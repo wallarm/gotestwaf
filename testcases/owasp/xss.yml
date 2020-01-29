@@ -1,0 +1,10 @@
+payload:
+  - '><script>evil(111)</script>'
+  - <img/src=x/onerror=xxx
+  - '"onwheel=ead(111)'
+encoder:
+  - Base64Flat
+  - Url
+placeholder:
+  - UrlPath
+  - UrlParam
