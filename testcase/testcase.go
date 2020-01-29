@@ -29,13 +29,13 @@ func Load(testcaseFolder string) []Testcase {
 	var files []string
 	var testcases []Testcase
 
-	err := filepath.Walk(testcaseFolder, func(path string, info os.FileInfo, err error) error {
+	if err := filepath.Walk(testcaseFolder, func(path string, info os.FileInfo, err error) error {
 		files = append(files, path)
 		return nil
-	})
-	if err != nil {
+	}); err != nil {
 		panic(err)
 	}
+
 	fmt.Println("Loading testcases: ")
 	for _, testcaseFile := range files {
 
@@ -49,43 +49,35 @@ func Load(testcaseFolder string) []Testcase {
 
 		fmt.Printf("%v\t%v\n", testsetName, testcaseName)
 
-		yamlFile, err := ioutil.ReadFile(testcaseFile)
-		if err != nil {
+		if yamlFile, err := ioutil.ReadFile(testcaseFile); err != nil {
 			log.Printf("yamlFile.Get err   #%v ", err)
-			continue
+		} else {
+			testcase := Testcase{}
+			if err = yaml.Unmarshal(yamlFile, &testcase); err != nil {
+				log.Printf("Unmarshal: %v", err)
+			} else {
+				testcase.Name = testcaseName
+				testcase.Testset = testsetName
+				testcases = append(testcases, testcase)
+			}
 		}
-
-		testcase := Testcase{Testset: testsetName, Name: testcaseName}
-
-		err = yaml.Unmarshal(yamlFile, &testcase)
-		if err != nil {
-			log.Fatalf("Unmarshal: %v", err)
-			continue
-		}
-
-		testcases = append(testcases, testcase)
-
 	}
 
 	return testcases
 }
 
-func Run(url string, config config.Config) map[string]map[string]map[bool]int {
+func Run(url string, config config.Config) report.Report {
 	var wg sync.WaitGroup
 	encoder.InitEncoders()
 	testcases := Load("./testcases/")
 
-	results := report.Report{}
-	// m["var1"] = map[string]string{}
-	// m["var1"]["var2"] = "something"
-	// fmt.Println(m["var1"]["var2"])
+	results := report.CreateReport()
 
 	for _, testcase := range testcases {
-		fmt.Printf("%+v\n", testcase)
-		results[testcase.Testset] = map[string]map[bool]int{}
-		results[testcase.Testset][testcase.Name] = map[bool]int{}
-		results[testcase.Testset][testcase.Name][true] = 0
-		results[testcase.Testset][testcase.Name][false] = 0
+		results.Report[testcase.Testset] = map[string]map[bool]int{}
+		results.Report[testcase.Testset][testcase.Name] = map[bool]int{}
+		results.Report[testcase.Testset][testcase.Name][true] = 0
+		results.Report[testcase.Testset][testcase.Name][false] = 0
 		for _, payloadData := range testcase.Payloads {
 			for _, encoderName := range testcase.Encoders {
 				for _, placeholder := range testcase.Placeholders {
@@ -95,14 +87,16 @@ func Run(url string, config config.Config) map[string]map[string]map[bool]int {
 						defer wg.Done()
 						ret := payload.Send(config, url, placeholder, encoderName, payloadData)
 						// TODO: Configure the way how to check results
+						results.Lock.Lock()
 						if ret.StatusCode == 403 {
 							result = "OK\n"
-							results[testcase.Testset][testcase.Name][true]++
+							results.Report[testcase.Testset][testcase.Name][true]++
 						} else {
 							result = "FAIL\n"
-							results[testcase.Testset][testcase.Name][false]++
+							results.Report[testcase.Testset][testcase.Name][false]++
 						}
-						fmt.Printf("Test %v %v : %v / %v / %v : %s", testcase.Testset, testcase.Name, payloadData, encoderName, placeholder, result)
+						results.Lock.Unlock()
+						fmt.Printf("Test %v / %v / %v : %s", payloadData, encoderName, placeholder, result)
 					}(payloadData, encoderName, placeholder, &wg)
 				}
 			}

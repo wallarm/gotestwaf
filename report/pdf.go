@@ -38,9 +38,7 @@ func tableClip(pdf *gofpdf.Fpdf, cols []float64, rows [][]string) {
 	}
 }
 
-type Report map[string]map[string]map[bool]int
-
-func ExportPDF(results Report) {
+func (r Report) ExportPDF() {
 	//TODO: implement a real PDF document creation here
 	cols := []float64{25, 25, 25, 25}
 	rows := [][]string{}
@@ -53,10 +51,10 @@ func ExportPDF(results Report) {
 	pdf.SetFont("Arial", "", 12)
 	pdf.AddPage()
 
-	for testset := range results {
-		for testcase := range results[testset] {
-			passed := results[testset][testcase][true]
-			failed := results[testset][testcase][false]
+	for testset := range r.Report {
+		for testcase := range r.Report[testset] {
+			passed := r.Report[testset][testcase][true]
+			failed := r.Report[testset][testcase][false]
 			total := passed + failed
 			percentage := float32(passed) / float32(total)
 			rows = append(rows, []string{testset, testcase, fmt.Sprintf("%d", passed), fmt.Sprintf("%d", failed)})
