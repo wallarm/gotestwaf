@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func Send(config config.Config, targetUrl string, placeholderName string, encoderName string, payload string) *http.Response {
+func Send(config *config.Config, targetUrl string, placeholderName string, encoderName string, payload string) *http.Response {
 	encodedPayload, _ := encoder.Apply(encoderName, payload)
 	var req = placeholder.Apply(targetUrl, placeholderName, encodedPayload)
 	//TODO: move certificates check into the config settings

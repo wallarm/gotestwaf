@@ -16,15 +16,13 @@ type Config struct {
 	TestcasesFolder        string            `yaml:"testcasesFolder"`
 }
 
-func LoadConfig(configFile string) Config {
-	yamlFile, err := ioutil.ReadFile(configFile)
-	if err != nil {
+func LoadConfig(configFile string) *Config {
+	if yamlFile, err := ioutil.ReadFile(configFile); err != nil {
 		log.Printf("yamlFile.Get err   #%v ", err)
+		return nil
+	} else {
+		config := Config{}
+		err = yaml.Unmarshal(yamlFile, &config)
+		return &config
 	}
-
-	config := Config{}
-	err = yaml.Unmarshal(yamlFile, &config)
-
-	return config
-
 }

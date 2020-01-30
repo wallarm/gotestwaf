@@ -54,10 +54,24 @@ func (r Report) ExportPDF() {
 
 	rows = append(rows, []string{"Testset", "Testcase", "Passed/Blocked", "Failed/Bypassed"})
 
-	for testset := range r.Report {
-		for testcase := range r.Report[testset] {
-			passed := r.Report[testset][testcase][true]
-			failed := r.Report[testset][testcase][false]
+	testcases := map[string]bool{}
+	testsets := map[string]bool{}
+	for rk := range r.Report {
+		testcases[rk.Name] = true
+		testsets[rk.Testset] = true
+	}
+
+	for testset := range testsets {
+		for testcase := range testcases {
+			rk := ReportKey{
+				Testset: testset,
+				Name:    testcase,
+			}
+			if _, ok := r.Report[rk]; !ok {
+				continue
+			}
+			passed := r.Report[rk][true]
+			failed := r.Report[rk][false]
 			total := passed + failed
 			percentage := float32(passed) / float32(total)
 			rows = append(rows, []string{testset, testcase, fmt.Sprintf("%d", passed), fmt.Sprintf("%d", failed)})
@@ -75,5 +89,5 @@ func (r Report) ExportPDF() {
 	pdf.Image(url, 15, 280, 20, 0, false, "", 0, "https://wallarm.com/?utm_campaign=gtw_tool&utm_medium=pdf&utm_source=github")
 
 	//pdf.Image(url, 15, 15, 510, 0, false, "", 0, "")
-	pdf.OutputFileAndClose("tables.pdf")
+	_ = pdf.OutputFileAndClose("tables.pdf")
 }

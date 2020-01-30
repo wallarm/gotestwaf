@@ -3,6 +3,8 @@ package testcase
 import (
 	"fmt"
 	"gotestwaf/config"
+	"gotestwaf/payload"
+	"gotestwaf/payload/encoder"
 	"gotestwaf/report"
 	"io/ioutil"
 	"log"
@@ -10,10 +12,6 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-	"sync"
-
-	"gotestwaf/payload"
-	"gotestwaf/payload/encoder"
 
 	"gopkg.in/yaml.v2"
 )
@@ -67,43 +65,40 @@ func Load(testcaseFolder string) []Testcase {
 	return testcases
 }
 
-func Run(url string, config config.Config) report.Report {
-	var wg sync.WaitGroup
+func Run(url string, config *config.Config) *report.Report {
 	encoder.InitEncoders()
 	testcases := Load("./testcases/")
-
 	results := report.CreateReport()
 
 	for _, testcase := range testcases {
-		if results.Report[testcase.Testset] == nil {
-			results.Report[testcase.Testset] = map[string]map[bool]int{}
-		}
-		if results.Report[testcase.Testset][testcase.Name] == nil {
-			results.Report[testcase.Testset][testcase.Name] = map[bool]int{}
-		}
-		results.Report[testcase.Testset][testcase.Name][true] = 0
-		results.Report[testcase.Testset][testcase.Name][false] = 0
 		for _, payloadData := range testcase.Payloads {
 			for _, encoderName := range testcase.Encoders {
 				for _, placeholder := range testcase.Placeholders {
-					wg.Add(1)
-					go func(testsetName string, testcaseName string, payloadData string, encoderName string, placeholder string, wg *sync.WaitGroup) {
-						defer wg.Done()
-						ret := payload.Send(config, url, placeholder, encoderName, payloadData)
-						// TODO: Configure the way how to check results
-						results.Lock.Lock()
-						if ret.StatusCode == 403 {
-							results.Report[testsetName][testcaseName][true]++
-						} else {
-							results.Report[testsetName][testcaseName][false]++
-						}
-						results.Lock.Unlock()
-						fmt.Printf(".")
-					}(testcase.Testset, testcase.Name, payloadData, encoderName, placeholder, &wg)
+					rk := report.ReportKey{
+						Testset: testcase.Testset,
+						Name:    testcase.Name,
+					}
+					results.Report[rk] = map[bool]int{true: 0, false: 0}
+					results.Wg.Add(1)
+					go TestExecutor(&url, config, rk, payloadData, encoderName, placeholder, results)
 				}
 			}
 		}
 	}
-	wg.Wait()
+	results.Wg.Wait()
 	return results
+}
+
+func TestExecutor(url *string, cfg *config.Config, reportKey report.ReportKey, payloadData string, encoderName string, placeholder string, res *report.Report) {
+	defer res.Wg.Done()
+	ret := payload.Send(cfg, *url, placeholder, encoderName, payloadData)
+	// TODO: Configure the way how to check results
+	res.Lock.Lock()
+	if ret.StatusCode == 403 {
+		res.Report[reportKey][true]++
+	} else {
+		res.Report[reportKey][false]++
+	}
+	res.Lock.Unlock()
+	fmt.Printf(".")
 }

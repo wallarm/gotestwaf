@@ -2,14 +2,20 @@ package report
 
 import "sync"
 
-type Report struct {
-	Report map[string]map[string]map[bool]int
-	Lock   sync.RWMutex
+type ReportKey struct {
+	Testset, Name string
 }
 
-func CreateReport() Report {
-	r := Report{}
-	r.Lock = sync.RWMutex{}
-	r.Report = make(map[string]map[string]map[bool]int)
-	return r
+type Report struct {
+	Report map[ReportKey]map[bool]int
+	Lock   *sync.RWMutex
+	Wg     *sync.WaitGroup
+}
+
+func CreateReport() *Report {
+	return &Report{
+		Report: make(map[ReportKey]map[bool]int),
+		Lock:   &sync.RWMutex{},
+		Wg:     &sync.WaitGroup{},
+	}
 }
