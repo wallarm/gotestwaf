@@ -12,4 +12,4 @@ The payload string you wanna send. Like ```<script>alert(111)</script>``` or som
 ## Encoder
 Data encoder the tool should apply to the payload.
 
-## Placeholde
+## Placeholder
