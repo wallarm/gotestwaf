@@ -74,15 +74,19 @@ func Run(url string, config config.Config) report.Report {
 	results := report.CreateReport()
 
 	for _, testcase := range testcases {
-		results.Report[testcase.Testset] = map[string]map[bool]int{}
-		results.Report[testcase.Testset][testcase.Name] = map[bool]int{}
+		if results.Report[testcase.Testset] == nil {
+			results.Report[testcase.Testset] = map[string]map[bool]int{}
+		}
+		if results.Report[testcase.Testset][testcase.Name] == nil {
+			results.Report[testcase.Testset][testcase.Name] = map[bool]int{}
+		}
 		results.Report[testcase.Testset][testcase.Name][true] = 0
 		results.Report[testcase.Testset][testcase.Name][false] = 0
 		for _, payloadData := range testcase.Payloads {
 			for _, encoderName := range testcase.Encoders {
 				for _, placeholder := range testcase.Placeholders {
 					wg.Add(1)
-					go func(payloadData string, encoderName string, placeholder string, wg *sync.WaitGroup) {
+					go func(testsetName string, testcaseName string, payloadData string, encoderName string, placeholder string, wg *sync.WaitGroup) {
 						var result string
 						defer wg.Done()
 						ret := payload.Send(config, url, placeholder, encoderName, payloadData)
@@ -90,18 +94,19 @@ func Run(url string, config config.Config) report.Report {
 						results.Lock.Lock()
 						if ret.StatusCode == 403 {
 							result = "OK\n"
-							results.Report[testcase.Testset][testcase.Name][true]++
+							results.Report[testsetName][testcaseName][true]++
 						} else {
 							result = "FAIL\n"
-							results.Report[testcase.Testset][testcase.Name][false]++
+							results.Report[testsetName][testcaseName][false]++
 						}
 						results.Lock.Unlock()
 						fmt.Printf("Test %v / %v / %v : %s", payloadData, encoderName, placeholder, result)
-					}(payloadData, encoderName, placeholder, &wg)
+					}(testcase.Testset, testcase.Name, payloadData, encoderName, placeholder, &wg)
 				}
 			}
 		}
 	}
 	wg.Wait()
+	fmt.Printf("\n%v\n\n", results.Report)
 	return results
 }
