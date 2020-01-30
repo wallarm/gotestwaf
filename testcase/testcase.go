@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -45,7 +46,7 @@ func Load(testcaseFolder string) []Testcase {
 
 		parts := strings.Split(testcaseFile, "/")
 		testsetName := parts[1]
-		testcaseName := parts[2]
+		testcaseName := strings.TrimSuffix(parts[2], path.Ext(parts[2]))
 
 		fmt.Printf("%v\t%v\n", testsetName, testcaseName)
 
@@ -87,26 +88,22 @@ func Run(url string, config config.Config) report.Report {
 				for _, placeholder := range testcase.Placeholders {
 					wg.Add(1)
 					go func(testsetName string, testcaseName string, payloadData string, encoderName string, placeholder string, wg *sync.WaitGroup) {
-						var result string
 						defer wg.Done()
 						ret := payload.Send(config, url, placeholder, encoderName, payloadData)
 						// TODO: Configure the way how to check results
 						results.Lock.Lock()
 						if ret.StatusCode == 403 {
-							result = "OK\n"
 							results.Report[testsetName][testcaseName][true]++
 						} else {
-							result = "FAIL\n"
 							results.Report[testsetName][testcaseName][false]++
 						}
 						results.Lock.Unlock()
-						fmt.Printf("Test %v / %v / %v : %s", payloadData, encoderName, placeholder, result)
+						fmt.Printf(".")
 					}(testcase.Testset, testcase.Name, payloadData, encoderName, placeholder, &wg)
 				}
 			}
 		}
 	}
 	wg.Wait()
-	fmt.Printf("\n%v\n\n", results.Report)
 	return results
 }

@@ -13,6 +13,7 @@ type Config struct {
 	CertificateCheck       bool              `yaml:"certificatecheck"`
 	MaxIddleConnections    int               `yaml:"threads"`
 	IddleConnectionTimeout int               `yaml:"threadTimeout"`
+	TestcasesFolder        string            `yaml:"testcasesFolder"`
 }
 
 func LoadConfig(configFile string) Config {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jung-kurt/gofpdf"
+	"github.com/jung-kurt/gofpdf/contrib/httpimg"
 )
 
 const MARGECELL = 2 // marge top/bottom of cell
@@ -40,7 +41,7 @@ func tableClip(pdf *gofpdf.Fpdf, cols []float64, rows [][]string) {
 
 func (r Report) ExportPDF() {
 	//TODO: implement a real PDF document creation here
-	cols := []float64{25, 25, 25, 25}
+	cols := []float64{45, 45, 45, 45}
 	rows := [][]string{}
 	//for i := 1; i <= 88; i++ {
 	//	word := fmt.Sprintf("%d:%s", i, strings.Repeat("A", i))
@@ -51,6 +52,8 @@ func (r Report) ExportPDF() {
 	pdf.SetFont("Arial", "", 12)
 	pdf.AddPage()
 
+	rows = append(rows, []string{"Testset", "Testcase", "Passed/Blocked", "Failed/Bypassed"})
+
 	for testset := range r.Report {
 		for testcase := range r.Report[testset] {
 			passed := r.Report[testset][testcase][true]
@@ -58,10 +61,19 @@ func (r Report) ExportPDF() {
 			total := passed + failed
 			percentage := float32(passed) / float32(total)
 			rows = append(rows, []string{testset, testcase, fmt.Sprintf("%d", passed), fmt.Sprintf("%d", failed)})
-			fmt.Printf("%v\t%v\t%v/%v\t(%.2f)", testset, testcase, passed, total, percentage)
+			fmt.Printf("%v\t%v\t%v/%v\t(%.2f)\n", testset, testcase, passed, total, percentage)
 		}
 	}
 
 	tableClip(pdf, cols, rows)
+
+	//url := ""
+	//httpimg.Register(pdf, url, "")
+
+	url := "http://troll.wallarm.tools/assets/wallarm.logo.png"
+	httpimg.Register(pdf, url, "")
+	pdf.Image(url, 15, 280, 20, 0, false, "", 0, "https://wallarm.com/?utm_campaign=gtw_tool&utm_medium=pdf&utm_source=github")
+
+	//pdf.Image(url, 15, 15, 510, 0, false, "", 0, "")
 	pdf.OutputFileAndClose("tables.pdf")
 }
