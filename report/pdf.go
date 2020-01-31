@@ -40,35 +40,41 @@ func tableClip(pdf *gofpdf.Fpdf, cols []float64, rows [][]string) {
 }
 
 func (r Report) ExportPDF() {
-	//TODO: implement a real PDF document creation here
-	cols := []float64{45, 45, 45, 45}
+	cols := []float64{35, 35, 35, 35, 35, 35}
 	rows := [][]string{}
-	//for i := 1; i <= 88; i++ {
-	//	word := fmt.Sprintf("%d:%s", i, strings.Repeat("A", i))
-	//	rows = append(rows, []string{word, word, word})
-	//}
+	overallPassedRate := float32(0)
+	overallTestsCompleted := 0
+	overallTestsFailed := 0
+	overallTestcasesCompleted := float32(0)
 
 	pdf := gofpdf.New("P", "mm", "A4", "")
-	pdf.SetFont("Arial", "", 12)
 	pdf.AddPage()
 
-	rows = append(rows, []string{"Testset", "Testcase", "Passed/Blocked", "Failed/Bypassed"})
+	rows = append(rows, []string{"Test set", "Test case", "Passed, %", "Passed/Blocked", "Failed/Bypassed"})
 
 	for testset := range r.Report {
 		for testcase := range r.Report[testset] {
 			passed := r.Report[testset][testcase][true]
 			failed := r.Report[testset][testcase][false]
 			total := passed + failed
+			overallTestsCompleted += total
+			overallTestsFailed += failed
 			percentage := float32(passed) / float32(total)
-			rows = append(rows, []string{testset, testcase, fmt.Sprintf("%d", passed), fmt.Sprintf("%d", failed)})
+			rows = append(rows, []string{testset, testcase, fmt.Sprintf("%.2f", percentage), fmt.Sprintf("%d", passed), fmt.Sprintf("%d", failed)})
 			fmt.Printf("%v\t%v\t%v/%v\t(%.2f)\n", testset, testcase, passed, total, percentage)
+			overallTestcasesCompleted += 1.00
+			overallPassedRate += percentage
 		}
 	}
 
-	tableClip(pdf, cols, rows)
+	pdf.SetFont("Arial", "", 24)
+	pdf.Cell(10, 10, fmt.Sprintf("WAF score: %.2f%%", (overallPassedRate/overallTestcasesCompleted)*100))
+	pdf.Ln(10)
+	pdf.SetFont("Arial", "", 12)
+	pdf.Cell(10, 10, fmt.Sprintf("%v bypasses in %v tests / %v test cases", overallTestsFailed, overallTestsCompleted, overallTestcasesCompleted))
+	pdf.Ln(10)
 
-	//url := ""
-	//httpimg.Register(pdf, url, "")
+	tableClip(pdf, cols, rows)
 
 	url := "http://troll.wallarm.tools/assets/wallarm.logo.png"
 	httpimg.Register(pdf, url, "")
