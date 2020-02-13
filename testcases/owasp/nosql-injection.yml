@@ -1,0 +1,10 @@
+payload:
+  - 'db.injection.insert({success:1});'
+  - "true, $where: '99 == 88'"
+  - "', $or: [ {}, { 'order':'order"
+encoder:
+  - Base64Flat
+  - Url
+placeholder:
+  - UrlPath
+  - UrlParam
