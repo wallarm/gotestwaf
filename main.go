@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
 
 	"gotestwaf/config"
 	"gotestwaf/testcase"
@@ -33,6 +34,7 @@ func main() {
 		conf.CertificateCheck = *checkCertificates
 	}
 
+	os.Mkdir("/tmp/report", 0700)
 	fmt.Printf("Checking %s\n", *url)
 
 	results := testcase.Run(*url, conf)

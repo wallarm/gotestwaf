@@ -105,5 +105,6 @@ func Run(url string, config config.Config) report.Report {
 		}
 	}
 	wg.Wait()
+	fmt.Printf("\n")
 	return results
 }

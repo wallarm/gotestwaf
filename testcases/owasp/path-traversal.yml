@@ -1,0 +1,10 @@
+payload:
+  - ../../../../../etc/passwd
+  - .../.../WINDOWS/win.ini
+  - ..\..\..\..\usr/lib\libinjection.so.6
+encoder:
+  - Base64Flat
+  - Url
+placeholder:
+  - UrlPath
+  - UrlParam

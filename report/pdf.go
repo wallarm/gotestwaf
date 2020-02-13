@@ -2,6 +2,7 @@ package report
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/jung-kurt/gofpdf"
 	"github.com/jung-kurt/gofpdf/contrib/httpimg"
@@ -81,5 +82,6 @@ func (r Report) ExportPDF() {
 	pdf.Image(url, 15, 280, 20, 0, false, "", 0, "https://wallarm.com/?utm_campaign=gtw_tool&utm_medium=pdf&utm_source=github")
 
 	//pdf.Image(url, 15, 15, 510, 0, false, "", 0, "")
-	pdf.OutputFileAndClose("tables.pdf")
+	current := time.Now()
+	pdf.OutputFileAndClose("/tmp/report/waf-test-report" + current.Format("2019-12-31") + ".pdf")
 }
