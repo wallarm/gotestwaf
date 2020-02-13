@@ -1,0 +1,9 @@
+payload:
+  - '*)(uid=*))(|(uid=*'
+  - '(&(uid=*)(uid=*))(|(uid=*)(userPassword={MD5}X03MO1qnZdYdgyfeuILPmQ==))'
+encoder:
+  - Base64Flat
+  - Url
+placeholder:
+  - UrlPath
+  - UrlParam

