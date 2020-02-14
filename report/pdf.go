@@ -81,7 +81,23 @@ func (r Report) ExportPDF() {
 	httpimg.Register(pdf, url, "")
 	pdf.Image(url, 15, 280, 20, 0, false, "", 0, "https://wallarm.com/?utm_campaign=gtw_tool&utm_medium=pdf&utm_source=github")
 
-	//pdf.Image(url, 15, 15, 510, 0, false, "", 0, "")
+	pdf.AddPage()
+
+	cols = []float64{150, 20, 20}
+	rows = [][]string{}
+
+	rows = append(rows, []string{"Payload", "Encoder", "Placeholder"})
+	for _, failedTest := range r.FailedTests {
+		rows = append(rows, []string{failedTest.Payload, failedTest.Encoder, failedTest.Placeholder})
+	}
+	pdf.SetFont("Arial", "", 24)
+	pdf.Cell(10, 10, "Bypasses in details.")
+	pdf.Ln(10)
+	pdf.Cell(10, 10, fmt.Sprintf("\n%d maliscious requests bypassed the WAF", len(r.FailedTests)))
+	pdf.Ln(10)
+	pdf.SetFont("Arial", "", 10)
+	tableClip(pdf, cols, rows)
+
 	current := time.Now()
-	pdf.OutputFileAndClose("/tmp/report/waf-test-report" + current.Format("2019-12-31") + ".pdf")
+	pdf.OutputFileAndClose("/tmp/report/waf-test-report" + current.Format("2006-January-02") + ".pdf")
 }

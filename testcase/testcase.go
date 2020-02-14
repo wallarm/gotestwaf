@@ -96,6 +96,8 @@ func Run(url string, config config.Config) report.Report {
 							results.Report[testsetName][testcaseName][true]++
 						} else {
 							results.Report[testsetName][testcaseName][false]++
+							test := report.Test{Testset: testsetName, Testcase: testcaseName, Payload: payloadData, Encoder: encoderName, Placeholder: placeholder}
+							results.FailedTests = append(results.FailedTests, test)
 						}
 						results.Lock.Unlock()
 						fmt.Printf(".")
