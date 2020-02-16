@@ -14,6 +14,7 @@ type Config struct {
 	MaxIddleConnections    int               `yaml:"threads"`
 	IddleConnectionTimeout int               `yaml:"threadTimeout"`
 	TestcasesFolder        string            `yaml:"testcasesFolder"`
+	BlockStatusCode        int               `yaml:"blockStatusCode"`
 }
 
 func LoadConfig(configFile string) Config {

@@ -92,7 +92,7 @@ func Run(url string, config config.Config) report.Report {
 						ret := payload.Send(config, url, placeholder, encoderName, payloadData)
 						// TODO: Configure the way how to check results
 						results.Lock.Lock()
-						if ret.StatusCode == 403 {
+						if ret.StatusCode == config.BlockStatusCode {
 							results.Report[testsetName][testcaseName][true]++
 						} else {
 							results.Report[testsetName][testcaseName][false]++

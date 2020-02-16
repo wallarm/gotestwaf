@@ -16,6 +16,7 @@ func main() {
 	proxyUrl := flag.String("proxy", "", "Proxy to use")
 	threads := flag.Int("threads", 2, "Number of concurrent HTTP requests")
 	checkCertificates := flag.Bool("check_cert", false, "Check SSL/TLS certificates, turned off by default")
+	blockStatuscode := flag.Int("block_statuscode", 443, "HTTP response status code that WAF use while blocking requests. 443 by default")
 
 	flag.Parse()
 
@@ -32,6 +33,9 @@ func main() {
 	}
 	if !conf.CertificateCheck {
 		conf.CertificateCheck = *checkCertificates
+	}
+	if conf.BlockStatusCode == 0 {
+		conf.BlockStatusCode = *blockStatuscode
 	}
 
 	os.Mkdir("/tmp/report", 0700)
