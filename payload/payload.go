@@ -16,7 +16,7 @@ func Send(config config.Config, targetUrl string, placeholderName string, encode
 	var req = placeholder.Apply(targetUrl, placeholderName, encodedPayload)
 	//TODO: move certificates check into the config settings
 	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: config.CertificateCheck},
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: !config.CertificateCheck},
 		IdleConnTimeout: time.Duration(config.IddleConnectionTimeout) * time.Second,
 		MaxIdleConns:    config.MaxIddleConnections,
 	}
