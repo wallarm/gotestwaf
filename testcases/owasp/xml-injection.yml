@@ -5,5 +5,5 @@ encoder:
   - Base64Flat
   - Url
 placeholder:
-  - UrlPath
   - UrlParam
+  - RequestBody

@@ -7,3 +7,4 @@ encoder:
 placeholder:
   - UrlPath
   - UrlParam
+  - JsonBody
