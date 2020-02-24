@@ -6,3 +6,4 @@ encoder:
   - Url
 placeholder:
   - UrlParam
+  - RequestBody

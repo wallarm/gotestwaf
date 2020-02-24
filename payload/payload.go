@@ -29,7 +29,11 @@ func Send(config config.Config, targetUrl string, placeholderName string, encode
 	for header, value := range config.Headers {
 		req.Header.Set(header, value)
 	}
-	client := &http.Client{Transport: tr}
+	client := &http.Client{
+		Transport: tr,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		}}
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Fatal(err)

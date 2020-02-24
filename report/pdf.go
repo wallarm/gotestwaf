@@ -2,7 +2,6 @@ package report
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/jung-kurt/gofpdf"
 	"github.com/jung-kurt/gofpdf/contrib/httpimg"
@@ -40,7 +39,7 @@ func tableClip(pdf *gofpdf.Fpdf, cols []float64, rows [][]string) {
 	}
 }
 
-func (r Report) ExportPDF() {
+func (r Report) ExportPDF(reportFile string) {
 	cols := []float64{35, 35, 35, 35, 35, 35}
 	rows := [][]string{}
 	overallPassedRate := float32(0)
@@ -98,6 +97,6 @@ func (r Report) ExportPDF() {
 	pdf.SetFont("Arial", "", 10)
 	tableClip(pdf, cols, rows)
 
-	current := time.Now()
-	pdf.OutputFileAndClose("/tmp/report/waf-test-report" + current.Format("2006-January-02") + ".pdf")
+	pdf.OutputFileAndClose(reportFile)
+	fmt.Printf("\nPDF report is ready: %s\n", reportFile)
 }
