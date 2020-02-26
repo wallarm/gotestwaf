@@ -7,6 +7,10 @@ import (
 
 type Placeholder struct{}
 
+func (p Placeholder) Header(url string, data string) (*http.Request, error) {
+	return Header(url, data)
+}
+
 func (p Placeholder) RequestBody(url string, data string) (*http.Request, error) {
 	return RequestBody(url, data)
 }
