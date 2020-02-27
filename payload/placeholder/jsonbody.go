@@ -17,9 +17,9 @@ func JsonBody(requestUrl string, payload string) (*http.Request, error) {
 		jsonPayload := fmt.Sprintf("{\"test\":true, \"%s\": \"%s\"}", param, encodedPayload)
 		//reqUrl.Path = fmt.Sprintf("%s/%s/", reqUrl.Path, payload)
 		if req, err := http.NewRequest("POST", reqUrl.String(), strings.NewReader(jsonPayload)); err != nil {
-			req.Header.Add("Content-Type", "application/json")
 			return nil, err
 		} else {
+			req.Header.Add("Content-Type", "application/json")
 			return req, nil
 		}
 	}
