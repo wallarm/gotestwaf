@@ -12,9 +12,9 @@ func Header(requestUrl string, payload string) (*http.Request, error) {
 		randomName, _ := RandomHex(5)
 		randomHeader := "X-" + randomName
 		if req, err := http.NewRequest("GET", reqUrl.String(), nil); err != nil {
-			req.Header.Add(randomHeader, payload)
 			return nil, err
 		} else {
+			req.Header.Add(randomHeader, payload)
 			return req, nil
 		}
 	}
