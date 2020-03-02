@@ -2,7 +2,7 @@ payload:
   - '<!DOCTYPE x SYSTEM "//x/x"><x>a</x>'
   - '<!DOCTYPE x [ <!ENTITY % y SYSTEM "//y/y"> %y; ]><x>a</x>'
 encoder:
-  - Base64Flat
+  - Base64
   - Url
 placeholder:
   - UrlParam
