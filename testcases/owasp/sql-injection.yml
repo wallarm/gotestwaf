@@ -8,3 +8,4 @@ placeholder:
   - UrlPath
   - UrlParam
   - JsonBody
+  - Header

