@@ -4,7 +4,7 @@ type PlainEncoder struct {
 	name string
 }
 
-var DefaultPlainEncoder = Base64Encoder{name: "Plain"}
+var DefaultPlainEncoder = PlainEncoder{name: "Plain"}
 
 func (enc PlainEncoder) GetName() *string {
 	return &enc.name
