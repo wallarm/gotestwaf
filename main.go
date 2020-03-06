@@ -20,7 +20,7 @@ func main() {
 	proxyUrl := flag.String("proxy", "", "Proxy to use")
 	threads := flag.Int("threads", 2, "Number of concurrent HTTP requests")
 	checkCertificates := flag.Bool("check_cert", false, "Check SSL/TLS certificates, turned off by default")
-	blockStatuscode := flag.Int("block_statuscode", 403, "HTTP response status code that WAF use while blocking requests. 443 by default")
+	blockStatuscode := flag.Int("block_statuscode", 403, "HTTP response status code that WAF use while blocking requests. 403 by default")
 	reportFile := flag.String("report", "/tmp/report/waf-test-report"+current.Format("2006-January-02")+".pdf", "Report filename to export results.")
 
 	flag.Parse()
