@@ -20,7 +20,7 @@ A place inside HTTP request where encoded payload should be. Like URL parameter,
 
 # Quick start
 ```
-docker build -t gotestwaf .
+docker build . --force-rm -t gotestwaf
 docker run -v /tmp:/tmp/report gotestwaf --url=https://the-waf-you-wanna-test/
 ```
 
@@ -42,7 +42,7 @@ docker run --rm -p 8080:80 -e PARANOIA=1 modsec_crs
 You may choose the PARANOIA level to increase the level of security.  
 Learn more https://coreruleset.org/faq/
 
-#### Run gotestwaf 
+#### Run gotestwaf
 `docker run -v /tmp:/tmp/report gotestwaf --url=http://the-waf-you-wanna-test/`
 
 #### Check results
