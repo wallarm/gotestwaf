@@ -77,7 +77,6 @@ func (r Report) ExportPDF(reportFile string) {
 	tableClip(pdf, cols, rows)
 
 	url := "http://troll.wallarm.tools/assets/wallarm.logo.png"
-	httpimg.Register(pdf, url, "")
 	pdf.Image(url, 15, 280, 20, 0, false, "", 0, "https://wallarm.com/?utm_campaign=gtw_tool&utm_medium=pdf&utm_source=github")
 
 	pdf.AddPage()
@@ -97,6 +96,11 @@ func (r Report) ExportPDF(reportFile string) {
 	pdf.SetFont("Arial", "", 10)
 	tableClip(pdf, cols, rows)
 
-	pdf.OutputFileAndClose(reportFile)
-	fmt.Printf("\nPDF report is ready: %s\n", reportFile)
+	err := pdf.OutputFileAndClose(reportFile)
+
+	if err != nil {
+		fmt.Printf("\nPDF generation error: %s\n", err)
+	} else {
+		fmt.Printf("\nPDF report is ready: %s\n", reportFile)
+	}
 }

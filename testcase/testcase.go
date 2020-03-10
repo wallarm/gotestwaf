@@ -70,7 +70,7 @@ func Load(testcaseFolder string) []Testcase {
 func Run(url string, config config.Config) report.Report {
 	var wg sync.WaitGroup
 	encoder.InitEncoders()
-	testcases := Load("./testcases/")
+	testcases := Load(config.TestcasesFolder)
 
 	results := report.CreateReport()
 
