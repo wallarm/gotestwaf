@@ -77,6 +77,7 @@ func (r Report) ExportPDF(reportFile string) {
 	tableClip(pdf, cols, rows)
 
 	url := "http://troll.wallarm.tools/assets/wallarm.logo.png"
+	httpimg.Register(pdf, url, "")
 	pdf.Image(url, 15, 280, 20, 0, false, "", 0, "https://wallarm.com/?utm_campaign=gtw_tool&utm_medium=pdf&utm_source=github")
 
 	pdf.AddPage()

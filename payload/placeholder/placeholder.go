@@ -15,6 +15,10 @@ func (p Placeholder) RequestBody(url string, data string) (*http.Request, error)
 	return RequestBody(url, data)
 }
 
+func (p Placeholder) SoapBody(url string, data string) (*http.Request, error) {
+	return SoapBody(url, data)
+}
+
 func (p Placeholder) JsonBody(url string, data string) (*http.Request, error) {
 	return JsonBody(url, data)
 }
