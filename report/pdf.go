@@ -69,9 +69,11 @@ func (r Report) ExportPDF(reportFile string) {
 
 	pdf.SetFont("Arial", "", 24)
 	pdf.Cell(10, 10, fmt.Sprintf("WAF score: %.2f%%", (overallPassedRate/overallTestcasesCompleted)*100))
+	fmt.Printf("WAF score: %.2f%%", (overallPassedRate/overallTestcasesCompleted)*100)
 	pdf.Ln(10)
 	pdf.SetFont("Arial", "", 12)
 	pdf.Cell(10, 10, fmt.Sprintf("%v bypasses in %v tests / %v test cases", overallTestsFailed, overallTestsCompleted, overallTestcasesCompleted))
+	fmt.Printf("%v bypasses in %v tests / %v test cases", overallTestsFailed, overallTestsCompleted, overallTestcasesCompleted)
 	pdf.Ln(10)
 
 	tableClip(pdf, cols, rows)
@@ -97,6 +99,10 @@ func (r Report) ExportPDF(reportFile string) {
 	pdf.SetFont("Arial", "", 10)
 	tableClip(pdf, cols, rows)
 
-	pdf.OutputFileAndClose(reportFile)
-	fmt.Printf("\nPDF report is ready: %s\n", reportFile)
+	err := pdf.OutputFileAndClose(reportFile)
+	fmt.Printf("%s error writing to %s", err, reportFile)
+	if err != nil {
+	} else {
+		fmt.Printf("\nPDF report is ready: %s\n", reportFile)
+	}
 }
