@@ -67,6 +67,11 @@ func Load(testcaseFolder string) []Testcase {
 	return testcases
 }
 
+func PreCheck(url string, config config.Config) (bool, int) {
+	ret := payload.Send(config, url, "UrlParam", "Plain", "<script>alert('union select password from users')</script>")
+	return (ret.StatusCode == config.BlockStatusCode), ret.StatusCode
+}
+
 func Run(url string, config config.Config) report.Report {
 	var wg sync.WaitGroup
 	encoder.InitEncoders()
