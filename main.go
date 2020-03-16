@@ -48,8 +48,10 @@ func main() {
 
 	check, status := testcase.PreCheck(*url, conf)
 	if !check {
-		fmt.Printf("[FATAL] WAF was not detected. Please check the 'block_statuscode' value. Baseline attack returned: %v", status)
+		fmt.Printf("[FATAL] WAF was not detected. Please check the 'block_statuscode' value. Baseline attack returned: %v\n", status)
 		return
+	} else {
+		fmt.Printf("WAF pre-check: OK. Blocking status code: %v\n", status)
 	}
 
 	os.Mkdir("/tmp/report", 0700)

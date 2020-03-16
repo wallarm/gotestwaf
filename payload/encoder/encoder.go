@@ -1,7 +1,6 @@
 package encoder
 
 import (
-	"fmt"
 	"log"
 )
 
@@ -24,7 +23,6 @@ func InitEncoders() {
 }
 
 func Apply(encoderName string, data string) (string, error) {
-	fmt.Printf("ENCODE %v %v", encoderName, data)
 	ret, err := Encoders[encoderName].Encode(data)
 	if err != nil {
 		log.Fatal(err)
