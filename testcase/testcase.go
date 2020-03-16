@@ -69,7 +69,7 @@ func Load(testcaseFolder string) []Testcase {
 
 func PreCheck(url string, config config.Config) (bool, int) {
 	encoder.InitEncoders()
-	ret := payload.Send(config, url, "UrlParam", "Plain", "<script>alert('union select password from users')</script>")
+	ret := payload.Send(config, url, "UrlParam", "Url", "<script>alert('union select password from users')</script>")
 	return (ret.StatusCode == config.BlockStatusCode), ret.StatusCode
 }
 
