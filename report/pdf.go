@@ -92,7 +92,7 @@ func (r Report) ExportPDF(reportFile string) {
 	pdf.SetFont("Arial", "", 24)
 	pdf.Cell(10, 10, "Bypasses in details.")
 	pdf.Ln(10)
-	pdf.Cell(10, 10, fmt.Sprintf("\n%d maliscious requests bypassed the WAF", len(r.FailedTests)))
+	pdf.Cell(10, 10, fmt.Sprintf("\n%d malicious requests bypassed the WAF", len(r.FailedTests)))
 	pdf.Ln(10)
 	pdf.SetFont("Arial", "", 10)
 	tableClip(pdf, cols, rows)
