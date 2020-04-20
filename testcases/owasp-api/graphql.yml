@@ -1,0 +1,6 @@
+payload:
+  - '{ __schema { types { name } } }'
+encoder:
+  - Plain
+placeholder:
+  - RequestBody
