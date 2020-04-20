@@ -15,6 +15,7 @@ func InitEncoders() {
 	Encoders[*DefaultJSUnicodeEncoder.GetName()] = DefaultJSUnicodeEncoder
 	Encoders[*DefaultUrlEncoder.GetName()] = DefaultUrlEncoder
 	Encoders[*DefaultPlainEncoder.GetName()] = DefaultPlainEncoder
+	Encoders[*DefaultXmlEntityEncoder.GetName()] = DefaultXmlEntityEncoder
 }
 
 func Apply(encoderName string, data string) (string, error) {
