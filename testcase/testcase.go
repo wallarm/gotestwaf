@@ -26,6 +26,7 @@ type Testcase struct {
 	Placeholders []string `yaml:"placeholder"`
 	Testset      string
 	Name         string
+	Type         bool
 }
 
 func Load(testcaseFolder string) []Testcase {
@@ -61,6 +62,11 @@ func Load(testcaseFolder string) []Testcase {
 			} else {
 				testcase.Name = testcaseName
 				testcase.Testset = testsetName
+				if strings.Contains(testsetName, "false") {
+					testcase.Type = false //testcase is false positive
+				} else {
+					testcase.Type = true //testcase is true positive
+				}
 				testcases = append(testcases, testcase)
 			}
 		}
@@ -112,9 +118,9 @@ func Run(url string, config config.Config) report.Report {
 						ret := payload.Send(config, url, placeholder, encoderName, payloadData)
 						results.Lock.Lock()
 						blocked, _ := CheckBlocking(ret, config)
-						if blocked {
+						if (blocked && testcase.Type) /*true positives*/ || (!blocked && !testcase.Type) /*true negatives*/ {
 							results.Report[testsetName][testcaseName][true]++
-						} else {
+						} else { /*false positives and false negatives (bypasses)*/
 							results.Report[testsetName][testcaseName][false]++
 							test := report.Test{Testset: testsetName, Testcase: testcaseName, Payload: payloadData, Encoder: encoderName, Placeholder: placeholder}
 							results.FailedTests = append(results.FailedTests, test)
