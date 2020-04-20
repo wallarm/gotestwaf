@@ -15,6 +15,7 @@ type Config struct {
 	IddleConnectionTimeout int               `yaml:"threadTimeout"`
 	TestcasesFolder        string            `yaml:"testcasesFolder"`
 	BlockStatusCode        int               `yaml:"blockStatusCode"`
+	BlockRegExp            string            `yaml:"blockRegExp"`
 	ReportFile             string            `yaml:"reportFile"`
 }
 

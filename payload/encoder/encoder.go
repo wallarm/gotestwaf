@@ -1,5 +1,9 @@
 package encoder
 
+import (
+	"log"
+)
+
 /* Better to use byte types, they're faster, but here I'll use strings */
 type Encoder interface {
 	GetName() *string
@@ -19,5 +23,9 @@ func InitEncoders() {
 }
 
 func Apply(encoderName string, data string) (string, error) {
-	return Encoders[encoderName].Encode(data)
+	ret, err := Encoders[encoderName].Encode(data)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return ret, err
 }

@@ -6,9 +6,11 @@ import (
 	"gotestwaf/report"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -67,6 +69,24 @@ func Load(testcaseFolder string) []Testcase {
 	return testcases
 }
 
+func CheckBlocking(resp *http.Response, config config.Config) (bool, int) {
+	if config.BlockRegExp != "" {
+		respData, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+		m, _ := regexp.MatchString(config.BlockRegExp, string(respData))
+		return m, resp.StatusCode
+	}
+	return (resp.StatusCode == config.BlockStatusCode), resp.StatusCode
+}
+
+func PreCheck(url string, config config.Config) (bool, int) {
+	encoder.InitEncoders()
+	ret := payload.Send(config, url, "UrlParam", "Url", "<script>alert('union select password from users')</script>")
+	return CheckBlocking(ret, config)
+}
+
 func Run(url string, config config.Config) report.Report {
 	var wg sync.WaitGroup
 	encoder.InitEncoders()
@@ -90,9 +110,9 @@ func Run(url string, config config.Config) report.Report {
 					go func(testsetName string, testcaseName string, payloadData string, encoderName string, placeholder string, wg *sync.WaitGroup) {
 						defer wg.Done()
 						ret := payload.Send(config, url, placeholder, encoderName, payloadData)
-						// TODO: Configure the way how to check results
 						results.Lock.Lock()
-						if ret.StatusCode == config.BlockStatusCode {
+						blocked, _ := CheckBlocking(ret, config)
+						if blocked {
 							results.Report[testsetName][testcaseName][true]++
 						} else {
 							results.Report[testsetName][testcaseName][false]++

@@ -2,6 +2,7 @@ payload:
   - '../../../../../etc/passwd'
   - '.../.../WINDOWS/win.ini'
   - '..\..\..\..\usr/lib\libinjection.so.6'
+  - 'file=/etc/passwd'
 encoder:
   - Base64Flat
   - Url
