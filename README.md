@@ -47,15 +47,22 @@ Learn more https://coreruleset.org/faq/
 
 #### Check results
 ```
-owasp   path-traversal   6/18  (0.33)
-owasp   sql-injection    4/16  (0.25)
-owasp   ss-include       2/8   (0.25)
-owasp   xml-injection    6/8   (0.75)
-owasp   xss-scripting    4/12  (0.33)
-owasp   ldap-injection   0/8   (0.00)
-owasp   mail-injection   3/12  (0.25)
-owasp   nosql-injection  0/18  (0.00)
-owasp   shell-injection  3/8   (0.38)
-owasp   sst-injection    5/20  (0.25)
+owasp ss-include  5/20  (0.25)
+owasp xml-injection 12/12 (1.00)
+owasp xss-scripting 9/28  (0.32)
+owasp ldap-injection  0/8 (0.00)
+owasp mail-injection  3/12  (0.25)
+owasp nosql-injection 0/18  (0.00)
+owasp path-traversal  8/24  (0.33)
+owasp shell-injection 3/8 (0.38)
+owasp sql-injection 8/32  (0.25)
+owasp sst-injection 5/20  (0.25)
+owasp-api graphql 1/1 (1.00)
+owasp-api rest  2/2 (1.00)
+owasp-api soap  0/2 (0.00)
+false-pos texts 7/8 (0.88)
+
+WAF score: 42.18%
+132 bypasses in 195 tests / 14 test cases
 ```
 ---
