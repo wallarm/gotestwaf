@@ -22,6 +22,7 @@ func main() {
 	checkCertificates := flag.Bool("check_cert", false, "Check SSL/TLS certificates, turned off by default")
 	blockStatuscode := flag.Int("block_statuscode", 403, "HTTP response status code that WAF use while blocking requests. 403 by default")
 	blockRegExp := flag.String("block_regexp", "", "Regular Expression to detect blocking page with the same HTTP response status code as not blocked request")
+
 	reportFile := flag.String("report", "/tmp/report/waf-test-report"+current.Format("2006-January-02")+".pdf", "Report filename to export results.")
 
 	flag.Parse()

@@ -69,9 +69,11 @@ func (r Report) ExportPDF(reportFile string) {
 
 	pdf.SetFont("Arial", "", 24)
 	pdf.Cell(10, 10, fmt.Sprintf("WAF score: %.2f%%", (overallPassedRate/overallTestcasesCompleted)*100))
+	fmt.Printf("\nWAF score: %.2f%%\n", (overallPassedRate/overallTestcasesCompleted)*100)
 	pdf.Ln(10)
 	pdf.SetFont("Arial", "", 12)
 	pdf.Cell(10, 10, fmt.Sprintf("%v bypasses in %v tests / %v test cases", overallTestsFailed, overallTestsCompleted, overallTestcasesCompleted))
+	fmt.Printf("%v bypasses in %v tests / %v test cases\n", overallTestsFailed, overallTestsCompleted, overallTestcasesCompleted)
 	pdf.Ln(10)
 
 	tableClip(pdf, cols, rows)
