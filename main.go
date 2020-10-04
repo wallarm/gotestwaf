@@ -20,10 +20,12 @@ func main() {
 	proxyUrl := flag.String("proxy", "", "Proxy to use")
 	threads := flag.Int("threads", 2, "Number of concurrent HTTP requests")
 	checkCertificates := flag.Bool("check_cert", false, "Check SSL/TLS certificates, turned off by default")
-	blockStatuscode := flag.Int("block_statuscode", 403, "HTTP response status code that WAF use while blocking requests. 403 by default")
+	blockStatusCode := flag.Int("block_statuscode", 403, "HTTP response status code that WAF use while blocking requests. 403 by default")
 	blockRegExp := flag.String("block_regexp", "", "Regular Expression to detect blocking page with the same HTTP response status code as not blocked request")
-
-	reportFile := flag.String("report", "/tmp/report/waf-test-report"+current.Format("2006-January-02")+".pdf", "Report filename to export results.")
+	passStatusCode := flag.Int("pass_statuscode", 200, "HTTP response status code that WAF use while passing requests. 200 by default")
+	passRegExp := flag.String("pass_regexp", "", "Regular Expression to detect normal (not blocked) web-page with the same HTTP response status code as blocked request")
+	reportFile := flag.String("report", "/tmp/report/waf-test-report"+current.Format("2006-January-02")+".pdf", "Report filename to export results")
+	nonBlockedAsPassed := flag.Bool("nonblocked_as_passed", true, "Count all the requests not blocked as passed (old behaviour). Otherwise, count all of them that doens't satisfy PassStatuscode/PassRegExp as blocked (by default)")
 
 	flag.Parse()
 
@@ -42,13 +44,22 @@ func main() {
 		conf.CertificateCheck = *checkCertificates
 	}
 	if conf.BlockStatusCode == 0 {
-		conf.BlockStatusCode = *blockStatuscode
+		conf.BlockStatusCode = *blockStatusCode
 	}
 	if conf.BlockRegExp == "" {
 		conf.BlockRegExp = *blockRegExp
 	}
+	if conf.PassStatusCode == 0 {
+		conf.PassStatusCode = *passStatusCode
+	}
+	if conf.PassRegExp == "" {
+		conf.PassRegExp = *passRegExp
+	}
 	if conf.ReportFile == "" {
 		conf.ReportFile = *reportFile
+	}
+	if !conf.NonBlockedAsPassed {
+		conf.NonBlockedAsPassed = *nonBlockedAsPassed
 	}
 
 	check, status := testcase.PreCheck(*url, conf)

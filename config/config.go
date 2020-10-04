@@ -16,7 +16,10 @@ type Config struct {
 	TestcasesFolder        string            `yaml:"testcasesFolder"`
 	BlockStatusCode        int               `yaml:"blockStatusCode"`
 	BlockRegExp            string            `yaml:"blockRegExp"`
+	PassStatusCode         int               `yaml:"passStatusCode"`
+	PassRegExp             string            `yaml:"passRegExp"`
 	ReportFile             string            `yaml:"reportFile"`
+	NonBlockedAsPassed     bool              `yaml:"nonBlockedAsPassed"`
 }
 
 func LoadConfig(configFile string) Config {
