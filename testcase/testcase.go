@@ -87,6 +87,18 @@ func CheckBlocking(resp *http.Response, config config.Config) (bool, int) {
 	return (resp.StatusCode == config.BlockStatusCode), resp.StatusCode
 }
 
+func CheckPass(resp *http.Response, config config.Config) (bool, int) {
+	if config.PassRegExp != "" {
+		respData, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+		m, _ := regexp.MatchString(config.PassRegExp, string(respData))
+		return m, resp.StatusCode
+	}
+	return (resp.StatusCode == config.PassStatusCode), resp.StatusCode
+}
+
 func PreCheck(url string, config config.Config) (bool, int) {
 	encoder.InitEncoders()
 	ret := payload.Send(config, url, "UrlParam", "Url", "<script>alert('union select password from users')</script>")
@@ -118,12 +130,17 @@ func Run(url string, config config.Config) report.Report {
 						ret := payload.Send(config, url, placeholder, encoderName, payloadData)
 						results.Lock.Lock()
 						blocked, _ := CheckBlocking(ret, config)
-						if (blocked && testcase.Type) /*true positives*/ || (!blocked && !testcase.Type) /*true negatives*/ {
+						passed, _ := CheckPass(ret, config)
+						if (blocked && testcase.Type) /*true positives*/ || (!blocked && !testcase.Type) /*true negatives for maliscious payloads (Type is true) and false positives checks (Type is false)*/ {
 							results.Report[testsetName][testcaseName][true]++
-						} else { /*false positives and false negatives (bypasses)*/
+						} else if (passed && testcase.Type) || (!passed && !testcase.Type) { /*false positives and false negatives (bypasses)*/
 							results.Report[testsetName][testcaseName][false]++
 							test := report.Test{Testset: testsetName, Testcase: testcaseName, Payload: payloadData, Encoder: encoderName, Placeholder: placeholder}
 							results.FailedTests = append(results.FailedTests, test)
+						} else { /* not blocked and not passed, means N/A, like other Cookie-validations, bot-ptotection, thresholds, and other variants*/
+							results.Report[testsetName][testcaseName][config.NonBlockedAsPassed]++
+							test := report.Test{Testset: testsetName, Testcase: testcaseName, Payload: payloadData, Encoder: encoderName, Placeholder: placeholder}
+							results.NaTests = append(results.FailedTests, test)
 						}
 						results.Lock.Unlock()
 						fmt.Printf(".")
