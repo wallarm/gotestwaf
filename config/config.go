@@ -23,6 +23,7 @@ type Config struct {
 	NonBlockedAsPassed     bool              `yaml:"nonBlockedAsPassed"`
 	Cookies                []*http.Cookie    ``
 	FollowCookies          bool              `yaml:"followCookies"`
+	MaxRedirects           int               `yaml:"maxRedirects"`
 }
 
 func LoadConfig(configFile string) Config {
