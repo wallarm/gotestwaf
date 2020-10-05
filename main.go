@@ -27,7 +27,7 @@ func main() {
 	reportFile := flag.String("report", "/tmp/report/waf-test-report"+current.Format("2006-January-02")+".pdf", "Report filename to export results")
 	nonBlockedAsPassed := flag.Bool("nonblocked_as_passed", true, "Count all the requests that were not blocked as passed (old behaviour). Otherwise, count all of them that doens't satisfy PassStatuscode/PassRegExp as blocked (by default)")
 	followCookies := flag.Bool("follow_cookies", true, "Allow GoTestWAF to use cookies server sent. May work only for --threads=1. Default: false")
-	maxRedirects := flag.Int("max_redirects", 30, "Maximum amount of redirects per request that GoTestWAF will follow until the hard stop. Default is 30")
+	maxRedirects := flag.Int("max_redirects", 50, "Maximum amount of redirects per request that GoTestWAF will follow until the hard stop. Default is 50")
 
 	flag.Parse()
 
