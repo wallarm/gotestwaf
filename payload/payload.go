@@ -34,7 +34,15 @@ func Send(config config.Config, targetUrl string, placeholderName string, encode
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		}}
+	if len(config.Cookies) > 0 && config.FollowCookies {
+		log.Println(config.Cookies)
+		client.Jar.SetCookies(req.URL, config.Cookies)
+	}
 	resp, err := client.Do(req)
+	if resp.Cookies() != nil && len(resp.Cookies()) > 0 {
+		config.Cookies = resp.Cookies()
+		//log.Println(resp.Cookies())
+	}
 	if err != nil {
 		log.Fatal(err)
 	}

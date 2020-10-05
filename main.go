@@ -26,6 +26,7 @@ func main() {
 	passRegExp := flag.String("pass_regexp", "", "Regular Expression to detect normal (not blocked) web-page with the same HTTP response status code as blocked request")
 	reportFile := flag.String("report", "/tmp/report/waf-test-report"+current.Format("2006-January-02")+".pdf", "Report filename to export results")
 	nonBlockedAsPassed := flag.Bool("nonblocked_as_passed", true, "Count all the requests not blocked as passed (old behaviour). Otherwise, count all of them that doens't satisfy PassStatuscode/PassRegExp as blocked (by default)")
+	followCookies := flag.Bool("follow_cookies", true, "Allow GoTestWAF to use cookies server sent. May work only for --threads=1. Default: false")
 
 	flag.Parse()
 
@@ -60,6 +61,9 @@ func main() {
 	}
 	if !conf.NonBlockedAsPassed {
 		conf.NonBlockedAsPassed = *nonBlockedAsPassed
+	}
+	if !conf.FollowCookies {
+		conf.FollowCookies = *followCookies
 	}
 
 	check, status := testcase.PreCheck(*url, conf)

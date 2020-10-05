@@ -3,6 +3,7 @@ package config
 import (
 	"io/ioutil"
 	"log"
+	"net/http"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -20,6 +21,8 @@ type Config struct {
 	PassRegExp             string            `yaml:"passRegExp"`
 	ReportFile             string            `yaml:"reportFile"`
 	NonBlockedAsPassed     bool              `yaml:"nonBlockedAsPassed"`
+	Cookies                []*http.Cookie    ``
+	FollowCookies          bool              `yaml:"followCookies"`
 }
 
 func LoadConfig(configFile string) Config {
