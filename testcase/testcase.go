@@ -13,6 +13,9 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
+
+	"math/rand"
 
 	"gotestwaf/payload"
 	"gotestwaf/payload/encoder"
@@ -127,6 +130,7 @@ func Run(url string, config config.Config) report.Report {
 					wg.Add(1)
 					go func(testsetName string, testcaseName string, payloadData string, encoderName string, placeholder string, wg *sync.WaitGroup) {
 						defer wg.Done()
+						time.Sleep(time.Duration(config.SendingDelay+rand.Intn(config.RandomDelay)) * time.Millisecond)
 						ret := payload.Send(config, url, placeholder, encoderName, payloadData)
 						results.Lock.Lock()
 						blocked, _ := CheckBlocking(ret, config)

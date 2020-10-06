@@ -28,10 +28,17 @@ func main() {
 	nonBlockedAsPassed := flag.Bool("nonblocked_as_passed", true, "Count all the requests that were not blocked as passed (old behaviour). Otherwise, count all of them that doens't satisfy PassStatuscode/PassRegExp as blocked (by default)")
 	followCookies := flag.Bool("follow_cookies", true, "Allow GoTestWAF to use cookies server sent. May work only for --threads=1. Default: false")
 	maxRedirects := flag.Int("max_redirects", 50, "Maximum amount of redirects per request that GoTestWAF will follow until the hard stop. Default is 50")
+	sendingDelay := flag.Int("sending_delay", 500, "Delay between sending requests inside threads, millisecconds. Default 500ms")
+	randomDelay := flag.Int("random_delay", 500, "Random delay, in addition to --sending_delay between requests inside threads, millisecconds. Default: up to +500ms")
 
 	flag.Parse()
 
 	conf := config.LoadConfig(*configFile)
+
+	/*setting up limits on some values*/
+	if *randomDelay <= 0 {
+		*randomDelay = 1 //otherwise it will cause panic at rand.Intn()
+	}
 
 	if conf.TestcasesFolder == "" {
 		conf.TestcasesFolder = *testcasesFolder
@@ -68,6 +75,12 @@ func main() {
 	}
 	if conf.MaxRedirects == 0 {
 		conf.MaxRedirects = *maxRedirects
+	}
+	if conf.SendingDelay == 0 {
+		conf.SendingDelay = *sendingDelay
+	}
+	if conf.RandomDelay <= 0 {
+		conf.RandomDelay = *randomDelay
 	}
 
 	check, status := testcase.PreCheck(*url, conf)
