@@ -24,6 +24,8 @@ type Config struct {
 	Cookies                []*http.Cookie    ``
 	FollowCookies          bool              `yaml:"followCookies"`
 	MaxRedirects           int               `yaml:"maxRedirects"`
+	SendingDelay           int               `yaml:"sendingDelay"`
+	RandomDelay            int               `yaml:"randomDelay"`
 }
 
 func LoadConfig(configFile string) Config {
