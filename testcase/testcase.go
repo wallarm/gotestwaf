@@ -135,17 +135,20 @@ func Run(url string, config config.Config) report.Report {
 						results.Lock.Lock()
 						blocked, _ := CheckBlocking(ret, config)
 						passed, _ := CheckPass(ret, config)
-						if (blocked && testcase.Type) /*true positives*/ || (!blocked && !testcase.Type) /*true negatives for maliscious payloads (Type is true) and false positives checks (Type is false)*/ {
-							results.Report[testsetName][testcaseName][true]++
-						} else if (passed && testcase.Type) || (!passed && !testcase.Type) { /*false positives and false negatives (bypasses)*/
-							results.Report[testsetName][testcaseName][false]++
-							test := report.Test{Testset: testsetName, Testcase: testcaseName, Payload: payloadData, Encoder: encoderName, Placeholder: placeholder}
-							results.FailedTests = append(results.FailedTests, test)
-						} else { /* not blocked and not passed, means N/A, like other Cookie-validations, bot-ptotection, thresholds, and other variants*/
+						if (blocked && passed) || (!blocked && !passed) {
 							results.Report[testsetName][testcaseName][config.NonBlockedAsPassed]++
-							test := report.Test{Testset: testsetName, Testcase: testcaseName, Payload: payloadData, Encoder: encoderName, Placeholder: placeholder}
-							results.NaTests = append(results.FailedTests, test)
+							test := report.Test{Testset: testsetName, Testcase: testcaseName, Payload: payloadData, Encoder: encoderName, Placeholder: placeholder, StatusCode: ret.StatusCode}
+							results.NaTests = append(results.NaTests, test)
+						} else {
+							if (blocked && testcase.Type) /*true positives*/ || (!blocked && !testcase.Type) /*true negatives for maliscious payloads (Type is true) and false positives checks (Type is false)*/ {
+								results.Report[testsetName][testcaseName][true]++
+							} else {
+								results.Report[testsetName][testcaseName][false]++
+								test := report.Test{Testset: testsetName, Testcase: testcaseName, Payload: payloadData, Encoder: encoderName, Placeholder: placeholder, StatusCode: ret.StatusCode}
+								results.FailedTests = append(results.FailedTests, test)
+							}
 						}
+
 						results.Lock.Unlock()
 						fmt.Printf(".")
 					}(testcase.Testset, testcase.Name, payloadData, encoderName, placeholder, &wg)

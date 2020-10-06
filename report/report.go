@@ -8,6 +8,7 @@ type Test struct {
 	Placeholder string
 	Testset     string
 	Testcase    string
+	StatusCode  int
 }
 
 type Report struct {
