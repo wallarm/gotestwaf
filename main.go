@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
+	"strings"
 	"time"
 
 	"gotestwaf/config"
@@ -26,14 +28,29 @@ func main() {
 	passRegExp := flag.String("pass_regexp", "", "Regular Expression to detect normal (not blocked) web-page with the same HTTP response status code as blocked request")
 	reportFile := flag.String("report", "/tmp/report/waf-test-report"+current.Format("2006-January-02")+".pdf", "Report filename to export results")
 	nonBlockedAsPassed := flag.Bool("nonblocked_as_passed", true, "Count all the requests that were not blocked as passed (old behaviour). Otherwise, count all of them that doens't satisfy PassStatuscode/PassRegExp as blocked (by default)")
-	followCookies := flag.Bool("follow_cookies", true, "Allow GoTestWAF to use cookies server sent. May work only for --threads=1. Default: false")
-	maxRedirects := flag.Int("max_redirects", 50, "Maximum amount of redirects per request that GoTestWAF will follow until the hard stop. Default is 50")
-	sendingDelay := flag.Int("sending_delay", 500, "Delay between sending requests inside threads, millisecconds. Default 500ms")
+	followCookies := flag.Bool("follow_cookies", false, "Allow GoTestWAF to use cookies server sent. May work only for --threads=1. Default: false")
+	maxRedirects := flag.Int("max_redirects", 50, "Maximum amount of redirects per request that GoTestWAF will follow until the hard stop. Default: 50")
+	sendingDelay := flag.Int("sending_delay", 500, "Delay between sending requests inside threads, millisecconds. Default: 500ms")
 	randomDelay := flag.Int("random_delay", 500, "Random delay, in addition to --sending_delay between requests inside threads, millisecconds. Default: up to +500ms")
+	headers := flag.String("headers", "", "The list of HTTP headers to add to each request, separated by ',' (comma). Example: -headers=X-a:aaa,X-b:bbb. Clear the config.yaml headers section prior to using this option. ")
 
 	flag.Parse()
 
 	conf := config.LoadConfig(*configFile)
+
+	if len(conf.Headers) == 0 {
+		conf.Headers = make(map[string]string)
+	}
+
+	for _, h := range strings.Split(*headers, ",") {
+		header := strings.Split(h, ":")
+		if len(header) == 2 {
+			conf.Headers[header[0]] = header[1]
+		} else {
+			log.Printf("Headers definition error, please use: -header=X-a:aaa,X-b:bbb")
+			os.Exit(3)
+		}
+	}
 
 	/*setting up limits on some values*/
 	if *randomDelay <= 0 {
