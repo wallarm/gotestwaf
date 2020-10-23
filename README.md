@@ -66,3 +66,43 @@ WAF score: 42.18%
 132 bypasses in 195 tests / 14 test cases
 ```
 ---
+
+### Configuration options
+```
+Usage of /go/src/gotestwaf/gotestwaf:
+  -block_regexp string
+    	Regular Expression to detect blocking page with the same HTTP response status code as not blocked request
+  -block_statuscode int
+    	HTTP response status code that WAF use while blocking requests. 403 by default (default 403)
+  -check_cert
+    	Check SSL/TLS certificates, turned off by default
+  -config string
+    	Config file to use. Attention, if you are using the config, all the are flags will be avoided. (default "config.yaml")
+  -follow_cookies
+    	Allow GoTestWAF to use cookies server sent. May work only for --threads=1. Default: false
+  -headers string
+    	The list of HTTP headers to add to each request, separated by ',' (comma). Example: -headers=X-a:aaa,X-b:bbb. Clear the config.yaml headers section prior to using this option. 
+  -max_redirects int
+    	Maximum amount of redirects per request that GoTestWAF will follow until the hard stop. Default: 50 (default 50)
+  -nonblocked_as_passed
+    	Count all the requests that were not blocked as passed (old behaviour). Otherwise, count all of them that doens't satisfy PassStatuscode/PassRegExp as blocked (by default) (default true)
+  -pass_regexp string
+    	Regular Expression to detect normal (not blocked) web-page with the same HTTP response status code as blocked request
+  -pass_statuscode int
+    	HTTP response status code that WAF use while passing requests. 200 by default (default 200)
+  -proxy string
+    	Proxy to use
+  -random_delay int
+    	Random delay, in addition to --sending_delay between requests inside threads, millisecconds. Default: up to +500ms (default 500)
+  -report string
+    	Report filename to export results (default "/tmp/report/waf-test-report2020-October-23.pdf")
+  -sending_delay int
+    	Delay between sending requests inside threads, millisecconds. Default: 500ms (default 500)
+  -testcases string
+    	Folder with test cases (default "./testcases/")
+  -threads int
+    	Number of concurrent HTTP requests (default 2)
+  -url string
+    	URL with a WAF to check (default "http://localhost")
+
+``
