@@ -26,7 +26,7 @@ func main() {
 	passRegExp := flag.String("pass_regexp", "", "Regular Expression to detect normal (not blocked) web-page with the same HTTP response status code as blocked request")
 	reportFile := flag.String("report", "/tmp/report/waf-test-report"+current.Format("2006-January-02")+".pdf", "Report filename to export results")
 	nonBlockedAsPassed := flag.Bool("nonblocked_as_passed", true, "Count all the requests that were not blocked as passed (old behaviour). Otherwise, count all of them that doens't satisfy PassStatuscode/PassRegExp as blocked (by default)")
-	followCookies := flag.Bool("follow_cookies", true, "Allow GoTestWAF to use cookies server sent. May work only for --threads=1. Default: false")
+	followCookies := flag.Bool("follow_cookies", false, "Allow GoTestWAF to use cookies server sent. May work only for --threads=1. Default: false")
 	maxRedirects := flag.Int("max_redirects", 50, "Maximum amount of redirects per request that GoTestWAF will follow until the hard stop. Default is 50")
 	sendingDelay := flag.Int("sending_delay", 500, "Delay between sending requests inside threads, millisecconds. Default 500ms")
 	randomDelay := flag.Int("random_delay", 500, "Random delay, in addition to --sending_delay between requests inside threads, millisecconds. Default: up to +500ms")
