@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"time"
@@ -46,9 +45,6 @@ func main() {
 		header := strings.Split(h, ":")
 		if len(header) == 2 {
 			conf.Headers[header[0]] = header[1]
-		} else {
-			log.Printf("Headers definition error, please use: -header=X-a:aaa,X-b:bbb")
-			os.Exit(3)
 		}
 	}
 
