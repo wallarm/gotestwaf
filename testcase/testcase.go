@@ -142,6 +142,8 @@ func Run(url string, config config.Config) report.Report {
 						} else {
 							if (blocked && testcase.Type) /*true positives*/ || (!blocked && !testcase.Type) /*true negatives for maliscious payloads (Type is true) and false positives checks (Type is false)*/ {
 								results.Report[testsetName][testcaseName][true]++
+								test := report.Test{Testset: testsetName, Testcase: testcaseName, Payload: payloadData, Encoder: encoderName, Placeholder: placeholder, StatusCode: ret.StatusCode}
+								results.PassedTests = append(results.PassedTests, test)
 							} else {
 								results.Report[testsetName][testcaseName][false]++
 								test := report.Test{Testset: testsetName, Testcase: testcaseName, Payload: payloadData, Encoder: encoderName, Placeholder: placeholder, StatusCode: ret.StatusCode}
