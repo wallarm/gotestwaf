@@ -20,6 +20,7 @@ type Config struct {
 	PassStatusCode         int               `yaml:"passStatusCode"`
 	PassRegExp             string            `yaml:"passRegExp"`
 	ReportFile             string            `yaml:"reportFile"`
+	PayloadsExportFile     string            `yaml:"payloadsExportFile"`
 	NonBlockedAsPassed     bool              `yaml:"nonBlockedAsPassed"`
 	Cookies                []*http.Cookie    ``
 	FollowCookies          bool              `yaml:"followCookies"`
