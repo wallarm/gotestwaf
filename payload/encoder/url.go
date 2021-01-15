@@ -1,17 +1,19 @@
 package encoder
 
-import "net/url"
+import (
+	"net/url"
+)
 
-type UrlEncoder struct {
+type URLEncoder struct {
 	name string
 }
 
-var DefaultUrlEncoder = UrlEncoder{name: "Url"}
+var DefaultURLEncoder = URLEncoder{name: "URL"}
 
-func (enc UrlEncoder) GetName() *string {
+func (enc URLEncoder) GetName() *string {
 	return &enc.name
 }
 
-func (enc UrlEncoder) Encode(data string) (string, error) {
+func (enc URLEncoder) Encode(data string) (string, error) {
 	return url.QueryEscape(data), nil
 }

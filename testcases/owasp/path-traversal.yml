@@ -5,8 +5,8 @@ payload:
   - 'file=/etc/passwd'
 encoder:
   - Base64Flat
-  - Url
+  - URL
 placeholder:
-  - UrlPath
-  - UrlParam
-  - JsonBody
+  - URLPath
+  - URLParam
+  - JSONBody

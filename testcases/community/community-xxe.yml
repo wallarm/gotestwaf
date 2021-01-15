@@ -4,8 +4,8 @@ payload:
   ANY
 - <!ENTITY % data SYSTEM "netdoc:/etc/passwd">
 encoder:
-- Url
+- URL
 placeholder:
-- UrlParam
-- JsonBody
+- URLParam
+- JSONBody
 ...

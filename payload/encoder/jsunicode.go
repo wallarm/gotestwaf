@@ -1,7 +1,9 @@
 package encoder
 
-import "fmt"
-import "regexp"
+import (
+	"fmt"
+	"regexp"
+)
 
 type JSUnicodeEncoder struct {
 	name string

@@ -1,3 +1,5 @@
 gotestwaf
 *.pdf
 chromedp/*
+.idea
+.DS_store

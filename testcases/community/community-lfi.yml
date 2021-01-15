@@ -5,8 +5,8 @@ payload:
 - ile:///etc/passwd
 - file:///etc/./passwd
 encoder:
-- Url
+- URL
 placeholder:
-- UrlParam
-- JsonBody
+- URLParam
+- JSONBody
 ...

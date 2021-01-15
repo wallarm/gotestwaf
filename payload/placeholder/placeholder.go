@@ -5,38 +5,40 @@ import (
 	"reflect"
 )
 
+const seed = 5
+
 type Placeholder struct{}
 
-func (p Placeholder) Header(url string, data string) (*http.Request, error) {
+func (p Placeholder) Header(url, data string) (*http.Request, error) {
 	return Header(url, data)
 }
 
-func (p Placeholder) RequestBody(url string, data string) (*http.Request, error) {
+func (p Placeholder) RequestBody(url, data string) (*http.Request, error) {
 	return RequestBody(url, data)
 }
 
-func (p Placeholder) SoapBody(url string, data string) (*http.Request, error) {
-	return SoapBody(url, data)
+func (p Placeholder) SOAPBody(url, data string) (*http.Request, error) {
+	return SOAPBody(url, data)
 }
 
-func (p Placeholder) JsonBody(url string, data string) (*http.Request, error) {
-	return JsonBody(url, data)
+func (p Placeholder) JSONBody(url, data string) (*http.Request, error) {
+	return JSONBody(url, data)
 }
 
-func (p Placeholder) UrlParam(url string, data string) (*http.Request, error) {
-	return UrlParam(url, data)
+func (p Placeholder) URLParam(url, data string) (*http.Request, error) {
+	return URLParam(url, data)
 }
 
-func (p Placeholder) UrlPath(url string, data string) (*http.Request, error) {
-	return UrlPath(url, data)
+func (p Placeholder) URLPath(url, data string) (*http.Request, error) {
+	return URLPath(url, data)
 }
 
-func Apply(host string, placeholder_name string, data string) *http.Request {
+func Apply(host, placeholder, data string) *http.Request {
 	var p Placeholder
 	inputs := make([]reflect.Value, 2)
 	inputs[0] = reflect.ValueOf(host)
 	inputs[1] = reflect.ValueOf(data)
-	req := reflect.ValueOf(&p).MethodByName(placeholder_name).Call(inputs)[0].Interface().(*http.Request)
+	req := reflect.ValueOf(&p).MethodByName(placeholder).Call(inputs)[0].Interface().(*http.Request)
 
 	return req
 }

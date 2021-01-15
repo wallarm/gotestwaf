@@ -24,8 +24,8 @@ payload:
 - ;+$u+cat+/etc$u/passwd$u
 - ;+$u+cat+/etc$u/passwd+\#
 encoder:
-- Url
+- URL
 placeholder:
-- UrlParam
-- JsonBody
+- URLParam
+- JSONBody
 ...

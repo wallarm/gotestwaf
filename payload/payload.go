@@ -2,42 +2,47 @@ package payload
 
 import (
 	"crypto/tls"
-	"gotestwaf/config"
-	"gotestwaf/payload/encoder"
-	"gotestwaf/payload/placeholder"
 	"log"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/wallarm/gotestwaf/config"
+	"github.com/wallarm/gotestwaf/payload/encoder"
+	"github.com/wallarm/gotestwaf/payload/placeholder"
 )
 
-func Send(config config.Config, targetUrl string, placeholderName string, encoderName string, payload string) *http.Response {
-	encodedPayload, _ := encoder.Apply(encoderName, payload)
-	var req = placeholder.Apply(targetUrl, placeholderName, encodedPayload)
-	//TODO: move certificates check into the config settings
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: !config.CertificateCheck},
-		IdleConnTimeout: time.Duration(config.IddleConnectionTimeout) * time.Second,
-		MaxIdleConns:    config.MaxIddleConnections,
+func Send(cfg *config.Config, targetURL, placeholderName, encoderName, payload string) *http.Response {
+	encodedPayload, err := encoder.Apply(encoderName, payload)
+	if err != nil {
+		log.Fatal("sending error:", err)
 	}
-	if config.Proxy != "" {
-		proxyUrl, _ := url.Parse(config.Proxy)
+	req := placeholder.Apply(targetURL, placeholderName, encodedPayload)
+	//TODO: move certificates check into the cfg settings
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: !cfg.TLSVerify},
+		IdleConnTimeout: time.Duration(cfg.IdleConnectionTimeout) * time.Second,
+		MaxIdleConns:    cfg.MaxIdleConnections,
+	}
+	if cfg.Proxy != "" {
+		proxyURL, _ := url.Parse(cfg.Proxy)
 		tr = &http.Transport{
-			Proxy: http.ProxyURL(proxyUrl),
+			Proxy: http.ProxyURL(proxyURL),
 		}
 	}
-	for header, value := range config.Headers {
+	for header, value := range cfg.HTTPHeaders {
 		req.Header.Set(header, value)
 	}
 	client := &http.Client{
 		Transport: tr,
-		//CheckRedirect: func(req *http.Request, via []*http.Request) error {
+		// CheckRedirect: func(req *http.Request, via []*http.Request) error {
 		//	return http.ErrUseLastResponse
 		//}
 		CheckRedirect: func() func(req *http.Request, via []*http.Request) error {
 			redirects := 0
 			return func(req *http.Request, via []*http.Request) error {
-				if redirects > config.MaxRedirects {
+				if redirects > cfg.MaxRedirects {
 					log.Fatal("Max redirect exceeded. Use --max_redirects to increase the limit")
 				}
 				redirects++
@@ -45,19 +50,18 @@ func Send(config config.Config, targetUrl string, placeholderName string, encode
 			}
 		}(),
 	}
-	if len(config.Cookies) > 0 && config.FollowCookies {
-		log.Println(config.Cookies)
-		client.Jar.SetCookies(req.URL, config.Cookies)
+	if len(cfg.Cookies) > 0 && cfg.FollowCookies {
+		log.Println(cfg.Cookies)
+		client.Jar.SetCookies(req.URL, cfg.Cookies)
 	}
-	resp, err := client.Do(req)
 
+	resp, err := client.Do(req)
 	if err != nil {
 		log.Fatal(err)
-	} else {
-		if len(resp.Cookies()) > 0 {
-			config.Cookies = resp.Cookies()
-			//log.Println(resp.Cookies())
-		}
+	}
+
+	if len(resp.Cookies()) > 0 {
+		cfg.Cookies = resp.Cookies()
 	}
 
 	return resp

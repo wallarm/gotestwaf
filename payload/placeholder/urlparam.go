@@ -1,16 +1,18 @@
 package placeholder
 
 import (
-	"log"
 	"net/http"
 )
 
 // Warning: this placeholder encodes URL anyways
-func UrlParam(requestUrl string, payload string) (*http.Request, error) {
-	param, _ := RandomHex(5)
-	req, err := http.NewRequest("GET", requestUrl+"/?"+param+"="+payload, nil)
+func URLParam(requestURL, payload string) (*http.Request, error) {
+	param, err := RandomHex(seed)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
+	}
+	req, err := http.NewRequest("GET", requestURL+"/?"+param+"="+payload, nil)
+	if err != nil {
+		return nil, err
 	}
 	return req, err
 }

@@ -6,15 +6,15 @@ import (
 	"strings"
 )
 
-func RequestBody(requestUrl string, payload string) (*http.Request, error) {
-	if reqUrl, err := url.Parse(requestUrl); err != nil {
+func RequestBody(requestURL, payload string) (*http.Request, error) {
+	reqURL, err := url.Parse(requestURL)
+	if err != nil {
 		return nil, err
-	} else {
-		//check if we need to set Content-Lenght manually here
-		if req, err := http.NewRequest("POST", reqUrl.String(), strings.NewReader(payload)); err != nil {
-			return nil, err
-		} else {
-			return req, nil
-		}
 	}
+	// check if we need to set Content-Length manually here
+	req, err := http.NewRequest("POST", reqURL.String(), strings.NewReader(payload))
+	if err != nil {
+		return nil, err
+	}
+	return req, nil
 }

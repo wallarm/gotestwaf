@@ -2,19 +2,30 @@ package placeholder
 
 import (
 	"fmt"
-	"gotestwaf/payload/encoder"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/wallarm/gotestwaf/payload/encoder"
 )
 
-func SoapBody(requestUrl string, payload string) (*http.Request, error) {
-	if reqUrl, err := url.Parse(requestUrl); err != nil {
+func SOAPBody(requestURL, payload string) (*http.Request, error) {
+	reqURL, err := url.Parse(requestURL)
+	if err != nil {
 		return nil, err
-	} else {
-		param, _ := RandomHex(5)
-		encodedPayload, _ := encoder.Apply("XmlEntity", payload)
-		soapPayload := fmt.Sprintf(`
+	}
+
+	param, err := RandomHex(seed)
+	if err != nil {
+		return nil, err
+	}
+
+	encodedPayload, err := encoder.Apply("XMLEntity", payload)
+	if err != nil {
+		return nil, err
+	}
+
+	soapPayload := fmt.Sprintf(`
       <?xml version="1.0" encoding="UTF-8"?>
       <soapenv:Envelope
               xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
@@ -36,13 +47,12 @@ func SoapBody(requestUrl string, payload string) (*http.Request, error) {
         </soapenv:Body>
       </soapenv:Envelope>
       `, param, encodedPayload, param)
-		//reqUrl.Path = fmt.Sprintf("%s/%s/", reqUrl.Path, payload)
-		if req, err := http.NewRequest("POST", reqUrl.String(), strings.NewReader(soapPayload)); err != nil {
-			return nil, err
-		} else {
-			req.Header.Add("SOAPAction", "\"http://schemas.xmlsoap.org/soap/actor/next\"")
-			req.Header.Add("Content-Type", "text/xml")
-			return req, nil
-		}
+	// reqUrl.Path = fmt.Sprintf("%s/%s/", reqUrl.Path, payload)
+	req, err := http.NewRequest("POST", reqURL.String(), strings.NewReader(soapPayload))
+	if err != nil {
+		return nil, err
 	}
+	req.Header.Add("SOAPAction", "\"http://schemas.xmlsoap.org/soap/actor/next\"")
+	req.Header.Add("Content-Type", "text/xml")
+	return req, nil
 }

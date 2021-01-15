@@ -4,4 +4,4 @@ payload:
 encoder:
   - Plain
 placeholder:
-  - JsonBody
+  - JSONBody

@@ -3,7 +3,7 @@ payload:
   - '(&(uid=*)(uid=*))(|(uid=*)(userPassword={MD5}X03MO1qnZdYdgyfeuILPmQ==))'
 encoder:
   - Base64Flat
-  - Url
+  - URL
 placeholder:
-  - UrlParam
-  - JsonBody
+  - URLParam
+  - JSONBody

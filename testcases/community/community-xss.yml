@@ -179,8 +179,8 @@ payload:
 - <bleh/ondragstart=&Tab;parent&Tab;['open']&Tab;&lpar;&rpar;%20draggable=True>dragme
 - eval('al'+'ert'+'(12)');//
 encoder:
-- Url
+- URL
 placeholder:
-- UrlParam
-- JsonBody
+- URLParam
+- JSONBody
 ...

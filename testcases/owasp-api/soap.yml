@@ -4,4 +4,4 @@ payload:
 encoder:
   - Plain
 placeholder:
-  - SoapBody
+  - SOAPBody
