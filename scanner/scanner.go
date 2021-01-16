@@ -65,7 +65,7 @@ func (s *Scanner) PreCheck(url string) (bool, int, error) {
 
 func (s *Scanner) Run(url string) (*report.Report, error) {
 	s.logger.Println("Test cases loading started")
-	testcases, err := Load(s.cfg.TestCasesFolder, s.logger)
+	testcases, err := Load(s.cfg.Fixtures, s.logger)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func (s *Scanner) Run(url string) (*report.Report, error) {
 					wg.Add(1)
 					go func(testSetName string, testCaseName string, payloadData string, encoderName string, placeholder string, wg *sync.WaitGroup) {
 						defer wg.Done()
-						time.Sleep(time.Duration(s.cfg.SendingDelay+rand.Intn(s.cfg.RandomDelay)) * time.Millisecond)
+						time.Sleep(time.Duration(s.cfg.SendDelay+rand.Intn(s.cfg.RandomDelay)) * time.Millisecond)
 						ret := payload.Send(s.cfg, url, placeholder, encoderName, payloadData)
 						results.Mu.Lock()
 						blocked, _, err := s.CheckBlocking(ret)

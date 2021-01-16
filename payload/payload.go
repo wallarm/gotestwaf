@@ -22,8 +22,8 @@ func Send(cfg *config.Config, targetURL, placeholderName, encoderName, payload s
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: !cfg.TLSVerify},
-		IdleConnTimeout: time.Duration(cfg.IdleConnectionTimeout) * time.Second,
-		MaxIdleConns:    cfg.MaxIdleConnections,
+		IdleConnTimeout: time.Duration(cfg.IdleConnTimeout) * time.Second,
+		MaxIdleConns:    cfg.MaxIdleConns,
 	}
 	if cfg.Proxy != "" {
 		proxyURL, _ := url.Parse(cfg.Proxy)

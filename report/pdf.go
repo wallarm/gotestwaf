@@ -72,7 +72,7 @@ func (r *Report) ExportToPDFAndShowTable(reportFile string) error {
 		}
 	}
 
-	wafScore := overallPassedRate/overallTestcasesCompleted
+	wafScore := overallPassedRate / overallTestcasesCompleted
 
 	// Create a table.
 	table := tablewriter.NewWriter(os.Stdout)
