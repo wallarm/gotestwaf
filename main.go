@@ -25,7 +25,7 @@ func main() {
 	logger := log.New(os.Stdout, "GOTESTWAF : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 
 	if err := run(logger); err != nil {
-		log.Println("main: error:", err)
+		logger.Println("main: error:", err)
 		os.Exit(1)
 	}
 }
@@ -35,7 +35,7 @@ func run(logger *log.Logger) error {
 
 	cfg, err := loadConfig(configPath)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 
 	logger.Println("Scanned URL:", cfg.URL)
@@ -82,21 +82,21 @@ func run(logger *log.Logger) error {
 func parseFlags() {
 	flag.String("url", "http://localhost/", "URL to check")
 	flag.StringVar(&configPath, "config", "config.yaml", "Path to a config file")
-	flag.String("fixtures", "./testcases/", "Path to a folder with test cases")
+	flag.String("testCasesPath", "./testcases/", "Path to a folder with test cases")
 	flag.String("proxy", "", "Proxy URL to use")
 	flag.Int("maxIdleConns", 2, "The maximum amount of time a keep-alive connection will live")
 	flag.Int("idleConnTimeout", 2, "The maximum number of keep-alive connections")
 	flag.Bool("tlsverify", false, "If true, the received TLS certificate will be verified")
 	flag.Int("blockStatusCode", 403, "HTTP status code that WAF uses while blocking requests")
-	flag.String("blockRegExp", "", "Regexp to detect blocking page with the same HTTP response status code as a not blocked request")
-	flag.Int("passStatusCode", 200, "HTTP response status code that WAF use while passing requests")
-	flag.String("passRegExp", "", "Regexp to detect normal (not blocked) web-page with the same HTTP status code as a blocked request")
+	flag.String("blockRegExp", "", "Regexp to detect a blocking page with the same HTTP response status code as a not blocked request")
+	flag.Int("passStatusCode", 200, "HTTP response status code that WAF uses while passing requests")
+	flag.String("passRegExp", "", "Regexp to a detect normal (not blocked) web page with the same HTTP status code as a blocked request")
 	flag.String("reportDir", "/tmp/gotestwaf/", "A directory to store reports")
-	flag.Bool("nonBlockedAsPassed", false, "Count all requests that were not blocked as passed. Otherwise, count all of them that don't satisfy to PassStatuscode/PassRegExp as blocked (by default)")
+	flag.Bool("nonBlockedAsPassed", false, "If true, count requests that weren't blocked as passed. If false, requests that don't satisfy to PassStatuscode/PassRegExp as blocked")
 	flag.Bool("followCookies", false, "If true, use cookies sent by the server. May work only with --maxIdleConns=1")
 	flag.Int("maxRedirects", 50, "The maximum number of handling redirects")
-	flag.Int("sendDelay", 500, "Delay in milliseconds between sending requests")
-	flag.Int("randomDelay", 500, "Random delay in milliseconds in addition to --sendDelay")
+	flag.Int("sendDelay", 500, "Delay in ms between requests")
+	flag.Int("randomDelay", 500, "Random delay in ms in addition to --sendDelay")
 
 	flag.Parse()
 }

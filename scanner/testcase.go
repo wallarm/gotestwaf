@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
@@ -20,11 +21,15 @@ type TestCase struct {
 	Type         bool
 }
 
-func Load(testCaseFolder string, logger *log.Logger) ([]TestCase, error) {
+func Load(testCasesPath string, logger *log.Logger) ([]TestCase, error) {
 	var files []string
 	var testCases []TestCase
 
-	if err := filepath.Walk(testCaseFolder, func(path string, info os.FileInfo, err error) error {
+	if testCasesPath == "" {
+		return nil, errors.New("empty test cases path")
+	}
+
+	if err := filepath.Walk(testCasesPath, func(path string, info os.FileInfo, err error) error {
 		files = append(files, path)
 		return nil
 	}); err != nil {

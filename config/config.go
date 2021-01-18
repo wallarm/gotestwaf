@@ -11,7 +11,7 @@ type Config struct {
 	TLSVerify          bool              `mapstructure:"tlsverify"`
 	MaxIdleConns       int               `mapstructure:"maxIdleConns"`
 	IdleConnTimeout    int               `mapstructure:"idleConnTimeout"`
-	Fixtures           string            `mapstructure:"fixtures"`
+	TestCasesPath      string            `mapstructure:"testCasesPath"`
 	BlockStatusCode    int               `mapstructure:"blockStatusCode"`
 	BlockRegExp        string            `mapstructure:"blockRegExp"`
 	PassStatusCode     int               `mapstructure:"passStatusCode"`

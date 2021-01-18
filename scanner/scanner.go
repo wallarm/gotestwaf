@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/wallarm/gotestwaf/config"
 	"github.com/wallarm/gotestwaf/payload"
 	"github.com/wallarm/gotestwaf/payload/encoder"
@@ -65,9 +66,9 @@ func (s *Scanner) PreCheck(url string) (bool, int, error) {
 
 func (s *Scanner) Run(url string) (*report.Report, error) {
 	s.logger.Println("Test cases loading started")
-	testcases, err := Load(s.cfg.Fixtures, s.logger)
+	testCases, err := Load(s.cfg.TestCasesPath, s.logger)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "loading test cases")
 	}
 	s.logger.Println("Test cases loading finished")
 
@@ -76,18 +77,18 @@ func (s *Scanner) Run(url string) (*report.Report, error) {
 	var wg sync.WaitGroup
 	s.logger.Println("Scanning started")
 
-	for _, testCase := range testcases {
-		if results.Report[testCase.TestSet] == nil {
-			results.Report[testCase.TestSet] = map[string]map[bool]int{}
+	for _, tc := range testCases {
+		if results.Report[tc.TestSet] == nil {
+			results.Report[tc.TestSet] = map[string]map[bool]int{}
 		}
-		if results.Report[testCase.TestSet][testCase.Name] == nil {
-			results.Report[testCase.TestSet][testCase.Name] = map[bool]int{}
+		if results.Report[tc.TestSet][tc.Name] == nil {
+			results.Report[tc.TestSet][tc.Name] = map[bool]int{}
 		}
-		results.Report[testCase.TestSet][testCase.Name][true] = 0
-		results.Report[testCase.TestSet][testCase.Name][false] = 0
-		for _, payloadData := range testCase.Payloads {
-			for _, encoderName := range testCase.Encoders {
-				for _, placeholder := range testCase.Placeholders {
+		results.Report[tc.TestSet][tc.Name][true] = 0
+		results.Report[tc.TestSet][tc.Name][false] = 0
+		for _, payloadData := range tc.Payloads {
+			for _, encoderName := range tc.Encoders {
+				for _, placeholder := range tc.Placeholders {
 					wg.Add(1)
 					go func(testSetName string, testCaseName string, payloadData string, encoderName string, placeholder string, wg *sync.WaitGroup) {
 						defer wg.Done()
@@ -115,9 +116,9 @@ func (s *Scanner) Run(url string) (*report.Report, error) {
 							results.NaTests = append(results.NaTests, test)
 						} else {
 							// true positives
-							if (blocked && testCase.Type) ||
+							if (blocked && tc.Type) ||
 								// /*true negatives for malicious payloads (Type is true) and false positives checks (Type is false)
-								(!blocked && !testCase.Type) {
+								(!blocked && !tc.Type) {
 								results.Report[testSetName][testCaseName][true]++
 								test := report.Test{
 									TestSet:     testSetName,
@@ -143,7 +144,7 @@ func (s *Scanner) Run(url string) (*report.Report, error) {
 						}
 						results.Mu.Unlock()
 						fmt.Printf(".")
-					}(testCase.TestSet, testCase.Name, payloadData, encoderName, placeholder, &wg)
+					}(tc.TestSet, tc.Name, payloadData, encoderName, placeholder, &wg)
 				}
 			}
 		}
