@@ -17,12 +17,12 @@ func InitEncoders() {
 	Encoders[*DefaultBase64Encoder.GetName()] = DefaultBase64Encoder
 	Encoders[*DefaultBase64FlatEncoder.GetName()] = DefaultBase64FlatEncoder
 	Encoders[*DefaultJSUnicodeEncoder.GetName()] = DefaultJSUnicodeEncoder
-	Encoders[*DefaultUrlEncoder.GetName()] = DefaultUrlEncoder
+	Encoders[*DefaultURLEncoder.GetName()] = DefaultURLEncoder
 	Encoders[*DefaultPlainEncoder.GetName()] = DefaultPlainEncoder
-	Encoders[*DefaultXmlEntityEncoder.GetName()] = DefaultXmlEntityEncoder
+	Encoders[*DefaultXMLEntityEncoder.GetName()] = DefaultXMLEntityEncoder
 }
 
-func Apply(encoderName string, data string) (string, error) {
+func Apply(encoderName, data string) (string, error) {
 	ret, err := Encoders[encoderName].Encode(data)
 	if err != nil {
 		log.Fatal(err)

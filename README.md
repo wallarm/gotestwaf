@@ -1,14 +1,18 @@
 # Go Test WAF
 
-An open-source Go project to test different WAF for detection logic and bypasses.
+An open-source Go project to test different web application firewalls (WAF) for detection logic and bypasses.
 
 # How it works
 
-It is a 3-steps requests generation process that multiply amount of payloads to encoders and placeholders. Let's say you defined 2 payloads, 3 encoders (Base64, JSON, and URLencode) and 1 placeholder (HTTP GET variable). In this case, the tool will send 2x3x1 = 6 requests in a testcase.
+It is a 3-steps requests generation process that multiply amount of payloads to encoders and placeholders.
+Let's say you defined 2 payloads, 3 encoders (Base64, JSON, and URLencode) and 1 placeholder (HTTP GET variable).
+In this case, the tool will send 2x3x1 = 6 requests in a testcase.
 
 ## Payload
 
-The payload string you wanna send. Like ```<script>alert(111)</script>``` or something more sophisticated. There is no macroses like so far, but it's in our TODO list. Since it's a YAML string, use binary encoding if you wanna to https://yaml.org/type/binary.html
+The payload string you wanna send. Like ```<script>alert(111)</script>``` or something more sophisticated.
+There is no macroses like so far, but it's in our TODO list. 
+Since it's a YAML string, use binary encoding if you wanna to https://yaml.org/type/binary.html
 
 ## Encoder
 
@@ -16,7 +20,8 @@ Data encoder the tool should apply to the payload. Base64, JSON unicode (\u0027 
 
 ## Placeholder
 
-A place inside HTTP request where encoded payload should be. Like URL parameter, URI, POST form parameter, or JSON POST body.
+A place inside HTTP request where encoded payload should be.
+Like URL parameter, URI, POST form parameter, or JSON POST body.
 
 # Quick start
 ```
@@ -25,7 +30,6 @@ docker run -v /tmp:/tmp/report gotestwaf --url=https://the-waf-you-wanna-test/
 ```
 
 Find the report file waf-test-report-<date>.pdf in a /tmp folder you mapped to /tmp/report inside the container.
-
 
 # Examples
 
@@ -70,39 +74,38 @@ WAF score: 42.18%
 ### Configuration options
 ```
 Usage of /go/src/gotestwaf/gotestwaf:
-  -block_regexp string
-    	Regular Expression to detect blocking page with the same HTTP response status code as not blocked request
-  -block_statuscode int
-    	HTTP response status code that WAF use while blocking requests. 403 by default (default 403)
-  -check_cert
-    	Check SSL/TLS certificates, turned off by default
-  -config string
-    	Config file to use. Attention, if you are using the config, all the are flags will be avoided. (default "config.yaml")
-  -follow_cookies
-    	Allow GoTestWAF to use cookies server sent. May work only for --threads=1. Default: false
-  -headers string
-    	The list of HTTP headers to add to each request, separated by ',' (comma). Example: -headers=X-a:aaa,X-b:bbb. Clear the config.yaml headers section prior to using this option. 
-  -max_redirects int
-    	Maximum amount of redirects per request that GoTestWAF will follow until the hard stop. Default: 50 (default 50)
-  -nonblocked_as_passed
-    	Count all the requests that were not blocked as passed (old behaviour). Otherwise, count all of them that doens't satisfy PassStatuscode/PassRegExp as blocked (by default) (default true)
-  -pass_regexp string
-    	Regular Expression to detect normal (not blocked) web-page with the same HTTP response status code as blocked request
-  -pass_statuscode int
-    	HTTP response status code that WAF use while passing requests. 200 by default (default 200)
-  -proxy string
-    	Proxy to use
-  -random_delay int
-    	Random delay, in addition to --sending_delay between requests inside threads, millisecconds. Default: up to +500ms (default 500)
-  -report string
-    	Report filename to export results (default "/tmp/report/waf-test-report2020-October-23.pdf")
-  -sending_delay int
-    	Delay between sending requests inside threads, millisecconds. Default: 500ms (default 500)
-  -testcases string
-    	Folder with test cases (default "./testcases/")
-  -threads int
-    	Number of concurrent HTTP requests (default 2)
-  -url string
-    	URL with a WAF to check (default "http://localhost")
-
-``
+  --blockRegExp string    
+        Regexp to detect a blocking page with the same HTTP response status code as a not blocked request
+  --blockStatusCode int   
+        HTTP status code that WAF uses while blocking requests (default 403)
+  --config string         
+        Path to a config file (default "config.yaml")
+  --followCookies         
+        If true, use cookies sent by the server. May work only with --maxIdleConns=1
+  --idleConnTimeout int   
+        The maximum number of keep-alive connections (default 2)
+  --maxIdleConns int      
+        The maximum amount of time a keep-alive connection will live (default 2)
+  --maxRedirects int      
+        The maximum number of handling redirects (default 50)
+  --nonBlockedAsPassed    
+        If true, count requests that weren't blocked as passed. If false, requests that don't satisfy to PassStatuscode/PassRegExp as blocked
+  --passRegExp string     
+        Regexp to a detect normal (not blocked) web page with the same HTTP status code as a blocked request
+  --passStatusCode int    
+        HTTP response status code that WAF uses while passing requests (default 200)
+  --proxy string          
+        Proxy URL to use
+  --randomDelay int       
+        Random delay in ms in addition to --sendDelay (default 500)
+  --reportDir string      
+        A directory to store reports (default "/tmp/gotestwaf/")
+  --sendDelay int         
+        Delay in ms between requests (default 500)
+  --testcases string      
+        Path to a folder with test cases (default "./testcases/")
+  --tlsverify             
+        If true, the received TLS certificate will be verified
+  --url string            
+        URL to check (default "http://localhost/")
+```

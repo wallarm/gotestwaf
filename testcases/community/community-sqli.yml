@@ -26,8 +26,8 @@ payload:
 - sle%25p%28'0x12'%2b1) => sleep('ox12' + 1)
 - "a' UNION SELECT 1, NULL, NULL, table_name, column_name FROM information_schema.columns-- -"
 encoder:
-- Url
+- URL
 placeholder:
-- UrlParam
-- JsonBody
+- URLParam
+- JSONBody
 ...

@@ -8,7 +8,7 @@ payload:
   - '"onwheel=ead(111)'
 encoder:
   - Base64Flat
-  - Url
+  - URL
 placeholder:
-  - UrlPath
-  - UrlParam
+  - URLPath
+  - URLParam

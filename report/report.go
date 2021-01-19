@@ -6,8 +6,8 @@ type Test struct {
 	Payload     string
 	Encoder     string
 	Placeholder string
-	Testset     string
-	Testcase    string
+	TestSet     string
+	TestCase    string
 	StatusCode  int
 }
 
@@ -16,15 +16,15 @@ type Report struct {
 	PassedTests []Test
 	FailedTests []Test
 	NaTests     []Test
-	Lock        sync.RWMutex
+	Mu          sync.RWMutex
 }
 
-func CreateReport() Report {
+func New() *Report {
 	r := Report{}
-	r.Lock = sync.RWMutex{}
+	r.Mu = sync.RWMutex{}
 	r.Report = make(map[string]map[string]map[bool]int)
 	r.FailedTests = make([]Test, 0)
 	r.NaTests = make([]Test, 0)
 	r.PassedTests = make([]Test, 0)
-	return r
+	return &r
 }

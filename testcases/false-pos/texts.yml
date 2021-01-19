@@ -10,4 +10,4 @@ payload:
 encoder:
   - Plain
 placeholder:
-  - UrlParam
+  - URLParam

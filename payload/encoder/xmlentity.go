@@ -2,17 +2,17 @@ package encoder
 
 import "fmt"
 
-type XmlEntityEncoder struct {
+type XMLEntityEncoder struct {
 	name string
 }
 
-var DefaultXmlEntityEncoder = XmlEntityEncoder{name: "XmlEntity"}
+var DefaultXMLEntityEncoder = XMLEntityEncoder{name: "XMLEntity"}
 
-func (enc XmlEntityEncoder) GetName() *string {
+func (enc XMLEntityEncoder) GetName() *string {
 	return &enc.name
 }
 
-func (enc XmlEntityEncoder) Encode(data string) (string, error) {
+func (enc XMLEntityEncoder) Encode(data string) (string, error) {
 	ret := ""
 	for _, v := range data {
 		ret += "&#x" + fmt.Sprintf("%x", v) + ";"

@@ -5,9 +5,9 @@ payload:
   - "')) or pg_sleep(5)--"
 encoder:
   - Base64Flat
-  - Url
+  - URL
 placeholder:
-  - UrlPath
-  - UrlParam
-  - JsonBody
+  - URLPath
+  - URLParam
+  - JSONBody
   - Header
