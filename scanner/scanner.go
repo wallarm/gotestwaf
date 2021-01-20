@@ -30,24 +30,24 @@ func New(cfg *config.Config, logger *log.Logger) *Scanner {
 }
 
 func (s *Scanner) CheckBlocking(resp *http.Response) (bool, int, error) {
-	if s.cfg.BlockRegExp != "" {
+	if s.cfg.BlockRegex != "" {
 		respData, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			return false, 0, err
 		}
-		m, _ := regexp.MatchString(s.cfg.BlockRegExp, string(respData))
+		m, _ := regexp.MatchString(s.cfg.BlockRegex, string(respData))
 		return m, resp.StatusCode, nil
 	}
 	return resp.StatusCode == s.cfg.BlockStatusCode, resp.StatusCode, nil
 }
 
 func (s *Scanner) CheckPass(resp *http.Response) (bool, int, error) {
-	if s.cfg.PassRegExp != "" {
+	if s.cfg.PassRegex != "" {
 		respData, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			return false, 0, err
 		}
-		m, _ := regexp.MatchString(s.cfg.PassRegExp, string(respData))
+		m, _ := regexp.MatchString(s.cfg.PassRegex, string(respData))
 		return m, resp.StatusCode, nil
 	}
 	return resp.StatusCode == s.cfg.PassStatusCode, resp.StatusCode, nil

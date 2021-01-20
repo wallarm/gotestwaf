@@ -41,21 +41,23 @@ func run(logger *log.Logger) error {
 	logger.Println("Scanned URL:", cfg.URL)
 
 	s := scanner.New(cfg, logger)
-	check, status, err := s.PreCheck(cfg.URL)
+
+	ok, httpStatus, err := s.PreCheck(cfg.URL)
 	if err != nil {
 		return errors.Wrap(err, "running pre-check")
 	}
-	if !check {
+	if !ok {
 		return errors.Errorf("WAF was not detected. "+
 			"Please check the 'block_statuscode' or 'block_regexp' values."+
-			"\nBaseline attack status code: %v\n", status)
+			"\nBaseline attack status code: %v\n", httpStatus)
 	}
 
-	logger.Printf("WAF pre-check: OK. Blocking status code: %v\n", status)
+	logger.Printf("WAF pre-check: OK. Blocking status code: %v\n", httpStatus)
 
-	if _, err := os.Stat(cfg.ReportDir); os.IsNotExist(err) {
-		if err := os.Mkdir(cfg.ReportDir, 0700); err != nil {
-			return errors.Wrap(err, "creating dir")
+	_, err = os.Stat(cfg.ReportDir)
+	if os.IsNotExist(err) {
+		if makeErr := os.Mkdir(cfg.ReportDir, 0700); makeErr != nil {
+			return errors.Wrap(makeErr, "creating dir")
 		}
 	}
 
@@ -80,28 +82,28 @@ func run(logger *log.Logger) error {
 }
 
 func parseFlags() {
+	flag.StringVar(&configPath, "configPath", "config.yaml", "Path to a config file")
 	flag.String("url", "http://localhost/", "URL to check")
-	flag.StringVar(&configPath, "config", "config.yaml", "Path to a config file")
-	flag.String("testCasesPath", "./testcases/", "Path to a folder with test cases")
 	flag.String("proxy", "", "Proxy URL to use")
-	flag.Int("maxIdleConns", 2, "The maximum amount of time a keep-alive connection will live")
-	flag.Int("idleConnTimeout", 2, "The maximum number of keep-alive connections")
 	flag.Bool("tlsverify", false, "If true, the received TLS certificate will be verified")
-	flag.Int("blockStatusCode", 403, "HTTP status code that WAF uses while blocking requests")
-	flag.String("blockRegExp", "", "Regexp to detect a blocking page with the same HTTP response status code as a not blocked request")
-	flag.Int("passStatusCode", 200, "HTTP response status code that WAF uses while passing requests")
-	flag.String("passRegExp", "", "Regexp to a detect normal (not blocked) web page with the same HTTP status code as a blocked request")
-	flag.String("reportDir", "/tmp/gotestwaf/", "A directory to store reports")
-	flag.Bool("nonBlockedAsPassed", false, "If true, count requests that weren't blocked as passed. If false, requests that don't satisfy to PassStatuscode/PassRegExp as blocked")
-	flag.Bool("followCookies", false, "If true, use cookies sent by the server. May work only with --maxIdleConns=1")
+	flag.Int("maxIdleConns", 2, "The maximum amount of time a keep-alive connection will live")
 	flag.Int("maxRedirects", 50, "The maximum number of handling redirects")
+	flag.Int("idleConnTimeout", 2, "The maximum number of keep-alive connections")
+	flag.Bool("followCookies", false, "If true, use cookies sent by the server. May work only with --maxIdleConns=1")
+	flag.Int("blockStatusCode", 403, "HTTP status code that WAF uses while blocking requests")
+	flag.Int("passStatusCode", 200, "HTTP response status code that WAF uses while passing requests")
+	flag.String("blockRegex", "", "Regex to detect a blocking page with the same HTTP response status code as a not blocked request")
+	flag.String("passRegex", "", "Regex to a detect normal (not blocked) web page with the same HTTP status code as a blocked request")
+	flag.Bool("nonBlockedAsPassed", false, "If true, count requests that weren't blocked as passed. If false, requests that don't satisfy to PassStatuscode/PassRegExp as blocked")
 	flag.Int("sendDelay", 500, "Delay in ms between requests")
 	flag.Int("randomDelay", 500, "Random delay in ms in addition to --sendDelay")
+	flag.String("testCasesPath", "./testcases/", "Path to a folder with test cases")
+	flag.String("reportDir", "/tmp/gotestwaf/", "A directory to store reports")
 
 	flag.Parse()
 }
 
-func loadConfig(configPath string) (config *config.Config, err error) {
+func loadConfig(configPath string) (cfg *config.Config, err error) {
 	err = viper.BindPFlags(flag.CommandLine)
 	if err != nil {
 		return nil, err
@@ -115,6 +117,6 @@ func loadConfig(configPath string) (config *config.Config, err error) {
 	if err != nil {
 		return
 	}
-	err = viper.Unmarshal(&config)
+	err = viper.Unmarshal(&cfg)
 	return
 }
