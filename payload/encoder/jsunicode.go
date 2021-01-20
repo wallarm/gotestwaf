@@ -2,7 +2,6 @@ package encoder
 
 import (
 	"fmt"
-	"regexp"
 )
 
 type JSUnicodeEncoder struct {
@@ -18,12 +17,13 @@ func (enc JSUnicodeEncoder) GetName() *string {
 func (enc JSUnicodeEncoder) Encode(data string) (string, error) {
 	ret := ""
 	// TODO: check hot it works with unicode multibytes
-	for _, v := range data {
-		matched, _ := regexp.MatchString(`[a-zA-Z0-9]`, string(v))
-		if matched {
-			ret += string(v)
+	for _, r := range data {
+		if r < 'a' || r > 'z' &&
+			r < 'A' || r > 'Z' &&
+			r < '0' || r > '9' {
+			ret += string(r)
 		} else {
-			ret += "\\u00" + fmt.Sprintf("%x", v)
+			ret += "\\u00" + fmt.Sprintf("%x", r)
 		}
 	}
 	return ret, nil

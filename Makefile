@@ -2,9 +2,14 @@ gotestwaf:
 	docker build . --force-rm -t gotestwaf
 
 scan_local:
-	docker run -v /tmp:/tmp/report gotestwaf --url=https://127.0.0.1:8080/
+	docker run -v /tmp:/tmp/report --network="host" gotestwaf --url=http://127.0.0.1:8080/
 
 lint:
 	golangci-lint -v run ./...
 
-.PHONY: lint gotestwaf scan_local
+tidy:
+	go mod tidy
+	go mod vendor
+
+.PHONY: lint gotestwaf scan_local tidy
+
