@@ -8,8 +8,9 @@ import (
 	"github.com/pkg/errors"
 	flag "github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"github.com/wallarm/gotestwaf/config"
-	"github.com/wallarm/gotestwaf/scanner"
+	"github.com/wallarm/gotestwaf/internal/data/config"
+	"github.com/wallarm/gotestwaf/internal/data/test"
+	"github.com/wallarm/gotestwaf/internal/scanner"
 )
 
 const (
@@ -40,7 +41,16 @@ func run(logger *log.Logger) error {
 
 	logger.Println("Scanned URL:", cfg.URL)
 
-	s := scanner.New(cfg, logger)
+	logger.Println("Test cases loading started")
+	testCases, err := test.Load(cfg.TestCasesPath, logger)
+	if err != nil {
+		return errors.Wrap(err, "loading test cases")
+	}
+	logger.Println("Test cases loading finished")
+
+	db := test.NewDB(testCases)
+
+	s := scanner.New(db, logger, cfg)
 
 	ok, httpStatus, err := s.PreCheck(cfg.URL)
 	if err != nil {
@@ -62,19 +72,19 @@ func run(logger *log.Logger) error {
 	}
 
 	logger.Printf("Checking %s\n", cfg.URL)
-	report, err := s.Run(cfg.URL)
+	err = s.Run(cfg.URL)
 	if err != nil {
 		return errors.Wrap(err, "running tests")
 	}
 
 	reportFile := cfg.ReportDir + "/" + reportPrefix + "-" + time.Now().Format("2006-January-02-11-06") + ".pdf"
-	err = report.ExportToPDFAndShowTable(reportFile)
+	err = db.ExportToPDFAndShowTable(reportFile)
 	if err != nil {
 		return errors.Wrap(err, "exporting report")
 	}
 
 	payloadFiles := cfg.ReportDir + "/" + payloadPrefix + "-" + time.Now().Format("2006-January-02-11-06") + ".csv"
-	err = report.ExportPayloads(payloadFiles)
+	err = db.ExportPayloads(payloadFiles)
 	if err != nil {
 		return errors.Wrap(err, "exporting payloads")
 	}
@@ -86,17 +96,18 @@ func parseFlags() {
 	flag.String("url", "http://localhost/", "URL to check")
 	flag.String("proxy", "", "Proxy URL to use")
 	flag.Bool("tlsverify", false, "If true, the received TLS certificate will be verified")
-	flag.Int("maxIdleConns", 2, "The maximum amount of time a keep-alive connection will live")
+	flag.Int("maxIdleConns", 2, "The maximum number of keep-alive connections")
 	flag.Int("maxRedirects", 50, "The maximum number of handling redirects")
-	flag.Int("idleConnTimeout", 2, "The maximum number of keep-alive connections")
+	flag.Int("idleConnTimeout", 2, "The maximum amount of time a keep-alive connection will live")
 	flag.Bool("followCookies", false, "If true, use cookies sent by the server. May work only with --maxIdleConns=1")
 	flag.Int("blockStatusCode", 403, "HTTP status code that WAF uses while blocking requests")
 	flag.Int("passStatusCode", 200, "HTTP response status code that WAF uses while passing requests")
 	flag.String("blockRegex", "", "Regex to detect a blocking page with the same HTTP response status code as a not blocked request")
 	flag.String("passRegex", "", "Regex to a detect normal (not blocked) web page with the same HTTP status code as a blocked request")
 	flag.Bool("nonBlockedAsPassed", false, "If true, count requests that weren't blocked as passed. If false, requests that don't satisfy to PassStatuscode/PassRegExp as blocked")
-	flag.Int("sendDelay", 500, "Delay in ms between requests")
-	flag.Int("randomDelay", 500, "Random delay in ms in addition to --sendDelay")
+	flag.Int("workers", 600, "The number of workers to scan")
+	flag.Int("sendDelay", 300, "Delay in ms between requests")
+	flag.Int("randomDelay", 300, "Random delay in ms in addition to --sendDelay")
 	flag.String("testCasesPath", "./testcases/", "Path to a folder with test cases")
 	flag.String("reportDir", "/tmp/gotestwaf/", "A directory to store reports")
 
