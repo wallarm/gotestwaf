@@ -5,6 +5,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/jung-kurt/gofpdf"
 	"github.com/jung-kurt/gofpdf/contrib/httpimg"
@@ -48,7 +49,7 @@ func tableClip(pdf *gofpdf.Fpdf, cols []float64, rows [][]string, fontSize float
 	}
 }
 
-func (r *Report) ExportToPDFAndShowTable(reportFile string) error {
+func (r *Report) ExportToPDFAndShowTable(reportFile string, order []string) error {
 	// Process data.
 	var rows [][]string
 	overallPassedRate := float32(0)
@@ -58,18 +59,19 @@ func (r *Report) ExportToPDFAndShowTable(reportFile string) error {
 
 	rows = append(rows, []string{"Test set", "Test case", "Passed, %", "Passed/Blocked", "Failed/Bypassed"})
 
-	for testSet := range r.Report {
-		for testCase := range r.Report[testSet] {
-			passed := r.Report[testSet][testCase][true]
-			failed := r.Report[testSet][testCase][false]
-			total := passed + failed
-			overallTestsCompleted += total
-			overallTestsFailed += failed
-			percentage := float32(passed) / float32(total) * 100
-			rows = append(rows, []string{testSet, testCase, fmt.Sprintf("%.2f", percentage), fmt.Sprintf("%d", passed), fmt.Sprintf("%d", failed)})
-			overallTestcasesCompleted += 1.00
-			overallPassedRate += percentage
-		}
+	for _, testInfo := range order {
+		parts := strings.Split(testInfo, ":")
+		testSet := parts[0]
+		testCase := parts[1]
+		passed := r.Report[testSet][testCase][true]
+		failed := r.Report[testSet][testCase][false]
+		total := passed + failed
+		overallTestsCompleted += total
+		overallTestsFailed += failed
+		percentage := float32(passed) / float32(total) * 100
+		rows = append(rows, []string{testSet, testCase, fmt.Sprintf("%.2f", percentage), fmt.Sprintf("%d", passed), fmt.Sprintf("%d", failed)})
+		overallTestcasesCompleted += 1.00
+		overallPassedRate += percentage
 	}
 
 	wafScore := overallPassedRate / overallTestcasesCompleted

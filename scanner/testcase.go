@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -35,6 +36,9 @@ func Load(testCasesPath string, logger *log.Logger) ([]TestCase, error) {
 	}); err != nil {
 		return nil, err
 	}
+
+	// Fix the determined files order
+	sort.Strings(files)
 
 	logger.Println("Loading test cases: ")
 	for _, testCaseFile := range files {

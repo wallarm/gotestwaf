@@ -62,13 +62,13 @@ func run(logger *log.Logger) error {
 	}
 
 	logger.Printf("Checking %s\n", cfg.URL)
-	report, err := s.Run(cfg.URL)
+	report, order, err := s.Run(cfg.URL)
 	if err != nil {
 		return errors.Wrap(err, "running tests")
 	}
 
 	reportFile := cfg.ReportDir + "/" + reportPrefix + "-" + time.Now().Format("2006-January-02-11-06") + ".pdf"
-	err = report.ExportToPDFAndShowTable(reportFile)
+	err = report.ExportToPDFAndShowTable(reportFile, order)
 	if err != nil {
 		return errors.Wrap(err, "exporting report")
 	}

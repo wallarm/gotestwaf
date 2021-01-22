@@ -64,11 +64,11 @@ func (s *Scanner) PreCheck(url string) (bool, int, error) {
 	return s.CheckBlocking(ret)
 }
 
-func (s *Scanner) Run(url string) (*report.Report, error) {
+func (s *Scanner) Run(url string) (*report.Report, []string, error) {
 	s.logger.Println("Test cases loading started")
 	testCases, err := Load(s.cfg.TestCasesPath, s.logger)
 	if err != nil {
-		return nil, errors.Wrap(err, "loading test cases")
+		return nil, nil, errors.Wrap(err, "loading test cases")
 	}
 	s.logger.Println("Test cases loading finished")
 
@@ -77,7 +77,11 @@ func (s *Scanner) Run(url string) (*report.Report, error) {
 	var wg sync.WaitGroup
 	s.logger.Println("Scanning started")
 
+	// Preserve the test cases order (to avoid unordered map loop)
+	var order []string
+
 	for _, tc := range testCases {
+		order = append(order, fmt.Sprintf("%s:%s", tc.TestSet, tc.Name))
 		if results.Report[tc.TestSet] == nil {
 			results.Report[tc.TestSet] = map[string]map[bool]int{}
 		}
@@ -153,5 +157,5 @@ func (s *Scanner) Run(url string) (*report.Report, error) {
 	fmt.Printf("\n")
 	s.logger.Println("Scanning finished")
 
-	return results, nil
+	return results, order, nil
 }
