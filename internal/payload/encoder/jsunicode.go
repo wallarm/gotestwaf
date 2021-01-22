@@ -1,9 +1,5 @@
 package encoder
 
-import (
-	"fmt"
-)
-
 type JSUnicodeEncoder struct {
 	name string
 }
@@ -16,15 +12,15 @@ func (enc JSUnicodeEncoder) GetName() *string {
 
 func (enc JSUnicodeEncoder) Encode(data string) (string, error) {
 	ret := ""
-	// TODO: check hot it works with unicode multibytes
-	for _, r := range data {
-		if r < 'a' || r > 'z' &&
-			r < 'A' || r > 'Z' &&
-			r < '0' || r > '9' {
-			ret += string(r)
-		} else {
-			ret += "\\u00" + fmt.Sprintf("%x", r)
+	// TODO: check how it works with unicode multibytes
+	for _, c := range data {
+		if c < 'a' || c > 'z' &&
+			c < 'A' || c > 'Z' &&
+			c < '0' || c > '9' {
+			ret += string(c)
+			continue
 		}
+		ret += "\\u00" + string(c)
 	}
 	return ret, nil
 }
