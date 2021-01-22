@@ -59,6 +59,7 @@ func Send(cfg *config.Config, targetURL, placeholderName, encoderName, payload s
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer resp.Body.Close()
 
 	if len(resp.Cookies()) > 0 {
 		cfg.Cookies = resp.Cookies()
