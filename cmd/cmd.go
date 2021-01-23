@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -80,34 +81,28 @@ func Run() int {
 
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
-	scannerErrors := make(chan error, 1)
 
 	go func() {
-		logger.Printf("Scanning %s\n", cfg.URL)
-		scannerErrors <- s.Run(ctx, cfg.URL)
-	}()
-
-	select {
-	case err = <-scannerErrors:
-		if err != nil {
-			logger.Println("scanner error:", err)
-			return 1
-		}
-
-	case sig := <-shutdown:
+		sig:= <-shutdown
 		logger.Printf("main: %v : scan canceled", sig)
 		cancel()
-		return 0
+	}()
+
+	logger.Printf("Scanning %s\n", cfg.URL)
+	err = s.Run(ctx, cfg.URL)
+	if err != nil {
+		logger.Println("scanner error:", err)
+		return 1
 	}
 
-	reportFile := cfg.ReportDir + "/" + reportPrefix + "-" + time.Now().Format("2006-January-02-11-06") + ".pdf"
+	reportFile := filepath.Join(cfg.ReportDir, reportPrefix + "-" + time.Now().Format("2006-January-02-11-06") + ".pdf" )
 	err = db.ExportToPDFAndShowTable(reportFile)
 	if err != nil {
 		logger.Println("exporting report:", err)
 		return 1
 	}
 
-	payloadFiles := cfg.ReportDir + "/" + payloadPrefix + "-" + time.Now().Format("2006-January-02-11-06") + ".csv"
+	payloadFiles := filepath.Join(cfg.ReportDir, payloadPrefix + "-" + time.Now().Format("2006-January-02-11-06") + ".csv" )
 	err = db.ExportPayloads(payloadFiles)
 	if err != nil {
 		logger.Println("exporting payloads:", err)

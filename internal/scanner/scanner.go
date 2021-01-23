@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/wallarm/gotestwaf/internal/data/config"
 	"github.com/wallarm/gotestwaf/internal/data/test"
 	"github.com/wallarm/gotestwaf/internal/payload/encoder"
@@ -100,7 +101,11 @@ func (s *Scanner) Run(ctx context.Context, url string) error {
 						return
 					}
 					time.Sleep(time.Duration(s.cfg.SendDelay+rand.Intn(s.cfg.RandomDelay)) * time.Millisecond)
-					s.scanURL(ctx, url, w)
+
+					if err := s.scanURL(ctx, url, w); err != nil {
+						s.logger.Println(err)
+						return
+					}
 				case <-ctx.Done():
 					return
 				}
@@ -128,20 +133,25 @@ func (s *Scanner) Run(ctx context.Context, url string) error {
 		}
 	}()
 	wg.Wait()
-
+	if err := errors.Cause(ctx.Err()); err == context.Canceled {
+		return ctx.Err()
+	}
 	return nil
 }
 
-func (s *Scanner) scanURL(ctx context.Context, url string, w testWork) {
-	body, statusCode, _ := s.httpClient.Send(ctx, url, w.placeholder, w.encoder, w.payload)
+func (s *Scanner) scanURL(ctx context.Context, url string, w testWork) error {
+	body, statusCode, err := s.httpClient.Send(ctx, url, w.placeholder, w.encoder, w.payload)
+	if err != nil {
+		return errors.Wrap(err, "http sending")
+	}
 
 	blocked, err := s.CheckBlocking(body, statusCode)
 	if err != nil {
-		s.logger.Println("failed to check blocking:", err)
+		return errors.Wrap(err, "failed to check blocking:")
 	}
 	passed, err := s.CheckPass(body, statusCode)
 	if err != nil {
-		s.logger.Println("failed to check passed or not:", err)
+		return errors.Wrap(err, "failed to check passed or not:")
 	}
 	t := &test.Test{
 		TestSet:     w.set,
@@ -164,4 +174,5 @@ func (s *Scanner) scanURL(ctx context.Context, url string, w testWork) {
 			s.db.UpdateFailedTests(t)
 		}
 	}
+	return nil
 }
