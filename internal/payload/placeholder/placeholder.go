@@ -39,5 +39,6 @@ func Apply(host, placeholder, data string) *http.Request {
 	inputs[0] = reflect.ValueOf(host)
 	inputs[1] = reflect.ValueOf(data)
 	req := reflect.ValueOf(&p).MethodByName(placeholder).Call(inputs)[0].Interface().(*http.Request)
+
 	return req
 }

@@ -1,6 +1,7 @@
 package scanner
 
 import (
+	"context"
 	"log"
 	"math/rand"
 	"regexp"
@@ -10,10 +11,11 @@ import (
 	"github.com/wallarm/gotestwaf/internal/data/config"
 	"github.com/wallarm/gotestwaf/internal/data/test"
 	"github.com/wallarm/gotestwaf/internal/payload/encoder"
-	"github.com/wallarm/gotestwaf/internal/platform"
 )
 
 const preCheckVector = "<script>alert('union select password from users')</script>"
+
+var i int
 
 type testWork struct {
 	set         string
@@ -58,7 +60,7 @@ func (s *Scanner) CheckPass(body []byte, statusCode int) (bool, error) {
 
 func (s *Scanner) PreCheck(url string) (bool, int, error) {
 	encoder.InitEncoders()
-	body, code, err := s.httpClient.Send(url, "URLParam", "URL", preCheckVector)
+	body, code, err := s.httpClient.Send(context.Background(), url, "URLParam", "URL", preCheckVector)
 	if err != nil {
 		return false, 0, err
 	}
@@ -69,18 +71,14 @@ func (s *Scanner) PreCheck(url string) (bool, int, error) {
 	return ok, code, nil
 }
 
-func (s *Scanner) Run(url string) error {
+func (s *Scanner) Run(ctx context.Context, url string) error {
 	encoder.InitEncoders()
 	gn := s.cfg.Workers
 
 	var wg sync.WaitGroup
 	wg.Add(gn)
 
-	workChan := make(chan testWork, gn)
-
 	rand.Seed(time.Now().UnixNano())
-
-	bar := platform.NewProgressBar()
 
 	s.logger.Println("Scanning started")
 	defer s.logger.Println("Scanning finished")
@@ -90,70 +88,80 @@ func (s *Scanner) Run(url string) error {
 		s.logger.Println("Scanning Time: ", time.Since(start))
 	}()
 
-	for e := 0; e < gn; e++ {
-		go func() {
-			defer wg.Done()
-			for w := range workChan {
-				time.Sleep(time.Duration(s.cfg.SendDelay+rand.Intn(s.cfg.RandomDelay)) * time.Millisecond)
-				body, statusCode, _ := s.httpClient.Send(url, w.placeholder, w.encoder, w.payload)
+	workChan := make(chan testWork, gn)
 
-				blocked, err := s.CheckBlocking(body, statusCode)
-				if err != nil {
-					s.logger.Println("failed to check blocking:", err)
-				}
-				passed, err := s.CheckPass(body, statusCode)
-				if err != nil {
-					s.logger.Println("failed to check passed or not:", err)
-				}
-				t := &test.Test{
-					TestSet:     w.set,
-					TestCase:    w.name,
-					Payload:     w.payload,
-					Encoder:     w.encoder,
-					Placeholder: w.placeholder,
-					StatusCode:  statusCode,
-				}
-				if (blocked && passed) || (!blocked && !passed) {
-					s.db.UpdateNaTests(t, s.cfg.NonBlockedAsPassed)
-				} else {
-					// true positives
-					if (blocked && w.tp) ||
-						// true negatives for malicious payloads (Type is true)
-						// and false positives checks (Type is false)
-						(!blocked && !w.tp) {
-						s.db.UpdatePassedTests(t)
-					} else {
-						s.db.UpdateFailedTests(t)
+	for e := 0; e < gn; e++ {
+		go func(ctx context.Context) {
+			defer wg.Done()
+			for {
+				select {
+				case w, ok := <-workChan:
+					if !ok {
+						return
 					}
+					time.Sleep(time.Duration(s.cfg.SendDelay+rand.Intn(s.cfg.RandomDelay)) * time.Millisecond)
+					s.scanURL(ctx, url, w)
+				case <-ctx.Done():
+					return
 				}
-				_ = bar.Add(1)
 			}
-		}()
+		}(ctx)
 	}
 
 	testCases := s.db.GetTests()
 
-	for _, t := range testCases {
-		for _, payload := range t.Payloads {
-			for _, e := range t.Encoders {
-				for _, placeholder := range t.Placeholders {
-					wrk := testWork{
-						t.Set,
-						t.Name,
-						payload,
-						e,
-						placeholder,
-						t.Type,
+	go func() {
+		defer close(workChan)
+		for _, t := range testCases {
+			for _, payload := range t.Payloads {
+				for _, e := range t.Encoders {
+					for _, placeholder := range t.Placeholders {
+						wrk := testWork{t.Set, t.Name, payload, e, placeholder, t.Type}
+						select {
+						case workChan <- wrk:
+						case <-ctx.Done():
+							return
+						}
 					}
-					workChan <- wrk
 				}
 			}
 		}
-	}
-
-	close(workChan)
+	}()
 	wg.Wait()
-	_ = bar.Finish()
 
 	return nil
+}
+
+func (s *Scanner) scanURL(ctx context.Context, url string, w testWork) {
+	body, statusCode, _ := s.httpClient.Send(ctx, url, w.placeholder, w.encoder, w.payload)
+
+	blocked, err := s.CheckBlocking(body, statusCode)
+	if err != nil {
+		s.logger.Println("failed to check blocking:", err)
+	}
+	passed, err := s.CheckPass(body, statusCode)
+	if err != nil {
+		s.logger.Println("failed to check passed or not:", err)
+	}
+	t := &test.Test{
+		TestSet:     w.set,
+		TestCase:    w.name,
+		Payload:     w.payload,
+		Encoder:     w.encoder,
+		Placeholder: w.placeholder,
+		StatusCode:  statusCode,
+	}
+	if (blocked && passed) || (!blocked && !passed) {
+		s.db.UpdateNaTests(t, s.cfg.NonBlockedAsPassed)
+	} else {
+		// true positives
+		if (blocked && w.tp) ||
+			// true negatives for malicious payloads (Type is true)
+			// and false positives checks (Type is false)
+			(!blocked && !w.tp) {
+			s.db.UpdatePassedTests(t)
+		} else {
+			s.db.UpdateFailedTests(t)
+		}
+	}
 }

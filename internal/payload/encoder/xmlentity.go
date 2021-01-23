@@ -1,7 +1,5 @@
 package encoder
 
-import "fmt"
-
 type XMLEntityEncoder struct {
 	name string
 }
@@ -15,7 +13,7 @@ func (enc XMLEntityEncoder) GetName() *string {
 func (enc XMLEntityEncoder) Encode(data string) (string, error) {
 	ret := ""
 	for _, v := range data {
-		ret += "&#x" + fmt.Sprintf("%x", v) + ";"
+		ret += "&#x" + string(v) + ";"
 	}
 	return ret, nil
 }

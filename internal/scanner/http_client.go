@@ -1,6 +1,7 @@
 package scanner
 
 import (
+	"context"
 	"crypto/tls"
 	"io/ioutil"
 	"net/http"
@@ -47,6 +48,7 @@ func NewHTTPClient(cfg *config.Config) *HTTPClient {
 			}
 		}(),
 	}
+
 	return &HTTPClient{
 		client:        cl,
 		cookies:       cfg.Cookies,
@@ -55,12 +57,14 @@ func NewHTTPClient(cfg *config.Config) *HTTPClient {
 	}
 }
 
-func (c *HTTPClient) Send(targetURL, placeholderName, encoderName, payload string) ([]byte, int, error) {
+func (c *HTTPClient) Send(ctx context.Context, targetURL, placeholderName, encoderName, payload string) ([]byte, int, error) {
 	encodedPayload, err := encoder.Apply(encoderName, payload)
 	if err != nil {
 		return nil, 0, errors.Wrap(err, "encoding payload")
 	}
+
 	req := placeholder.Apply(targetURL, placeholderName, encodedPayload)
+	req = req.WithContext(ctx)
 
 	for header, value := range c.headers {
 		req.Header.Set(header, value)
