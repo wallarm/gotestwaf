@@ -13,7 +13,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-const MARGECELL = 2 // marge top/bottom of cell
+const (
+	MARGECELL = 2 // marge top/bottom of cell
+
+	wallarmLink = "https://wallarm.com/?utm_campaign=gtw_tool&utm_medium=pdf&utm_source=github"
+	trollLink   = "http://troll.wallarm.tools/assets/wallarm.logo.png"
+)
 
 func tableClip(pdf *gofpdf.Fpdf, cols []float64, rows [][]string, fontSize float64) {
 	pagew, pageh := pdf.GetPageSize()
@@ -79,7 +84,14 @@ func (db *DB) ExportToPDFAndShowTable(reportFile string) error {
 			overallTestsCompleted += total
 			overallTestsFailed += failed
 			percentage := float32(passed) / float32(total) * 100
-			rows = append(rows, []string{testSet, testCase, fmt.Sprintf("%.2f", percentage), fmt.Sprintf("%d", passed), fmt.Sprintf("%d", failed)})
+			rows = append(rows,
+				[]string{
+					testSet,
+					testCase,
+					fmt.Sprintf("%.2f", percentage),
+					fmt.Sprintf("%d", passed),
+					fmt.Sprintf("%d", failed)},
+			)
 			overallTestcasesCompleted += 1.00
 			overallPassedRate += percentage
 		}
@@ -106,14 +118,14 @@ func (db *DB) ExportToPDFAndShowTable(reportFile string) error {
 
 	pdf.Ln(10)
 	pdf.SetFont("Arial", "", 12)
-	pdf.Cell(10, 10, fmt.Sprintf("%v bypasses in %v tests / %v test cases", overallTestsFailed, overallTestsCompleted, overallTestcasesCompleted))
+	pdf.Cell(10, 10, fmt.Sprintf("%v bypasses in %v tests / %v test cases",
+		overallTestsFailed, overallTestsCompleted, overallTestcasesCompleted))
 	pdf.Ln(10)
 
 	tableClip(pdf, cols, rows, 12)
 
-	url := "http://troll.wallarm.tools/assets/wallarm.logo.png"
-	httpimg.Register(pdf, url, "")
-	pdf.Image(url, 15, 280, 20, 0, false, "", 0, "https://wallarm.com/?utm_campaign=gtw_tool&utm_medium=pdf&utm_source=github")
+	httpimg.Register(pdf, trollLink, "")
+	pdf.Image(trollLink, 15, 280, 20, 0, false, "", 0, wallarmLink)
 
 	pdf.AddPage()
 
@@ -128,7 +140,7 @@ func (db *DB) ExportToPDFAndShowTable(reportFile string) error {
 	pdf.Cell(10, 10, "Bypasses in details.")
 	pdf.Ln(10)
 	pdf.SetFont("Arial", "", 12)
-	pdf.Cell(10, 10, fmt.Sprintf("\n%d malicious requests bypassed the WAF", len(db.failedTests)))
+	pdf.Cell(10, 10, fmt.Sprintf("\n%d malicious requests have bypassed the WAF", len(db.failedTests)))
 	pdf.Ln(10)
 	pdf.SetFont("Arial", "", 10)
 
@@ -147,7 +159,8 @@ func (db *DB) ExportToPDFAndShowTable(reportFile string) error {
 	pdf.Cell(10, 10, "Unresolved test cases")
 	pdf.Ln(10)
 	pdf.SetFont("Arial", "", 12)
-	pdf.Cell(10, 10, fmt.Sprintf("\n%d requests indentified as blocked and passed both or as not-blocked and not-passed both", len(db.naTests)))
+	pdf.Cell(10, 10, fmt.Sprintf("\n%d requests indentified as blocked and passed or as not-blocked and not-passed",
+		len(db.naTests)))
 	pdf.Ln(10)
 	pdf.SetFont("Arial", "", 10)
 

@@ -47,7 +47,6 @@ func SOAPBody(requestURL, payload string) (*http.Request, error) {
         </soapenv:Body>
       </soapenv:Envelope>
       `, param, encodedPayload, param)
-	// reqUrl.Path = fmt.Sprintf("%s/%s/", reqUrl.Path, payload)
 	req, err := http.NewRequest("POST", reqURL.String(), strings.NewReader(soapPayload))
 	if err != nil {
 		return nil, err

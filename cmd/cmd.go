@@ -83,7 +83,7 @@ func Run() int {
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
-		sig:= <-shutdown
+		sig := <-shutdown
 		logger.Printf("main: %v : scan canceled", sig)
 		cancel()
 	}()
@@ -95,14 +95,14 @@ func Run() int {
 		return 1
 	}
 
-	reportFile := filepath.Join(cfg.ReportDir, reportPrefix + "-" + time.Now().Format("2006-January-02-11-06") + ".pdf" )
+	reportFile := filepath.Join(cfg.ReportDir, reportPrefix+"-"+time.Now().Format("2006-January-02-11-06")+".pdf")
 	err = db.ExportToPDFAndShowTable(reportFile)
 	if err != nil {
 		logger.Println("exporting report:", err)
 		return 1
 	}
 
-	payloadFiles := filepath.Join(cfg.ReportDir, payloadPrefix + "-" + time.Now().Format("2006-January-02-11-06") + ".csv" )
+	payloadFiles := filepath.Join(cfg.ReportDir, payloadPrefix+"-"+time.Now().Format("2006-January-02-11-06")+".csv")
 	err = db.ExportPayloads(payloadFiles)
 	if err != nil {
 		logger.Println("exporting payloads:", err)
@@ -124,12 +124,15 @@ func parseFlags() {
 	flag.Bool("followCookies", false, "If true, use cookies sent by the server. May work only with --maxIdleConns=1")
 	flag.Int("blockStatusCode", 403, "HTTP status code that WAF uses while blocking requests")
 	flag.Int("passStatusCode", 200, "HTTP response status code that WAF uses while passing requests")
-	flag.String("blockRegex", "", "Regex to detect a blocking page with the same HTTP response status code as a not blocked request")
-	flag.String("passRegex", "", "Regex to a detect normal (not blocked) web page with the same HTTP status code as a blocked request")
-	flag.Bool("nonBlockedAsPassed", false, "If true, count requests that weren't blocked as passed. If false, requests that don't satisfy to PassStatuscode/PassRegExp as blocked")
+	flag.String("blockRegex", "",
+		"Regex to detect a blocking page with the same HTTP response status code as a not blocked request")
+	flag.String("passRegex", "",
+		"Regex to a detect normal (not blocked) web page with the same HTTP status code as a blocked request")
+	flag.Bool("nonBlockedAsPassed", false,
+		"If true, count requests that weren't blocked as passed. If false, requests that don't satisfy to PassStatuscode/PassRegExp as blocked")
 	flag.Int("workers", 200, "The number of workers to scan")
 	flag.Int("sendDelay", 400, "Delay in ms between requests")
-	flag.Int("randomDelay", 400, "Random delay in ms in addition to --sendDelay")
+	flag.Int("randomDelay", 400, "Random delay in ms in addition to the delay between requests")
 	flag.String("testCasesPath", "./testcases/", "Path to a folder with test cases")
 	flag.String("reportDir", "/tmp/gotestwaf/", "A directory to store reports")
 

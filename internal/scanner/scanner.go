@@ -16,15 +16,13 @@ import (
 
 const preCheckVector = "<script>alert('union select password from users')</script>"
 
-var i int
-
 type testWork struct {
-	set         string
-	name        string
-	payload     string
-	encoder     string
-	placeholder string
-	tp          bool
+	set            string
+	name           string
+	payload        string
+	encoder        string
+	placeholder    string
+	isTruePositive bool
 }
 
 type Scanner struct {
@@ -35,6 +33,7 @@ type Scanner struct {
 }
 
 func New(db *test.DB, logger *log.Logger, cfg *config.Config) *Scanner {
+	encoder.InitEncoders()
 	return &Scanner{
 		db:         db,
 		logger:     logger,
@@ -60,7 +59,6 @@ func (s *Scanner) CheckPass(body []byte, statusCode int) (bool, error) {
 }
 
 func (s *Scanner) PreCheck(url string) (bool, int, error) {
-	encoder.InitEncoders()
 	body, code, err := s.httpClient.Send(context.Background(), url, "URLParam", "URL", preCheckVector)
 	if err != nil {
 		return false, 0, err
@@ -73,9 +71,7 @@ func (s *Scanner) PreCheck(url string) (bool, int, error) {
 }
 
 func (s *Scanner) Run(ctx context.Context, url string) error {
-	encoder.InitEncoders()
 	gn := s.cfg.Workers
-
 	var wg sync.WaitGroup
 	wg.Add(gn)
 
@@ -89,14 +85,14 @@ func (s *Scanner) Run(ctx context.Context, url string) error {
 		s.logger.Println("Scanning Time: ", time.Since(start))
 	}()
 
-	workChan := make(chan testWork, gn)
+	testChan := s.produceTests(ctx, gn)
 
 	for e := 0; e < gn; e++ {
 		go func(ctx context.Context) {
 			defer wg.Done()
 			for {
 				select {
-				case w, ok := <-workChan:
+				case w, ok := <-testChan:
 					if !ok {
 						return
 					}
@@ -113,17 +109,26 @@ func (s *Scanner) Run(ctx context.Context, url string) error {
 		}(ctx)
 	}
 
+	wg.Wait()
+	if err := errors.Cause(ctx.Err()); err == context.Canceled {
+		return ctx.Err()
+	}
+	return nil
+}
+
+func (s *Scanner) produceTests(ctx context.Context, n int) <-chan *testWork {
+	testChan := make(chan *testWork, n)
 	testCases := s.db.GetTests()
 
 	go func() {
-		defer close(workChan)
+		defer close(testChan)
 		for _, t := range testCases {
 			for _, payload := range t.Payloads {
 				for _, e := range t.Encoders {
 					for _, placeholder := range t.Placeholders {
-						wrk := testWork{t.Set, t.Name, payload, e, placeholder, t.Type}
+						wrk := &testWork{t.Set, t.Name, payload, e, placeholder, t.Type}
 						select {
-						case workChan <- wrk:
+						case testChan <- wrk:
 						case <-ctx.Done():
 							return
 						}
@@ -132,14 +137,10 @@ func (s *Scanner) Run(ctx context.Context, url string) error {
 			}
 		}
 	}()
-	wg.Wait()
-	if err := errors.Cause(ctx.Err()); err == context.Canceled {
-		return ctx.Err()
-	}
-	return nil
+	return testChan
 }
 
-func (s *Scanner) scanURL(ctx context.Context, url string, w testWork) error {
+func (s *Scanner) scanURL(ctx context.Context, url string, w *testWork) error {
 	body, statusCode, err := s.httpClient.Send(ctx, url, w.placeholder, w.encoder, w.payload)
 	if err != nil {
 		return errors.Wrap(err, "http sending")
@@ -165,10 +166,10 @@ func (s *Scanner) scanURL(ctx context.Context, url string, w testWork) error {
 		s.db.UpdateNaTests(t, s.cfg.NonBlockedAsPassed)
 	} else {
 		// true positives
-		if (blocked && w.tp) ||
+		if (blocked && w.isTruePositive) ||
 			// true negatives for malicious payloads (Type is true)
 			// and false positives checks (Type is false)
-			(!blocked && !w.tp) {
+			(!blocked && !w.isTruePositive) {
 			s.db.UpdatePassedTests(t)
 		} else {
 			s.db.UpdateFailedTests(t)
