@@ -6,6 +6,7 @@ import (
 
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/jung-kurt/gofpdf"
 	"github.com/jung-kurt/gofpdf/contrib/httpimg"
@@ -33,8 +34,19 @@ func tableClip(pdf *gofpdf.Fpdf, cols []float64, rows [][]string, fontSize float
 		height := lineHt + MARGECELL
 
 		x, y := pdf.GetXY()
+
+		//found max number of lines in the cell to create one size cells in the row
+		var nLines = make([]int, len(row))
+		var maxNLine int
+		for i, txt := range row {
+			width := cols[i]
+			nLines[i] = len(pdf.SplitLines([]byte(txt), width))
+			if maxNLine < nLines[i] {
+				maxNLine = nLines[i]
+			}
+		}
 		// add a new page if the height of the row doesn't fit on the page
-		if y+height >= pageh-mbottom {
+		if y+height*float64(maxNLine) >= pageh-mbottom {
 			pdf.AddPage()
 			x, y = pdf.GetXY()
 		}
@@ -45,13 +57,20 @@ func tableClip(pdf *gofpdf.Fpdf, cols []float64, rows [][]string, fontSize float
 				pdf.SetFont("Arial", "", fontSize)
 			}
 			width := cols[i]
-			pdf.Rect(x, y, width, height, "")
-			pdf.ClipRect(x, y, width, height, false)
-			pdf.Cell(width, height, txt)
-			pdf.ClipEnd()
+
+
+			if nLines[i] < maxNLine {
+				// draw one line cell with height of highest cell in the row
+				pdf.MultiCell(width, height*float64(maxNLine), txt, "1", "", false)
+			} else {
+				// draw multiline cell with exposed height of one line
+				pdf.MultiCell(width, height, txt, "1", "", false)
+			}
+
 			x += width
+			pdf.SetXY(x, y)
 		}
-		pdf.Ln(-1)
+		pdf.Ln(height*float64(maxNLine))
 	}
 }
 
@@ -110,7 +129,7 @@ func (db *DB) ExportToPDFAndShowTable(reportFile string) error {
 	table.Render()
 
 	// Create a pdf file
-	cols := []float64{35, 35, 35, 35, 35, 35}
+	cols := []float64{35, 45, 35, 35, 40}
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
 	pdf.SetFont("Arial", "", 24)
@@ -129,12 +148,14 @@ func (db *DB) ExportToPDFAndShowTable(reportFile string) error {
 
 	pdf.AddPage()
 
-	cols = []float64{135, 20, 20, 15}
+	cols = []float64{100, 30, 20, 25, 15}
 	rows = [][]string{}
 
-	rows = append(rows, []string{"Payload", "Encoder", "Placeholder", "Status"})
+	rows = append(rows, []string{"Payload", "Test Case", "Encoder", "Placeholder", "Status"})
 	for _, failedTest := range db.failedTests {
-		rows = append(rows, []string{failedTest.Payload, failedTest.Encoder, failedTest.Placeholder, strconv.Itoa(failedTest.StatusCode)})
+		payload := fmt.Sprintf("%+q", failedTest.Payload)
+		payload = strings.ReplaceAll(payload[1:len(payload)-1], `\"`, `"`)
+		rows = append(rows, []string{payload, failedTest.TestCase, failedTest.Encoder, failedTest.Placeholder, strconv.Itoa(failedTest.StatusCode)})
 	}
 	pdf.SetFont("Arial", "", 24)
 	pdf.Cell(10, 10, "Bypasses in details.")
@@ -148,12 +169,14 @@ func (db *DB) ExportToPDFAndShowTable(reportFile string) error {
 
 	pdf.AddPage()
 
-	cols = []float64{135, 20, 20, 15}
+	cols = []float64{100, 30, 20, 25, 15}
 	rows = [][]string{}
 
-	rows = append(rows, []string{"Payload", "Encoder", "Placeholder", "Status"})
+	rows = append(rows, []string{"Payload", "Test Case", "Encoder", "Placeholder", "Status"})
 	for _, naTest := range db.naTests {
-		rows = append(rows, []string{naTest.Payload, naTest.Encoder, naTest.Placeholder, strconv.Itoa(naTest.StatusCode)})
+		payload := fmt.Sprintf("%+q", naTest.Payload)
+		payload = strings.ReplaceAll(payload[1:len(payload)-1], `\"`, `"`)
+		rows = append(rows, []string{payload, naTest.TestCase, naTest.Encoder, naTest.Placeholder, strconv.Itoa(naTest.StatusCode)})
 	}
 	pdf.SetFont("Arial", "", 24)
 	pdf.Cell(10, 10, "Unresolved test cases")
