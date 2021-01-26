@@ -1,15 +1,15 @@
 package test
 
-type Test struct {
-	Payload     string
-	Encoder     string
-	Placeholder string
-	TestSet     string
-	TestCase    string
-	StatusCode  int
+type Info struct {
+	Payload            string
+	Encoder            string
+	Placeholder        string
+	Set                string
+	Case               string
+	ResponseStatusCode int
 }
 
-type TestCase struct {
+type Case struct {
 	Payloads     []string `yaml:"payload"`
 	Encoders     []string `yaml:"encoder"`
 	Placeholders []string `yaml:"placeholder"`

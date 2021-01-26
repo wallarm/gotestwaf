@@ -95,14 +95,16 @@ func Run() int {
 		return 1
 	}
 
-	reportFile := filepath.Join(cfg.ReportDir, reportPrefix+"-"+time.Now().Format("2006-January-02-11-06")+".pdf")
+	reportTime := time.Now().Format("2006-January-02-15-04-05")
+
+	reportFile := filepath.Join(cfg.ReportDir, reportPrefix+"-"+reportTime+".pdf")
 	err = db.ExportToPDFAndShowTable(reportFile)
 	if err != nil {
 		logger.Println("exporting report:", err)
 		return 1
 	}
 
-	payloadFiles := filepath.Join(cfg.ReportDir, payloadPrefix+"-"+time.Now().Format("2006-January-02-11-06")+".csv")
+	payloadFiles := filepath.Join(cfg.ReportDir, payloadPrefix+"-"+reportTime+".csv")
 	err = db.ExportPayloads(payloadFiles)
 	if err != nil {
 		logger.Println("exporting payloads:", err)
@@ -117,7 +119,7 @@ func parseFlags() {
 
 	flag.String("url", "http://localhost/", "URL to check")
 	flag.String("proxy", "", "Proxy URL to use")
-	flag.Bool("tlsverify", false, "If true, the received TLS certificate will be verified")
+	flag.Bool("tlsVerify", false, "If true, the received TLS certificate will be verified")
 	flag.Int("maxIdleConns", 2, "The maximum number of keep-alive connections")
 	flag.Int("maxRedirects", 50, "The maximum number of handling redirects")
 	flag.Int("idleConnTimeout", 2, "The maximum amount of time a keep-alive connection will live")

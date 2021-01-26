@@ -12,9 +12,9 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func Load(testCasesPath string, logger *log.Logger) ([]TestCase, error) {
+func Load(testCasesPath string, logger *log.Logger) ([]Case, error) {
 	var files []string
-	var testCases []TestCase
+	var testCases []Case
 
 	if testCasesPath == "" {
 		return nil, errors.New("empty test cases path")
@@ -44,7 +44,7 @@ func Load(testCasesPath string, logger *log.Logger) ([]TestCase, error) {
 			return nil, err
 		}
 
-		var testCase TestCase
+		var testCase Case
 		err = yaml.Unmarshal(yamlFile, &testCase)
 		if err != nil {
 			return nil, err

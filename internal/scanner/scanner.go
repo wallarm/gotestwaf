@@ -154,13 +154,13 @@ func (s *Scanner) scanURL(ctx context.Context, url string, w *testWork) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to check passed or not:")
 	}
-	t := &test.Test{
-		TestSet:     w.set,
-		TestCase:    w.name,
-		Payload:     w.payload,
-		Encoder:     w.encoder,
-		Placeholder: w.placeholder,
-		StatusCode:  statusCode,
+	t := &test.Info{
+		Set:                w.set,
+		Case:               w.name,
+		Payload:            w.payload,
+		Encoder:            w.encoder,
+		Placeholder:        w.placeholder,
+		ResponseStatusCode: statusCode,
 	}
 	if (blocked && passed) || (!blocked && !passed) {
 		s.db.UpdateNaTests(t, s.cfg.NonBlockedAsPassed)

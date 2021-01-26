@@ -7,13 +7,13 @@ import (
 type DB struct {
 	mu          sync.Mutex
 	counters    map[string]map[string]map[bool]int
-	passedTests []Test
-	failedTests []Test
-	naTests     []Test
-	tests       []TestCase
+	passedTests []Info
+	failedTests []Info
+	naTests     []Info
+	tests       []Case
 }
 
-func NewDB(tests []TestCase) *DB {
+func NewDB(tests []Case) *DB {
 	r := DB{
 		counters: make(map[string]map[string]map[bool]int),
 		tests:    tests,
@@ -30,27 +30,27 @@ func NewDB(tests []TestCase) *DB {
 	return &r
 }
 
-func (db *DB) UpdatePassedTests(t *Test) {
+func (db *DB) UpdatePassedTests(t *Info) {
 	db.mu.Lock()
-	db.counters[t.TestSet][t.TestCase][true]++
+	db.counters[t.Set][t.Case][true]++
 	db.passedTests = append(db.passedTests, *t)
 	defer db.mu.Unlock()
 }
 
-func (db *DB) UpdateNaTests(t *Test, tpe bool) {
+func (db *DB) UpdateNaTests(t *Info, tpe bool) {
 	db.mu.Lock()
-	db.counters[t.TestSet][t.TestCase][tpe]++
+	db.counters[t.Set][t.Case][tpe]++
 	db.passedTests = append(db.passedTests, *t)
 	defer db.mu.Unlock()
 }
 
-func (db *DB) UpdateFailedTests(t *Test) {
+func (db *DB) UpdateFailedTests(t *Info) {
 	db.mu.Lock()
-	db.counters[t.TestSet][t.TestCase][false]++
+	db.counters[t.Set][t.Case][false]++
 	db.failedTests = append(db.failedTests, *t)
 	defer db.mu.Unlock()
 }
 
-func (db *DB) GetTests() []TestCase {
+func (db *DB) GetTests() []Case {
 	return db.tests
 }

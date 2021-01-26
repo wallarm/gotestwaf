@@ -2,9 +2,8 @@ package test
 
 import (
 	"fmt"
-	"sort"
-
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -19,6 +18,10 @@ const (
 
 	wallarmLink = "https://wallarm.com/?utm_campaign=gtw_tool&utm_medium=pdf&utm_source=github"
 	trollLink   = "http://troll.wallarm.tools/assets/wallarm.logo.png"
+
+	cellWidth     = 10
+	cellHeight    = 10
+	lineBreakSize = 10
 )
 
 func tableClip(pdf *gofpdf.Fpdf, cols []float64, rows [][]string, fontSize float64) {
@@ -35,8 +38,8 @@ func tableClip(pdf *gofpdf.Fpdf, cols []float64, rows [][]string, fontSize float
 
 		x, y := pdf.GetXY()
 
-		//found max number of lines in the cell to create one size cells in the row
-		var nLines = make([]int, len(row))
+		// Founds max number of lines in the cell to create one size cells in the row.
+		nLines := make([]int, len(row))
 		var maxNLine int
 		for i, txt := range row {
 			width := cols[i]
@@ -58,7 +61,6 @@ func tableClip(pdf *gofpdf.Fpdf, cols []float64, rows [][]string, fontSize float
 			}
 			width := cols[i]
 
-
 			if nLines[i] < maxNLine {
 				// draw one line cell with height of highest cell in the row
 				pdf.MultiCell(width, height*float64(maxNLine), txt, "1", "", false)
@@ -70,7 +72,7 @@ func tableClip(pdf *gofpdf.Fpdf, cols []float64, rows [][]string, fontSize float
 			x += width
 			pdf.SetXY(x, y)
 		}
-		pdf.Ln(height*float64(maxNLine))
+		pdf.Ln(height * float64(maxNLine))
 	}
 }
 
@@ -133,13 +135,13 @@ func (db *DB) ExportToPDFAndShowTable(reportFile string) error {
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
 	pdf.SetFont("Arial", "", 24)
-	pdf.Cell(10, 10, fmt.Sprintf("WAF score: %.2f%%", wafScore))
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF score: %.2f%%", wafScore))
 
-	pdf.Ln(10)
+	pdf.Ln(lineBreakSize)
 	pdf.SetFont("Arial", "", 12)
-	pdf.Cell(10, 10, fmt.Sprintf("%v bypasses in %v tests / %v test cases",
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("%v bypasses in %v tests / %v test cases",
 		overallTestsFailed, overallTestsCompleted, overallTestcasesCompleted))
-	pdf.Ln(10)
+	pdf.Ln(lineBreakSize)
 
 	tableClip(pdf, cols, rows, 12)
 
@@ -155,14 +157,20 @@ func (db *DB) ExportToPDFAndShowTable(reportFile string) error {
 	for _, failedTest := range db.failedTests {
 		payload := fmt.Sprintf("%+q", failedTest.Payload)
 		payload = strings.ReplaceAll(payload[1:len(payload)-1], `\"`, `"`)
-		rows = append(rows, []string{payload, failedTest.TestCase, failedTest.Encoder, failedTest.Placeholder, strconv.Itoa(failedTest.StatusCode)})
+		rows = append(rows,
+			[]string{payload,
+				failedTest.Case,
+				failedTest.Encoder,
+				failedTest.Placeholder,
+				strconv.Itoa(failedTest.ResponseStatusCode)},
+		)
 	}
 	pdf.SetFont("Arial", "", 24)
-	pdf.Cell(10, 10, "Bypasses in details.")
-	pdf.Ln(10)
+	pdf.Cell(cellWidth, cellHeight, "Bypasses in details.")
+	pdf.Ln(lineBreakSize)
 	pdf.SetFont("Arial", "", 12)
-	pdf.Cell(10, 10, fmt.Sprintf("\n%d malicious requests have bypassed the WAF", len(db.failedTests)))
-	pdf.Ln(10)
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("\n%d malicious requests have bypassed the WAF", len(db.failedTests)))
+	pdf.Ln(lineBreakSize)
 	pdf.SetFont("Arial", "", 10)
 
 	tableClip(pdf, cols, rows, 10)
@@ -176,15 +184,21 @@ func (db *DB) ExportToPDFAndShowTable(reportFile string) error {
 	for _, naTest := range db.naTests {
 		payload := fmt.Sprintf("%+q", naTest.Payload)
 		payload = strings.ReplaceAll(payload[1:len(payload)-1], `\"`, `"`)
-		rows = append(rows, []string{payload, naTest.TestCase, naTest.Encoder, naTest.Placeholder, strconv.Itoa(naTest.StatusCode)})
+		rows = append(rows,
+			[]string{payload,
+				naTest.Case,
+				naTest.Encoder,
+				naTest.Placeholder,
+				strconv.Itoa(naTest.ResponseStatusCode)},
+		)
 	}
 	pdf.SetFont("Arial", "", 24)
-	pdf.Cell(10, 10, "Unresolved test cases")
-	pdf.Ln(10)
+	pdf.Cell(cellWidth, cellHeight, "Unresolved test cases")
+	pdf.Ln(lineBreakSize)
 	pdf.SetFont("Arial", "", 12)
-	pdf.Cell(10, 10, fmt.Sprintf("\n%d requests indentified as blocked and passed or as not-blocked and not-passed",
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("\n%d requests indentified as blocked and passed or as not-blocked and not-passed",
 		len(db.naTests)))
-	pdf.Ln(10)
+	pdf.Ln(lineBreakSize)
 	pdf.SetFont("Arial", "", 10)
 
 	tableClip(pdf, cols, rows, 10)

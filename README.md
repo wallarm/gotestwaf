@@ -97,17 +97,17 @@ Usage of /go/src/gotestwaf/gotestwaf:
   --proxy string          
         Proxy URL to use
   --randomDelay int       
-        Random delay in ms in addition to --sendDelay (default 300)
+        Random delay in ms in addition to --sendDelay (default 400)
   --reportDir string      
         A directory to store reports (default "/tmp/gotestwaf/")
   --sendDelay int         
-        Delay in ms between requests (default 300)
+        Delay in ms between requests (default 400)
   --testcases string      
         Path to a folder with test cases (default "./testcases/")
-  --tlsverify             
+  --tlsVerify             
         If true, the received TLS certificate will be verified
   --url string            
         URL to check (default "http://localhost/")
   --workers int
-        The number of workers to scan (default 600)
+        The number of workers to scan (default 200)
 ```
