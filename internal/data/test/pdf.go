@@ -2,6 +2,7 @@ package test
 
 import (
 	"fmt"
+	"sort"
 
 	"os"
 	"strconv"
@@ -59,8 +60,19 @@ func (db *DB) ExportToPDFAndShowTable(reportFile string) error {
 
 	rows = append(rows, []string{"Test set", "Test case", "Passed, %", "Passed/Blocked", "Failed/Bypassed"})
 
+	sortedTestSets := make([]string, 0, len(db.counters))
 	for testSet := range db.counters {
+		sortedTestSets = append(sortedTestSets, testSet)
+	}
+	sort.Strings(sortedTestSets)
+
+	for _, testSet := range sortedTestSets {
+		sortedTestCases := make([]string, 0, len(db.counters[testSet]))
 		for testCase := range db.counters[testSet] {
+			sortedTestCases = append(sortedTestCases, testCase)
+		}
+		sort.Strings(sortedTestCases)
+		for _, testCase := range sortedTestCases {
 			passed := db.counters[testSet][testCase][true]
 			failed := db.counters[testSet][testCase][false]
 			total := passed + failed

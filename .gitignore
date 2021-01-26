@@ -1,4 +1,5 @@
 gotestwaf
+main
 *.pdf
 chromedp/*
 .idea
