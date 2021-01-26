@@ -5,7 +5,6 @@ import (
 
 	"os"
 	"strconv"
-	"strings"
 
 	"github.com/jung-kurt/gofpdf"
 	"github.com/jung-kurt/gofpdf/contrib/httpimg"
