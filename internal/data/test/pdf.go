@@ -122,7 +122,7 @@ func (db *DB) ExportToPDFAndShowTable(reportFile string) error {
 
 	// Create a table.
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Test Set", "Test Case", "Passed", "Blocked", "Failed/Bypassed"})
+	table.SetHeader([]string{"Test Set", "Test Case", "Passed", "Passed/Blocked", "Failed/Bypassed"})
 	table.SetFooter([]string{"", "", "", "WAF Score:", fmt.Sprintf("%.2f%%", wafScore)})
 
 	for _, v := range rows[1:] {

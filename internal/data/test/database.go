@@ -32,25 +32,25 @@ func NewDB(tests []Case) *DB {
 
 func (db *DB) UpdatePassedTests(t *Info) {
 	db.mu.Lock()
+	defer db.mu.Unlock()
 	db.counters[t.Set][t.Case][true]++
 	db.passedTests = append(db.passedTests, *t)
-	defer db.mu.Unlock()
 }
 
-func (db *DB) UpdateNaTests(t *Info, tpe bool) {
+func (db *DB) UpdateNaTests(t *Info, nonBlockedAsPassed bool) {
 	db.mu.Lock()
-	db.counters[t.Set][t.Case][tpe]++
-	db.passedTests = append(db.passedTests, *t)
 	defer db.mu.Unlock()
+	db.counters[t.Set][t.Case][nonBlockedAsPassed]++
+	db.naTests = append(db.naTests, *t)
 }
 
 func (db *DB) UpdateFailedTests(t *Info) {
 	db.mu.Lock()
+	defer db.mu.Unlock()
 	db.counters[t.Set][t.Case][false]++
 	db.failedTests = append(db.failedTests, *t)
-	defer db.mu.Unlock()
 }
 
-func (db *DB) GetTests() []Case {
+func (db *DB) GetTestCases() []Case {
 	return db.tests
 }

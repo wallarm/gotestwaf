@@ -17,8 +17,8 @@ import (
 const preCheckVector = "<script>alert('union select password from users')</script>"
 
 type testWork struct {
-	set            string
-	name           string
+	setName        string
+	caseName       string
 	payload        string
 	encoder        string
 	placeholder    string
@@ -118,7 +118,7 @@ func (s *Scanner) Run(ctx context.Context, url string) error {
 
 func (s *Scanner) produceTests(ctx context.Context, n int) <-chan *testWork {
 	testChan := make(chan *testWork, n)
-	testCases := s.db.GetTests()
+	testCases := s.db.GetTestCases()
 
 	go func() {
 		defer close(testChan)
@@ -126,7 +126,13 @@ func (s *Scanner) produceTests(ctx context.Context, n int) <-chan *testWork {
 			for _, payload := range t.Payloads {
 				for _, e := range t.Encoders {
 					for _, placeholder := range t.Placeholders {
-						wrk := &testWork{t.Set, t.Name, payload, e, placeholder, t.Type}
+						wrk := &testWork{t.Set,
+							t.Name,
+							payload,
+							e,
+							placeholder,
+							t.IsTruePositive,
+						}
 						select {
 						case testChan <- wrk:
 						case <-ctx.Done():
@@ -150,29 +156,30 @@ func (s *Scanner) scanURL(ctx context.Context, url string, w *testWork) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to check blocking:")
 	}
+
 	passed, err := s.CheckPass(body, statusCode)
 	if err != nil {
 		return errors.Wrap(err, "failed to check passed or not:")
 	}
-	t := &test.Info{
-		Set:                w.set,
-		Case:               w.name,
+
+	info := &test.Info{
+		Set:                w.setName,
+		Case:               w.caseName,
 		Payload:            w.payload,
 		Encoder:            w.encoder,
 		Placeholder:        w.placeholder,
 		ResponseStatusCode: statusCode,
 	}
 	if (blocked && passed) || (!blocked && !passed) {
-		s.db.UpdateNaTests(t, s.cfg.NonBlockedAsPassed)
+		s.db.UpdateNaTests(info, s.cfg.NonBlockedAsPassed)
 	} else {
-		// true positives
+		// true negatives for malicious payloads (IsTruePositive is true)
+		// and false positives checks (IsTruePositive is false)
 		if (blocked && w.isTruePositive) ||
-			// true negatives for malicious payloads (Type is true)
-			// and false positives checks (Type is false)
 			(!blocked && !w.isTruePositive) {
-			s.db.UpdatePassedTests(t)
+			s.db.UpdatePassedTests(info)
 		} else {
-			s.db.UpdateFailedTests(t)
+			s.db.UpdateFailedTests(info)
 		}
 	}
 	return nil

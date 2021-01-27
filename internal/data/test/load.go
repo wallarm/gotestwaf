@@ -44,20 +44,20 @@ func Load(testCasesPath string, logger *log.Logger) ([]Case, error) {
 			return nil, err
 		}
 
-		var testCase Case
-		err = yaml.Unmarshal(yamlFile, &testCase)
+		var t Case
+		err = yaml.Unmarshal(yamlFile, &t)
 		if err != nil {
 			return nil, err
 		}
 
-		testCase.Name = testCaseName
-		testCase.Set = testSetName
+		t.Name = testCaseName
+		t.Set = testSetName
 		if strings.Contains(testSetName, "false") {
-			testCase.Type = false // test case is false positive
+			t.IsTruePositive = false // test case is false positive
 		} else {
-			testCase.Type = true // test case is true positive
+			t.IsTruePositive = true // test case is true positive
 		}
-		testCases = append(testCases, testCase)
+		testCases = append(testCases, t)
 	}
 
 	return testCases, nil

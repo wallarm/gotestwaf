@@ -10,10 +10,10 @@ type Info struct {
 }
 
 type Case struct {
-	Payloads     []string `yaml:"payload"`
-	Encoders     []string `yaml:"encoder"`
-	Placeholders []string `yaml:"placeholder"`
-	Set          string
-	Name         string
-	Type         bool
+	Payloads       []string `yaml:"payload"`
+	Encoders       []string `yaml:"encoder"`
+	Placeholders   []string `yaml:"placeholder"`
+	Set            string
+	Name           string
+	IsTruePositive bool
 }
