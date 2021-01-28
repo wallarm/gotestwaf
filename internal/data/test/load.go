@@ -9,18 +9,19 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/wallarm/gotestwaf/internal/data/config"
 	"gopkg.in/yaml.v2"
 )
 
-func Load(testCasesPath string, logger *log.Logger) ([]Case, error) {
+func Load(cfg *config.Config, logger *log.Logger) ([]Case, error) {
 	var files []string
 	var testCases []Case
 
-	if testCasesPath == "" {
+	if cfg.TestCasesPath == "" {
 		return nil, errors.New("empty test cases path")
 	}
 
-	if err := filepath.Walk(testCasesPath, func(path string, info os.FileInfo, err error) error {
+	if err := filepath.Walk(cfg.TestCasesPath, func(path string, info os.FileInfo, err error) error {
 		files = append(files, path)
 		return nil
 	}); err != nil {
@@ -56,6 +57,10 @@ func Load(testCasesPath string, logger *log.Logger) ([]Case, error) {
 			t.IsTruePositive = false // test case is false positive
 		} else {
 			t.IsTruePositive = true // test case is true positive
+		}
+
+		if cfg.TestCase != "" && t.Name != cfg.TestCase {
+				continue
 		}
 		testCases = append(testCases, t)
 	}

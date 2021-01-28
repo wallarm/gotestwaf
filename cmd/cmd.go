@@ -45,7 +45,7 @@ func Run() int {
 	defer cancel()
 
 	logger.Println("Test cases loading started")
-	testCases, err := test.Load(cfg.TestCasesPath, logger)
+	testCases, err := test.Load(cfg, logger)
 	if err != nil {
 		logger.Println("loading test cases:", err)
 		return 1
@@ -135,6 +135,7 @@ func parseFlags() {
 	flag.Int("workers", 200, "The number of workers to scan")
 	flag.Int("sendDelay", 400, "Delay in ms between requests")
 	flag.Int("randomDelay", 400, "Random delay in ms in addition to the delay between requests")
+	flag.String("testCase", "", "If set then only this test case will be run")
 	flag.String("testCasesPath", "./testcases/", "Path to a folder with test cases")
 	flag.String("reportDir", "/tmp/gotestwaf/", "A directory to store reports")
 
