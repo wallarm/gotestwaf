@@ -20,33 +20,29 @@ func SOAPBody(requestURL, payload string) (*http.Request, error) {
 		return nil, err
 	}
 
+	param = "ab" + param
+
 	encodedPayload, err := encoder.Apply("XMLEntity", payload)
 	if err != nil {
 		return nil, err
 	}
 
-	soapPayload := fmt.Sprintf(`
-      <?xml version="1.0" encoding="UTF-8"?>
-      <soapenv:Envelope
-              xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-              xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-        <soapenv:Header>
-          <ns1:RequestHeader
-               soapenv:actor="http://schemas.xmlsoap.org/soap/actor/next"
-               soapenv:mustUnderstand="0"
-               xmlns:ns1="https://www.google.com/apis/ads/publisher/v202002">
-          </ns1:RequestHeader>
-        </soapenv:Header>
-        <soapenv:Body>
-          <getAdUnitsByStatement xmlns="https://www.google.com/apis/ads/publisher/v202002">
-            <filterStatement>
-              <%s>%s</%s>
-            </filterStatement>
-          </getAdUnitsByStatement>
-        </soapenv:Body>
-      </soapenv:Envelope>
-      `, param, encodedPayload, param)
+	soapPayload := fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<soapenv:Header>
+		<ns1:RequestHeader soapenv:actor="http://schemas.xmlsoap.org/soap/actor/next"
+               soapenv:mustUnderstand="0" xmlns:ns1="https://www.google.com/apis/ads/publisher/v202002">
+		</ns1:RequestHeader>
+	</soapenv:Header>
+	<soapenv:Body>
+		<getAdUnitsByStatement xmlns="https://www.google.com/apis/ads/publisher/v202002">
+			<filterStatement>
+				<%s>%s</%s>
+			</filterStatement>
+		</getAdUnitsByStatement>
+	</soapenv:Body>
+</soapenv:Envelope>`, param, encodedPayload, param)
 	req, err := http.NewRequest("POST", reqURL.String(), strings.NewReader(soapPayload))
 	if err != nil {
 		return nil, err

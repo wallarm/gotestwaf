@@ -1,5 +1,10 @@
 package encoder
 
+import (
+	"bytes"
+	"encoding/xml"
+)
+
 type XMLEntityEncoder struct {
 	name string
 }
@@ -11,9 +16,9 @@ func (enc XMLEntityEncoder) GetName() *string {
 }
 
 func (enc XMLEntityEncoder) Encode(data string) (string, error) {
-	ret := ""
-	for _, v := range data {
-		ret += "&#x" + string(v) + ";"
+	b := bytes.NewBufferString("")
+	if err := xml.NewEncoder(b).Encode(data); err != nil {
+		return "", err
 	}
-	return ret, nil
+	return b.String(), nil
 }
