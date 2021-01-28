@@ -59,10 +59,18 @@ func Load(cfg *config.Config, logger *log.Logger) ([]Case, error) {
 			t.IsTruePositive = true // test case is true positive
 		}
 
+		if cfg.TestSet != "" && t.Set != cfg.TestSet {
+			continue
+		}
+
 		if cfg.TestCase != "" && t.Name != cfg.TestCase {
-				continue
+			continue
 		}
 		testCases = append(testCases, t)
+	}
+
+	if testCases == nil {
+		return nil, errors.New("no tests were selected")
 	}
 
 	return testCases, nil

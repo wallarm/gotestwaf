@@ -115,7 +115,7 @@ func Run() int {
 
 func parseFlags() {
 	flag.StringVar(&configPath, "configPath", "config.yaml", "Path to a config file")
-	flag.BoolVar(&verbose, "verbose", true, "Enable verbose logging")
+	flag.BoolVar(&verbose, "verbose", true, "If true, enable verbose logging")
 
 	flag.String("url", "http://localhost/", "URL to check")
 	flag.String("proxy", "", "Proxy URL to use")
@@ -137,6 +137,7 @@ func parseFlags() {
 	flag.Int("randomDelay", 400, "Random delay in ms in addition to the delay between requests")
 	flag.String("testCase", "", "If set then only this test case will be run")
 	flag.String("testCasesPath", "./testcases/", "Path to a folder with test cases")
+	flag.String("testSet", "", "If set then only this test set's cases will be run")
 	flag.String("reportDir", "/tmp/gotestwaf/", "A directory to store reports")
 
 	flag.Parse()

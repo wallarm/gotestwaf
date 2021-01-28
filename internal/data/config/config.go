@@ -20,7 +20,8 @@ type Config struct {
 	Workers            int               `mapstructure:"workers"`
 	RandomDelay        int               `mapstructure:"randomDelay"`
 	SendDelay          int               `mapstructure:"sendDelay"`
-	TestCasesPath      string            `mapstructure:"testCasesPath"`
 	ReportDir          string            `mapstructure:"reportDir"`
 	TestCase           string            `mapstructure:"testCase"`
+	TestCasesPath      string            `mapstructure:"testCasesPath"`
+	TestSet            string            `mapstructure:"testSet"`
 }
