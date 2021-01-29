@@ -4,7 +4,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -12,6 +11,8 @@ import (
 	"github.com/wallarm/gotestwaf/internal/data/config"
 	"gopkg.in/yaml.v2"
 )
+
+const testCaseExt = ".yml"
 
 func Load(cfg *config.Config, logger *log.Logger) ([]Case, error) {
 	var files []string
@@ -30,13 +31,16 @@ func Load(cfg *config.Config, logger *log.Logger) ([]Case, error) {
 
 	logger.Println("Loading test cases: ")
 	for _, testCaseFile := range files {
-		if filepath.Ext(testCaseFile) != ".yml" {
+		if filepath.Ext(testCaseFile) != testCaseExt {
 			continue
 		}
 
+		// Ignore subdirectories, process as .../<testSetName>/<testCaseName>/<case>.yml
 		parts := strings.Split(testCaseFile, "/")
+		parts = parts[len(parts)-3:]
+
 		testSetName := parts[1]
-		testCaseName := strings.TrimSuffix(parts[2], path.Ext(parts[2]))
+		testCaseName := strings.TrimSuffix(parts[2], testCaseExt)
 
 		if cfg.TestSet != "" && testSetName != cfg.TestSet {
 			continue
