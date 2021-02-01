@@ -26,7 +26,7 @@ Like URL parameter, URI, POST form parameter, or JSON POST body.
 # Quick start
 ```
 docker build . --force-rm -t gotestwaf
-docker run -v /tmp:/tmp/report gotestwaf --url=https://the-waf-you-wanna-test/
+docker run -v /tmp:/tmp/gotestwaf gotestwaf --url=https://the-waf-you-wanna-test/
 ```
 
 Find the report file waf-test-report-<date>.pdf in a /tmp folder you mapped to /tmp/report inside the container.
@@ -47,7 +47,7 @@ You may choose the PARANOIA level to increase the level of security.
 Learn more https://coreruleset.org/faq/
 
 #### Run gotestwaf
-`docker run -v /tmp:/tmp/report gotestwaf --url=http://the-waf-you-wanna-test/`
+`docker run -v /tmp:/tmp/gotestwaf gotestwaf --url=http://the-waf-you-wanna-test/`
 
 #### Check results
 ```
@@ -97,15 +97,23 @@ Usage of /go/src/gotestwaf/gotestwaf:
   --proxy string          
         Proxy URL to use
   --randomDelay int       
-        Random delay in ms in addition to --sendDelay (default 500)
+        Random delay in ms in addition to --sendDelay (default 400)
   --reportDir string      
         A directory to store reports (default "/tmp/gotestwaf/")
   --sendDelay int         
-        Delay in ms between requests (default 500)
-  --testcases string      
+        Delay in ms between requests (default 400)
+  --testCase string
+          If set, then only this test case will be run
+  --testCasesPath string      
         Path to a folder with test cases (default "./testcases/")
-  --tlsverify             
+  --testSet string
+          If set, then only this test set's cases will be run
+  --tlsVerify             
         If true, the received TLS certificate will be verified
   --url string            
         URL to check (default "http://localhost/")
+  --verbose                
+        If true, enable verbose logging (default true)
+  --workers int
+        The number of workers to scan (default 200)
 ```
