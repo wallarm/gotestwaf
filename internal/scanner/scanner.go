@@ -58,16 +58,16 @@ func (s *Scanner) CheckPass(body []byte, statusCode int) (bool, error) {
 	return statusCode == s.cfg.PassStatusCode, nil
 }
 
-func (s *Scanner) PreCheck(url string) (bool, int, error) {
+func (s *Scanner) PreCheck(url string) (blocked bool, statusCode int, err error) {
 	body, code, err := s.httpClient.Send(context.Background(), url, "URLParam", "URL", preCheckVector)
 	if err != nil {
 		return false, 0, err
 	}
-	ok, err := s.CheckBlocking(body, code)
+	blocked, err = s.CheckBlocking(body, code)
 	if err != nil {
 		return false, 0, err
 	}
-	return ok, code, nil
+	return blocked, code, nil
 }
 
 func (s *Scanner) Run(ctx context.Context, url string) error {
