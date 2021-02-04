@@ -57,7 +57,9 @@ func NewHTTPClient(cfg *config.Config) *HTTPClient {
 	}
 }
 
-func (c *HTTPClient) Send(ctx context.Context, targetURL, placeholderName, encoderName, payload string) ([]byte, int, error) {
+func (c *HTTPClient) Send(
+	ctx context.Context, targetURL, placeholderName, encoderName, payload string) (
+	body []byte, statusCode int, err error) {
 	encodedPayload, err := encoder.Apply(encoderName, payload)
 	if err != nil {
 		return nil, 0, errors.Wrap(err, "encoding payload")
@@ -80,11 +82,11 @@ func (c *HTTPClient) Send(ctx context.Context, targetURL, placeholderName, encod
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, 0, errors.Wrap(err, "reading response body")
 	}
-	statusCode := resp.StatusCode
+	statusCode = resp.StatusCode
 
 	if len(resp.Cookies()) > 0 {
 		c.cookies = append(c.cookies, resp.Cookies()...)

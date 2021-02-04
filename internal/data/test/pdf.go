@@ -77,14 +77,11 @@ func tableClip(pdf *gofpdf.Fpdf, cols []float64, rows [][]string, fontSize float
 }
 
 func (db *DB) ExportToPDFAndShowTable(reportFile string) error {
-	// Process data.
 	var rows [][]string
-	overallPassedRate := float32(0)
-	overallTestsCompleted := 0
-	overallTestsFailed := 0
-	overallTestcasesCompleted := float32(0)
+	var overallPassedRate, overallTestcasesCompleted float32
+	var overallTestsCompleted, overallTestsFailed int
 
-	rows = append(rows, []string{"Test set", "Test case", "Passed, %", "Passed/Blocked", "Failed/Bypassed"})
+	rows = append(rows, []string{"Test set", "Test case", "Percentage, %", "Passed/Blocked", "Failed/Bypassed"})
 
 	sortedTestSets := make([]string, 0, len(db.counters))
 	for testSet := range db.counters {
@@ -104,7 +101,12 @@ func (db *DB) ExportToPDFAndShowTable(reportFile string) error {
 			total := passed + failed
 			overallTestsCompleted += total
 			overallTestsFailed += failed
-			percentage := float32(passed) / float32(total) * 100
+
+			var percentage float32 = 0
+			if total != 0 {
+				percentage = float32(passed) / float32(total) * 100
+			}
+
 			rows = append(rows,
 				[]string{
 					testSet,
@@ -122,7 +124,7 @@ func (db *DB) ExportToPDFAndShowTable(reportFile string) error {
 
 	// Create a table.
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Test Set", "Test Case", "Passed", "Passed/Blocked", "Failed/Bypassed"})
+	table.SetHeader([]string{"Test Set", "Test Case", "Percentage, %", "Passed/Blocked", "Failed/Bypassed"})
 	table.SetFooter([]string{"", "", "", "WAF Score:", fmt.Sprintf("%.2f%%", wafScore)})
 
 	for _, v := range rows[1:] {
