@@ -106,6 +106,10 @@ func (db *DB) ExportToPDFAndShowTable(reportFile string) error {
 			if total != 0 {
 				percentage = float32(passed) / float32(total) * 100
 			}
+			// Invert the score for the false positive test sets
+			if strings.Contains(testSet, "false") {
+				percentage = 100 - percentage
+			}
 
 			rows = append(rows,
 				[]string{
