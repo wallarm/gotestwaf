@@ -71,6 +71,20 @@ func Run() int {
 
 	logger.Printf("WAF pre-check: OK. Blocking status code: %v\n", httpStatus)
 
+	available, blocked, err := s.WSPreCheck(cfg.WS)
+	if !available && err != nil {
+		logger.Printf("WebSocket connection is not available, " +
+			"reason: %s\n", err)
+	}
+	if available && blocked && err != nil {
+		logger.Printf("WebSocket is available and payloads are " +
+			"blocked by the WAF, reason: %s\n", err)
+	}
+	if available && !blocked {
+		logger.Println("WebSocket is available and payloads are " +
+			"not blocked by the WAF")
+	}
+
 	_, err = os.Stat(cfg.ReportDir)
 	if os.IsNotExist(err) {
 		if makeErr := os.Mkdir(cfg.ReportDir, 0700); makeErr != nil {
@@ -118,6 +132,7 @@ func parseFlags() {
 	flag.BoolVar(&verbose, "verbose", true, "If true, enable verbose logging")
 
 	flag.String("url", "http://localhost/", "URL to check")
+	flag.String("ws", "ws://localhost/", "WS URL to check")
 	flag.String("proxy", "", "Proxy URL to use")
 	flag.Bool("tlsVerify", false, "If true, the received TLS certificate will be verified")
 	flag.Int("maxIdleConns", 2, "The maximum number of keep-alive connections")

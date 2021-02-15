@@ -5,6 +5,7 @@ import "net/http"
 type Config struct {
 	Cookies            []*http.Cookie
 	URL                string            `mapstructure:"url"`
+	WS                 string 			 `mapstructure:"ws"`
 	HTTPHeaders        map[string]string `mapstructure:"headers"`
 	TLSVerify          bool              `mapstructure:"tlsverify"`
 	Proxy              string            `mapstructure:"proxy"`

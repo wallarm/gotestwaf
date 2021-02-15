@@ -3,6 +3,7 @@ module github.com/wallarm/gotestwaf
 go 1.13
 
 require (
+	github.com/gorilla/websocket v1.4.2
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/olekukonko/tablewriter v0.0.4
