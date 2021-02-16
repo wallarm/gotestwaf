@@ -21,6 +21,8 @@ import (
 const (
 	reportPrefix  = "waf-evaluation-report"
 	payloadPrefix = "waf-evaluation-payloads"
+	reportsDir = "reports"
+	testCasesDir = "testcases"
 )
 
 var (
@@ -115,8 +117,8 @@ func Run() int {
 }
 
 func parseFlags() {
-	defaultReportDir := filepath.Join(os.TempDir(), "gotestwaf")
-	defaultTestCasesPath := filepath.Join(".", "testcases")
+	defaultReportDir := filepath.Join(".", reportsDir)
+	defaultTestCasesPath := filepath.Join(".", testCasesDir)
 
 	flag.StringVar(&configPath, "configPath", "config.yaml", "Path to a config file")
 	flag.BoolVar(&verbose, "verbose", true, "If true, enable verbose logging")
