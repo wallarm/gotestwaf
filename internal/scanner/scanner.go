@@ -107,7 +107,6 @@ func (s *Scanner) WSPreCheck(url string) (available bool, blocked bool, err erro
 				if err != nil {
 					return true, true, err
 				}
-				//return true, true, errors.New("Disconnect")
 		}
 	}
 

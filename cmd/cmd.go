@@ -4,6 +4,7 @@ import (
 	"context"
 	"io/ioutil"
 	"log"
+	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -29,6 +30,19 @@ var (
 	configPath string
 	verbose    bool
 )
+
+func WSFromURL(wafUrl string) (wsUrl string, err error) {
+	u, err := url.Parse(wafUrl)
+	if err != nil {
+		return "", err
+	}
+	wsScheme := "ws"
+	if u.Scheme == "https" {
+		wsScheme = "wss"
+	}
+	u.Scheme = wsScheme
+	return u.String(), nil
+}
 
 func Run() int {
 	logger := log.New(os.Stdout, "GOTESTWAF : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
@@ -74,12 +88,23 @@ func Run() int {
 
 	logger.Printf("WAF pre-check: OK. Blocking status code: %v\n", httpStatus)
 
+	// If WS URL is not available - try to build it from WAF URL
+	if cfg.WS == "" {
+		wsUrl, err := WSFromURL(cfg.URL)
+		if err != nil {
+			logger.Printf("Can not parse WAF URL, reason: %s\n", err)
+		}
+		cfg.WS = wsUrl
+	}
+
+	logger.Printf("WebSocket URL to check: %s\n", cfg.WS)
+
 	available, blocked, err := s.WSPreCheck(cfg.WS)
 	if !available && err != nil {
 		logger.Printf("WebSocket connection is not available, " +
 			"reason: %s\n", err)
 	}
-	if available && blocked && err != nil {
+	if available && blocked {
 		logger.Printf("WebSocket is available and payloads are " +
 			"blocked by the WAF, reason: %s\n", err)
 	}
@@ -138,7 +163,7 @@ func parseFlags() {
 	flag.BoolVar(&verbose, "verbose", true, "If true, enable verbose logging")
 
 	flag.String("url", "http://localhost/", "URL to check")
-	flag.String("ws", "ws://localhost/", "WS URL to check")
+	flag.String("ws", "", "WS URL to check")
 	flag.String("proxy", "", "Proxy URL to use")
 	flag.Bool("tlsVerify", false, "If true, the received TLS certificate will be verified")
 	flag.Int("maxIdleConns", 2, "The maximum number of keep-alive connections")
