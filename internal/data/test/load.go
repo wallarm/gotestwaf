@@ -8,8 +8,9 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/wallarm/gotestwaf/internal/data/config"
 	"gopkg.in/yaml.v2"
+
+	"github.com/wallarm/gotestwaf/internal/data/config"
 )
 
 const testCaseExt = ".yml"
@@ -36,7 +37,7 @@ func Load(cfg *config.Config, logger *log.Logger) ([]Case, error) {
 		}
 
 		// Ignore subdirectories, process as .../<testSetName>/<testCaseName>/<case>.yml
-		parts := strings.Split(testCaseFile, "/")
+		parts := strings.Split(testCaseFile, string(os.PathSeparator))
 		parts = parts[len(parts)-3:]
 
 		testSetName := parts[1]

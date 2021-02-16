@@ -1,6 +1,7 @@
 gotestwaf
 main
 *.pdf
+reports/waf*
 chromedp/*
 .idea
 .DS_store

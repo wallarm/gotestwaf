@@ -12,6 +12,7 @@ import (
 
 	flag "github.com/spf13/pflag"
 	"github.com/spf13/viper"
+
 	"github.com/wallarm/gotestwaf/internal/data/config"
 	"github.com/wallarm/gotestwaf/internal/data/test"
 	"github.com/wallarm/gotestwaf/internal/scanner"
@@ -20,6 +21,8 @@ import (
 const (
 	reportPrefix  = "waf-evaluation-report"
 	payloadPrefix = "waf-evaluation-payloads"
+	reportsDir = "reports"
+	testCasesDir = "testcases"
 )
 
 var (
@@ -128,6 +131,9 @@ func Run() int {
 }
 
 func parseFlags() {
+	defaultReportDir := filepath.Join(".", reportsDir)
+	defaultTestCasesPath := filepath.Join(".", testCasesDir)
+
 	flag.StringVar(&configPath, "configPath", "config.yaml", "Path to a config file")
 	flag.BoolVar(&verbose, "verbose", true, "If true, enable verbose logging")
 
@@ -151,9 +157,9 @@ func parseFlags() {
 	flag.Int("sendDelay", 400, "Delay in ms between requests")
 	flag.Int("randomDelay", 400, "Random delay in ms in addition to the delay between requests")
 	flag.String("testCase", "", "If set then only this test case will be run")
-	flag.String("testCasesPath", "./testcases/", "Path to a folder with test cases")
+	flag.String("testCasesPath", defaultTestCasesPath, "Path to a folder with test cases")
 	flag.String("testSet", "", "If set then only this test set's cases will be run")
-	flag.String("reportDir", "/tmp/gotestwaf/", "A directory to store reports")
+	flag.String("reportDir", defaultReportDir, "A directory to store reports")
 
 	flag.Parse()
 }
