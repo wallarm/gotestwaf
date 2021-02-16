@@ -81,8 +81,7 @@ func (s *Scanner) WSPreCheck(url string) (available bool, blocked bool, err erro
 	}
 
 	var WSpreCheckVectors = [...]string{
-		fmt.Sprintf("{\"message\": \"%s\"}", preCheckVector),
-		fmt.Sprintf("{\"%s\": \"%s\"}", preCheckVector, preCheckVector),
+		fmt.Sprintf("{\"message\": \"%[1]s\", \"%[1]s\": \"%[1]s\"}", preCheckVector),
 		preCheckVector,
 	}
 
