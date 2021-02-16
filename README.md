@@ -26,7 +26,7 @@ Like URL parameter, URI, POST form parameter, or JSON POST body.
 # Quick start
 ```
 docker build . --force-rm -t gotestwaf
-docker run -v ${PWD}:/go/src/gotestwaf/reports gotestwaf --url=https://the-waf-you-wanna-test/
+docker run -v ${PWD}/reports:/go/src/gotestwaf/reports gotestwaf --url=https://the-waf-you-wanna-test/
 ```
 
 Find the report file `waf-test-report-<date>.pdf` in a current folder that you mapped to `/go/src/gotestwaf/reports` inside the container.
@@ -47,7 +47,7 @@ You may choose the PARANOIA level to increase the level of security.
 Learn more https://coreruleset.org/faq/
 
 #### Run gotestwaf
-`docker run -v ${PWD}:/go/src/gotestwaf/reports gotestwaf --url=http://the-waf-you-wanna-test/`
+`docker run -v ${PWD}/reports:/go/src/gotestwaf/reports gotestwaf --url=http://the-waf-you-wanna-test/`
 
 #### Check results
 ```
