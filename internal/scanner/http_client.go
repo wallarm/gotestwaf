@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+
 	"github.com/wallarm/gotestwaf/internal/data/config"
 	"github.com/wallarm/gotestwaf/internal/payload/encoder"
 	"github.com/wallarm/gotestwaf/internal/payload/placeholder"
