@@ -115,7 +115,7 @@ func Run() int {
 }
 
 func parseFlags() {
-	defaultReportDir := filepath.Join(os.TempDir(), "gotestwaf")
+	defaultReportDir := filepath.Join(".", "reports")
 	defaultTestCasesPath := filepath.Join(".", "testcases")
 
 	flag.StringVar(&configPath, "configPath", "config.yaml", "Path to a config file")
