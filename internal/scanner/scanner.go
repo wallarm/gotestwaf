@@ -101,13 +101,13 @@ func (s *Scanner) WSPreCheck(url string) (bool, bool, error) {
 
 	for _, payload := range wsPreCheckVectors {
 		select {
-			case err := <- wsError:
+		case err := <-wsError:
+			return true, true, err
+		default:
+			err := wsClient.WriteMessage(websocket.TextMessage, []byte(payload))
+			if err != nil {
 				return true, true, err
-			default:
-				err := wsClient.WriteMessage(websocket.TextMessage, []byte(payload))
-				if err != nil {
-					return true, true, err
-				}
+			}
 		}
 	}
 

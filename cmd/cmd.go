@@ -22,8 +22,8 @@ import (
 const (
 	reportPrefix  = "waf-evaluation-report"
 	payloadPrefix = "waf-evaluation-payloads"
-	reportsDir = "reports"
-	testCasesDir = "testcases"
+	reportsDir    = "reports"
+	testCasesDir  = "testcases"
 )
 
 var (
@@ -101,11 +101,11 @@ func Run() int {
 
 	available, blocked, err := s.WSPreCheck(cfg.WebSocketURL)
 	if !available && err != nil {
-		logger.Printf("WebSocket connection is not available, " +
+		logger.Printf("WebSocket connection is not available, "+
 			"reason: %s\n", err)
 	}
 	if available && blocked {
-		logger.Printf("WebSocket is available and payloads are " +
+		logger.Printf("WebSocket is available and payloads are "+
 			"blocked by the WAF, reason: %s\n", err)
 	}
 	if available && !blocked {
