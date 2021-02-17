@@ -3,12 +3,13 @@ package scanner
 import (
 	"context"
 	"fmt"
-	"github.com/gorilla/websocket"
 	"log"
 	"math/rand"
 	"regexp"
 	"sync"
 	"time"
+
+	"github.com/gorilla/websocket"
 
 	"github.com/pkg/errors"
 
@@ -75,13 +76,13 @@ func (s *Scanner) PreCheck(url string) (blocked bool, statusCode int, err error)
 	return blocked, code, nil
 }
 
-func (s *Scanner) WSPreCheck(url string) (available bool, blocked bool, err error) {
+func (s *Scanner) WSPreCheck(url string) (bool, bool, error) {
 	wsClient, _, err := s.wsClient.Dial(url, nil)
 	if err != nil {
 		return false, false, err
 	}
 
-	var WSpreCheckVectors = [...]string{
+	wsPreCheckVectors := [...]string{
 		fmt.Sprintf("{\"message\": \"%[1]s\", \"%[1]s\": \"%[1]s\"}", preCheckVector),
 		preCheckVector,
 	}
@@ -98,7 +99,7 @@ func (s *Scanner) WSPreCheck(url string) (available bool, blocked bool, err erro
 		}
 	}()
 
-	for _, payload := range WSpreCheckVectors {
+	for _, payload := range wsPreCheckVectors {
 		select {
 			case err := <- wsError:
 				return true, true, err

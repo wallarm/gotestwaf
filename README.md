@@ -122,6 +122,6 @@ Usage of /go/src/gotestwaf/gotestwaf:
         If true, enable verbose logging (default true)
   --workers int
         The number of workers to scan (default 200)
-  --ws string
-        WS URL to check
+  --wsURL string
+        WebSocket URL to check
 ```

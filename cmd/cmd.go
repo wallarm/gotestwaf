@@ -31,17 +31,17 @@ var (
 	verbose    bool
 )
 
-func WSFromURL(wafUrl string) (wsUrl string, err error) {
-	u, err := url.Parse(wafUrl)
+func WSFromURL(wafUrl string) (string, error) {
+	urlParse, err := url.Parse(wafUrl)
 	if err != nil {
 		return "", err
 	}
 	wsScheme := "ws"
-	if u.Scheme == "https" {
+	if urlParse.Scheme == "https" {
 		wsScheme = "wss"
 	}
-	u.Scheme = wsScheme
-	return u.String(), nil
+	urlParse.Scheme = wsScheme
+	return urlParse.String(), nil
 }
 
 func Run() int {
@@ -89,17 +89,17 @@ func Run() int {
 	logger.Printf("WAF pre-check: OK. Blocking status code: %v\n", httpStatus)
 
 	// If WS URL is not available - try to build it from WAF URL
-	if cfg.WS == "" {
+	if cfg.WebSocketURL == "" {
 		wsUrl, err := WSFromURL(cfg.URL)
 		if err != nil {
 			logger.Printf("Can not parse WAF URL, reason: %s\n", err)
 		}
-		cfg.WS = wsUrl
+		cfg.WebSocketURL = wsUrl
 	}
 
-	logger.Printf("WebSocket URL to check: %s\n", cfg.WS)
+	logger.Printf("WebSocket URL to check: %s\n", cfg.WebSocketURL)
 
-	available, blocked, err := s.WSPreCheck(cfg.WS)
+	available, blocked, err := s.WSPreCheck(cfg.WebSocketURL)
 	if !available && err != nil {
 		logger.Printf("WebSocket connection is not available, " +
 			"reason: %s\n", err)
@@ -163,7 +163,7 @@ func parseFlags() {
 	flag.BoolVar(&verbose, "verbose", true, "If true, enable verbose logging")
 
 	flag.String("url", "http://localhost/", "URL to check")
-	flag.String("ws", "", "WS URL to check")
+	flag.String("wsURL", "", "WebSocket URL to check")
 	flag.String("proxy", "", "Proxy URL to use")
 	flag.Bool("tlsVerify", false, "If true, the received TLS certificate will be verified")
 	flag.Int("maxIdleConns", 2, "The maximum number of keep-alive connections")
