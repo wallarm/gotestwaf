@@ -2,11 +2,14 @@ package scanner
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"math/rand"
 	"regexp"
 	"sync"
 	"time"
+
+	"github.com/gorilla/websocket"
 
 	"github.com/pkg/errors"
 
@@ -31,6 +34,7 @@ type Scanner struct {
 	cfg        *config.Config
 	db         *test.DB
 	httpClient *HTTPClient
+	wsClient   *websocket.Dialer
 }
 
 func New(db *test.DB, logger *log.Logger, cfg *config.Config) *Scanner {
@@ -40,6 +44,7 @@ func New(db *test.DB, logger *log.Logger, cfg *config.Config) *Scanner {
 		logger:     logger,
 		cfg:        cfg,
 		httpClient: NewHTTPClient(cfg),
+		wsClient:   websocket.DefaultDialer,
 	}
 }
 
@@ -69,6 +74,44 @@ func (s *Scanner) PreCheck(url string) (blocked bool, statusCode int, err error)
 		return false, 0, err
 	}
 	return blocked, code, nil
+}
+
+func (s *Scanner) WSPreCheck(url string) (bool, bool, error) {
+	wsClient, _, err := s.wsClient.Dial(url, nil)
+	if err != nil {
+		return false, false, err
+	}
+
+	wsPreCheckVectors := [...]string{
+		fmt.Sprintf("{\"message\": \"%[1]s\", \"%[1]s\": \"%[1]s\"}", preCheckVector),
+		preCheckVector,
+	}
+
+	wsError := make(chan error, 1)
+
+	go func() {
+		defer close(wsError)
+		for {
+			_, _, err := wsClient.ReadMessage()
+			if err != nil {
+				wsError <- err
+			}
+		}
+	}()
+
+	for _, payload := range wsPreCheckVectors {
+		select {
+		case err := <-wsError:
+			return true, true, err
+		default:
+			err := wsClient.WriteMessage(websocket.TextMessage, []byte(payload))
+			if err != nil {
+				return true, true, err
+			}
+		}
+	}
+
+	return true, false, nil
 }
 
 func (s *Scanner) Run(ctx context.Context, url string) error {

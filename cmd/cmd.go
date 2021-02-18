@@ -4,6 +4,7 @@ import (
 	"context"
 	"io/ioutil"
 	"log"
+	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -21,14 +22,27 @@ import (
 const (
 	reportPrefix  = "waf-evaluation-report"
 	payloadPrefix = "waf-evaluation-payloads"
-	reportsDir = "reports"
-	testCasesDir = "testcases"
+	reportsDir    = "reports"
+	testCasesDir  = "testcases"
 )
 
 var (
 	configPath string
 	verbose    bool
 )
+
+func WSFromURL(wafUrl string) (string, error) {
+	urlParse, err := url.Parse(wafUrl)
+	if err != nil {
+		return "", err
+	}
+	wsScheme := "ws"
+	if urlParse.Scheme == "https" {
+		wsScheme = "wss"
+	}
+	urlParse.Scheme = wsScheme
+	return urlParse.String(), nil
+}
 
 func Run() int {
 	logger := log.New(os.Stdout, "GOTESTWAF : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
@@ -73,6 +87,31 @@ func Run() int {
 	}
 
 	logger.Printf("WAF pre-check: OK. Blocking status code: %v\n", httpStatus)
+
+	// If WS URL is not available - try to build it from WAF URL
+	if cfg.WebSocketURL == "" {
+		wsUrl, err := WSFromURL(cfg.URL)
+		if err != nil {
+			logger.Printf("Can not parse WAF URL, reason: %s\n", err)
+		}
+		cfg.WebSocketURL = wsUrl
+	}
+
+	logger.Printf("WebSocket URL to check: %s\n", cfg.WebSocketURL)
+
+	available, blocked, err := s.WSPreCheck(cfg.WebSocketURL)
+	if !available && err != nil {
+		logger.Printf("WebSocket connection is not available, "+
+			"reason: %s\n", err)
+	}
+	if available && blocked {
+		logger.Printf("WebSocket is available and payloads are "+
+			"blocked by the WAF, reason: %s\n", err)
+	}
+	if available && !blocked {
+		logger.Println("WebSocket is available and payloads are " +
+			"not blocked by the WAF")
+	}
 
 	_, err = os.Stat(cfg.ReportDir)
 	if os.IsNotExist(err) {
@@ -124,6 +163,7 @@ func parseFlags() {
 	flag.BoolVar(&verbose, "verbose", true, "If true, enable verbose logging")
 
 	flag.String("url", "http://localhost/", "URL to check")
+	flag.String("wsURL", "", "WebSocket URL to check")
 	flag.String("proxy", "", "Proxy URL to use")
 	flag.Bool("tlsVerify", false, "If true, the received TLS certificate will be verified")
 	flag.Int("maxIdleConns", 2, "The maximum number of keep-alive connections")
