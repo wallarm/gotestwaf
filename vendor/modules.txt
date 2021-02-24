@@ -1,5 +1,8 @@
 # github.com/fsnotify/fsnotify v1.4.7
 github.com/fsnotify/fsnotify
+# github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
+github.com/golang/freetype/raster
+github.com/golang/freetype/truetype
 # github.com/gorilla/websocket v1.4.2
 github.com/gorilla/websocket
 # github.com/hashicorp/hcl v1.0.0
@@ -41,6 +44,18 @@ github.com/spf13/pflag
 github.com/spf13/viper
 # github.com/subosito/gotenv v1.2.0
 github.com/subosito/gotenv
+# github.com/wcharczuk/go-chart v2.0.1+incompatible
+github.com/wcharczuk/go-chart
+github.com/wcharczuk/go-chart/drawing
+github.com/wcharczuk/go-chart/matrix
+github.com/wcharczuk/go-chart/roboto
+github.com/wcharczuk/go-chart/seq
+github.com/wcharczuk/go-chart/util
+# golang.org/x/image v0.0.0-20190910094157-69e4b8554b2a
+golang.org/x/image/draw
+golang.org/x/image/font
+golang.org/x/image/math/f64
+golang.org/x/image/math/fixed
 # golang.org/x/sys v0.0.0-20201223074533-0d417f636930
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
