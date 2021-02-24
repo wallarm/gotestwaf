@@ -1,6 +1,7 @@
 package test
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"sort"
@@ -8,10 +9,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/wcharczuk/go-chart/drawing"
+
 	"github.com/jung-kurt/gofpdf"
 	"github.com/jung-kurt/gofpdf/contrib/httpimg"
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
+	"github.com/wcharczuk/go-chart"
 )
 
 const (
@@ -23,6 +27,8 @@ const (
 	cellWidth     = 10
 	cellHeight    = 10
 	lineBreakSize = 10
+	pageWidth     = 210
+	pageHeight    = 297
 )
 
 func tableClip(pdf *gofpdf.Fpdf, cols []float64, rows [][]string, fontSize float64) {
@@ -75,6 +81,37 @@ func tableClip(pdf *gofpdf.Fpdf, cols []float64, rows [][]string, fontSize float
 		}
 		pdf.Ln(height * float64(maxNLine))
 	}
+}
+
+func drawChart(bypassed int, blocked int, overall int) (*bytes.Buffer, error) {
+	bypassedProc := float64(bypassed*100) / float64(overall)
+	blockedProc := 100.0 - bypassedProc
+	pie := chart.PieChart{
+		Width:  512,
+		Height: 512,
+		Values: []chart.Value{
+			{
+				Value: float64(bypassed),
+				Label: fmt.Sprintf("Bypassed (%.2f%%)", bypassedProc),
+				Style: chart.Style{
+					FillColor: drawing.ColorFromAlphaMixedRGBA(234, 67, 54, 255),
+				},
+			},
+			{
+				Value: float64(blocked),
+				Label: fmt.Sprintf("Blocked (%.2f%%)", blockedProc),
+				Style: chart.Style{
+					FillColor: drawing.ColorFromAlphaMixedRGBA(66, 133, 244, 255),
+				},
+			},
+		},
+	}
+	buffer := bytes.NewBuffer([]byte{})
+	err := pie.Render(chart.PNG, buffer)
+	if err != nil {
+		return buffer, err
+	}
+	return buffer, nil
 }
 
 func (db *DB) ExportToPDFAndShowTable(reportFile string, reportTime time.Time, WAFName string) error {
@@ -162,6 +199,19 @@ func (db *DB) ExportToPDFAndShowTable(reportFile string, reportTime time.Time, W
 
 	tableClip(pdf, cols, rows, 12)
 
+	pdf.Ln(lineBreakSize)
+	chartBuf, err := drawChart(overallTestsFailed, overallTestsCompleted-overallTestsFailed, overallTestsCompleted)
+	if err != nil {
+		return errors.Wrap(err, "Plot generation error")
+	}
+	imageInfo := pdf.RegisterImageReader("", "PNG", chartBuf)
+	if pdf.Ok() {
+		imgWd, imgHt := imageInfo.Extent()
+		imgWd, imgHt = imgWd/2, imgHt/2
+		pdf.Image("", (pageWidth-imgWd)/2, (pageHeight-imgHt)/2,
+			imgWd, imgHt, true, "PNG", 0, "")
+	}
+
 	httpimg.Register(pdf, trollLink, "")
 	pdf.Image(trollLink, 15, 280, 20, 0, false, "", 0, wallarmLink)
 
@@ -220,7 +270,7 @@ func (db *DB) ExportToPDFAndShowTable(reportFile string, reportTime time.Time, W
 
 	tableClip(pdf, cols, rows, 10)
 
-	err := pdf.OutputFileAndClose(reportFile)
+	err = pdf.OutputFileAndClose(reportFile)
 	if err != nil {
 		return errors.Wrap(err, "PDF generation error")
 	}
