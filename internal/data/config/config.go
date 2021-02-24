@@ -25,4 +25,5 @@ type Config struct {
 	TestCase           string            `mapstructure:"testCase"`
 	TestCasesPath      string            `mapstructure:"testCasesPath"`
 	TestSet            string            `mapstructure:"testSet"`
+	WAFName            string            `mapstructure:"wafName"`
 }

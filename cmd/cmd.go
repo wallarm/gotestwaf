@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/url"
@@ -20,6 +21,7 @@ import (
 )
 
 const (
+	wafName       = "generic"
 	reportPrefix  = "waf-evaluation-report"
 	payloadPrefix = "waf-evaluation-payloads"
 	reportsDir    = "reports"
@@ -137,16 +139,17 @@ func Run() int {
 		return 1
 	}
 
-	reportTime := time.Now().Format("2006-January-02-15-04-05")
+	reportTime := time.Now()
+	reportSaveTime := reportTime.Format("2006-January-02-15-04-05")
 
-	reportFile := filepath.Join(cfg.ReportDir, reportPrefix+"-"+reportTime+".pdf")
-	err = db.ExportToPDFAndShowTable(reportFile)
+	reportFile := filepath.Join(cfg.ReportDir, fmt.Sprintf("%s-%s-%s.pdf", reportPrefix, cfg.WAFName, reportSaveTime))
+	err = db.ExportToPDFAndShowTable(reportFile, reportTime, cfg.WAFName)
 	if err != nil {
 		logger.Println("exporting report:", err)
 		return 1
 	}
 
-	payloadFiles := filepath.Join(cfg.ReportDir, payloadPrefix+"-"+reportTime+".csv")
+	payloadFiles := filepath.Join(cfg.ReportDir, fmt.Sprintf("%s-%s-%s.csv", payloadPrefix, cfg.WAFName, reportSaveTime))
 	err = db.ExportPayloads(payloadFiles)
 	if err != nil {
 		logger.Println("exporting payloads:", err)
@@ -185,7 +188,7 @@ func parseFlags() {
 	flag.String("testCasesPath", defaultTestCasesPath, "Path to a folder with test cases")
 	flag.String("testSet", "", "If set then only this test set's cases will be run")
 	flag.String("reportDir", defaultReportDir, "A directory to store reports")
-
+	flag.String("wafName", wafName, "Name of the WAF product")
 	flag.Parse()
 }
 

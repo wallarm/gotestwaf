@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/jung-kurt/gofpdf"
 	"github.com/jung-kurt/gofpdf/contrib/httpimg"
@@ -76,10 +77,13 @@ func tableClip(pdf *gofpdf.Fpdf, cols []float64, rows [][]string, fontSize float
 	}
 }
 
-func (db *DB) ExportToPDFAndShowTable(reportFile string) error {
+func (db *DB) ExportToPDFAndShowTable(reportFile string, reportTime time.Time, WAFName string) error {
 	var rows [][]string
 	var overallPassedRate, overallTestcasesCompleted float32
 	var overallTestsCompleted, overallTestsFailed int
+
+	reportTableTime := reportTime.Format("2006-01-02")
+	reportPdfTime := reportTime.Format("02 January 2006")
 
 	rows = append(rows, []string{"Test set", "Test case", "Percentage, %", "Passed/Blocked", "Failed/Bypassed"})
 
@@ -129,7 +133,7 @@ func (db *DB) ExportToPDFAndShowTable(reportFile string) error {
 	// Create a table.
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{"Test Set", "Test Case", "Percentage, %", "Passed/Blocked", "Failed/Bypassed"})
-	table.SetFooter([]string{"", "", "", "WAF Score:", fmt.Sprintf("%.2f%%", wafScore)})
+	table.SetFooter([]string{fmt.Sprintf("Date: %s", reportTableTime), "WAF Name:", WAFName, "WAF Score:", fmt.Sprintf("%.2f%%", wafScore)})
 
 	for _, v := range rows[1:] {
 		table.Append(v)
@@ -141,10 +145,17 @@ func (db *DB) ExportToPDFAndShowTable(reportFile string) error {
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
 	pdf.SetFont("Arial", "", 24)
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF score: %.2f%%", wafScore))
+	pdf.Cell(cellWidth, cellHeight, "WAF Testing Results")
 
 	pdf.Ln(lineBreakSize)
+	pdf.SetFont("Arial", "B", 12)
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF score: %.2f%%", wafScore))
 	pdf.SetFont("Arial", "", 12)
+	pdf.Ln(lineBreakSize / 2)
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF name: %s", WAFName))
+	pdf.Ln(lineBreakSize / 2)
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF testing date: %s", reportPdfTime))
+	pdf.Ln(lineBreakSize)
 	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("%v bypasses in %v tests / %v test cases",
 		overallTestsFailed, overallTestsCompleted, overallTestcasesCompleted))
 	pdf.Ln(lineBreakSize)
