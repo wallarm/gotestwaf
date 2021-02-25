@@ -24,7 +24,13 @@ A place inside HTTP request where encoded payload should be.
 Like URL parameter, URI, POST form parameter, or JSON POST body.
 
 # Quick start
-## Docker
+## Dockerhub
+The latest gotestwaf always available via the dockerhub repository: https://hub.docker.com/r/wallarm/gotestwaf  
+It can be easily pulled via the following command:  
+```
+docker pull wallarm/gotestwaf
+```
+## Local Docker build
 ```
 docker build . --force-rm -t gotestwaf
 docker run -v ${PWD}/reports:/go/src/gotestwaf/reports gotestwaf --url=https://the-waf-you-wanna-test/
@@ -55,34 +61,19 @@ Learn more https://coreruleset.org/faq/
 #### Run gotestwaf
 `docker run -v ${PWD}/reports:/go/src/gotestwaf/reports gotestwaf --url=http://172.17.0.1:8080/`
 
+#### Run gotestwaf with WebSocket check
+You can additionally set the WebSocket URL to check via the `wsURL` flag and `verbose` flag to include more information about the checking process:  
+`docker run -v ${PWD}/reports:/go/src/gotestwaf/reports gotestwaf --url=http://172.17.0.1:8080/ --wsURL=ws://172.17.0.1:8080/api/ws --verbose`
+
+
 #### Check results
 ```
 GOTESTWAF : 2021/02/25 02:54:04.782526 cmd.go:66: Test cases loading started
-GOTESTWAF : 2021/02/25 02:54:04.782738 load.go:33: Loading test cases: 
-GOTESTWAF : 2021/02/25 02:54:04.782750 load.go:54: community:community-lfi
-GOTESTWAF : 2021/02/25 02:54:04.782797 load.go:54: community:community-rce
-GOTESTWAF : 2021/02/25 02:54:04.782874 load.go:54: community:community-sqli
-GOTESTWAF : 2021/02/25 02:54:04.782976 load.go:54: community:community-xss
-GOTESTWAF : 2021/02/25 02:54:04.783366 load.go:54: community:community-xxe
-GOTESTWAF : 2021/02/25 02:54:04.783413 load.go:54: false-pos:texts
-GOTESTWAF : 2021/02/25 02:54:04.783460 load.go:54: owasp:ldap-injection
-GOTESTWAF : 2021/02/25 02:54:04.783503 load.go:54: owasp:mail-injection
-GOTESTWAF : 2021/02/25 02:54:04.783541 load.go:54: owasp:nosql-injection
-GOTESTWAF : 2021/02/25 02:54:04.783587 load.go:54: owasp:path-traversal
-GOTESTWAF : 2021/02/25 02:54:04.783628 load.go:54: owasp:shell-injection
-GOTESTWAF : 2021/02/25 02:54:04.783671 load.go:54: owasp:sql-injection
-GOTESTWAF : 2021/02/25 02:54:04.783712 load.go:54: owasp:ss-include
-GOTESTWAF : 2021/02/25 02:54:04.783758 load.go:54: owasp:sst-injection
-GOTESTWAF : 2021/02/25 02:54:04.783806 load.go:54: owasp:xml-injection
-GOTESTWAF : 2021/02/25 02:54:04.783867 load.go:54: owasp:xss-scripting
-GOTESTWAF : 2021/02/25 02:54:04.783922 load.go:54: owasp-api:graphql
-GOTESTWAF : 2021/02/25 02:54:04.783965 load.go:54: owasp-api:rest
-GOTESTWAF : 2021/02/25 02:54:04.783997 load.go:54: owasp-api:soap
 GOTESTWAF : 2021/02/25 02:54:04.784032 cmd.go:72: Test cases loading finished
 GOTESTWAF : 2021/02/25 02:54:04.784050 cmd.go:78: Scanned URL: http://172.17.0.1:8080/
 GOTESTWAF : 2021/02/25 02:54:04.788380 cmd.go:91: WAF pre-check: OK. Blocking status code: 403
-GOTESTWAF : 2021/02/25 02:54:04.788397 cmd.go:102: WebSocket URL to check: ws://172.17.0.1:8080/
-GOTESTWAF : 2021/02/25 02:54:04.791253 cmd.go:106: WebSocket connection is not available, reason: websocket: bad handshake
+GOTESTWAF : 2021/02/25 02:54:04.788397 cmd.go:102: WebSocket pre-check. URL to check: ws://172.17.0.1:8080/api/ws
+GOTESTWAF : 2021/02/25 02:54:04.791253 cmd.go:106: WebSocket pre-check: connection is not available, reason: websocket: bad handshake
 GOTESTWAF : 2021/02/25 02:54:04.791354 cmd.go:135: Scanning http://172.17.0.1:8080/
 GOTESTWAF : 2021/02/25 02:54:04.791373 scanner.go:124: Scanning started
 GOTESTWAF : 2021/02/25 02:54:07.268681 scanner.go:129: Scanning Time:  2.477299327s
@@ -160,6 +151,8 @@ Usage of /go/src/gotestwaf/gotestwaf:
         URL to check (default "http://localhost/")
   --verbose                
         If true, enable verbose logging (default true)
+  --wafName string
+        Name of the WAF product (default "generic")
   --workers int
         The number of workers to scan (default 200)
   --wsURL string
