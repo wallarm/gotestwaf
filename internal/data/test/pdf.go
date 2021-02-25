@@ -92,14 +92,14 @@ func drawChart(bypassed int, blocked int, overall int, failed string, passed str
 		Values: []chart.Value{
 			{
 				Value: float64(bypassed),
-				Label: fmt.Sprintf("%s (%d payloads, %.2f%%)", failed, bypassed, bypassedProc),
+				Label: fmt.Sprintf("%s - %d (%.2f%%)", failed, bypassed, bypassedProc),
 				Style: chart.Style{
 					FillColor: drawing.ColorFromAlphaMixedRGBA(234, 67, 54, 255),
 				},
 			},
 			{
 				Value: float64(blocked),
-				Label: fmt.Sprintf("%s (%d payloads, %.2f%%)", passed, blocked, blockedProc),
+				Label: fmt.Sprintf("%s - %d (%.2f%%)", passed, blocked, blockedProc),
 				Style: chart.Style{
 					FillColor: drawing.ColorFromAlphaMixedRGBA(66, 133, 244, 255),
 				},
@@ -194,20 +194,11 @@ func (db *DB) ExportToPDFAndShowTable(reportFile string, reportTime time.Time, W
 	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF testing date: %s", reportPdfTime))
 	pdf.Ln(lineBreakSize)
 
-	// Num of bypasses = failed tests + true positive (bypassed false pos) - NA tests (unknown results)
-	// Or, in other words, num of bypasses = correct malicious bypasses only + true positive
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("%v bypasses in %v tests, %v unresolved cases / %v test cases",
-		overallTestsFailed-len(db.naTests), overallTestsCompleted, len(db.naTests), overallTestcasesCompleted))
-	pdf.Ln(lineBreakSize)
-
-	tableClip(pdf, cols, rows, 12)
-
-	cols = []float64{100, 30, 20, 25, 15}
-	rows = [][]string{}
+	var rowsPayloads [][]string
 	var rowsTruePos [][]string
 	var rowsFalsePos [][]string
 
-	rows = append(rows, []string{"Payload", "Test Case", "Encoder", "Placeholder", "Status"})
+	rowsPayloads = append(rowsPayloads, []string{"Payload", "Test Case", "Encoder", "Placeholder", "Status"})
 	// True positive  - false positive payloads that bypass the WAF (good behavior)
 	rowsTruePos = append(rowsTruePos, []string{"Payload", "Test Case", "Encoder", "Placeholder", "Status"})
 	// False positive - false positive payloads that were blocked (bad behavior)
@@ -225,9 +216,19 @@ func (db *DB) ExportToPDFAndShowTable(reportFile string, reportTime time.Time, W
 		if strings.Contains(failedTest.Set, "false") {
 			rowsFalsePos = append(rowsFalsePos, toAppend)
 		} else {
-			rows = append(rows, toAppend)
+			rowsPayloads = append(rowsPayloads, toAppend)
 		}
 	}
+
+	// Num of bypasses = (failed tests) - (false pos and true pos) - (NA tests (unknown results))
+	// Or, in other words, num of bypasses = correct malicious bypasses only
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("%v bypasses in %v tests, %v unresolved cases / %v test cases",
+		len(rowsPayloads)-1, overallTestsCompleted, len(db.naTests), overallTestcasesCompleted))
+	pdf.Ln(lineBreakSize)
+
+	tableClip(pdf, cols, rows, 12)
+
+	cols = []float64{100, 30, 20, 25, 15}
 
 	for _, blockedTest := range db.passedTests {
 		payload := fmt.Sprintf("%+q", blockedTest.Payload)
@@ -245,8 +246,8 @@ func (db *DB) ExportToPDFAndShowTable(reportFile string, reportTime time.Time, W
 
 	pdf.Ln(lineBreakSize)
 
-	// Include only failed tests (without Unknown)
-	bypassesNum := len(db.failedTests)
+	// Include only real bypasses, without unknown or false pos/true pos
+	bypassesNum := len(rowsPayloads) - 1
 	blockedNum := len(db.passedTests)
 	// Num = number of actual rows - top header (1 line)
 	truePosNum := len(rowsTruePos) - 1
@@ -287,11 +288,11 @@ func (db *DB) ExportToPDFAndShowTable(reportFile string, reportTime time.Time, W
 	pdf.Cell(cellWidth, cellHeight, "Bypasses in Details")
 	pdf.Ln(lineBreakSize)
 	pdf.SetFont("Arial", "", 12)
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("\n%d malicious requests have bypassed the WAF", len(rows)-1))
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("\n%d malicious requests have bypassed the WAF", len(rowsPayloads)-1))
 	pdf.Ln(lineBreakSize)
 	pdf.SetFont("Arial", "", 10)
 
-	tableClip(pdf, cols, rows, 10)
+	tableClip(pdf, cols, rowsPayloads, 10)
 
 	pdf.AddPage()
 	pdf.SetFont("Arial", "", 24)
