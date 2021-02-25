@@ -163,7 +163,7 @@ func parseFlags() {
 	defaultTestCasesPath := filepath.Join(".", testCasesDir)
 
 	flag.StringVar(&configPath, "configPath", "config.yaml", "Path to a config file")
-	flag.BoolVar(&verbose, "verbose", false, "If true, enable verbose logging")
+	flag.BoolVar(&verbose, "verbose", true, "If true, enable verbose logging")
 
 	flag.String("url", "http://localhost/", "URL to check")
 	flag.String("wsURL", "", "WebSocket URL to check")
