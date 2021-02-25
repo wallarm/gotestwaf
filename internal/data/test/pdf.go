@@ -246,12 +246,12 @@ func (db *DB) ExportToPDFAndShowTable(reportFile string, reportTime time.Time, W
 
 	pdf.Ln(lineBreakSize)
 
-	// Include only real bypasses, without unknown or false pos/true pos
-	bypassesNum := len(rowsPayloads) - 1
-	blockedNum := len(db.passedTests)
 	// Num = number of actual rows - top header (1 line)
 	truePosNum := len(rowsTruePos) - 1
 	falsePosNum := len(rowsFalsePos) - 1
+	// Include only real bypasses, without unknown or false pos/true pos
+	bypassesNum := len(rowsPayloads) - 1
+	blockedNum := len(db.passedTests) - truePosNum
 	currentY := pdf.GetY()
 
 	chartBuf, err := drawChart(bypassesNum, blockedNum, bypassesNum+blockedNum, "Bypassed", "Blocked")
