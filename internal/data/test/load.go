@@ -30,7 +30,6 @@ func Load(cfg *config.Config, logger *log.Logger) ([]Case, error) {
 		return nil, err
 	}
 
-	logger.Println("Loading test cases: ")
 	for _, testCaseFile := range files {
 		if filepath.Ext(testCaseFile) != testCaseExt {
 			continue
@@ -50,8 +49,6 @@ func Load(cfg *config.Config, logger *log.Logger) ([]Case, error) {
 		if cfg.TestCase != "" && testCaseName != cfg.TestCase {
 			continue
 		}
-
-		logger.Printf("%v:%v", testSetName, testCaseName)
 
 		yamlFile, err := ioutil.ReadFile(testCaseFile)
 		if err != nil {
