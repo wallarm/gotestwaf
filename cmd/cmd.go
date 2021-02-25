@@ -99,11 +99,11 @@ func Run() int {
 		cfg.WebSocketURL = wsUrl
 	}
 
-	logger.Printf("WebSocket URL to check: %s\n", cfg.WebSocketURL)
+	logger.Printf("WebSocket pre-check. URL to check: %s\n", cfg.WebSocketURL)
 
 	available, blocked, err := s.WSPreCheck(cfg.WebSocketURL)
 	if !available && err != nil {
-		logger.Printf("WebSocket connection is not available, "+
+		logger.Printf("WebSocket pre-check: connection is not available, "+
 			"reason: %s\n", err)
 	}
 	if available && blocked {
@@ -163,7 +163,7 @@ func parseFlags() {
 	defaultTestCasesPath := filepath.Join(".", testCasesDir)
 
 	flag.StringVar(&configPath, "configPath", "config.yaml", "Path to a config file")
-	flag.BoolVar(&verbose, "verbose", true, "If true, enable verbose logging")
+	flag.BoolVar(&verbose, "verbose", false, "If true, enable verbose logging")
 
 	flag.String("url", "http://localhost/", "URL to check")
 	flag.String("wsURL", "", "WebSocket URL to check")
