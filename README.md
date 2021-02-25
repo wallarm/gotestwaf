@@ -53,27 +53,67 @@ You may choose the PARANOIA level to increase the level of security.
 Learn more https://coreruleset.org/faq/
 
 #### Run gotestwaf
-`docker run -v ${PWD}/reports:/go/src/gotestwaf/reports gotestwaf --url=http://the-waf-you-wanna-test/`
+`docker run -v ${PWD}/reports:/go/src/gotestwaf/reports gotestwaf --url=http://172.17.0.1:8080/`
 
 #### Check results
 ```
-owasp ss-include  5/20  (0.25)
-owasp xml-injection 12/12 (1.00)
-owasp xss-scripting 9/28  (0.32)
-owasp ldap-injection  0/8 (0.00)
-owasp mail-injection  3/12  (0.25)
-owasp nosql-injection 0/18  (0.00)
-owasp path-traversal  8/24  (0.33)
-owasp shell-injection 3/8 (0.38)
-owasp sql-injection 8/32  (0.25)
-owasp sst-injection 5/20  (0.25)
-owasp-api graphql 1/1 (1.00)
-owasp-api rest  2/2 (1.00)
-owasp-api soap  0/2 (0.00)
-false-pos texts 7/8 (0.88)
+GOTESTWAF : 2021/02/25 02:54:04.782526 cmd.go:66: Test cases loading started
+GOTESTWAF : 2021/02/25 02:54:04.782738 load.go:33: Loading test cases: 
+GOTESTWAF : 2021/02/25 02:54:04.782750 load.go:54: community:community-lfi
+GOTESTWAF : 2021/02/25 02:54:04.782797 load.go:54: community:community-rce
+GOTESTWAF : 2021/02/25 02:54:04.782874 load.go:54: community:community-sqli
+GOTESTWAF : 2021/02/25 02:54:04.782976 load.go:54: community:community-xss
+GOTESTWAF : 2021/02/25 02:54:04.783366 load.go:54: community:community-xxe
+GOTESTWAF : 2021/02/25 02:54:04.783413 load.go:54: false-pos:texts
+GOTESTWAF : 2021/02/25 02:54:04.783460 load.go:54: owasp:ldap-injection
+GOTESTWAF : 2021/02/25 02:54:04.783503 load.go:54: owasp:mail-injection
+GOTESTWAF : 2021/02/25 02:54:04.783541 load.go:54: owasp:nosql-injection
+GOTESTWAF : 2021/02/25 02:54:04.783587 load.go:54: owasp:path-traversal
+GOTESTWAF : 2021/02/25 02:54:04.783628 load.go:54: owasp:shell-injection
+GOTESTWAF : 2021/02/25 02:54:04.783671 load.go:54: owasp:sql-injection
+GOTESTWAF : 2021/02/25 02:54:04.783712 load.go:54: owasp:ss-include
+GOTESTWAF : 2021/02/25 02:54:04.783758 load.go:54: owasp:sst-injection
+GOTESTWAF : 2021/02/25 02:54:04.783806 load.go:54: owasp:xml-injection
+GOTESTWAF : 2021/02/25 02:54:04.783867 load.go:54: owasp:xss-scripting
+GOTESTWAF : 2021/02/25 02:54:04.783922 load.go:54: owasp-api:graphql
+GOTESTWAF : 2021/02/25 02:54:04.783965 load.go:54: owasp-api:rest
+GOTESTWAF : 2021/02/25 02:54:04.783997 load.go:54: owasp-api:soap
+GOTESTWAF : 2021/02/25 02:54:04.784032 cmd.go:72: Test cases loading finished
+GOTESTWAF : 2021/02/25 02:54:04.784050 cmd.go:78: Scanned URL: http://172.17.0.1:8080/
+GOTESTWAF : 2021/02/25 02:54:04.788380 cmd.go:91: WAF pre-check: OK. Blocking status code: 403
+GOTESTWAF : 2021/02/25 02:54:04.788397 cmd.go:102: WebSocket URL to check: ws://172.17.0.1:8080/
+GOTESTWAF : 2021/02/25 02:54:04.791253 cmd.go:106: WebSocket connection is not available, reason: websocket: bad handshake
+GOTESTWAF : 2021/02/25 02:54:04.791354 cmd.go:135: Scanning http://172.17.0.1:8080/
+GOTESTWAF : 2021/02/25 02:54:04.791373 scanner.go:124: Scanning started
+GOTESTWAF : 2021/02/25 02:54:07.268681 scanner.go:129: Scanning Time:  2.477299327s
+GOTESTWAF : 2021/02/25 02:54:07.268693 scanner.go:160: Scanning finished
++------------------+-----------------+---------------+----------------+-----------------+
+|     TEST SET     |    TEST CASE    | PERCENTAGE, % | PASSED/BLOCKED | FAILED/BYPASSED |
++------------------+-----------------+---------------+----------------+-----------------+
+| community        | community-lfi   |         66.67 |              4 |               2 |
+| community        | community-rce   |         14.29 |              6 |              36 |
+| community        | community-sqli  |         70.83 |             34 |              14 |
+| community        | community-xss   |         91.78 |            279 |              25 |
+| community        | community-xxe   |        100.00 |              4 |               0 |
+| false-pos        | texts           |         87.50 |              1 |               7 |
+| owasp            | ldap-injection  |         12.50 |              1 |               7 |
+| owasp            | mail-injection  |         25.00 |              3 |               9 |
+| owasp            | nosql-injection |          0.00 |              0 |              18 |
+| owasp            | path-traversal  |         33.33 |              8 |              16 |
+| owasp            | shell-injection |         37.50 |              3 |               5 |
+| owasp            | sql-injection   |         25.00 |              8 |              24 |
+| owasp            | ss-include      |         25.00 |              5 |              15 |
+| owasp            | sst-injection   |         25.00 |              5 |              15 |
+| owasp            | xml-injection   |        100.00 |             12 |               0 |
+| owasp            | xss-scripting   |         32.14 |              9 |              19 |
+| owasp-api        | graphql         |        100.00 |              1 |               0 |
+| owasp-api        | rest            |        100.00 |              2 |               0 |
+| owasp-api        | soap            |        100.00 |              2 |               0 |
++------------------+-----------------+---------------+----------------+-----------------+
+| DATE: 2021-02-25 |    WAF NAME:    |    GENERIC    |   WAF SCORE:   |     55.08%      |
++------------------+-----------------+---------------+----------------+-----------------+
 
-WAF score: 42.18%
-132 bypasses in 195 tests / 14 test cases
+PDF report is ready: reports/waf-evaluation-report-generic-2021-February-25-02-54-07.pdf
 ```
 ---
 
