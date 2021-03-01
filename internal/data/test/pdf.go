@@ -116,15 +116,20 @@ func drawChart(bypassed int, blocked int, overall int, failed string, passed str
 
 func (db *DB) RenderTable(reportTime time.Time, WAFName string) ([][]string, error) {
 	var rows [][]string
-	reportTableTime := reportTime.Format("2006-01-02")
-
-	rows = append(rows, []string{"Test set", "Test case", "Percentage, %", "Passed/Blocked", "Failed/Bypassed"})
+	rows = append(rows, []string{"Test set", "Test case", "Percentage, %", "Passed/Blocked", "Failed/Bypassed", "Unresolved"})
 
 	sortedTestSets := make([]string, 0, len(db.counters))
 	for testSet := range db.counters {
 		sortedTestSets = append(sortedTestSets, testSet)
 	}
 	sort.Strings(sortedTestSets)
+
+	unresolvedCases := make(map[string]int)
+	posCases := make(map[bool]int)
+
+	for _, naTest := range db.naTests {
+		unresolvedCases[naTest.Case] += 1
+	}
 
 	for _, testSet := range sortedTestSets {
 		sortedTestCases := make([]string, 0, len(db.counters[testSet]))
@@ -134,9 +139,11 @@ func (db *DB) RenderTable(reportTime time.Time, WAFName string) ([][]string, err
 		sort.Strings(sortedTestCases)
 
 		for _, testCase := range sortedTestCases {
+			unresolved := unresolvedCases[testCase]
 			passed := db.counters[testSet][testCase][true]
-			failed := db.counters[testSet][testCase][false]
-			total := passed + failed
+			failed := db.counters[testSet][testCase][false] - unresolved
+			// Include the unresolved results in total score to calculate them
+			total := passed + failed + unresolved
 			db.overallTestsCompleted += total
 			db.overallTestsFailed += failed
 
@@ -145,9 +152,13 @@ func (db *DB) RenderTable(reportTime time.Time, WAFName string) ([][]string, err
 				percentage = float32(passed) / float32(total) * 100
 			}
 
-			// Invert the score for the false positive test sets
+			// Remove false pos / true pos cases from a list of test cases
 			if strings.Contains(testSet, "false") {
-				percentage = 100 - percentage
+				// False pos - failed
+				posCases[false] += failed
+				// True pos - succeed
+				posCases[true] += passed
+				continue
 			}
 
 			rows = append(rows,
@@ -156,7 +167,8 @@ func (db *DB) RenderTable(reportTime time.Time, WAFName string) ([][]string, err
 					testCase,
 					fmt.Sprintf("%.2f", percentage),
 					fmt.Sprintf("%d", passed),
-					fmt.Sprintf("%d", failed)},
+					fmt.Sprintf("%d", failed),
+					fmt.Sprintf("%d", unresolvedCases[testCase])},
 			)
 			db.overallTestcasesCompleted += 1.00
 			db.overallPassedRate += percentage
@@ -167,8 +179,19 @@ func (db *DB) RenderTable(reportTime time.Time, WAFName string) ([][]string, err
 
 	// Create a table.
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Test Set", "Test Case", "Percentage, %", "Passed/Blocked", "Failed/Bypassed"})
-	table.SetFooter([]string{fmt.Sprintf("Date: %s", reportTableTime), "WAF Name:", WAFName, "WAF Score:", fmt.Sprintf("%.2f%%", db.wafScore)})
+	table.SetHeader([]string{"Test Set", "Test Case", "Percentage, %", "Passed/Blocked", "Failed/Bypassed", "Unresolved"})
+
+	trueFalsePosSum := posCases[false] + posCases[true]
+	falsePosRate := float32(posCases[false]) / float32(trueFalsePosSum) * 100
+	truePosRate := 100 - falsePosRate
+
+	table.SetFooter([]string{
+		fmt.Sprintf("Date:\n%s", reportTime.Format("2006-01-02")),
+		fmt.Sprintf("WAF Name:\n%s", WAFName),
+		fmt.Sprintf("Unresolved:\n%d/%d (%.2f%%)", len(db.naTests), db.overallTestsCompleted, float32(len(db.naTests))/float32(db.overallTestsCompleted)*100),
+		fmt.Sprintf("False pos:\n%d/%d (%.2f%%)", posCases[false], trueFalsePosSum, falsePosRate),
+		fmt.Sprintf("True pos:\n%d/%d (%.2f%%)", posCases[true], trueFalsePosSum, truePosRate),
+		fmt.Sprintf("WAF Score:\n%.2f%%", db.wafScore)})
 
 	for _, v := range rows[1:] {
 		table.Append(v)
@@ -180,7 +203,7 @@ func (db *DB) RenderTable(reportTime time.Time, WAFName string) ([][]string, err
 
 func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, WAFName string, rows [][]string) error {
 	// Create a pdf file
-	cols := []float64{35, 45, 35, 35, 40}
+	cols := []float64{25, 35, 30, 35, 35, 30}
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
 	pdf.SetFont("Arial", "", 24)
@@ -229,7 +252,7 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, WAFName strin
 		len(rowsPayloads)-1, db.overallTestsCompleted, len(db.naTests), db.overallTestcasesCompleted))
 	pdf.Ln(lineBreakSize)
 
-	tableClip(pdf, cols, rows, 12)
+	tableClip(pdf, cols, rows, 10)
 
 	cols = []float64{100, 30, 20, 25, 15}
 
@@ -270,15 +293,14 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, WAFName strin
 	}
 
 	chartFalseBuf, err := drawChart(falsePosNum, truePosNum, truePosNum+falsePosNum, "False Positive", "True Positive")
-	if err != nil {
-		return errors.Wrap(err, "Plot generation error")
-	}
-	imageInfoFalse := pdf.RegisterImageReader("False Pos Plot", "PNG", chartFalseBuf)
-	if pdf.Ok() {
-		imgWd, imgHt := imageInfoFalse.Extent()
-		imgWd, imgHt = imgWd/2, imgHt/2
-		pdf.Image("False Pos Plot", pageWidth-imgWd-pageWidth/20, currentY,
-			imgWd, imgHt, false, "PNG", 0, "")
+	if err == nil {
+		imageInfoFalse := pdf.RegisterImageReader("False Pos Plot", "PNG", chartFalseBuf)
+		if pdf.Ok() {
+			imgWd, imgHt := imageInfoFalse.Extent()
+			imgWd, imgHt = imgWd/2, imgHt/2
+			pdf.Image("False Pos Plot", pageWidth-imgWd-pageWidth/20, currentY,
+				imgWd, imgHt, false, "PNG", 0, "")
+		}
 	}
 
 	httpimg.Register(pdf, trollLink, "")
@@ -322,11 +344,12 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, WAFName strin
 
 	cols = []float64{100, 30, 20, 25, 15}
 
-	rows = append(rows, []string{"Payload", "Test Case", "Encoder", "Placeholder", "Status"})
+	var unresolvedRaws [][]string
+	unresolvedRaws = append(unresolvedRaws, []string{"Payload", "Test Case", "Encoder", "Placeholder", "Status"})
 	for _, naTest := range db.naTests {
 		payload := fmt.Sprintf("%+q", naTest.Payload)
 		payload = strings.ReplaceAll(payload[1:len(payload)-1], `\"`, `"`)
-		rows = append(rows,
+		unresolvedRaws = append(unresolvedRaws,
 			[]string{payload,
 				naTest.Case,
 				naTest.Encoder,
@@ -343,7 +366,7 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, WAFName strin
 	pdf.Ln(lineBreakSize)
 	pdf.SetFont("Arial", "", 10)
 
-	tableClip(pdf, cols, rows, 10)
+	tableClip(pdf, cols, unresolvedRaws, 10)
 
 	err = pdf.OutputFileAndClose(reportFile)
 	if err != nil {
