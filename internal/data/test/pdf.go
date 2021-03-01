@@ -114,13 +114,9 @@ func drawChart(bypassed int, blocked int, overall int, failed string, passed str
 	return buffer, nil
 }
 
-func (db *DB) ExportToPDFAndShowTable(reportFile string, reportTime time.Time, WAFName string) error {
+func (db *DB) RenderTable(reportTime time.Time, WAFName string) ([][]string, error) {
 	var rows [][]string
-	var overallPassedRate, overallTestcasesCompleted float32
-	var overallTestsCompleted, overallTestsFailed int
-
 	reportTableTime := reportTime.Format("2006-01-02")
-	reportPdfTime := reportTime.Format("02 January 2006")
 
 	rows = append(rows, []string{"Test set", "Test case", "Percentage, %", "Passed/Blocked", "Failed/Bypassed"})
 
@@ -136,17 +132,19 @@ func (db *DB) ExportToPDFAndShowTable(reportFile string, reportTime time.Time, W
 			sortedTestCases = append(sortedTestCases, testCase)
 		}
 		sort.Strings(sortedTestCases)
+
 		for _, testCase := range sortedTestCases {
 			passed := db.counters[testSet][testCase][true]
 			failed := db.counters[testSet][testCase][false]
 			total := passed + failed
-			overallTestsCompleted += total
-			overallTestsFailed += failed
+			db.overallTestsCompleted += total
+			db.overallTestsFailed += failed
 
 			var percentage float32 = 0
 			if total != 0 {
 				percentage = float32(passed) / float32(total) * 100
 			}
+
 			// Invert the score for the false positive test sets
 			if strings.Contains(testSet, "false") {
 				percentage = 100 - percentage
@@ -160,23 +158,27 @@ func (db *DB) ExportToPDFAndShowTable(reportFile string, reportTime time.Time, W
 					fmt.Sprintf("%d", passed),
 					fmt.Sprintf("%d", failed)},
 			)
-			overallTestcasesCompleted += 1.00
-			overallPassedRate += percentage
+			db.overallTestcasesCompleted += 1.00
+			db.overallPassedRate += percentage
 		}
 	}
 
-	wafScore := overallPassedRate / overallTestcasesCompleted
+	db.wafScore = db.overallPassedRate / db.overallTestcasesCompleted
 
 	// Create a table.
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{"Test Set", "Test Case", "Percentage, %", "Passed/Blocked", "Failed/Bypassed"})
-	table.SetFooter([]string{fmt.Sprintf("Date: %s", reportTableTime), "WAF Name:", WAFName, "WAF Score:", fmt.Sprintf("%.2f%%", wafScore)})
+	table.SetFooter([]string{fmt.Sprintf("Date: %s", reportTableTime), "WAF Name:", WAFName, "WAF Score:", fmt.Sprintf("%.2f%%", db.wafScore)})
 
 	for _, v := range rows[1:] {
 		table.Append(v)
 	}
 	table.Render()
 
+	return rows, nil
+}
+
+func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, WAFName string, rows [][]string) error {
 	// Create a pdf file
 	cols := []float64{35, 45, 35, 35, 40}
 	pdf := gofpdf.New("P", "mm", "A4", "")
@@ -186,12 +188,13 @@ func (db *DB) ExportToPDFAndShowTable(reportFile string, reportTime time.Time, W
 
 	pdf.Ln(lineBreakSize)
 	pdf.SetFont("Arial", "B", 12)
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF score: %.2f%%", wafScore))
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF score: %.2f%%", db.wafScore))
 	pdf.SetFont("Arial", "", 12)
 	pdf.Ln(lineBreakSize / 2)
 	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF name: %s", WAFName))
 	pdf.Ln(lineBreakSize / 2)
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF testing date: %s", reportPdfTime))
+
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF testing date: %s", reportTime.Format("02 January 2006")))
 	pdf.Ln(lineBreakSize)
 
 	var rowsPayloads [][]string
@@ -223,7 +226,7 @@ func (db *DB) ExportToPDFAndShowTable(reportFile string, reportTime time.Time, W
 	// Num of bypasses = (failed tests) - (false pos and true pos) - (NA tests (unknown results))
 	// Or, in other words, num of bypasses = correct malicious bypasses only
 	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("%v bypasses in %v tests, %v unresolved cases / %v test cases",
-		len(rowsPayloads)-1, overallTestsCompleted, len(db.naTests), overallTestcasesCompleted))
+		len(rowsPayloads)-1, db.overallTestsCompleted, len(db.naTests), db.overallTestcasesCompleted))
 	pdf.Ln(lineBreakSize)
 
 	tableClip(pdf, cols, rows, 12)
@@ -318,7 +321,6 @@ func (db *DB) ExportToPDFAndShowTable(reportFile string, reportTime time.Time, W
 	pdf.AddPage()
 
 	cols = []float64{100, 30, 20, 25, 15}
-	rows = [][]string{}
 
 	rows = append(rows, []string{"Payload", "Test Case", "Encoder", "Placeholder", "Status"})
 	for _, naTest := range db.naTests {
