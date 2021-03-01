@@ -11,5 +11,9 @@ tidy:
 	go mod tidy
 	go mod vendor
 
+delete_reports:
+	rm -f ./reports/*.pdf
+	rm -f ./reports/*.csv
+
 .PHONY: lint gotestwaf scan_local tidy
 
