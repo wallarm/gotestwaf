@@ -143,9 +143,16 @@ func Run() int {
 	reportSaveTime := reportTime.Format("2006-January-02-15-04-05")
 
 	reportFile := filepath.Join(cfg.ReportDir, fmt.Sprintf("%s-%s-%s.pdf", reportPrefix, cfg.WAFName, reportSaveTime))
-	err = db.ExportToPDFAndShowTable(reportFile, reportTime, cfg.WAFName)
+
+	rows, err := db.RenderTable(reportTime, cfg.WAFName)
 	if err != nil {
-		logger.Println("exporting report:", err)
+		logger.Println("CLI table rendering error:", err)
+		return 1
+	}
+
+	err = db.ExportToPDF(reportFile, reportTime, cfg.WAFName, cfg.URL, rows)
+	if err != nil {
+		logger.Println("PDF exporting report:", err)
 		return 1
 	}
 
