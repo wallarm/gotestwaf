@@ -28,7 +28,7 @@ const (
 	cellHeight    = 10
 	lineBreakSize = 10
 	pageWidth     = 210
-	colMinWidth   = 20
+	colMinWidth   = 21
 )
 
 func tableClip(pdf *gofpdf.Fpdf, cols []float64, rows [][]string, fontSize float64) {
@@ -145,8 +145,13 @@ func (db *DB) RenderTable(reportTime time.Time, WAFName string) ([][]string, err
 	regularCasesNum := make(map[string]int)
 
 	unresolvedCasesNum := make(map[string]int)
+	var unresolvedPositiveCasesNum int
 	for _, naTest := range db.naTests {
-		unresolvedCasesNum[naTest.Case] += 1
+		if strings.Contains(naTest.Set, "false") {
+			unresolvedPositiveCasesNum += 1
+		} else {
+			unresolvedCasesNum[naTest.Case] += 1
+		}
 	}
 
 	sortedTestSets := make([]string, 0, len(db.counters))
@@ -220,6 +225,7 @@ func (db *DB) RenderTable(reportTime time.Time, WAFName string) ([][]string, err
 	db.wafScore = db.overallPassedRate / db.overallTestcasesCompleted
 
 	// Create a table for regular cases (excluding positive cases)
+	fmt.Println("\nNegative Tests:")
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader(baseHeader)
 
@@ -241,8 +247,8 @@ func (db *DB) RenderTable(reportTime time.Time, WAFName string) ([][]string, err
 		fmt.Sprintf("Date:\n%s", reportTime.Format("2006-01-02")),
 		fmt.Sprintf("WAF Name:\n%s", WAFName),
 		fmt.Sprintf("WAF Average Score:\n%.2f%%", db.wafScore),
-		fmt.Sprintf("Blocked Resolved:\n%d/%d (%.2f%%)", regularCasesNum["blocked"], resolvedTestsSum, blockedRate),
-		fmt.Sprintf("Bypassed Resolved:\n%d/%d (%.2f%%)", regularCasesNum["bypassed"], resolvedTestsSum, bypassedRate),
+		fmt.Sprintf("Blocked (Resolved):\n%d/%d (%.2f%%)", regularCasesNum["blocked"], resolvedTestsSum, blockedRate),
+		fmt.Sprintf("Bypassed (Resolved):\n%d/%d (%.2f%%)", regularCasesNum["bypassed"], resolvedTestsSum, bypassedRate),
 		fmt.Sprintf("Unresolved:\n%d/%d (%.2f%%)", len(db.naTests), db.overallTestsCompleted, unresolvedRate)})
 	table.Render()
 
@@ -258,16 +264,18 @@ func (db *DB) RenderTable(reportTime time.Time, WAFName string) ([][]string, err
 		posTable.SetColMinWidth(index, colMinWidth)
 	}
 
-	falsePosRate := calculatePercentage(positiveCasesNum[false], positiveTestsSum)
-	truePosRate := calculatePercentage(positiveCasesNum[true], positiveTestsSum)
+	unresolvedPosRate := calculatePercentage(unresolvedPositiveCasesNum, positiveTestsSum)
+	resolvedPositiveTests := positiveTestsSum - unresolvedPositiveCasesNum
+	falsePosRate := calculatePercentage(positiveCasesNum[false], resolvedPositiveTests)
+	truePosRate := calculatePercentage(positiveCasesNum[true], resolvedPositiveTests)
 
 	posTable.SetFooter([]string{
-		" ",
-		" ",
-		" ",
-		fmt.Sprintf("False positive:\n%d/%d (%.2f%%)", positiveCasesNum[false], positiveTestsSum, falsePosRate),
-		fmt.Sprintf("True positive:\n%d/%d (%.2f%%)", positiveCasesNum[true], positiveTestsSum, truePosRate),
-		fmt.Sprintf("Positive Score:\n%.2f%%", truePosRate)})
+		fmt.Sprintf("Date:\n%s", reportTime.Format("2006-01-02")),
+		fmt.Sprintf("WAF Name:\n%s", WAFName),
+		fmt.Sprintf("WAF Positive Score:\n%.2f%%", truePosRate),
+		fmt.Sprintf("False positive (res):\n%d/%d (%.2f%%)", positiveCasesNum[false], resolvedPositiveTests, falsePosRate),
+		fmt.Sprintf("True positive (res):\n%d/%d (%.2f%%)", positiveCasesNum[true], resolvedPositiveTests, truePosRate),
+		fmt.Sprintf("Unresolved:\n%d/%d (%.2f%%)", unresolvedPositiveCasesNum, positiveTestsSum, unresolvedPosRate)})
 	posTable.Render()
 
 	return regularRows, nil
