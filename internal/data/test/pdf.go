@@ -87,7 +87,7 @@ func drawChart(bypassed int, blocked int, overall int, failed string, passed str
 	bypassedProc := float64(bypassed*100) / float64(overall)
 	blockedProc := 100.0 - bypassedProc
 	pie := chart.PieChart{
-		DPI:   100,
+		DPI:   85,
 		Title: fmt.Sprintf("%s", title),
 		TitleStyle: chart.Style{
 			Show:              true,
@@ -102,18 +102,20 @@ func drawChart(bypassed int, blocked int, overall int, failed string, passed str
 		Values: []chart.Value{
 			{
 				Value: float64(bypassed),
-				Label: fmt.Sprintf("%s - %d (%.2f%%)", failed, bypassed, bypassedProc),
+				Label: fmt.Sprintf("%s: %d (%.2f%%)", failed, bypassed, bypassedProc),
 				Style: chart.Style{
 					// Red
 					FillColor: drawing.ColorFromAlphaMixedRGBA(66, 133, 244, 255),
+					FontSize:  12,
 				},
 			},
 			{
 				Value: float64(blocked),
-				Label: fmt.Sprintf("%s - %d (%.2f%%)", passed, blocked, blockedProc),
+				Label: fmt.Sprintf("%s: %d (%.2f%%)", passed, blocked, blockedProc),
 				Style: chart.Style{
 					// Blue
 					FillColor: drawing.ColorFromAlphaMixedRGBA(234, 67, 54, 255),
+					FontSize:  12,
 				},
 			},
 		},
