@@ -28,7 +28,7 @@ const (
 	cellHeight    = 10
 	lineBreakSize = 10
 	pageWidth     = 210
-	pageHeight    = 297
+	colMinWidth   = 20
 )
 
 func tableClip(pdf *gofpdf.Fpdf, cols []float64, rows [][]string, fontSize float64) {
@@ -114,22 +114,32 @@ func drawChart(bypassed int, blocked int, overall int, failed string, passed str
 	return buffer, nil
 }
 
+func calculatePercentage(first int, second int) (percentage float32) {
+	percentage = float32(first) / float32(second) * 100
+	return
+}
+
 func (db *DB) RenderTable(reportTime time.Time, WAFName string) ([][]string, error) {
-	var rows [][]string
-	rows = append(rows, []string{"Test set", "Test case", "Percentage, %", "Passed/Blocked", "Failed/Bypassed", "Unresolved"})
+	baseHeader := []string{"Test set", "Test case", "Percentage, %", "Blocked", "Bypassed", "Unresolved"}
+
+	// Table rows to render, regular and positive cases
+	positiveRows := [][]string{baseHeader}
+	regularRows := [][]string{baseHeader}
+
+	// Counters to use with table footers
+	positiveCasesNum := make(map[bool]int)
+	regularCasesNum := make(map[string]int)
+
+	unresolvedCasesNum := make(map[string]int)
+	for _, naTest := range db.naTests {
+		unresolvedCasesNum[naTest.Case] += 1
+	}
 
 	sortedTestSets := make([]string, 0, len(db.counters))
 	for testSet := range db.counters {
 		sortedTestSets = append(sortedTestSets, testSet)
 	}
 	sort.Strings(sortedTestSets)
-
-	unresolvedCases := make(map[string]int)
-	posCases := make(map[bool]int)
-
-	for _, naTest := range db.naTests {
-		unresolvedCases[naTest.Case] += 1
-	}
 
 	for _, testSet := range sortedTestSets {
 		sortedTestCases := make([]string, 0, len(db.counters[testSet]))
@@ -139,10 +149,11 @@ func (db *DB) RenderTable(reportTime time.Time, WAFName string) ([][]string, err
 		sort.Strings(sortedTestCases)
 
 		for _, testCase := range sortedTestCases {
-			unresolved := unresolvedCases[testCase]
+			unresolved := unresolvedCasesNum[testCase]
 			passed := db.counters[testSet][testCase][true]
+			// Avoid the unresolved cases when counting failed
 			failed := db.counters[testSet][testCase][false] - unresolved
-			// Include the unresolved results in total score to calculate them
+			// But include the unresolved results in total score to calculate them
 			total := passed + failed + unresolved
 			db.overallTestsCompleted += total
 			db.overallTestsFailed += failed
@@ -152,24 +163,40 @@ func (db *DB) RenderTable(reportTime time.Time, WAFName string) ([][]string, err
 				percentage = float32(passed) / float32(total) * 100
 			}
 
-			// Remove false pos / true pos cases from a list of test cases
+			// If positive set - move to another table (remove from general cases)
 			if strings.Contains(testSet, "false") {
-				// False pos - failed
-				posCases[false] += failed
-				// True pos - succeed
-				posCases[true] += passed
-				continue
-			}
+				// False positive - blocked by the WAF (bad behavior, failed)
+				positiveCasesNum[false] += failed
+				// True positive - bypassed (good behavior, passed)
+				positiveCasesNum[true] += passed
 
-			rows = append(rows,
-				[]string{
+				// Swap the "failed" and "passed" cases for positive cases
+				rowAppend := []string{
 					testSet,
 					testCase,
 					fmt.Sprintf("%.2f", percentage),
-					fmt.Sprintf("%d", passed),
 					fmt.Sprintf("%d", failed),
-					fmt.Sprintf("%d", unresolvedCases[testCase])},
-			)
+					fmt.Sprintf("%d", passed),
+					fmt.Sprintf("%d", unresolvedCasesNum[testCase])}
+
+				positiveRows = append(positiveRows, rowAppend)
+				continue
+			}
+
+			// If not positive set - insert into the original table, update stats
+			rowAppend := []string{
+				testSet,
+				testCase,
+				fmt.Sprintf("%.2f", percentage),
+				fmt.Sprintf("%d", passed),
+				fmt.Sprintf("%d", failed),
+				fmt.Sprintf("%d", unresolvedCasesNum[testCase])}
+
+			regularCasesNum["blocked"] += passed
+			regularCasesNum["bypassed"] += failed
+
+			regularRows = append(regularRows, rowAppend)
+
 			db.overallTestcasesCompleted += 1.00
 			db.overallPassedRate += percentage
 		}
@@ -177,28 +204,58 @@ func (db *DB) RenderTable(reportTime time.Time, WAFName string) ([][]string, err
 
 	db.wafScore = db.overallPassedRate / db.overallTestcasesCompleted
 
-	// Create a table.
+	// Create a table for regular cases (excluding positive cases)
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Test Set", "Test Case", "Percentage, %", "Passed/Blocked", "Failed/Bypassed", "Unresolved"})
+	table.SetHeader(baseHeader)
 
-	trueFalsePosSum := posCases[false] + posCases[true]
-	falsePosRate := float32(posCases[false]) / float32(trueFalsePosSum) * 100
-	truePosRate := 100 - falsePosRate
+	for _, row := range regularRows[1:] {
+		table.Append(row)
+	}
+	for index, _ := range baseHeader {
+		table.SetColMinWidth(index, colMinWidth)
+	}
+
+	positiveTestsSum := positiveCasesNum[false] + positiveCasesNum[true]
+	resolvedTestsSum := db.overallTestsCompleted - len(db.naTests) - positiveTestsSum
+
+	unresolvedRate := calculatePercentage(len(db.naTests), db.overallTestsCompleted)
+	blockedRate := calculatePercentage(regularCasesNum["blocked"], resolvedTestsSum)
+	bypassedRate := calculatePercentage(regularCasesNum["bypassed"], resolvedTestsSum)
 
 	table.SetFooter([]string{
 		fmt.Sprintf("Date:\n%s", reportTime.Format("2006-01-02")),
 		fmt.Sprintf("WAF Name:\n%s", WAFName),
-		fmt.Sprintf("Unresolved:\n%d/%d (%.2f%%)", len(db.naTests), db.overallTestsCompleted, float32(len(db.naTests))/float32(db.overallTestsCompleted)*100),
-		fmt.Sprintf("False pos:\n%d/%d (%.2f%%)", posCases[false], trueFalsePosSum, falsePosRate),
-		fmt.Sprintf("True pos:\n%d/%d (%.2f%%)", posCases[true], trueFalsePosSum, truePosRate),
+		fmt.Sprintf("Unresolved:\n%d/%d (%.2f%%)", len(db.naTests), db.overallTestsCompleted, unresolvedRate),
+		fmt.Sprintf("Blocked Resolved:\n%d/%d (%.2f%%)", regularCasesNum["blocked"], resolvedTestsSum, blockedRate),
+		fmt.Sprintf("Bypassed Resolved:\n%d/%d (%.2f%%)", regularCasesNum["bypassed"], resolvedTestsSum, bypassedRate),
 		fmt.Sprintf("WAF Score:\n%.2f%%", db.wafScore)})
-
-	for _, v := range rows[1:] {
-		table.Append(v)
-	}
 	table.Render()
 
-	return rows, nil
+	// Create a table for positive cases
+	fmt.Println("\nPositive Tests:")
+	posTable := tablewriter.NewWriter(os.Stdout)
+	posTable.SetHeader(baseHeader)
+
+	for _, row := range positiveRows[1:] {
+		posTable.Append(row)
+	}
+	for index, _ := range baseHeader {
+		posTable.SetColMinWidth(index, colMinWidth)
+	}
+
+	falsePosRate := calculatePercentage(positiveCasesNum[false], positiveTestsSum)
+	truePosRate := calculatePercentage(positiveCasesNum[true], positiveTestsSum)
+
+	posTable.SetFooter([]string{
+		" ",
+		" ",
+		" ",
+		fmt.Sprintf("False pos:\n%d/%d (%.2f%%)", positiveCasesNum[false], positiveTestsSum, falsePosRate),
+		fmt.Sprintf("True pos:\n%d/%d (%.2f%%)", positiveCasesNum[true], positiveTestsSum, truePosRate),
+		fmt.Sprintf("Pos Score:\n%.2f%%", truePosRate)})
+	posTable.Render()
+
+	return regularRows, nil
 }
 
 func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, WAFName string, rows [][]string) error {
