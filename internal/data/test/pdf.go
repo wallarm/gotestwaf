@@ -167,12 +167,13 @@ func (db *DB) RenderTable(reportTime time.Time, WAFName string) ([][]string, err
 			failed := db.counters[testSet][testCase][false] - unresolved
 			// But include the unresolved results in total score to calculate them
 			total := passed + failed + unresolved
+			totalResolved := passed + failed
 			db.overallTestsCompleted += total
 			db.overallTestsFailed += failed
 
 			var percentage float32 = 0
-			if total != 0 {
-				percentage = float32(passed) / float32(total) * 100
+			if totalResolved != 0 {
+				percentage = float32(passed) / float32(totalResolved) * 100
 			}
 
 			// If positive set - move to another table (remove from general cases)
@@ -237,10 +238,10 @@ func (db *DB) RenderTable(reportTime time.Time, WAFName string) ([][]string, err
 	table.SetFooter([]string{
 		fmt.Sprintf("Date:\n%s", reportTime.Format("2006-01-02")),
 		fmt.Sprintf("WAF Name:\n%s", WAFName),
-		fmt.Sprintf("Unresolved:\n%d/%d (%.2f%%)", len(db.naTests), db.overallTestsCompleted, unresolvedRate),
+		fmt.Sprintf("WAF Average Score:\n%.2f%%", db.wafScore),
 		fmt.Sprintf("Blocked Resolved:\n%d/%d (%.2f%%)", regularCasesNum["blocked"], resolvedTestsSum, blockedRate),
 		fmt.Sprintf("Bypassed Resolved:\n%d/%d (%.2f%%)", regularCasesNum["bypassed"], resolvedTestsSum, bypassedRate),
-		fmt.Sprintf("WAF Score:\n%.2f%%", db.wafScore)})
+		fmt.Sprintf("Unresolved:\n%d/%d (%.2f%%)", len(db.naTests), db.overallTestsCompleted, unresolvedRate)})
 	table.Render()
 
 	// Create a table for positive cases
@@ -262,9 +263,9 @@ func (db *DB) RenderTable(reportTime time.Time, WAFName string) ([][]string, err
 		" ",
 		" ",
 		" ",
-		fmt.Sprintf("False pos:\n%d/%d (%.2f%%)", positiveCasesNum[false], positiveTestsSum, falsePosRate),
-		fmt.Sprintf("True pos:\n%d/%d (%.2f%%)", positiveCasesNum[true], positiveTestsSum, truePosRate),
-		fmt.Sprintf("Pos Score:\n%.2f%%", truePosRate)})
+		fmt.Sprintf("False positive:\n%d/%d (%.2f%%)", positiveCasesNum[false], positiveTestsSum, falsePosRate),
+		fmt.Sprintf("True positive:\n%d/%d (%.2f%%)", positiveCasesNum[true], positiveTestsSum, truePosRate),
+		fmt.Sprintf("Positive Score:\n%.2f%%", truePosRate)})
 	posTable.Render()
 
 	return regularRows, nil
@@ -325,7 +326,12 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, WAFName strin
 	pdf.Ln(lineBreakSize)
 
 	pdf.SetFont("Arial", "B", 12)
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF Detection Score: %.2f%%", db.wafScore))
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF Average Score: %.2f%%", db.wafScore))
+	pdf.SetFont("Arial", "", 12)
+	pdf.Ln(lineBreakSize / 2)
+
+	pdf.SetFont("Arial", "B", 12)
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF Detection Score: %.2f%%", calculatePercentage(blockedNum, bypassesNum+blockedNum)))
 	pdf.SetFont("Arial", "", 12)
 	pdf.Ln(lineBreakSize / 2)
 
