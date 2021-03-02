@@ -202,24 +202,6 @@ func (db *DB) RenderTable(reportTime time.Time, WAFName string) ([][]string, err
 }
 
 func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, WAFName string, rows [][]string) error {
-	// Create a pdf file
-	cols := []float64{25, 35, 30, 35, 35, 30}
-	pdf := gofpdf.New("P", "mm", "A4", "")
-	pdf.AddPage()
-	pdf.SetFont("Arial", "", 24)
-	pdf.Cell(cellWidth, cellHeight, "WAF Testing Results")
-
-	pdf.Ln(lineBreakSize)
-	pdf.SetFont("Arial", "B", 12)
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF score: %.2f%%", db.wafScore))
-	pdf.SetFont("Arial", "", 12)
-	pdf.Ln(lineBreakSize / 2)
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF name: %s", WAFName))
-	pdf.Ln(lineBreakSize / 2)
-
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF testing date: %s", reportTime.Format("02 January 2006")))
-	pdf.Ln(lineBreakSize)
-
 	var rowsPayloads [][]string
 	var rowsTruePos [][]string
 	var rowsFalsePos [][]string
@@ -246,16 +228,6 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, WAFName strin
 		}
 	}
 
-	// Num of bypasses = (failed tests) - (false pos and true pos) - (NA tests (unknown results))
-	// Or, in other words, num of bypasses = correct malicious bypasses only
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("%v bypasses in %v tests, %v unresolved cases / %v test cases",
-		len(rowsPayloads)-1, db.overallTestsCompleted, len(db.naTests), db.overallTestcasesCompleted))
-	pdf.Ln(lineBreakSize)
-
-	tableClip(pdf, cols, rows, 10)
-
-	cols = []float64{100, 30, 20, 25, 15}
-
 	for _, blockedTest := range db.passedTests {
 		payload := fmt.Sprintf("%+q", blockedTest.Payload)
 		payload = strings.ReplaceAll(payload[1:len(payload)-1], `\"`, `"`)
@@ -270,14 +242,31 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, WAFName strin
 		}
 	}
 
-	pdf.Ln(lineBreakSize)
-
 	// Num = number of actual rows - top header (1 line)
 	truePosNum := len(rowsTruePos) - 1
 	falsePosNum := len(rowsFalsePos) - 1
 	// Include only real bypasses, without unknown or false pos/true pos
 	bypassesNum := len(rowsPayloads) - 1
 	blockedNum := len(db.passedTests) - truePosNum
+
+	cols := []float64{25, 35, 30, 35, 35, 30}
+
+	pdf := gofpdf.New("P", "mm", "A4", "")
+	pdf.AddPage()
+	pdf.SetFont("Arial", "", 24)
+	pdf.Cell(cellWidth, cellHeight, "WAF Testing Results")
+
+	pdf.Ln(lineBreakSize)
+	pdf.SetFont("Arial", "B", 12)
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF overall score: %.2f%%", db.wafScore))
+	pdf.SetFont("Arial", "", 12)
+	pdf.Ln(lineBreakSize / 2)
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF name: %s", WAFName))
+	pdf.Ln(lineBreakSize / 2)
+
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF testing date: %s", reportTime.Format("02 January 2006")))
+	pdf.Ln(lineBreakSize)
+
 	currentY := pdf.GetY()
 
 	chartBuf, err := drawChart(bypassesNum, blockedNum, bypassesNum+blockedNum, "Bypassed", "Blocked")
@@ -288,9 +277,29 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, WAFName strin
 	if pdf.Ok() {
 		imgWd, imgHt := imageInfo.Extent()
 		imgWd, imgHt = imgWd/2, imgHt/2
-		pdf.Image("Overall Plot", pageWidth/20, currentY,
-			imgWd, imgHt, false, "PNG", 0, "")
+		pdf.Image("Overall Plot", (pageWidth-imgWd)/2, currentY,
+			imgWd, imgHt, true, "PNG", 0, "")
 	}
+
+	pdf.Ln(lineBreakSize)
+
+	// Num of bypasses = (failed tests) - (false pos and true pos) - (NA tests (unknown results))
+	// Or, in other words, num of bypasses = correct malicious bypasses only
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("%v bypasses in %v tests, %v unresolved cases / %v test cases",
+		len(rowsPayloads)-1, db.overallTestsCompleted, len(db.naTests), db.overallTestcasesCompleted))
+	pdf.Ln(lineBreakSize)
+
+	tableClip(pdf, cols, rows, 10)
+
+	cols = []float64{100, 30, 20, 25, 15}
+
+	httpimg.Register(pdf, trollLink, "")
+	pdf.Image(trollLink, 15, 280, 20, 0, false, "", 0, wallarmLink)
+
+	pdf.AddPage()
+	pdf.SetFont("Arial", "", 24)
+	pdf.Cell(cellWidth, cellHeight, "Positive Tests in Details")
+	pdf.Ln(lineBreakSize * 2)
 
 	chartFalseBuf, err := drawChart(falsePosNum, truePosNum, truePosNum+falsePosNum, "False Positive", "True Positive")
 	if err == nil {
@@ -298,30 +307,11 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, WAFName strin
 		if pdf.Ok() {
 			imgWd, imgHt := imageInfoFalse.Extent()
 			imgWd, imgHt = imgWd/2, imgHt/2
-			pdf.Image("False Pos Plot", pageWidth-imgWd-pageWidth/20, currentY,
-				imgWd, imgHt, false, "PNG", 0, "")
+			pdf.Image("False Pos Plot", (pageWidth-imgWd)/2, currentY,
+				imgWd, imgHt, true, "PNG", 0, "")
 		}
 	}
 
-	httpimg.Register(pdf, trollLink, "")
-	pdf.Image(trollLink, 15, 280, 20, 0, false, "", 0, wallarmLink)
-
-	pdf.AddPage()
-
-	// Malicious payloads block
-	pdf.SetFont("Arial", "", 24)
-	pdf.Cell(cellWidth, cellHeight, "Bypasses in Details")
-	pdf.Ln(lineBreakSize)
-	pdf.SetFont("Arial", "", 12)
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("\n%d malicious requests have bypassed the WAF", len(rowsPayloads)-1))
-	pdf.Ln(lineBreakSize)
-	pdf.SetFont("Arial", "", 10)
-
-	tableClip(pdf, cols, rowsPayloads, 10)
-
-	pdf.AddPage()
-	pdf.SetFont("Arial", "", 24)
-	pdf.Cell(cellWidth, cellHeight, "False Positive and True Positive in Details")
 	pdf.Ln(lineBreakSize)
 
 	// False Positive payloads block
@@ -342,6 +332,17 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, WAFName strin
 
 	pdf.AddPage()
 
+	// Malicious payloads block
+	pdf.SetFont("Arial", "", 24)
+	pdf.Cell(cellWidth, cellHeight, "Bypasses in Details")
+	pdf.Ln(lineBreakSize)
+	pdf.SetFont("Arial", "", 12)
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("\n%d malicious requests have bypassed the WAF", len(rowsPayloads)-1))
+	pdf.Ln(lineBreakSize)
+	pdf.SetFont("Arial", "", 10)
+
+	tableClip(pdf, cols, rowsPayloads, 10)
+
 	cols = []float64{100, 30, 20, 25, 15}
 
 	var unresolvedRaws [][]string
@@ -357,6 +358,8 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, WAFName strin
 				strconv.Itoa(naTest.ResponseStatusCode)},
 		)
 	}
+
+	pdf.AddPage()
 	pdf.SetFont("Arial", "", 24)
 	pdf.Cell(cellWidth, cellHeight, "Unresolved Test Cases")
 	pdf.Ln(lineBreakSize)
