@@ -83,10 +83,20 @@ func tableClip(pdf *gofpdf.Fpdf, cols []float64, rows [][]string, fontSize float
 	}
 }
 
-func drawChart(bypassed int, blocked int, overall int, failed string, passed string) (*bytes.Buffer, error) {
+func drawChart(bypassed int, blocked int, overall int, failed string, passed string, title string) (*bytes.Buffer, error) {
 	bypassedProc := float64(bypassed*100) / float64(overall)
 	blockedProc := 100.0 - bypassedProc
 	pie := chart.PieChart{
+		DPI:   100,
+		Title: fmt.Sprintf("%s", title),
+		TitleStyle: chart.Style{
+			Show:              true,
+			TextVerticalAlign: chart.TextVerticalAlignBaseline,
+		},
+		Background: chart.Style{
+			Show:    true,
+			Padding: chart.NewBox(25, 25, 25, 25),
+		},
 		Width:  512,
 		Height: 512,
 		Values: []chart.Value{
@@ -94,14 +104,16 @@ func drawChart(bypassed int, blocked int, overall int, failed string, passed str
 				Value: float64(bypassed),
 				Label: fmt.Sprintf("%s - %d (%.2f%%)", failed, bypassed, bypassedProc),
 				Style: chart.Style{
-					FillColor: drawing.ColorFromAlphaMixedRGBA(234, 67, 54, 255),
+					// Red
+					FillColor: drawing.ColorFromAlphaMixedRGBA(66, 133, 244, 255),
 				},
 			},
 			{
 				Value: float64(blocked),
 				Label: fmt.Sprintf("%s - %d (%.2f%%)", passed, blocked, blockedProc),
 				Style: chart.Style{
-					FillColor: drawing.ColorFromAlphaMixedRGBA(66, 133, 244, 255),
+					// Blue
+					FillColor: drawing.ColorFromAlphaMixedRGBA(234, 67, 54, 255),
 				},
 			},
 		},
@@ -258,7 +270,7 @@ func (db *DB) RenderTable(reportTime time.Time, WAFName string) ([][]string, err
 	return regularRows, nil
 }
 
-func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, WAFName string, rows [][]string) error {
+func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, WAFName string, url string, rows [][]string) error {
 	baseHeader := []string{"Payload", "Test Case", "Encoder", "Placeholder", "Status"}
 
 	maliciousRows := [][]string{baseHeader}
@@ -313,18 +325,27 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, WAFName strin
 	pdf.Ln(lineBreakSize)
 
 	pdf.SetFont("Arial", "B", 12)
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF overall score: %.2f%%", db.wafScore))
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF Detection Score: %.2f%%", db.wafScore))
 	pdf.SetFont("Arial", "", 12)
 	pdf.Ln(lineBreakSize / 2)
 
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF name: %s", WAFName))
-	pdf.Ln(lineBreakSize / 2)
-
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF testing date: %s", reportTime.Format("02 January 2006")))
+	pdf.SetFont("Arial", "B", 12)
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF Positive Tests Score: %.2f%%", calculatePercentage(truePosNum, truePosNum+falsePosNum)))
+	pdf.SetFont("Arial", "", 12)
 	pdf.Ln(lineBreakSize)
 
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF Name: %s", WAFName))
+	pdf.Ln(lineBreakSize / 2)
+
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF URL: %s", url))
+	pdf.Ln(lineBreakSize / 2)
+
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF Testing Date: %s", reportTime.Format("02 January 2006")))
+	pdf.Ln(lineBreakSize * 1.5)
+
 	currentY := pdf.GetY()
-	chartBuf, err := drawChart(bypassesNum, blockedNum, bypassesNum+blockedNum, "Bypassed", "Blocked")
+
+	chartBuf, err := drawChart(bypassesNum, blockedNum, bypassesNum+blockedNum, "Bypassed", "Blocked", "Detection Score")
 	if err != nil {
 		return errors.Wrap(err, "Plot generation error")
 	}
@@ -332,10 +353,20 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, WAFName strin
 	if pdf.Ok() {
 		imgWd, imgHt := imageInfo.Extent()
 		imgWd, imgHt = imgWd/2, imgHt/2
-		pdf.Image("Overall Plot", (pageWidth-imgWd)/2, currentY,
-			imgWd, imgHt, true, "PNG", 0, "")
+		pdf.Image("Overall Plot", pageWidth/20, currentY,
+			imgWd, imgHt, false, "PNG", 0, "")
 	}
-	pdf.Ln(lineBreakSize)
+
+	chartFalseBuf, err := drawChart(truePosNum, falsePosNum, truePosNum+falsePosNum, "True Positive", "False Positive", "Positive Tests Score")
+	if err == nil {
+		imageInfoFalse := pdf.RegisterImageReader("False Pos Plot", "PNG", chartFalseBuf)
+		if pdf.Ok() {
+			imgWd, imgHt := imageInfoFalse.Extent()
+			imgWd, imgHt = imgWd/2, imgHt/2
+			pdf.Image("False Pos Plot", pageWidth-imgWd-pageWidth/20, currentY,
+				imgWd, imgHt, true, "PNG", 0, "")
+		}
+	}
 
 	// Num of bypasses: failed tests minus positive cases minus unknown cases
 	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("%v bypasses in %v tests, %v unresolved cases / %v test cases",
@@ -351,18 +382,6 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, WAFName strin
 	pdf.AddPage()
 	pdf.SetFont("Arial", "", 24)
 	pdf.Cell(cellWidth, cellHeight, "Positive Tests in Details")
-	pdf.Ln(lineBreakSize * 2)
-
-	chartFalseBuf, err := drawChart(falsePosNum, truePosNum, truePosNum+falsePosNum, "False Positive", "True Positive")
-	if err == nil {
-		imageInfoFalse := pdf.RegisterImageReader("False Pos Plot", "PNG", chartFalseBuf)
-		if pdf.Ok() {
-			imgWd, imgHt := imageInfoFalse.Extent()
-			imgWd, imgHt = imgWd/2, imgHt/2
-			pdf.Image("False Pos Plot", (pageWidth-imgWd)/2, currentY,
-				imgWd, imgHt, true, "PNG", 0, "")
-		}
-	}
 	pdf.Ln(lineBreakSize)
 
 	// False Positive payloads block

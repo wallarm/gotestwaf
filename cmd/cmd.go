@@ -150,7 +150,7 @@ func Run() int {
 		return 1
 	}
 
-	err = db.ExportToPDF(reportFile, reportTime, cfg.WAFName, rows)
+	err = db.ExportToPDF(reportFile, reportTime, cfg.WAFName, cfg.URL, rows)
 	if err != nil {
 		logger.Println("PDF exporting report:", err)
 		return 1
