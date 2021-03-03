@@ -4,6 +4,6 @@ WORKDIR $GOPATH/src/gotestwaf
 COPY . .
 
 ENV GO111MODULE=on
-RUN go build -mod vendor
+RUN go build -o gotestwaf -mod vendor /go/src/gotestwaf/cmd/main.go
 
 ENTRYPOINT ["/go/src/gotestwaf/gotestwaf"]

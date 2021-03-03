@@ -9,13 +9,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wcharczuk/go-chart/drawing"
-
 	"github.com/jung-kurt/gofpdf"
 	"github.com/jung-kurt/gofpdf/contrib/httpimg"
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 	"github.com/wcharczuk/go-chart"
+	"github.com/wcharczuk/go-chart/drawing"
 )
 
 const (
@@ -83,12 +82,12 @@ func tableClip(pdf *gofpdf.Fpdf, cols []float64, rows [][]string, fontSize float
 	}
 }
 
-func drawChart(bypassed int, blocked int, overall int, failed string, passed string, title string) (*bytes.Buffer, error) {
+func drawChart(bypassed, blocked, overall int, failed, passed, title string) (*bytes.Buffer, error) {
 	bypassedProc := float64(bypassed*100) / float64(overall)
 	blockedProc := 100.0 - bypassedProc
 	pie := chart.PieChart{
 		DPI:   85,
-		Title: fmt.Sprintf("%s", title),
+		Title: title,
 		TitleStyle: chart.Style{
 			Show:              true,
 			TextVerticalAlign: chart.TextVerticalAlignBaseline,
@@ -128,12 +127,12 @@ func drawChart(bypassed int, blocked int, overall int, failed string, passed str
 	return buffer, nil
 }
 
-func calculatePercentage(first int, second int) (percentage float32) {
+func calculatePercentage(first, second int) (percentage float32) {
 	percentage = float32(first) / float32(second) * 100
 	return
 }
 
-func (db *DB) RenderTable(reportTime time.Time, WAFName string) ([][]string, error) {
+func (db *DB) RenderTable(reportTime time.Time, wafName string) ([][]string, error) {
 	baseHeader := []string{"Test set", "Test case", "Percentage, %", "Blocked", "Bypassed", "Unresolved"}
 
 	// Table rows to render, regular and positive cases
@@ -148,10 +147,10 @@ func (db *DB) RenderTable(reportTime time.Time, WAFName string) ([][]string, err
 	var unresolvedPositiveCasesNum int
 	for _, naTest := range db.naTests {
 		if strings.Contains(naTest.Set, "false") {
-			unresolvedPositiveCasesNum += 1
-		} else {
-			unresolvedCasesNum[naTest.Case] += 1
+			unresolvedPositiveCasesNum++
+			continue
 		}
+		unresolvedCasesNum[naTest.Case]++
 	}
 
 	sortedTestSets := make([]string, 0, len(db.counters))
@@ -245,7 +244,7 @@ func (db *DB) RenderTable(reportTime time.Time, WAFName string) ([][]string, err
 
 	table.SetFooter([]string{
 		fmt.Sprintf("Date:\n%s", reportTime.Format("2006-01-02")),
-		fmt.Sprintf("WAF Name:\n%s", WAFName),
+		fmt.Sprintf("WAF Name:\n%s", wafName),
 		fmt.Sprintf("WAF Average Score:\n%.2f%%", db.wafScore),
 		fmt.Sprintf("Blocked (Resolved):\n%d/%d (%.2f%%)", regularCasesNum["blocked"], resolvedTestsSum, blockedRate),
 		fmt.Sprintf("Bypassed (Resolved):\n%d/%d (%.2f%%)", regularCasesNum["bypassed"], resolvedTestsSum, bypassedRate),
@@ -271,7 +270,7 @@ func (db *DB) RenderTable(reportTime time.Time, WAFName string) ([][]string, err
 
 	posTable.SetFooter([]string{
 		fmt.Sprintf("Date:\n%s", reportTime.Format("2006-01-02")),
-		fmt.Sprintf("WAF Name:\n%s", WAFName),
+		fmt.Sprintf("WAF Name:\n%s", wafName),
 		fmt.Sprintf("WAF Positive Score:\n%.2f%%", truePosRate),
 		fmt.Sprintf("False positive (res):\n%d/%d (%.2f%%)", positiveCasesNum[false], resolvedPositiveTests, falsePosRate),
 		fmt.Sprintf("True positive (res):\n%d/%d (%.2f%%)", positiveCasesNum[true], resolvedPositiveTests, truePosRate),
@@ -281,7 +280,7 @@ func (db *DB) RenderTable(reportTime time.Time, WAFName string) ([][]string, err
 	return regularRows, nil
 }
 
-func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, WAFName string, url string, rows [][]string) error {
+func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, wafName, url string, rows [][]string) error {
 	baseHeader := []string{"Payload", "Test Case", "Encoder", "Placeholder", "Status"}
 
 	maliciousRows := [][]string{baseHeader}
@@ -350,7 +349,7 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, WAFName strin
 	pdf.SetFont("Arial", "", 12)
 	pdf.Ln(lineBreakSize)
 
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF Name: %s", WAFName))
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF Name: %s", wafName))
 	pdf.Ln(lineBreakSize / 2)
 
 	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF URL: %s", url))
@@ -404,7 +403,12 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, WAFName strin
 	cols = []float64{100, 30, 20, 25, 15}
 
 	pdf.SetFont("Arial", "", 12)
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("\n%d false positive requests identified as blocked (failed, bad behavior)", len(falsePosRows)-1))
+	pdf.Cell(
+		cellWidth,
+		cellHeight,
+		fmt.Sprintf("\n%d false positive requests identified as blocked (failed, bad behavior)",
+			len(falsePosRows)-1),
+	)
 	pdf.Ln(lineBreakSize)
 	pdf.SetFont("Arial", "", 10)
 
@@ -412,7 +416,12 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, WAFName strin
 
 	// True Positive payloads block
 	pdf.SetFont("Arial", "", 12)
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("\n%d true positive requests identified as bypassed (passed, good behavior)", len(truePosRows)-1))
+	pdf.Cell(
+		cellWidth,
+		cellHeight,
+		fmt.Sprintf("\n%d true positive requests identified as bypassed (passed, good behavior)",
+			len(truePosRows)-1),
+	)
 	pdf.Ln(lineBreakSize)
 	pdf.SetFont("Arial", "", 10)
 
