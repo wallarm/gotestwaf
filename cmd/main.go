@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"context"
@@ -12,20 +12,22 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/pkg/errors"
 	flag "github.com/spf13/pflag"
 	"github.com/spf13/viper"
-
 	"github.com/wallarm/gotestwaf/internal/data/config"
 	"github.com/wallarm/gotestwaf/internal/data/test"
 	"github.com/wallarm/gotestwaf/internal/scanner"
 )
 
 const (
+	defaultReportPath    = "reports"
+	defaultTestCasesPath = "testcases"
+	defaultConfigPath    = "config.yaml"
+
 	wafName       = "generic"
 	reportPrefix  = "waf-evaluation-report"
 	payloadPrefix = "waf-evaluation-payloads"
-	reportsDir    = "reports"
-	testCasesDir  = "testcases"
 )
 
 var (
@@ -33,22 +35,16 @@ var (
 	verbose    bool
 )
 
-func WSFromURL(wafUrl string) (string, error) {
-	urlParse, err := url.Parse(wafUrl)
-	if err != nil {
-		return "", err
-	}
-	wsScheme := "ws"
-	if urlParse.Scheme == "https" {
-		wsScheme = "wss"
-	}
-	urlParse.Scheme = wsScheme
-	return urlParse.String(), nil
-}
-
-func Run() int {
+func main() {
 	logger := log.New(os.Stdout, "GOTESTWAF : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 
+	if err := run(logger); err != nil {
+		logger.Println("main error:", err)
+		os.Exit(1)
+	}
+}
+
+func run(logger *log.Logger) error {
 	parseFlags()
 	if !verbose {
 		logger.SetOutput(ioutil.Discard)
@@ -56,19 +52,19 @@ func Run() int {
 
 	cfg, err := loadConfig(configPath)
 	if err != nil {
-		logger.Println("loading config:", err)
-		return 1
+		return errors.Wrap(err, "loading config")
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	logger.Println("Test cases loading started")
+
 	testCases, err := test.Load(cfg, logger)
 	if err != nil {
-		logger.Println("loading test cases:", err)
-		return 1
+		return errors.Wrap(err, "loading test case")
 	}
+
 	logger.Println("Test cases loading finished")
 
 	db := test.NewDB(testCases)
@@ -78,25 +74,24 @@ func Run() int {
 	logger.Println("Scanned URL:", cfg.URL)
 	ok, httpStatus, err := s.PreCheck(cfg.URL)
 	if err != nil {
-		logger.Println("running pre-check:", err)
-		return 1
+		return errors.Wrap(err, "running pre-check")
 	}
 	if !ok {
-		logger.Printf("WAF was not detected. "+
+		return errors.Errorf("WAF was not detected. "+
 			"Please check the 'block_statuscode' or 'block_regexp' values."+
 			"\nBaseline attack status code: %v\n", httpStatus)
-		return 1
 	}
 
 	logger.Printf("WAF pre-check: OK. Blocking status code: %v\n", httpStatus)
 
 	// If WS URL is not available - try to build it from WAF URL
 	if cfg.WebSocketURL == "" {
-		wsUrl, err := WSFromURL(cfg.URL)
-		if err != nil {
-			logger.Printf("Can not parse WAF URL, reason: %s\n", err)
+		wsURL, wsErr := wsFromURL(cfg.URL)
+		if wsErr != nil {
+			logger.Printf("Can not parse WAF URL, reason: %s\n", wsErr)
+			logger.Println("The provided WAF URL will be used for WebSocket testing")
 		}
-		cfg.WebSocketURL = wsUrl
+		cfg.WebSocketURL = wsURL
 	}
 
 	logger.Printf("WebSocket pre-check. URL to check: %s\n", cfg.WebSocketURL)
@@ -115,11 +110,10 @@ func Run() int {
 			"not blocked by the WAF")
 	}
 
-	_, err = os.Stat(cfg.ReportDir)
+	_, err = os.Stat(cfg.ReportPath)
 	if os.IsNotExist(err) {
-		if makeErr := os.Mkdir(cfg.ReportDir, 0700); makeErr != nil {
-			logger.Println("creating dir:", makeErr)
-			return 1
+		if makeErr := os.Mkdir(cfg.ReportPath, 0700); makeErr != nil {
+			return errors.Wrap(makeErr, "creating dir")
 		}
 	}
 
@@ -135,41 +129,38 @@ func Run() int {
 	logger.Printf("Scanning %s\n", cfg.URL)
 	err = s.Run(ctx, cfg.URL)
 	if err != nil {
-		logger.Println("scanner error:", err)
-		return 1
+		return errors.Wrap(err, "run scanning")
 	}
 
 	reportTime := time.Now()
 	reportSaveTime := reportTime.Format("2006-January-02-15-04-05")
 
-	reportFile := filepath.Join(cfg.ReportDir, fmt.Sprintf("%s-%s-%s.pdf", reportPrefix, cfg.WAFName, reportSaveTime))
+	reportFile := filepath.Join(cfg.ReportPath, fmt.Sprintf("%s-%s-%s.pdf", reportPrefix, cfg.WAFName, reportSaveTime))
 
 	rows, err := db.RenderTable(reportTime, cfg.WAFName)
 	if err != nil {
-		logger.Println("CLI table rendering error:", err)
-		return 1
+		return errors.Wrap(err, "table rendering")
 	}
 
 	err = db.ExportToPDF(reportFile, reportTime, cfg.WAFName, cfg.URL, rows)
 	if err != nil {
-		logger.Println("PDF exporting report:", err)
-		return 1
+		return errors.Wrap(err, "PDF exporting")
 	}
 
-	payloadFiles := filepath.Join(cfg.ReportDir, fmt.Sprintf("%s-%s-%s.csv", payloadPrefix, cfg.WAFName, reportSaveTime))
+	payloadFiles := filepath.Join(cfg.ReportPath, fmt.Sprintf("%s-%s-%s.csv", payloadPrefix, cfg.WAFName, reportSaveTime))
 	err = db.ExportPayloads(payloadFiles)
 	if err != nil {
-		logger.Println("exporting payloads:", err)
-		return 1
+		errors.Wrap(err, "payloads exporting")
 	}
-	return 0
+
+	return nil
 }
 
 func parseFlags() {
-	defaultReportDir := filepath.Join(".", reportsDir)
-	defaultTestCasesPath := filepath.Join(".", testCasesDir)
+	reportPath := filepath.Join(".", defaultReportPath)
+	testCasesPath := filepath.Join(".", defaultTestCasesPath)
 
-	flag.StringVar(&configPath, "configPath", "config.yaml", "Path to a config file")
+	flag.StringVar(&configPath, "configPath", defaultConfigPath, "Path to the config file")
 	flag.BoolVar(&verbose, "verbose", true, "If true, enable verbose logging")
 
 	flag.String("url", "http://localhost/", "URL to check")
@@ -192,9 +183,9 @@ func parseFlags() {
 	flag.Int("sendDelay", 400, "Delay in ms between requests")
 	flag.Int("randomDelay", 400, "Random delay in ms in addition to the delay between requests")
 	flag.String("testCase", "", "If set then only this test case will be run")
-	flag.String("testCasesPath", defaultTestCasesPath, "Path to a folder with test cases")
 	flag.String("testSet", "", "If set then only this test set's cases will be run")
-	flag.String("reportDir", defaultReportDir, "A directory to store reports")
+	flag.String("reportPath", reportPath, "A directory to store reports")
+	flag.String("testCasesPath", testCasesPath, "Path to a folder with test cases")
 	flag.String("wafName", wafName, "Name of the WAF product")
 	flag.Parse()
 }
@@ -215,4 +206,17 @@ func loadConfig(path string) (cfg *config.Config, err error) {
 	}
 	err = viper.Unmarshal(&cfg)
 	return
+}
+
+func wsFromURL(wafURL string) (string, error) {
+	urlParse, err := url.Parse(wafURL)
+	if err != nil {
+		return "", err
+	}
+	wsScheme := "ws"
+	if urlParse.Scheme == "https" {
+		wsScheme = "wss"
+	}
+	urlParse.Scheme = wsScheme
+	return urlParse.String(), nil
 }

@@ -76,7 +76,7 @@ func (s *Scanner) PreCheck(url string) (blocked bool, statusCode int, err error)
 	return blocked, code, nil
 }
 
-func (s *Scanner) WSPreCheck(url string) (bool, bool, error) {
+func (s *Scanner) WSPreCheck(url string) (available, blocked bool, err error) {
 	wsClient, _, err := s.wsClient.Dial(url, nil)
 	if err != nil {
 		return false, false, err

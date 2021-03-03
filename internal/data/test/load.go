@@ -9,7 +9,6 @@ import (
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
-
 	"github.com/wallarm/gotestwaf/internal/data/config"
 )
 
