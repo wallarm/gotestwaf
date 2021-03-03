@@ -144,11 +144,10 @@ func (db *DB) RenderTable(reportTime time.Time, wafName string) ([][]string, err
 	regularCasesNum := make(map[string]int)
 
 	unresolvedCasesNum := make(map[string]int)
-	var unresolvedPositiveCasesNum int
+	var unresolvedPositiveTestsSum int
 	for _, naTest := range db.naTests {
 		if strings.Contains(naTest.Set, "false") {
-			unresolvedPositiveCasesNum++
-			continue
+			unresolvedPositiveTestsSum++
 		}
 		unresolvedCasesNum[naTest.Case]++
 	}
@@ -235,7 +234,8 @@ func (db *DB) RenderTable(reportTime time.Time, wafName string) ([][]string, err
 		table.SetColMinWidth(index, colMinWidth)
 	}
 
-	positiveTestsSum := positiveCasesNum[false] + positiveCasesNum[true]
+	positiveTestsSum := positiveCasesNum[false] + positiveCasesNum[true] + unresolvedPositiveTestsSum
+	resolvedPositiveTestsSum := positiveTestsSum - unresolvedPositiveTestsSum
 	resolvedTestsSum := db.overallTestsCompleted - len(db.naTests) - positiveTestsSum
 
 	unresolvedRate := calculatePercentage(len(db.naTests), db.overallTestsCompleted)
@@ -263,18 +263,17 @@ func (db *DB) RenderTable(reportTime time.Time, wafName string) ([][]string, err
 		posTable.SetColMinWidth(index, colMinWidth)
 	}
 
-	unresolvedPosRate := calculatePercentage(unresolvedPositiveCasesNum, positiveTestsSum)
-	resolvedPositiveTests := positiveTestsSum - unresolvedPositiveCasesNum
-	falsePosRate := calculatePercentage(positiveCasesNum[false], resolvedPositiveTests)
-	truePosRate := calculatePercentage(positiveCasesNum[true], resolvedPositiveTests)
+	unresolvedPosRate := calculatePercentage(unresolvedPositiveTestsSum, positiveTestsSum)
+	falsePosRate := calculatePercentage(positiveCasesNum[false], resolvedPositiveTestsSum)
+	truePosRate := calculatePercentage(positiveCasesNum[true], resolvedPositiveTestsSum)
 
 	posTable.SetFooter([]string{
 		fmt.Sprintf("Date:\n%s", reportTime.Format("2006-01-02")),
 		fmt.Sprintf("WAF Name:\n%s", wafName),
 		fmt.Sprintf("WAF Positive Score:\n%.2f%%", truePosRate),
-		fmt.Sprintf("False positive (res):\n%d/%d (%.2f%%)", positiveCasesNum[false], resolvedPositiveTests, falsePosRate),
-		fmt.Sprintf("True positive (res):\n%d/%d (%.2f%%)", positiveCasesNum[true], resolvedPositiveTests, truePosRate),
-		fmt.Sprintf("Unresolved:\n%d/%d (%.2f%%)", unresolvedPositiveCasesNum, positiveTestsSum, unresolvedPosRate)})
+		fmt.Sprintf("False positive (res):\n%d/%d (%.2f%%)", positiveCasesNum[false], resolvedPositiveTestsSum, falsePosRate),
+		fmt.Sprintf("True positive (res):\n%d/%d (%.2f%%)", positiveCasesNum[true], resolvedPositiveTestsSum, truePosRate),
+		fmt.Sprintf("Unresolved:\n%d/%d (%.2f%%)", unresolvedPositiveTestsSum, positiveTestsSum, unresolvedPosRate)})
 	posTable.Render()
 
 	return regularRows, nil
