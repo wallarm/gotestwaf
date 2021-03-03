@@ -362,20 +362,30 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, wafName, url 
 
 	currentY := pdf.GetY()
 
-	chartBuf, err := drawChart(bypassesNum, blockedNum, bypassesNum+blockedNum, "Bypassed", "Blocked", "Detection Score")
-	if err != nil {
-		return errors.Wrap(err, "Plot generation error")
-	}
-	imageInfo := pdf.RegisterImageReader("Overall Plot", "PNG", chartBuf)
-	if pdf.Ok() {
-		imgWd, imgHt := imageInfo.Extent()
-		imgWd, imgHt = imgWd/2, imgHt/2
-		pdf.Image("Overall Plot", pageWidth/20, currentY,
-			imgWd, imgHt, false, "PNG", 0, "")
+	negativeChartFlow := false
+	// Show only negative chart if positive chart is not available
+	if truePosNum+falsePosNum == 0 {
+		negativeChartFlow = true
 	}
 
-	chartFalseBuf, err := drawChart(truePosNum, falsePosNum, truePosNum+falsePosNum, "True Positive", "False Positive", "Positive Tests Score")
-	if err == nil {
+	if bypassesNum+blockedNum != 0 {
+		chartBuf, err := drawChart(bypassesNum, blockedNum, bypassesNum+blockedNum, "Bypassed", "Blocked", "Detection Score")
+		if err != nil {
+			return errors.Wrap(err, "Plot generation error (negative tests)")
+		}
+		imageInfo := pdf.RegisterImageReader("Overall Plot", "PNG", chartBuf)
+		if pdf.Ok() {
+			imgWd, imgHt := imageInfo.Extent()
+			imgWd, imgHt = imgWd/2, imgHt/2
+			pdf.Image("Overall Plot", pageWidth/20, currentY,
+				imgWd, imgHt, negativeChartFlow, "PNG", 0, "")
+		}
+	}
+	if truePosNum+falsePosNum != 0 {
+		chartFalseBuf, err := drawChart(truePosNum, falsePosNum, truePosNum+falsePosNum, "True Positive", "False Positive", "Positive Tests Score")
+		if err != nil {
+			return errors.Wrap(err, "Plot generation error (positive tests)")
+		}
 		imageInfoFalse := pdf.RegisterImageReader("False Pos Plot", "PNG", chartFalseBuf)
 		if pdf.Ok() {
 			imgWd, imgHt := imageInfoFalse.Extent()
@@ -386,7 +396,7 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, wafName, url 
 	}
 
 	// Num of bypasses: failed tests minus positive cases minus unknown cases
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("%v bypasses in %v tests, %v unresolved cases / %v test cases",
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("Total: %v bypasses in %v tests, %v unresolved cases / %v test cases",
 		len(maliciousRows)-1, db.overallTestsCompleted, len(db.naTests), db.overallTestcasesCompleted))
 	pdf.Ln(lineBreakSize)
 
@@ -469,7 +479,7 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, wafName, url 
 
 	tableClip(pdf, cols, unresolvedRaws, 10)
 
-	err = pdf.OutputFileAndClose(reportFile)
+	err := pdf.OutputFileAndClose(reportFile)
 	if err != nil {
 		return errors.Wrap(err, "PDF generation error")
 	}
