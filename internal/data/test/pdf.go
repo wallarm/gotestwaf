@@ -236,19 +236,22 @@ func (db *DB) RenderTable(reportTime time.Time, wafName string) ([][]string, err
 
 	positiveTestsSum := positiveCasesNum[false] + positiveCasesNum[true] + unresolvedPositiveTestsSum
 	resolvedPositiveTestsSum := positiveTestsSum - unresolvedPositiveTestsSum
-	resolvedTestsSum := db.overallTestsCompleted - len(db.naTests) - positiveTestsSum
+	resolvedNegativeTestsSum := db.overallTestsCompleted - len(db.naTests) - resolvedPositiveTestsSum
 
-	unresolvedRate := calculatePercentage(len(db.naTests), db.overallTestsCompleted)
-	blockedRate := calculatePercentage(regularCasesNum["blocked"], resolvedTestsSum)
-	bypassedRate := calculatePercentage(regularCasesNum["bypassed"], resolvedTestsSum)
+	negativeTestsSum := db.overallTestsCompleted - positiveTestsSum
+	unresolvedNegativeTestsSum := len(db.naTests) - unresolvedPositiveTestsSum
+
+	unresolvedNegativeRate := calculatePercentage(unresolvedNegativeTestsSum, negativeTestsSum)
+	blockedNegativeRate := calculatePercentage(regularCasesNum["blocked"], resolvedNegativeTestsSum)
+	bypassedNegativeRate := calculatePercentage(regularCasesNum["bypassed"], resolvedNegativeTestsSum)
 
 	table.SetFooter([]string{
 		fmt.Sprintf("Date:\n%s", reportTime.Format("2006-01-02")),
 		fmt.Sprintf("WAF Name:\n%s", wafName),
 		fmt.Sprintf("WAF Average Score:\n%.2f%%", db.wafScore),
-		fmt.Sprintf("Blocked (Resolved):\n%d/%d (%.2f%%)", regularCasesNum["blocked"], resolvedTestsSum, blockedRate),
-		fmt.Sprintf("Bypassed (Resolved):\n%d/%d (%.2f%%)", regularCasesNum["bypassed"], resolvedTestsSum, bypassedRate),
-		fmt.Sprintf("Unresolved:\n%d/%d (%.2f%%)", len(db.naTests), db.overallTestsCompleted, unresolvedRate)})
+		fmt.Sprintf("Blocked (Resolved):\n%d/%d (%.2f%%)", regularCasesNum["blocked"], resolvedNegativeTestsSum, blockedNegativeRate),
+		fmt.Sprintf("Bypassed (Resolved):\n%d/%d (%.2f%%)", regularCasesNum["bypassed"], resolvedNegativeTestsSum, bypassedNegativeRate),
+		fmt.Sprintf("Unresolved:\n%d/%d (%.2f%%)", unresolvedNegativeTestsSum, negativeTestsSum, unresolvedNegativeRate)})
 	table.Render()
 
 	// Create a table for positive cases
