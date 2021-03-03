@@ -84,16 +84,16 @@ docker run -v ${PWD}/reports:/go/src/gotestwaf/reports gotestwaf --url=http://17
 
 #### Check results
 ```
-GOTESTWAF : 2021/03/03 07:26:56.391391 main.go:61: Test cases loading started
-GOTESTWAF : 2021/03/03 07:26:56.394785 main.go:68: Test cases loading finished
-GOTESTWAF : 2021/03/03 07:26:56.394892 main.go:74: Scanned URL: http://127.0.0.1:8080/
-GOTESTWAF : 2021/03/03 07:26:56.398773 main.go:85: WAF pre-check: OK. Blocking status code: 403
-GOTESTWAF : 2021/03/03 07:26:56.398829 main.go:97: WebSocket pre-check. URL to check: ws://127.0.0.1:8080/
-GOTESTWAF : 2021/03/03 07:26:56.564399 main.go:101: WebSocket pre-check: connection is not available, reason: websocket: bad handshake
-GOTESTWAF : 2021/03/03 07:26:56.565247 main.go:129: Scanning http://127.0.0.1:8080/
-GOTESTWAF : 2021/03/03 07:26:56.565407 scanner.go:124: Scanning started
-GOTESTWAF : 2021/03/03 07:26:59.202419 scanner.go:129: Scanning Time:  2.6369163s
-GOTESTWAF : 2021/03/03 07:26:59.202513 scanner.go:160: Scanning finished
+GOTESTWAF : 2021/03/03 15:15:48.072331 main.go:61: Test cases loading started
+GOTESTWAF : 2021/03/03 15:15:48.077093 main.go:68: Test cases loading finished
+GOTESTWAF : 2021/03/03 15:15:48.077123 main.go:74: Scanned URL: http://127.0.0.1:8080/
+GOTESTWAF : 2021/03/03 15:15:48.083134 main.go:85: WAF pre-check: OK. Blocking status code: 403
+GOTESTWAF : 2021/03/03 15:15:48.083179 main.go:97: WebSocket pre-check. URL to check: ws://127.0.0.1:8080/
+GOTESTWAF : 2021/03/03 15:15:48.251824 main.go:101: WebSocket pre-check: connection is not available, reason: websocket: bad handshake
+GOTESTWAF : 2021/03/03 15:15:48.252047 main.go:129: Scanning http://127.0.0.1:8080/
+GOTESTWAF : 2021/03/03 15:15:48.252076 scanner.go:124: Scanning started
+GOTESTWAF : 2021/03/03 15:15:51.210216 scanner.go:129: Scanning Time:  2.958076338s
+GOTESTWAF : 2021/03/03 15:15:51.210235 scanner.go:160: Scanning finished
 
 Negative Tests:
 +-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
@@ -119,7 +119,7 @@ Negative Tests:
 | owasp-api             | soap                  |                100.00 |                     2 |                     0 |                     0 |
 +-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
 |         DATE:         |       WAF NAME:       |  WAF AVERAGE SCORE:   |  BLOCKED (RESOLVED):  | BYPASSED (RESOLVED):  |      UNRESOLVED:      |
-|      2021-03-03       |        GENERIC        |        55.83%         |   381/528 (72.16%)    |   153/528 (28.98%)    |    63/599 (10.52%)    |
+|      2021-03-03       |        GENERIC        |        55.83%         |   381/534 (71.35%)    |   153/534 (28.65%)    |    57/591 (9.64%)     |
 +-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
 
 Positive Tests:
@@ -132,7 +132,7 @@ Positive Tests:
 |      2021-03-03       |        GENERIC        |        50.00%         |     1/2 (50.00%)      |     1/2 (50.00%)      |     6/8 (75.00%)      |
 +-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
 
-PDF report is ready: reports/waf-evaluation-report-generic-2021-March-03-07-26-59.pdf
+PDF report is ready: reports/waf-evaluation-report-generic-2021-March-03-15-15-51.pdf
 ```
 ---
 
