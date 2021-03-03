@@ -48,22 +48,38 @@ go build -mod vendor
 ## Testing on OWASP ModSecurity Core Rule Set
 
 #### Build & run ModSecurity CRS docker image
+You can pull, build and run ModSecurity CRS docker image automatically:
 ```
-git clone https://github.com/SpiderLabs/owasp-modsecurity-crs
-cd owasp-modsecurity-crs/util/docker
-docker build -t modsec_crs --file Dockerfile-3.0-nginx .
-docker run --rm -p 8080:80 -e PARANOIA=1 modsec_crs
+make modsec
 ```
-
+Or manually with your configuration flags to test:
+```
+docker pull owasp/modsecurity-crs
+docker run -p 8080:80 -d -e PARANOIA=1 --rm owasp/modsecurity-crs
+```
 You may choose the PARANOIA level to increase the level of security.  
 Learn more https://coreruleset.org/faq/
 
 #### Run gotestwaf
-`docker run -v ${PWD}/reports:/go/src/gotestwaf/reports gotestwaf --url=http://172.17.0.1:8080/`
+If you want to test the functionality on the running ModSecurity CRS docker container, you can use the following commands:
+```
+make scan_local               (to run natively)
+make scan_local_from_docker   (to run from docker)
+```
+Or manually from docker:
+```
+docker run -v ${PWD}/reports:/go/src/gotestwaf/reports --network="host" gotestwaf --url=http://127.0.0.1:8080/ --verbose
+```
+And manually with `go run` (natively):
+```
+go run ./cmd --url=http://127.0.0.1:8080/ --verbose
+```
 
 #### Run gotestwaf with WebSocket check
 You can additionally set the WebSocket URL to check via the `wsURL` flag and `verbose` flag to include more information about the checking process:  
-`docker run -v ${PWD}/reports:/go/src/gotestwaf/reports gotestwaf --url=http://172.17.0.1:8080/ --wsURL=ws://172.17.0.1:8080/api/ws --verbose`
+```
+docker run -v ${PWD}/reports:/go/src/gotestwaf/reports gotestwaf --url=http://172.17.0.1:8080/ --wsURL=ws://172.17.0.1:8080/api/ws --verbose
+```
 
 
 #### Check results
