@@ -144,11 +144,10 @@ func (db *DB) RenderTable(reportTime time.Time, wafName string) ([][]string, err
 	regularCasesNum := make(map[string]int)
 
 	unresolvedCasesNum := make(map[string]int)
-	var unresolvedPositiveCasesNum int
+	var unresolvedPositiveTestsSum int
 	for _, naTest := range db.naTests {
 		if strings.Contains(naTest.Set, "false") {
-			unresolvedPositiveCasesNum++
-			continue
+			unresolvedPositiveTestsSum++
 		}
 		unresolvedCasesNum[naTest.Case]++
 	}
@@ -235,20 +234,24 @@ func (db *DB) RenderTable(reportTime time.Time, wafName string) ([][]string, err
 		table.SetColMinWidth(index, colMinWidth)
 	}
 
-	positiveTestsSum := positiveCasesNum[false] + positiveCasesNum[true]
-	resolvedTestsSum := db.overallTestsCompleted - len(db.naTests) - positiveTestsSum
+	positiveTestsSum := positiveCasesNum[false] + positiveCasesNum[true] + unresolvedPositiveTestsSum
+	resolvedPositiveTestsSum := positiveTestsSum - unresolvedPositiveTestsSum
+	resolvedNegativeTestsSum := db.overallTestsCompleted - len(db.naTests) - resolvedPositiveTestsSum
 
-	unresolvedRate := calculatePercentage(len(db.naTests), db.overallTestsCompleted)
-	blockedRate := calculatePercentage(regularCasesNum["blocked"], resolvedTestsSum)
-	bypassedRate := calculatePercentage(regularCasesNum["bypassed"], resolvedTestsSum)
+	negativeTestsSum := db.overallTestsCompleted - positiveTestsSum
+	unresolvedNegativeTestsSum := len(db.naTests) - unresolvedPositiveTestsSum
+
+	unresolvedNegativeRate := calculatePercentage(unresolvedNegativeTestsSum, negativeTestsSum)
+	blockedNegativeRate := calculatePercentage(regularCasesNum["blocked"], resolvedNegativeTestsSum)
+	bypassedNegativeRate := calculatePercentage(regularCasesNum["bypassed"], resolvedNegativeTestsSum)
 
 	table.SetFooter([]string{
 		fmt.Sprintf("Date:\n%s", reportTime.Format("2006-01-02")),
 		fmt.Sprintf("WAF Name:\n%s", wafName),
 		fmt.Sprintf("WAF Average Score:\n%.2f%%", db.wafScore),
-		fmt.Sprintf("Blocked (Resolved):\n%d/%d (%.2f%%)", regularCasesNum["blocked"], resolvedTestsSum, blockedRate),
-		fmt.Sprintf("Bypassed (Resolved):\n%d/%d (%.2f%%)", regularCasesNum["bypassed"], resolvedTestsSum, bypassedRate),
-		fmt.Sprintf("Unresolved:\n%d/%d (%.2f%%)", len(db.naTests), db.overallTestsCompleted, unresolvedRate)})
+		fmt.Sprintf("Blocked (Resolved):\n%d/%d (%.2f%%)", regularCasesNum["blocked"], resolvedNegativeTestsSum, blockedNegativeRate),
+		fmt.Sprintf("Bypassed (Resolved):\n%d/%d (%.2f%%)", regularCasesNum["bypassed"], resolvedNegativeTestsSum, bypassedNegativeRate),
+		fmt.Sprintf("Unresolved:\n%d/%d (%.2f%%)", unresolvedNegativeTestsSum, negativeTestsSum, unresolvedNegativeRate)})
 	table.Render()
 
 	// Create a table for positive cases
@@ -263,18 +266,17 @@ func (db *DB) RenderTable(reportTime time.Time, wafName string) ([][]string, err
 		posTable.SetColMinWidth(index, colMinWidth)
 	}
 
-	unresolvedPosRate := calculatePercentage(unresolvedPositiveCasesNum, positiveTestsSum)
-	resolvedPositiveTests := positiveTestsSum - unresolvedPositiveCasesNum
-	falsePosRate := calculatePercentage(positiveCasesNum[false], resolvedPositiveTests)
-	truePosRate := calculatePercentage(positiveCasesNum[true], resolvedPositiveTests)
+	unresolvedPosRate := calculatePercentage(unresolvedPositiveTestsSum, positiveTestsSum)
+	falsePosRate := calculatePercentage(positiveCasesNum[false], resolvedPositiveTestsSum)
+	truePosRate := calculatePercentage(positiveCasesNum[true], resolvedPositiveTestsSum)
 
 	posTable.SetFooter([]string{
 		fmt.Sprintf("Date:\n%s", reportTime.Format("2006-01-02")),
 		fmt.Sprintf("WAF Name:\n%s", wafName),
 		fmt.Sprintf("WAF Positive Score:\n%.2f%%", truePosRate),
-		fmt.Sprintf("False positive (res):\n%d/%d (%.2f%%)", positiveCasesNum[false], resolvedPositiveTests, falsePosRate),
-		fmt.Sprintf("True positive (res):\n%d/%d (%.2f%%)", positiveCasesNum[true], resolvedPositiveTests, truePosRate),
-		fmt.Sprintf("Unresolved:\n%d/%d (%.2f%%)", unresolvedPositiveCasesNum, positiveTestsSum, unresolvedPosRate)})
+		fmt.Sprintf("False positive (res):\n%d/%d (%.2f%%)", positiveCasesNum[false], resolvedPositiveTestsSum, falsePosRate),
+		fmt.Sprintf("True positive (res):\n%d/%d (%.2f%%)", positiveCasesNum[true], resolvedPositiveTestsSum, truePosRate),
+		fmt.Sprintf("Unresolved:\n%d/%d (%.2f%%)", unresolvedPositiveTestsSum, positiveTestsSum, unresolvedPosRate)})
 	posTable.Render()
 
 	return regularRows, nil
@@ -360,20 +362,30 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, wafName, url 
 
 	currentY := pdf.GetY()
 
-	chartBuf, err := drawChart(bypassesNum, blockedNum, bypassesNum+blockedNum, "Bypassed", "Blocked", "Detection Score")
-	if err != nil {
-		return errors.Wrap(err, "Plot generation error")
-	}
-	imageInfo := pdf.RegisterImageReader("Overall Plot", "PNG", chartBuf)
-	if pdf.Ok() {
-		imgWd, imgHt := imageInfo.Extent()
-		imgWd, imgHt = imgWd/2, imgHt/2
-		pdf.Image("Overall Plot", pageWidth/20, currentY,
-			imgWd, imgHt, false, "PNG", 0, "")
+	negativeChartFlow := false
+	// Show only negative chart if positive chart is not available
+	if truePosNum+falsePosNum == 0 {
+		negativeChartFlow = true
 	}
 
-	chartFalseBuf, err := drawChart(truePosNum, falsePosNum, truePosNum+falsePosNum, "True Positive", "False Positive", "Positive Tests Score")
-	if err == nil {
+	if bypassesNum+blockedNum != 0 {
+		chartBuf, err := drawChart(bypassesNum, blockedNum, bypassesNum+blockedNum, "Bypassed", "Blocked", "Detection Score")
+		if err != nil {
+			return errors.Wrap(err, "Plot generation error (negative tests)")
+		}
+		imageInfo := pdf.RegisterImageReader("Overall Plot", "PNG", chartBuf)
+		if pdf.Ok() {
+			imgWd, imgHt := imageInfo.Extent()
+			imgWd, imgHt = imgWd/2, imgHt/2
+			pdf.Image("Overall Plot", pageWidth/20, currentY,
+				imgWd, imgHt, negativeChartFlow, "PNG", 0, "")
+		}
+	}
+	if truePosNum+falsePosNum != 0 {
+		chartFalseBuf, err := drawChart(truePosNum, falsePosNum, truePosNum+falsePosNum, "True Positive", "False Positive", "Positive Tests Score")
+		if err != nil {
+			return errors.Wrap(err, "Plot generation error (positive tests)")
+		}
 		imageInfoFalse := pdf.RegisterImageReader("False Pos Plot", "PNG", chartFalseBuf)
 		if pdf.Ok() {
 			imgWd, imgHt := imageInfoFalse.Extent()
@@ -384,7 +396,7 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, wafName, url 
 	}
 
 	// Num of bypasses: failed tests minus positive cases minus unknown cases
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("%v bypasses in %v tests, %v unresolved cases / %v test cases",
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("Total: %v bypasses in %v tests, %v unresolved cases / %v test cases",
 		len(maliciousRows)-1, db.overallTestsCompleted, len(db.naTests), db.overallTestcasesCompleted))
 	pdf.Ln(lineBreakSize)
 
@@ -467,7 +479,7 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, wafName, url 
 
 	tableClip(pdf, cols, unresolvedRaws, 10)
 
-	err = pdf.OutputFileAndClose(reportFile)
+	err := pdf.OutputFileAndClose(reportFile)
 	if err != nil {
 		return errors.Wrap(err, "PDF generation error")
 	}
