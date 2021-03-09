@@ -8,6 +8,6 @@ payload:
   - 'The Senora found herself a heroine; more than that, she became aware'
   - time he came.
 encoder:
-  - Plain
+  - URL
 placeholder:
   - URLParam
