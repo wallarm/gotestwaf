@@ -78,7 +78,7 @@ func run(logger *log.Logger) error {
 	}
 	if !ok {
 		return errors.Errorf("WAF was not detected. "+
-			"Please check the 'block_statuscode' or 'block_regexp' values."+
+			"Please use the '--blockStatusCode' or '--blockRegex' flags. Use '--help' for additional info."+
 			"\nBaseline attack status code: %v\n", httpStatus)
 	}
 
