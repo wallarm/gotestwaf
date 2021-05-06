@@ -3,6 +3,7 @@ package test
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"sort"
 	"strconv"
@@ -10,7 +11,6 @@ import (
 	"time"
 
 	"github.com/jung-kurt/gofpdf"
-	"github.com/jung-kurt/gofpdf/contrib/httpimg"
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 	"github.com/wcharczuk/go-chart"
@@ -21,7 +21,6 @@ const (
 	MARGECELL = 2 // marge top/bottom of cell
 
 	wallarmLink = "https://wallarm.com/?utm_campaign=gtw_tool&utm_medium=pdf&utm_source=github"
-	trollLink   = "http://troll.wallarm.tools/assets/wallarm.logo.png"
 
 	cellWidth     = 10
 	cellHeight    = 10
@@ -402,8 +401,13 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, wafName, url 
 
 	tableClip(pdf, cols, rows, 10)
 
-	httpimg.Register(pdf, trollLink, "")
-	pdf.Image(trollLink, 15, 280, 20, 0, false, "", 0, wallarmLink)
+	wallarmLogo, err := ioutil.ReadFile(fmt.Sprintf("cmd%sresources%slogo.png", string(os.PathSeparator), string(os.PathSeparator)))
+	if err != nil {
+		return errors.Wrap(err, "can not load logo image")
+	}
+	reader := bytes.NewReader(wallarmLogo)
+	pdf.RegisterImageReader("wallarm-logo", "PNG", reader)
+	pdf.Image("wallarm-logo", 15, 280, 20, 0, false, "", 0, wallarmLink)
 
 	// Positive tests page
 	pdf.AddPage()
@@ -479,8 +483,7 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, wafName, url 
 
 	tableClip(pdf, cols, unresolvedRaws, 10)
 
-	err := pdf.OutputFileAndClose(reportFile)
-	if err != nil {
+	if err = pdf.OutputFileAndClose(reportFile); err != nil {
 		return errors.Wrap(err, "PDF generation error")
 	}
 
