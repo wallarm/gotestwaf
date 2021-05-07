@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"io/ioutil"
 	"net/http"
+	"net/http/cookiejar"
 	"net/url"
 	"time"
 
@@ -22,7 +23,7 @@ type HTTPClient struct {
 	followCookies bool
 }
 
-func NewHTTPClient(cfg *config.Config) *HTTPClient {
+func NewHTTPClient(cfg *config.Config) (*HTTPClient, error) {
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: !cfg.TLSVerify},
 		IdleConnTimeout: time.Duration(cfg.IdleConnTimeout) * time.Second,
@@ -34,6 +35,11 @@ func NewHTTPClient(cfg *config.Config) *HTTPClient {
 		tr = &http.Transport{
 			Proxy: http.ProxyURL(proxyURL),
 		}
+	}
+
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		return nil, err
 	}
 
 	cl := &http.Client{
@@ -48,6 +54,7 @@ func NewHTTPClient(cfg *config.Config) *HTTPClient {
 				return nil
 			}
 		}(),
+		Jar: jar,
 	}
 
 	return &HTTPClient{
@@ -55,7 +62,7 @@ func NewHTTPClient(cfg *config.Config) *HTTPClient {
 		cookies:       cfg.Cookies,
 		headers:       cfg.HTTPHeaders,
 		followCookies: cfg.FollowCookies,
-	}
+	}, nil
 }
 
 func (c *HTTPClient) Send(
