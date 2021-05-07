@@ -12,11 +12,11 @@ type DB struct {
 	naTests     []Info
 	tests       []Case
 
-	overallPassedRate         float32
-	overallTestcasesCompleted float32
-	overallTestsCompleted     int
-	overallTestsFailed        int
-	wafScore                  float32
+	overallPassedRequestsPercentage float32
+	overallCompletedTestCases       float32
+	overallRequests                 int
+	overallRequestsFailed           int
+	wafScore                        float32
 }
 
 func NewDB(tests []Case) *DB {

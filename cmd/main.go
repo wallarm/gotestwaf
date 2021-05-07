@@ -137,12 +137,12 @@ func run(logger *log.Logger) error {
 
 	reportFile := filepath.Join(cfg.ReportPath, fmt.Sprintf("%s-%s-%s.pdf", reportPrefix, cfg.WAFName, reportSaveTime))
 
-	rows, err := db.RenderTable(reportTime, cfg.WAFName)
+	rows, err := db.RenderTable(reportTime, cfg.WAFName, cfg.IgnoreUnresolved)
 	if err != nil {
 		return errors.Wrap(err, "table rendering")
 	}
 
-	err = db.ExportToPDF(reportFile, reportTime, cfg.WAFName, cfg.URL, rows)
+	err = db.ExportToPDF(reportFile, reportTime, cfg.WAFName, cfg.URL, rows, cfg.IgnoreUnresolved)
 	if err != nil {
 		return errors.Wrap(err, "PDF exporting")
 	}
@@ -187,6 +187,7 @@ func parseFlags() {
 	flag.String("reportPath", reportPath, "A directory to store reports")
 	flag.String("testCasesPath", testCasesPath, "Path to a folder with test cases")
 	flag.String("wafName", wafName, "Name of the WAF product")
+	flag.Bool("ignoreUnresolved", false, "If true, unresolved test cases will be considered as bypassed (affect score and results)")
 	flag.Parse()
 }
 

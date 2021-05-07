@@ -26,4 +26,5 @@ type Config struct {
 	TestCasesPath      string            `mapstructure:"testCasesPath"`
 	TestSet            string            `mapstructure:"testSet"`
 	WAFName            string            `mapstructure:"wafName"`
+	IgnoreUnresolved   bool              `mapstructure:"ignoreUnresolved"`
 }

@@ -82,9 +82,9 @@ func tableClip(pdf *gofpdf.Fpdf, cols []float64, rows [][]string, fontSize float
 }
 
 func drawChart(bypassed, blocked, overall int, failed, passed, title string) (*bytes.Buffer, error) {
-	bypassedProc := float64(bypassed*100) / float64(overall)
-	blockedProc := 100.0 - bypassedProc
-	pie := chart.PieChart{
+	bypassedPercentage := float64(bypassed*100) / float64(overall)
+	blockedPercentage := 100.0 - bypassedPercentage
+	pieChartImg := chart.PieChart{
 		DPI:   85,
 		Title: title,
 		TitleStyle: chart.Style{
@@ -100,7 +100,7 @@ func drawChart(bypassed, blocked, overall int, failed, passed, title string) (*b
 		Values: []chart.Value{
 			{
 				Value: float64(bypassed),
-				Label: fmt.Sprintf("%s: %d (%.2f%%)", failed, bypassed, bypassedProc),
+				Label: fmt.Sprintf("%s: %d (%.2f%%)", failed, bypassed, bypassedPercentage),
 				Style: chart.Style{
 					// Red
 					FillColor: drawing.ColorFromAlphaMixedRGBA(66, 133, 244, 255),
@@ -109,7 +109,7 @@ func drawChart(bypassed, blocked, overall int, failed, passed, title string) (*b
 			},
 			{
 				Value: float64(blocked),
-				Label: fmt.Sprintf("%s: %d (%.2f%%)", passed, blocked, blockedProc),
+				Label: fmt.Sprintf("%s: %d (%.2f%%)", passed, blocked, blockedPercentage),
 				Style: chart.Style{
 					// Blue
 					FillColor: drawing.ColorFromAlphaMixedRGBA(234, 67, 54, 255),
@@ -119,36 +119,50 @@ func drawChart(bypassed, blocked, overall int, failed, passed, title string) (*b
 		},
 	}
 	buffer := bytes.NewBuffer([]byte{})
-	err := pie.Render(chart.PNG, buffer)
-	if err != nil {
+	if err := pieChartImg.Render(chart.PNG, buffer); err != nil {
 		return buffer, err
 	}
 	return buffer, nil
 }
 
-func calculatePercentage(first, second int) (percentage float32) {
-	percentage = float32(first) / float32(second) * 100
-	return
+func calculatePercentage(first, second int) float32 {
+	if second == 0 {
+		return 0.0
+	}
+	return float32(first) / float32(second) * 100
 }
 
-func (db *DB) RenderTable(reportTime time.Time, wafName string) ([][]string, error) {
-	baseHeader := []string{"Test set", "Test case", "Percentage, %", "Blocked", "Bypassed", "Unresolved"}
+func isPositiveTest(setName string) bool {
+	return strings.Contains(setName, "false")
+}
+
+func (db *DB) RenderTable(reportTime time.Time, wafName string, ignoreUnresolved bool) ([][]string, error) {
+	baseHeader := []string{"Test set", "Test case", "Percentage, %", "Blocked", "Bypassed"}
+	if !ignoreUnresolved {
+		baseHeader = append(baseHeader, "Unresolved")
+	}
 
 	// Table rows to render, regular and positive cases
-	positiveRows := [][]string{baseHeader}
-	regularRows := [][]string{baseHeader}
+	positiveTestRows := [][]string{baseHeader}
+	negativeTestRows := [][]string{baseHeader}
 
 	// Counters to use with table footers
-	positiveCasesNum := make(map[bool]int)
-	regularCasesNum := make(map[string]int)
+	positiveRequestsNumber := make(map[string]int)
+	negativeRequestsNumber := make(map[string]int)
+	unresolvedRequestsNumber := make(map[string]int)
 
-	unresolvedCasesNum := make(map[string]int)
-	var unresolvedPositiveTestsSum int
-	for _, naTest := range db.naTests {
-		if strings.Contains(naTest.Set, "false") {
-			unresolvedPositiveTestsSum++
+	var positiveUnresolvedRequestsSum int
+	for _, unresolvedTest := range db.naTests {
+		// If we want to count UNRESOLVED as BYPASSED, we shouldn't count UNRESOLVED at all
+		// set it to zero by default
+		if ignoreUnresolved {
+			unresolvedRequestsNumber[unresolvedTest.Case] = 0
+			continue
 		}
-		unresolvedCasesNum[naTest.Case]++
+		if isPositiveTest(unresolvedTest.Set) {
+			positiveUnresolvedRequestsSum++
+		}
+		unresolvedRequestsNumber[unresolvedTest.Case]++
 	}
 
 	sortedTestSets := make([]string, 0, len(db.counters))
@@ -165,38 +179,45 @@ func (db *DB) RenderTable(reportTime time.Time, wafName string) ([][]string, err
 		sort.Strings(sortedTestCases)
 
 		for _, testCase := range sortedTestCases {
-			unresolved := unresolvedCasesNum[testCase]
-			passed := db.counters[testSet][testCase][true]
-			// Avoid the unresolved cases when counting failed
-			failed := db.counters[testSet][testCase][false] - unresolved
-			// But include the unresolved results in total score to calculate them
-			total := passed + failed + unresolved
-			totalResolved := passed + failed
-			db.overallTestsCompleted += total
-			db.overallTestsFailed += failed
-
-			var percentage float32 = 0
-			if totalResolved != 0 {
-				percentage = float32(passed) / float32(totalResolved) * 100
+			unresolvedRequests := unresolvedRequestsNumber[testCase]
+			passedRequests := db.counters[testSet][testCase][true]
+			failedRequests := db.counters[testSet][testCase][false]
+			totalRequests := passedRequests + failedRequests
+			// If we don't want to count UNRESOLVED requests as BYPASSED, we need to subtract them
+			// from failed requests (in other case we will count them as usual), and add this
+			// subtracted value to the overall requests
+			if !ignoreUnresolved {
+				failedRequests -= unresolvedRequests
 			}
 
-			// If positive set - move to another table (remove from general cases)
-			if strings.Contains(testSet, "false") {
-				// False positive - blocked by the WAF (bad behavior, failed)
-				positiveCasesNum[false] += failed
-				// True positive - bypassed (good behavior, passed)
-				positiveCasesNum[true] += passed
+			totalResolvedRequests := passedRequests + failedRequests
+			var passedRequestsPercentage float32 = 0
+			if totalResolvedRequests != 0 {
+				passedRequestsPercentage = float32(passedRequests) / float32(totalResolvedRequests) * 100
+			}
 
-				// Swap the "failed" and "passed" cases for positive cases
+			db.overallRequests += totalRequests
+			db.overallRequestsFailed += failedRequests
+
+			// If positive set - move to another table (remove from general cases)
+			if isPositiveTest(testSet) {
+				// False positive - blocked by the WAF (bad behavior, failedRequests)
+				positiveRequestsNumber["blocked"] += failedRequests
+				// True positive - bypassed (good behavior, passedRequests)
+				positiveRequestsNumber["bypassed"] += passedRequests
+
+				// Swap the "failedRequests" and "passedRequests" cases for positive cases
 				rowAppend := []string{
 					testSet,
 					testCase,
-					fmt.Sprintf("%.2f", percentage),
-					fmt.Sprintf("%d", failed),
-					fmt.Sprintf("%d", passed),
-					fmt.Sprintf("%d", unresolvedCasesNum[testCase])}
+					fmt.Sprintf("%.2f", passedRequestsPercentage),
+					fmt.Sprintf("%d", failedRequests),
+					fmt.Sprintf("%d", passedRequests)}
+				if !ignoreUnresolved {
+					rowAppend = append(rowAppend, fmt.Sprintf("%d", unresolvedRequestsNumber[testCase]))
+				}
 
-				positiveRows = append(positiveRows, rowAppend)
+				positiveTestRows = append(positiveTestRows, rowAppend)
 				continue
 			}
 
@@ -204,53 +225,65 @@ func (db *DB) RenderTable(reportTime time.Time, wafName string) ([][]string, err
 			rowAppend := []string{
 				testSet,
 				testCase,
-				fmt.Sprintf("%.2f", percentage),
-				fmt.Sprintf("%d", passed),
-				fmt.Sprintf("%d", failed),
-				fmt.Sprintf("%d", unresolvedCasesNum[testCase])}
+				fmt.Sprintf("%.2f", passedRequestsPercentage),
+				fmt.Sprintf("%d", passedRequests),
+				fmt.Sprintf("%d", failedRequests)}
+			if !ignoreUnresolved {
+				rowAppend = append(rowAppend, fmt.Sprintf("%d", unresolvedRequestsNumber[testCase]))
+			}
 
-			regularCasesNum["blocked"] += passed
-			regularCasesNum["bypassed"] += failed
+			negativeRequestsNumber["blocked"] += passedRequests
+			negativeRequestsNumber["bypassed"] += failedRequests
 
-			regularRows = append(regularRows, rowAppend)
+			negativeTestRows = append(negativeTestRows, rowAppend)
 
-			db.overallTestcasesCompleted += 1.00
-			db.overallPassedRate += percentage
+			db.overallCompletedTestCases += 1.00
+			db.overallPassedRequestsPercentage += passedRequestsPercentage
 		}
 	}
 
-	db.wafScore = db.overallPassedRate / db.overallTestcasesCompleted
+	db.wafScore = db.overallPassedRequestsPercentage / db.overallCompletedTestCases
 
 	// Create a table for regular cases (excluding positive cases)
 	fmt.Println("\nNegative Tests:")
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader(baseHeader)
 
-	for _, row := range regularRows[1:] {
+	for _, row := range negativeTestRows[1:] {
 		table.Append(row)
 	}
 	for index := range baseHeader {
 		table.SetColMinWidth(index, colMinWidth)
 	}
 
-	positiveTestsSum := positiveCasesNum[false] + positiveCasesNum[true] + unresolvedPositiveTestsSum
-	resolvedPositiveTestsSum := positiveTestsSum - unresolvedPositiveTestsSum
-	resolvedNegativeTestsSum := db.overallTestsCompleted - len(db.naTests) - resolvedPositiveTestsSum
+	positiveRequestsSum := positiveRequestsNumber["blocked"] + positiveRequestsNumber["bypassed"] + positiveUnresolvedRequestsSum
+	negativeRequestsSum := db.overallRequests - positiveRequestsSum
 
-	negativeTestsSum := db.overallTestsCompleted - positiveTestsSum
-	unresolvedNegativeTestsSum := len(db.naTests) - unresolvedPositiveTestsSum
+	positiveResolvedRequestsSum := positiveRequestsSum - positiveUnresolvedRequestsSum
+	negativeResolvedRequestsSum := db.overallRequests - positiveResolvedRequestsSum
+	if !ignoreUnresolved {
+		negativeResolvedRequestsSum -= len(db.naTests)
+	}
 
-	unresolvedNegativeRate := calculatePercentage(unresolvedNegativeTestsSum, negativeTestsSum)
-	blockedNegativeRate := calculatePercentage(regularCasesNum["blocked"], resolvedNegativeTestsSum)
-	bypassedNegativeRate := calculatePercentage(regularCasesNum["bypassed"], resolvedNegativeTestsSum)
+	var negativeUnresolvedRequestsSum int
+	if !ignoreUnresolved {
+		negativeUnresolvedRequestsSum = len(db.naTests) - positiveUnresolvedRequestsSum
+	}
 
-	table.SetFooter([]string{
+	negativeUnresolvedRequestsPercentage := calculatePercentage(negativeUnresolvedRequestsSum, negativeRequestsSum)
+	negativeResolvedBlockedRequestsPercentage := calculatePercentage(negativeRequestsNumber["blocked"], negativeResolvedRequestsSum)
+	negativeResolvedBypassedRequestsPercentage := calculatePercentage(negativeRequestsNumber["bypassed"], negativeResolvedRequestsSum)
+
+	footerNegativeTests := []string{
 		fmt.Sprintf("Date:\n%s", reportTime.Format("2006-01-02")),
 		fmt.Sprintf("WAF Name:\n%s", wafName),
 		fmt.Sprintf("WAF Average Score:\n%.2f%%", db.wafScore),
-		fmt.Sprintf("Blocked (Resolved):\n%d/%d (%.2f%%)", regularCasesNum["blocked"], resolvedNegativeTestsSum, blockedNegativeRate),
-		fmt.Sprintf("Bypassed (Resolved):\n%d/%d (%.2f%%)", regularCasesNum["bypassed"], resolvedNegativeTestsSum, bypassedNegativeRate),
-		fmt.Sprintf("Unresolved:\n%d/%d (%.2f%%)", unresolvedNegativeTestsSum, negativeTestsSum, unresolvedNegativeRate)})
+		fmt.Sprintf("Blocked (Resolved):\n%d/%d (%.2f%%)", negativeRequestsNumber["blocked"], negativeResolvedRequestsSum, negativeResolvedBlockedRequestsPercentage),
+		fmt.Sprintf("Bypassed (Resolved):\n%d/%d (%.2f%%)", negativeRequestsNumber["bypassed"], negativeResolvedRequestsSum, negativeResolvedBypassedRequestsPercentage)}
+	if !ignoreUnresolved {
+		footerNegativeTests = append(footerNegativeTests, fmt.Sprintf("Unresolved:\n%d/%d (%.2f%%)", negativeUnresolvedRequestsSum, negativeRequestsSum, negativeUnresolvedRequestsPercentage))
+	}
+	table.SetFooter(footerNegativeTests)
 	table.Render()
 
 	// Create a table for positive cases
@@ -258,74 +291,94 @@ func (db *DB) RenderTable(reportTime time.Time, wafName string) ([][]string, err
 	posTable := tablewriter.NewWriter(os.Stdout)
 	posTable.SetHeader(baseHeader)
 
-	for _, row := range positiveRows[1:] {
+	for _, row := range positiveTestRows[1:] {
 		posTable.Append(row)
 	}
 	for index := range baseHeader {
 		posTable.SetColMinWidth(index, colMinWidth)
 	}
 
-	unresolvedPosRate := calculatePercentage(unresolvedPositiveTestsSum, positiveTestsSum)
-	falsePosRate := calculatePercentage(positiveCasesNum[false], resolvedPositiveTestsSum)
-	truePosRate := calculatePercentage(positiveCasesNum[true], resolvedPositiveTestsSum)
+	positiveUnresolvedRequestsPercentage := calculatePercentage(positiveUnresolvedRequestsSum, positiveRequestsSum)
+	positiveResolvedFalsePercentage := calculatePercentage(positiveRequestsNumber["blocked"], positiveResolvedRequestsSum)
+	positiveResolvedTruePercentage := calculatePercentage(positiveRequestsNumber["bypassed"], positiveResolvedRequestsSum)
 
-	posTable.SetFooter([]string{
+	footerPositiveTests := []string{
 		fmt.Sprintf("Date:\n%s", reportTime.Format("2006-01-02")),
 		fmt.Sprintf("WAF Name:\n%s", wafName),
-		fmt.Sprintf("WAF Positive Score:\n%.2f%%", truePosRate),
-		fmt.Sprintf("False positive (res):\n%d/%d (%.2f%%)", positiveCasesNum[false], resolvedPositiveTestsSum, falsePosRate),
-		fmt.Sprintf("True positive (res):\n%d/%d (%.2f%%)", positiveCasesNum[true], resolvedPositiveTestsSum, truePosRate),
-		fmt.Sprintf("Unresolved:\n%d/%d (%.2f%%)", unresolvedPositiveTestsSum, positiveTestsSum, unresolvedPosRate)})
+		fmt.Sprintf("WAF Positive Score:\n%.2f%%", positiveResolvedTruePercentage),
+		fmt.Sprintf("False positive (res):\n%d/%d (%.2f%%)", positiveRequestsNumber["blocked"], positiveResolvedRequestsSum, positiveResolvedFalsePercentage),
+		fmt.Sprintf("True positive (res):\n%d/%d (%.2f%%)", positiveRequestsNumber["bypassed"], positiveResolvedRequestsSum, positiveResolvedTruePercentage)}
+	if !ignoreUnresolved {
+		footerPositiveTests = append(footerPositiveTests, fmt.Sprintf("Unresolved:\n%d/%d (%.2f%%)", positiveUnresolvedRequestsSum, positiveRequestsSum, positiveUnresolvedRequestsPercentage))
+	}
+
+	posTable.SetFooter(footerPositiveTests)
 	posTable.Render()
 
-	return regularRows, nil
+	return negativeTestRows, nil
 }
 
-func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, wafName, url string, rows [][]string) error {
+func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, wafName, url string, rows [][]string, ignoreUnresolved bool) error {
 	baseHeader := []string{"Payload", "Test Case", "Encoder", "Placeholder", "Status"}
 
-	maliciousRows := [][]string{baseHeader}
-	truePosRows := [][]string{baseHeader}
-	falsePosRows := [][]string{baseHeader}
+	negativeBypassRows := [][]string{baseHeader}
+	positiveTrueRows := [][]string{baseHeader}
+	positiveFalseRows := [][]string{baseHeader}
 
-	for _, failedTest := range db.failedTests {
-		payload := fmt.Sprintf("%+q", failedTest.Payload)
+	for _, failedRequest := range db.failedTests {
+		payload := fmt.Sprintf("%+q", failedRequest.Payload)
 		payload = strings.ReplaceAll(payload[1:len(payload)-1], `\"`, `"`)
 		toAppend := []string{payload,
-			failedTest.Case,
-			failedTest.Encoder,
-			failedTest.Placeholder,
-			strconv.Itoa(failedTest.ResponseStatusCode)}
-		// Failed for False Positive - blocked by the waf (bad behavior)
-		if strings.Contains(failedTest.Set, "false") {
-			falsePosRows = append(falsePosRows, toAppend)
-			// Failed for malicious payload - bypass (bad behavior)
+			failedRequest.Case,
+			failedRequest.Encoder,
+			failedRequest.Placeholder,
+			strconv.Itoa(failedRequest.ResponseStatusCode)}
+		if isPositiveTest(failedRequest.Set) {
+			positiveFalseRows = append(positiveFalseRows, toAppend)
 		} else {
-			maliciousRows = append(maliciousRows, toAppend)
+			negativeBypassRows = append(negativeBypassRows, toAppend)
 		}
 	}
 
-	for _, blockedTest := range db.passedTests {
-		payload := fmt.Sprintf("%+q", blockedTest.Payload)
+	for _, passedRequest := range db.passedTests {
+		payload := fmt.Sprintf("%+q", passedRequest.Payload)
 		payload = strings.ReplaceAll(payload[1:len(payload)-1], `\"`, `"`)
 		// Passed for false pos - bypassed (good behavior)
-		if strings.Contains(blockedTest.Set, "false") {
-			truePosRows = append(truePosRows, []string{payload,
-				blockedTest.Case,
-				blockedTest.Encoder,
-				blockedTest.Placeholder,
-				strconv.Itoa(blockedTest.ResponseStatusCode)})
+		if isPositiveTest(passedRequest.Set) {
+			positiveTrueRows = append(positiveTrueRows, []string{payload,
+				passedRequest.Case,
+				passedRequest.Encoder,
+				passedRequest.Placeholder,
+				strconv.Itoa(passedRequest.ResponseStatusCode)})
 		}
 	}
 
 	// Num (general): number of actual rows minus top header (1 line)
-	truePosNum := len(truePosRows) - 1
-	falsePosNum := len(falsePosRows) - 1
-	// Include only real bypasses, without unknown or positive cases
-	bypassesNum := len(maliciousRows) - 1
-	blockedNum := len(db.passedTests) - truePosNum
+	positiveTrueNumber := len(positiveTrueRows) - 1
+	positiveFalseNumber := len(positiveFalseRows) - 1
+	var positiveUnresolvedNumber int
+	for _, unresolvedRequest := range db.naTests {
+		if isPositiveTest(unresolvedRequest.Set) {
+			positiveUnresolvedNumber++
+		}
+	}
 
-	cols := []float64{25, 35, 30, 35, 35, 30}
+	if ignoreUnresolved {
+		for _, unresolvedRequest := range db.naTests {
+			payload := fmt.Sprintf("%+q", unresolvedRequest.Payload)
+			payload = strings.ReplaceAll(payload[1:len(payload)-1], `\"`, `"`)
+			negativeBypassRows = append(negativeBypassRows, []string{payload,
+				unresolvedRequest.Case,
+				unresolvedRequest.Encoder,
+				unresolvedRequest.Placeholder,
+				strconv.Itoa(unresolvedRequest.ResponseStatusCode)})
+		}
+	}
+
+	negativeBypassNumber := len(negativeBypassRows) - 1
+	negativeBlockedNumber := len(db.passedTests) - positiveTrueNumber
+
+	columns := []float64{25, 35, 30, 35, 35, 30}
 
 	// Title page
 	pdf := gofpdf.New("P", "mm", "A4", "")
@@ -337,19 +390,15 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, wafName, url 
 
 	pdf.SetFont("Arial", "B", 12)
 	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF Average Score: %.2f%%", db.wafScore))
-	pdf.SetFont("Arial", "", 12)
 	pdf.Ln(lineBreakSize / 2)
 
-	pdf.SetFont("Arial", "B", 12)
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF Detection Score: %.2f%%", calculatePercentage(blockedNum, bypassesNum+blockedNum)))
-	pdf.SetFont("Arial", "", 12)
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF Detection Score: %.2f%%", calculatePercentage(negativeBlockedNumber, negativeBypassNumber+negativeBlockedNumber)))
 	pdf.Ln(lineBreakSize / 2)
 
-	pdf.SetFont("Arial", "B", 12)
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF Positive Tests Score: %.2f%%", calculatePercentage(truePosNum, truePosNum+falsePosNum)))
-	pdf.SetFont("Arial", "", 12)
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF Positive Tests Score: %.2f%%", calculatePercentage(positiveTrueNumber, positiveTrueNumber+positiveFalseNumber)))
 	pdf.Ln(lineBreakSize)
 
+	pdf.SetFont("Arial", "", 12)
 	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF Name: %s", wafName))
 	pdf.Ln(lineBreakSize / 2)
 
@@ -357,18 +406,18 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, wafName, url 
 	pdf.Ln(lineBreakSize / 2)
 
 	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF Testing Date: %s", reportTime.Format("02 January 2006")))
-	pdf.Ln(lineBreakSize * 1.5)
+	pdf.Ln(lineBreakSize)
 
 	currentY := pdf.GetY()
 
 	negativeChartFlow := false
 	// Show only negative chart if positive chart is not available
-	if truePosNum+falsePosNum == 0 {
+	if positiveTrueNumber+positiveFalseNumber == 0 {
 		negativeChartFlow = true
 	}
 
-	if bypassesNum+blockedNum != 0 {
-		chartBuf, err := drawChart(bypassesNum, blockedNum, bypassesNum+blockedNum, "Bypassed", "Blocked", "Detection Score")
+	if negativeBypassNumber+negativeBlockedNumber != 0 {
+		chartBuf, err := drawChart(negativeBypassNumber, negativeBlockedNumber, negativeBypassNumber+negativeBlockedNumber, "Bypassed", "Blocked", "Detection Score")
 		if err != nil {
 			return errors.Wrap(err, "Plot generation error (negative tests)")
 		}
@@ -380,8 +429,8 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, wafName, url 
 				imgWd, imgHt, negativeChartFlow, "PNG", 0, "")
 		}
 	}
-	if truePosNum+falsePosNum != 0 {
-		chartFalseBuf, err := drawChart(truePosNum, falsePosNum, truePosNum+falsePosNum, "True Positive", "False Positive", "Positive Tests Score")
+	if positiveTrueNumber+positiveFalseNumber != 0 {
+		chartFalseBuf, err := drawChart(positiveTrueNumber, positiveFalseNumber, positiveTrueNumber+positiveFalseNumber, "True Positive", "False Positive", "Positive Tests Score")
 		if err != nil {
 			return errors.Wrap(err, "Plot generation error (positive tests)")
 		}
@@ -395,11 +444,12 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, wafName, url 
 	}
 
 	// Num of bypasses: failed tests minus positive cases minus unknown cases
+	unresolvedRequests := db.overallRequests - negativeBypassNumber - negativeBlockedNumber - positiveTrueNumber - positiveFalseNumber
 	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("Total: %v bypasses in %v tests, %v unresolved cases / %v test cases",
-		len(maliciousRows)-1, db.overallTestsCompleted, len(db.naTests), db.overallTestcasesCompleted))
+		negativeBypassNumber, db.overallRequests, unresolvedRequests, db.overallCompletedTestCases))
 	pdf.Ln(lineBreakSize)
 
-	tableClip(pdf, cols, rows, 10)
+	tableClip(pdf, columns, rows, 10)
 
 	wallarmLogo, err := ioutil.ReadFile(fmt.Sprintf("cmd%sresources%slogo.png", string(os.PathSeparator), string(os.PathSeparator)))
 	if err != nil {
@@ -416,19 +466,19 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, wafName, url 
 	pdf.Ln(lineBreakSize)
 
 	// False Positive payloads block
-	cols = []float64{100, 30, 20, 25, 15}
+	columns = []float64{100, 30, 20, 25, 15}
 
 	pdf.SetFont("Arial", "", 12)
 	pdf.Cell(
 		cellWidth,
 		cellHeight,
 		fmt.Sprintf("\n%d false positive requests identified as blocked (failed, bad behavior)",
-			len(falsePosRows)-1),
+			len(positiveFalseRows)-1),
 	)
 	pdf.Ln(lineBreakSize)
 	pdf.SetFont("Arial", "", 10)
 
-	tableClip(pdf, cols, falsePosRows, 10)
+	tableClip(pdf, columns, positiveFalseRows, 10)
 
 	// True Positive payloads block
 	pdf.SetFont("Arial", "", 12)
@@ -436,12 +486,12 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, wafName, url 
 		cellWidth,
 		cellHeight,
 		fmt.Sprintf("\n%d true positive requests identified as bypassed (passed, good behavior)",
-			len(truePosRows)-1),
+			len(positiveTrueRows)-1),
 	)
 	pdf.Ln(lineBreakSize)
 	pdf.SetFont("Arial", "", 10)
 
-	tableClip(pdf, cols, truePosRows, 10)
+	tableClip(pdf, columns, positiveTrueRows, 10)
 
 	// Malicious payloads page
 	pdf.AddPage()
@@ -450,13 +500,13 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, wafName, url 
 	pdf.Ln(lineBreakSize)
 
 	pdf.SetFont("Arial", "", 12)
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("\n%d malicious requests have bypassed the WAF", len(maliciousRows)-1))
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("\n%d malicious requests have bypassed the WAF", len(negativeBypassRows)-1))
 	pdf.Ln(lineBreakSize)
 
 	pdf.SetFont("Arial", "", 10)
-	tableClip(pdf, cols, maliciousRows, 10)
+	tableClip(pdf, columns, negativeBypassRows, 10)
 
-	cols = []float64{100, 30, 20, 25, 15}
+	columns = []float64{100, 30, 20, 25, 15}
 	var unresolvedRaws [][]string
 	unresolvedRaws = append(unresolvedRaws, []string{"Payload", "Test Case", "Encoder", "Placeholder", "Status"})
 	for _, naTest := range db.naTests {
@@ -471,17 +521,19 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, wafName, url 
 		)
 	}
 
-	pdf.AddPage()
-	pdf.SetFont("Arial", "", 24)
-	pdf.Cell(cellWidth, cellHeight, "Unresolved Test Cases")
-	pdf.Ln(lineBreakSize)
-	pdf.SetFont("Arial", "", 12)
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("\n%d requests indentified as blocked and passed or as not-blocked and not-passed",
-		len(db.naTests)))
-	pdf.Ln(lineBreakSize)
-	pdf.SetFont("Arial", "", 10)
+	if !ignoreUnresolved {
+		pdf.AddPage()
+		pdf.SetFont("Arial", "", 24)
+		pdf.Cell(cellWidth, cellHeight, "Unresolved Test Cases")
+		pdf.Ln(lineBreakSize)
+		pdf.SetFont("Arial", "", 12)
+		pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("\n%d requests indentified as blocked and passed or as not-blocked and not-passed",
+			len(db.naTests)))
+		pdf.Ln(lineBreakSize)
+		pdf.SetFont("Arial", "", 10)
 
-	tableClip(pdf, cols, unresolvedRaws, 10)
+		tableClip(pdf, columns, unresolvedRaws, 10)
+	}
 
 	if err = pdf.OutputFileAndClose(reportFile); err != nil {
 		return errors.Wrap(err, "PDF generation error")
