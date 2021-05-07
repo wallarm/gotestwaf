@@ -14,8 +14,8 @@ type DB struct {
 
 	overallPassedRate         float32
 	overallTestcasesCompleted float32
-	overallTestsCompleted     int
-	overallTestsFailed        int
+	overallRequests           int
+	overallRequestsFailed     int
 	wafScore                  float32
 }
 

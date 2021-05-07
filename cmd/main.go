@@ -137,7 +137,7 @@ func run(logger *log.Logger) error {
 
 	reportFile := filepath.Join(cfg.ReportPath, fmt.Sprintf("%s-%s-%s.pdf", reportPrefix, cfg.WAFName, reportSaveTime))
 
-	rows, err := db.RenderTable(reportTime, cfg.WAFName)
+	rows, err := db.RenderTable(reportTime, cfg.WAFName, true)
 	if err != nil {
 		return errors.Wrap(err, "table rendering")
 	}
