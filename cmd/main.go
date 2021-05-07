@@ -68,8 +68,12 @@ func run(logger *log.Logger) error {
 	logger.Println("Test cases loading finished")
 
 	db := test.NewDB(testCases)
+	httpClient, err := scanner.NewHTTPClient(cfg)
+	if err != nil {
+		return errors.Wrap(err, "HTTP client")
+	}
 
-	s := scanner.New(db, logger, cfg)
+	s := scanner.New(db, logger, cfg, httpClient)
 
 	logger.Println("Scanned URL:", cfg.URL)
 	ok, httpStatus, err := s.PreCheck(cfg.URL)

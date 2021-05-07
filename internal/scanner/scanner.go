@@ -37,13 +37,13 @@ type Scanner struct {
 	wsClient   *websocket.Dialer
 }
 
-func New(db *test.DB, logger *log.Logger, cfg *config.Config) *Scanner {
+func New(db *test.DB, logger *log.Logger, cfg *config.Config, httpClient *HTTPClient) *Scanner {
 	encoder.InitEncoders()
 	return &Scanner{
 		db:         db,
 		logger:     logger,
 		cfg:        cfg,
-		httpClient: NewHTTPClient(cfg),
+		httpClient: httpClient,
 		wsClient:   websocket.DefaultDialer,
 	}
 }
