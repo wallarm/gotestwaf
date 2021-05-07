@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"io/ioutil"
 	"net/http"
+	"net/http/cookiejar"
 	"net/url"
 	"time"
 
@@ -36,6 +37,8 @@ func NewHTTPClient(cfg *config.Config) *HTTPClient {
 		}
 	}
 
+	jar, _ := cookiejar.New(nil)
+
 	cl := &http.Client{
 		Transport: tr,
 		CheckRedirect: func() func(req *http.Request, via []*http.Request) error {
@@ -48,6 +51,7 @@ func NewHTTPClient(cfg *config.Config) *HTTPClient {
 				return nil
 			}
 		}(),
+		Jar: jar,
 	}
 
 	return &HTTPClient{
