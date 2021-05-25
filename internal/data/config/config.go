@@ -27,4 +27,5 @@ type Config struct {
 	TestSet            string            `mapstructure:"testSet"`
 	WAFName            string            `mapstructure:"wafName"`
 	IgnoreUnresolved   bool              `mapstructure:"ignoreUnresolved"`
+	BlockConnReset     bool              `mapstructure:"blockConnReset"`
 }

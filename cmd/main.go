@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/url"
@@ -78,7 +79,19 @@ func run(logger *log.Logger) error {
 	logger.Println("Scanned URL:", cfg.URL)
 	ok, httpStatus, err := s.PreCheck(cfg.URL)
 	if err != nil {
-		return errors.Wrap(err, "running pre-check")
+		if cfg.BlockConnReset && (errors.Is(err, io.EOF) || errors.Is(err, syscall.ECONNRESET)) {
+			logger.Println("Connection reset, trying benign request to make sure that service is available")
+			blockedBenign, httpStatusBenign, errBenign := s.BenignPreCheck(cfg.URL)
+			if !blockedBenign {
+				logger.Printf("Service is available (HTTP status: %d), WAF resets connections. Consider this behavior as block", httpStatusBenign)
+				ok = true
+			}
+			if errBenign != nil {
+				return errors.Wrap(errBenign, "running benign request pre-check")
+			}
+		} else {
+			return errors.Wrap(err, "running pre-check")
+		}
 	}
 	if !ok {
 		return errors.Errorf("WAF was not detected. "+
@@ -131,7 +144,7 @@ func run(logger *log.Logger) error {
 	}()
 
 	logger.Printf("Scanning %s\n", cfg.URL)
-	err = s.Run(ctx, cfg.URL)
+	err = s.Run(ctx, cfg.URL, cfg.BlockConnReset)
 	if err != nil {
 		return errors.Wrap(err, "run scanning")
 	}
@@ -192,6 +205,7 @@ func parseFlags() {
 	flag.String("testCasesPath", testCasesPath, "Path to a folder with test cases")
 	flag.String("wafName", wafName, "Name of the WAF product")
 	flag.Bool("ignoreUnresolved", false, "If true, unresolved test cases will be considered as bypassed (affect score and results)")
+	flag.Bool("blockConnReset", false, "If true, connection resets will be considered as block")
 	flag.Parse()
 }
 

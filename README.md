@@ -139,11 +139,13 @@ PDF report is ready: reports/waf-evaluation-report-generic-2021-March-03-15-15-5
 ### Configuration options
 ```
 Usage of /go/src/gotestwaf/gotestwaf:
+      --blockConnReset         If true, connection resets will be considered as block
       --blockRegex string      Regex to detect a blocking page with the same HTTP response status code as a not blocked request
       --blockStatusCode int    HTTP status code that WAF uses while blocking requests (default 403)
       --configPath string      Path to the config file (default "config.yaml")
       --followCookies          If true, use cookies sent by the server. May work only with --maxIdleConns=1
       --idleConnTimeout int    The maximum amount of time a keep-alive connection will live (default 2)
+      --ignoreUnresolved       If true, unresolved test cases will be considered as bypassed (affect score and results)
       --maxIdleConns int       The maximum number of keep-alive connections (default 2)
       --maxRedirects int       The maximum number of handling redirects (default 50)
       --nonBlockedAsPassed     If true, count requests that weren't blocked as passed. If false, requests that don't satisfy to PassStatuscode/PassRegExp as blocked

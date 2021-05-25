@@ -3,10 +3,12 @@ package scanner
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"math/rand"
 	"regexp"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -64,6 +66,18 @@ func (s *Scanner) CheckPass(body []byte, statusCode int) (bool, error) {
 	return statusCode == s.cfg.PassStatusCode, nil
 }
 
+func (s *Scanner) BenignPreCheck(url string) (blocked bool, statusCode int, err error) {
+	body, code, err := s.httpClient.Send(context.Background(), url, "URLParam", "URL", "")
+	if err != nil {
+		return false, 0, err
+	}
+	blocked, err = s.CheckBlocking(body, code)
+	if err != nil {
+		return false, 0, err
+	}
+	return blocked, code, nil
+}
+
 func (s *Scanner) PreCheck(url string) (blocked bool, statusCode int, err error) {
 	body, code, err := s.httpClient.Send(context.Background(), url, "URLParam", "URL", preCheckVector)
 	if err != nil {
@@ -114,7 +128,7 @@ func (s *Scanner) WSPreCheck(url string) (available, blocked bool, err error) {
 	return true, false, nil
 }
 
-func (s *Scanner) Run(ctx context.Context, url string) error {
+func (s *Scanner) Run(ctx context.Context, url string, blockConn bool) error {
 	gn := s.cfg.Workers
 	var wg sync.WaitGroup
 	wg.Add(gn)
@@ -142,7 +156,7 @@ func (s *Scanner) Run(ctx context.Context, url string) error {
 					}
 					time.Sleep(time.Duration(s.cfg.SendDelay+rand.Intn(s.cfg.RandomDelay)) * time.Millisecond)
 
-					if err := s.scanURL(ctx, url, w); err != nil {
+					if err := s.scanURL(ctx, url, blockConn, w); err != nil {
 						s.logger.Println(err)
 						return
 					}
@@ -190,20 +204,30 @@ func (s *Scanner) produceTests(ctx context.Context, n int) <-chan *testWork {
 	return testChan
 }
 
-func (s *Scanner) scanURL(ctx context.Context, url string, w *testWork) error {
+func (s *Scanner) scanURL(ctx context.Context, url string, blockConn bool, w *testWork) error {
 	body, statusCode, err := s.httpClient.Send(ctx, url, w.placeholder, w.encoder, w.payload)
+	var blockedByReset bool
 	if err != nil {
-		return errors.Wrap(err, "http sending")
+		if blockConn && (errors.Is(err, io.EOF) || errors.Is(err, syscall.ECONNRESET)) {
+			blockedByReset = true
+		} else {
+			return errors.Wrap(err, "http sending")
+		}
 	}
 
-	blocked, err := s.CheckBlocking(body, statusCode)
-	if err != nil {
-		return errors.Wrap(err, "failed to check blocking:")
-	}
+	var blocked, passed bool
+	if blockedByReset {
+		blocked = true
+	} else {
+		blocked, err = s.CheckBlocking(body, statusCode)
+		if err != nil {
+			return errors.Wrap(err, "failed to check blocking:")
+		}
 
-	passed, err := s.CheckPass(body, statusCode)
-	if err != nil {
-		return errors.Wrap(err, "failed to check passed or not:")
+		passed, err = s.CheckPass(body, statusCode)
+		if err != nil {
+			return errors.Wrap(err, "failed to check passed or not:")
+		}
 	}
 
 	info := &test.Info{
