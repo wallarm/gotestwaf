@@ -87,7 +87,7 @@ func run(logger *log.Logger) error {
 				ok = true
 			}
 			if errBenign != nil {
-				return errors.Wrap(err, "running benign request pre-check")
+				return errors.Wrap(errBenign, "running benign request pre-check")
 			}
 		} else {
 			return errors.Wrap(err, "running pre-check")
