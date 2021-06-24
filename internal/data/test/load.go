@@ -39,6 +39,11 @@ func Load(cfg *config.Config, logger *log.Logger) ([]Case, error) {
 			return nil, err
 		}
 	}
+	// bugfix: fix array out of bounds error caused by separator on windows platform
+	pathSeparator := string(os.PathSeparator)
+	if loadBindData {
+		pathSeparator = "/"
+	}
 
 	for _, testCaseFile := range files {
 		if filepath.Ext(testCaseFile) != testCaseExt {
@@ -46,7 +51,7 @@ func Load(cfg *config.Config, logger *log.Logger) ([]Case, error) {
 		}
 
 		// Ignore subdirectories, process as .../<testSetName>/<testCaseName>/<case>.yml
-		parts := strings.Split(testCaseFile, string(os.PathSeparator))
+		parts := strings.Split(testCaseFile, pathSeparator)
 		parts = parts[len(parts)-3:]
 
 		testSetName := parts[1]
