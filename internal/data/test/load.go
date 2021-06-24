@@ -17,16 +17,27 @@ const testCaseExt = ".yml"
 func Load(cfg *config.Config, logger *log.Logger) ([]Case, error) {
 	var files []string
 	var testCases []Case
+	var loadBindData = false
 
 	if cfg.TestCasesPath == "" {
 		return nil, errors.New("empty test cases path")
 	}
-
-	if err := filepath.Walk(cfg.TestCasesPath, func(path string, info os.FileInfo, err error) error {
-		files = append(files, path)
-		return nil
-	}); err != nil {
-		return nil, err
+	
+	if _, err := os.Stat(cfg.TestCasesPath); err != nil {
+		for path, _ := range _bindata {
+			if strings.HasSuffix(path, ".yaml") || strings.HasSuffix(path, ".png") {
+				continue
+			}
+			files = append(files, path)
+		}
+		loadBindData = true
+	} else {
+		if err := filepath.Walk(cfg.TestCasesPath, func(path string, info os.FileInfo, err error) error {
+			files = append(files, path)
+			return nil
+		}); err != nil {
+			return nil, err
+		}
 	}
 
 	for _, testCaseFile := range files {
@@ -48,8 +59,14 @@ func Load(cfg *config.Config, logger *log.Logger) ([]Case, error) {
 		if cfg.TestCase != "" && testCaseName != cfg.TestCase {
 			continue
 		}
-
-		yamlFile, err := ioutil.ReadFile(testCaseFile)
+		
+		var yamlFile []byte
+		var err error
+		if loadBindData {
+			yamlFile, err = Asset(testCaseFile)
+		} else {
+			yamlFile, err = ioutil.ReadFile(testCaseFile)
+		}
 		if err != nil {
 			return nil, err
 		}
