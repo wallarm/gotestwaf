@@ -74,7 +74,21 @@ func run(logger *log.Logger) error {
 		return errors.Wrap(err, "HTTP client")
 	}
 
-	s := scanner.New(db, logger, cfg, httpClient)
+	grpcData, err := scanner.NewGRPCData(cfg)
+	if err != nil {
+		return errors.Wrap(err, "gRPC client")
+	}
+
+	available, err := grpcData.CheckAvailability()
+	if err != nil {
+		logger.Printf("gRPC pre-check: connection is not available, "+
+			"reason: %s\n", err)
+	}
+	if available {
+		grpcData.SetAvailability(available)
+	}
+
+	s := scanner.New(db, logger, cfg, httpClient, grpcData)
 
 	logger.Println("Scanned URL:", cfg.URL)
 	ok, httpStatus, err := s.PreCheck(cfg.URL)
