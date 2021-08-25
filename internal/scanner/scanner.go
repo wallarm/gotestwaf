@@ -212,7 +212,7 @@ func (s *Scanner) scanURL(ctx context.Context, url string, blockConn bool, w *te
 	)
 
 	switch w.encoder {
-	case "gRPC":
+	case *encoder.DefaultGRPCEncoder.GetName():
 		body, statusCode, err = s.grpcData.Send(ctx, w.encoder, w.payload)
 	default:
 		body, statusCode, err = s.httpClient.Send(ctx, url, w.placeholder, w.encoder, w.payload)

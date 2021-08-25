@@ -79,12 +79,15 @@ func run(logger *log.Logger) error {
 		return errors.Wrap(err, "gRPC client")
 	}
 
+	logger.Printf("gRPC pre-check: IN PROGRESS")
+
 	available, err := grpcData.CheckAvailability()
 	if err != nil {
 		logger.Printf("gRPC pre-check: connection is not available, "+
 			"reason: %s\n", err)
 	}
 	if available {
+		logger.Printf("gRPC pre-check: OK")
 		grpcData.SetAvailability(available)
 	}
 
