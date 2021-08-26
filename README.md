@@ -23,6 +23,9 @@ Data encoder the tool should apply to the payload. Base64, JSON unicode (\u0027 
 A place inside HTTP request where encoded payload should be.
 Like URL parameter, URI, POST form parameter, or JSON POST body.
 
+## Caveats
+We recommend adding the scanner's IP address to the whitelists before executing the test.
+
 # Quick start
 ## Dockerhub
 The latest gotestwaf always available via the dockerhub repository: https://hub.docker.com/r/wallarm/gotestwaf  
