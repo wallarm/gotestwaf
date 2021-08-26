@@ -226,6 +226,7 @@ func parseFlags() {
 	flag.Bool("ignoreUnresolved", false, "If true, unresolved test cases will be considered as bypassed (affect score and results)")
 	flag.Bool("blockConnReset", false, "If true, connection resets will be considered as block")
 	flag.Bool("skipWAFBlockCheck", false, "If true, testing will begin without checking for the WAF presence")
+	flag.String("addHeader", "", "Pass additional header to target WAF")
 	flag.Parse()
 }
 

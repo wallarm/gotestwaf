@@ -29,4 +29,5 @@ type Config struct {
 	IgnoreUnresolved   bool              `mapstructure:"ignoreUnresolved"`
 	BlockConnReset     bool              `mapstructure:"blockConnReset"`
 	SkipWAFBlockCheck  bool              `mapstructure:"skipWAFBlockCheck"`
+	AddHeader          string            `mapstructure:"addHeader"`
 }

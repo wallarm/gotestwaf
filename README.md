@@ -139,6 +139,7 @@ PDF report is ready: reports/waf-evaluation-report-generic-2021-March-03-15-15-5
 ### Configuration options
 ```
 Usage of /go/src/gotestwaf/gotestwaf:
+      --addHeader string       Pass additional HTTP header to target WAF
       --blockConnReset         If true, connection resets will be considered as block
       --blockRegex string      Regex to detect a blocking page with the same HTTP response status code as a not blocked request
       --blockStatusCode int    HTTP status code that WAF uses while blocking requests (default 403)
