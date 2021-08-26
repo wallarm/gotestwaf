@@ -74,32 +74,53 @@ func run(logger *log.Logger) error {
 		return errors.Wrap(err, "HTTP client")
 	}
 
-	s := scanner.New(db, logger, cfg, httpClient)
+	grpcData, err := scanner.NewGRPCData(cfg)
+	if err != nil {
+		return errors.Wrap(err, "gRPC client")
+	}
+
+	logger.Printf("gRPC pre-check: IN PROGRESS")
+
+	available, err := grpcData.CheckAvailability()
+	if err != nil {
+		logger.Printf("gRPC pre-check: connection is not available, "+
+			"reason: %s\n", err)
+	}
+	if available {
+		logger.Printf("gRPC pre-check: OK")
+		grpcData.SetAvailability(available)
+	}
+
+	s := scanner.New(db, logger, cfg, httpClient, grpcData)
 
 	logger.Println("Scanned URL:", cfg.URL)
-	ok, httpStatus, err := s.PreCheck(cfg.URL)
-	if err != nil {
-		if cfg.BlockConnReset && (errors.Is(err, io.EOF) || errors.Is(err, syscall.ECONNRESET)) {
-			logger.Println("Connection reset, trying benign request to make sure that service is available")
-			blockedBenign, httpStatusBenign, errBenign := s.BenignPreCheck(cfg.URL)
-			if !blockedBenign {
-				logger.Printf("Service is available (HTTP status: %d), WAF resets connections. Consider this behavior as block", httpStatusBenign)
-				ok = true
+	if !cfg.SkipWAFBlockCheck {
+		ok, httpStatus, err := s.PreCheck(cfg.URL)
+		if err != nil {
+			if cfg.BlockConnReset && (errors.Is(err, io.EOF) || errors.Is(err, syscall.ECONNRESET)) {
+				logger.Println("Connection reset, trying benign request to make sure that service is available")
+				blockedBenign, httpStatusBenign, errBenign := s.BenignPreCheck(cfg.URL)
+				if !blockedBenign {
+					logger.Printf("Service is available (HTTP status: %d), WAF resets connections. Consider this behavior as block", httpStatusBenign)
+					ok = true
+				}
+				if errBenign != nil {
+					return errors.Wrap(errBenign, "running benign request pre-check")
+				}
+			} else {
+				return errors.Wrap(err, "running pre-check")
 			}
-			if errBenign != nil {
-				return errors.Wrap(errBenign, "running benign request pre-check")
-			}
-		} else {
-			return errors.Wrap(err, "running pre-check")
 		}
-	}
-	if !ok {
-		return errors.Errorf("WAF was not detected. "+
-			"Please use the '--blockStatusCode' or '--blockRegex' flags. Use '--help' for additional info."+
-			"\nBaseline attack status code: %v\n", httpStatus)
-	}
+		if !ok {
+			return errors.Errorf("WAF was not detected. "+
+				"Please use the '--blockStatusCode' or '--blockRegex' flags. Use '--help' for additional info."+
+				"\nBaseline attack status code: %v\n", httpStatus)
+		}
 
-	logger.Printf("WAF pre-check: OK. Blocking status code: %v\n", httpStatus)
+		logger.Printf("WAF pre-check: OK. Blocking status code: %v\n", httpStatus)
+	} else {
+		logger.Println("WAF pre-check: SKIPPED")
+	}
 
 	// If WS URL is not available - try to build it from WAF URL
 	if cfg.WebSocketURL == "" {
@@ -206,6 +227,8 @@ func parseFlags() {
 	flag.String("wafName", wafName, "Name of the WAF product")
 	flag.Bool("ignoreUnresolved", false, "If true, unresolved test cases will be considered as bypassed (affect score and results)")
 	flag.Bool("blockConnReset", false, "If true, connection resets will be considered as block")
+	flag.Bool("skipWAFBlockCheck", false, "If true, WAF detection tests will be skipped")
+	flag.String("addHeader", "", "An HTTP header to add to requests")
 	flag.Parse()
 }
 

@@ -1,0 +1,15 @@
+syntax = "proto3";
+package encoder;
+option go_package = "github.com/wallarm/gotestwaf/internal/payload/encoder";
+
+message Request {
+  string value = 1;
+}
+
+message Response {
+  string value = 1;
+}
+
+service ServiceFooBar {
+  rpc foo(Request) returns (Response);
+}

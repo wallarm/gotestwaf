@@ -12,9 +12,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-
 	"github.com/pkg/errors"
-
 	"github.com/wallarm/gotestwaf/internal/data/config"
 	"github.com/wallarm/gotestwaf/internal/data/test"
 	"github.com/wallarm/gotestwaf/internal/payload/encoder"
@@ -36,16 +34,18 @@ type Scanner struct {
 	cfg        *config.Config
 	db         *test.DB
 	httpClient *HTTPClient
+	grpcData   *GRPCData
 	wsClient   *websocket.Dialer
 }
 
-func New(db *test.DB, logger *log.Logger, cfg *config.Config, httpClient *HTTPClient) *Scanner {
+func New(db *test.DB, logger *log.Logger, cfg *config.Config, httpClient *HTTPClient, grpcData *GRPCData) *Scanner {
 	encoder.InitEncoders()
 	return &Scanner{
 		db:         db,
 		logger:     logger,
 		cfg:        cfg,
 		httpClient: httpClient,
+		grpcData:   grpcData,
 		wsClient:   websocket.DefaultDialer,
 	}
 }
@@ -205,7 +205,19 @@ func (s *Scanner) produceTests(ctx context.Context, n int) <-chan *testWork {
 }
 
 func (s *Scanner) scanURL(ctx context.Context, url string, blockConn bool, w *testWork) error {
-	body, statusCode, err := s.httpClient.Send(ctx, url, w.placeholder, w.encoder, w.payload)
+	var (
+		body       []byte
+		statusCode int
+		err        error
+	)
+
+	switch w.encoder {
+	case *encoder.DefaultGRPCEncoder.GetName():
+		body, statusCode, err = s.grpcData.Send(ctx, w.encoder, w.payload)
+	default:
+		body, statusCode, err = s.httpClient.Send(ctx, url, w.placeholder, w.encoder, w.payload)
+	}
+
 	var blockedByReset bool
 	if err != nil {
 		if blockConn && (errors.Is(err, io.EOF) || errors.Is(err, syscall.ECONNRESET)) {

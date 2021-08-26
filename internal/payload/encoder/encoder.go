@@ -16,6 +16,7 @@ func InitEncoders() {
 	Encoders[*DefaultURLEncoder.GetName()] = DefaultURLEncoder
 	Encoders[*DefaultPlainEncoder.GetName()] = DefaultPlainEncoder
 	Encoders[*DefaultXMLEntityEncoder.GetName()] = DefaultXMLEntityEncoder
+	Encoders[*DefaultGRPCEncoder.GetName()] = DefaultGRPCEncoder
 }
 
 func Apply(encoderName, data string) (string, error) {

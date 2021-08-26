@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
-
 	"github.com/wallarm/gotestwaf/internal/data/config"
 	"github.com/wallarm/gotestwaf/internal/payload/encoder"
 	"github.com/wallarm/gotestwaf/internal/payload/placeholder"
@@ -57,10 +57,16 @@ func NewHTTPClient(cfg *config.Config) (*HTTPClient, error) {
 		Jar: jar,
 	}
 
+	configuredHeaders := cfg.HTTPHeaders
+	customHeader := strings.Split(cfg.AddHeader, ":")
+	if len(customHeader) > 1 {
+		configuredHeaders[customHeader[0]] = strings.TrimPrefix(cfg.AddHeader, customHeader[0]+":")
+	}
+
 	return &HTTPClient{
 		client:        cl,
 		cookies:       cfg.Cookies,
-		headers:       cfg.HTTPHeaders,
+		headers:       configuredHeaders,
 		followCookies: cfg.FollowCookies,
 	}, nil
 }

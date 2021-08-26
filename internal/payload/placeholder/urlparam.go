@@ -2,6 +2,7 @@ package placeholder
 
 import (
 	"net/http"
+	"net/url"
 )
 
 // Warning: this placeholder encodes URL anyways
@@ -10,7 +11,14 @@ func URLParam(requestURL, payload string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest("GET", requestURL+"/?"+param+"="+payload, nil)
+
+	reqURL, err := url.Parse(requestURL)
+	if err != nil {
+		return nil, err
+	}
+
+	reqURL.RawQuery = param + "=" + payload
+	req, err := http.NewRequest("GET", reqURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
