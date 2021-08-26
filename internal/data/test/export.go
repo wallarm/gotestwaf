@@ -3,6 +3,7 @@ package test
 import (
 	"encoding/csv"
 	"os"
+	"strconv"
 
 	"github.com/wallarm/gotestwaf/internal/payload/encoder"
 )
@@ -17,6 +18,10 @@ func (db *DB) ExportPayloads(payloadsExportFile string) error {
 	csvWriter := csv.NewWriter(csvFile)
 	defer csvWriter.Flush()
 
+	if err := csvWriter.Write([]string{"Payload", "Check Status", "Response Code", "Placeholder", "Encoder", "Case"}); err != nil {
+		return err
+	}
+
 	for _, failedTest := range db.failedTests {
 		p := failedTest.Payload
 		e := failedTest.Encoder
@@ -24,7 +29,7 @@ func (db *DB) ExportPayloads(payloadsExportFile string) error {
 		if err != nil {
 			return err
 		}
-		err = csvWriter.Write([]string{ep, "failed", failedTest.Placeholder})
+		err = csvWriter.Write([]string{ep, "failed", strconv.Itoa(failedTest.ResponseStatusCode), failedTest.Placeholder, failedTest.Encoder, failedTest.Case})
 		if err != nil {
 			return err
 		}
@@ -37,7 +42,7 @@ func (db *DB) ExportPayloads(payloadsExportFile string) error {
 		if err != nil {
 			return err
 		}
-		err = csvWriter.Write([]string{ep, "passed", passedTest.Placeholder})
+		err = csvWriter.Write([]string{ep, "passed", strconv.Itoa(passedTest.ResponseStatusCode), passedTest.Placeholder, passedTest.Encoder, passedTest.Case})
 		if err != nil {
 			return err
 		}
@@ -50,7 +55,7 @@ func (db *DB) ExportPayloads(payloadsExportFile string) error {
 		if err != nil {
 			return err
 		}
-		err = csvWriter.Write([]string{ep, "NA", naTest.Placeholder})
+		err = csvWriter.Write([]string{ep, "NA", strconv.Itoa(naTest.ResponseStatusCode), naTest.Placeholder, naTest.Encoder, naTest.Case})
 		if err != nil {
 			return err
 		}
