@@ -155,6 +155,7 @@ Usage of /go/src/gotestwaf/gotestwaf:
       --randomDelay int        Random delay in ms in addition to the delay between requests (default 400)
       --reportPath string      A directory to store reports (default "reports")
       --sendDelay int          Delay in ms between requests (default 400)
+      --skipWAFBlockCheck      If true, testing will begin without checking for the WAF presence
       --testCase string        If set then only this test case will be run
       --testCasesPath string   Path to a folder with test cases (default "testcases")
       --testSet string         If set then only this test set's cases will be run

@@ -28,4 +28,5 @@ type Config struct {
 	WAFName            string            `mapstructure:"wafName"`
 	IgnoreUnresolved   bool              `mapstructure:"ignoreUnresolved"`
 	BlockConnReset     bool              `mapstructure:"blockConnReset"`
+	SkipWAFBlockCheck  bool              `mapstructure:"skipWAFBlockCheck"`
 }
