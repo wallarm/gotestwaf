@@ -17,16 +17,32 @@ const testCaseExt = ".yml"
 func Load(cfg *config.Config, logger *log.Logger) ([]Case, error) {
 	var files []string
 	var testCases []Case
+	var loadBindData = false
 
 	if cfg.TestCasesPath == "" {
 		return nil, errors.New("empty test cases path")
 	}
-
-	if err := filepath.Walk(cfg.TestCasesPath, func(path string, info os.FileInfo, err error) error {
-		files = append(files, path)
-		return nil
-	}); err != nil {
-		return nil, err
+	
+	if _, err := os.Stat(cfg.TestCasesPath); err != nil {
+		for path, _ := range _bindata {
+			if strings.HasSuffix(path, ".yaml") || strings.HasSuffix(path, ".png") {
+				continue
+			}
+			files = append(files, path)
+		}
+		loadBindData = true
+	} else {
+		if err := filepath.Walk(cfg.TestCasesPath, func(path string, info os.FileInfo, err error) error {
+			files = append(files, path)
+			return nil
+		}); err != nil {
+			return nil, err
+		}
+	}
+	// bugfix: fix array out of bounds error caused by separator on windows platform
+	pathSeparator := string(os.PathSeparator)
+	if loadBindData {
+		pathSeparator = "/"
 	}
 
 	for _, testCaseFile := range files {
@@ -35,7 +51,7 @@ func Load(cfg *config.Config, logger *log.Logger) ([]Case, error) {
 		}
 
 		// Ignore subdirectories, process as .../<testSetName>/<testCaseName>/<case>.yml
-		parts := strings.Split(testCaseFile, string(os.PathSeparator))
+		parts := strings.Split(testCaseFile, pathSeparator)
 		parts = parts[len(parts)-3:]
 
 		testSetName := parts[1]
@@ -48,8 +64,14 @@ func Load(cfg *config.Config, logger *log.Logger) ([]Case, error) {
 		if cfg.TestCase != "" && testCaseName != cfg.TestCase {
 			continue
 		}
-
-		yamlFile, err := ioutil.ReadFile(testCaseFile)
+		
+		var yamlFile []byte
+		var err error
+		if loadBindData {
+			yamlFile, err = Asset(testCaseFile)
+		} else {
+			yamlFile, err = ioutil.ReadFile(testCaseFile)
+		}
 		if err != nil {
 			return nil, err
 		}
