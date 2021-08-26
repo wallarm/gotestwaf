@@ -120,6 +120,10 @@ func run(logger *log.Logger) error {
 		logger.Printf("WAF pre-check: OK. Blocking status code: %v\n", httpStatus)
 	}
 
+	if cfg.SkipWAFBlockCheck {
+		logger.Println("WAF pre-check: SKIPPED")
+	}
+
 	// If WS URL is not available - try to build it from WAF URL
 	if cfg.WebSocketURL == "" {
 		wsURL, wsErr := wsFromURL(cfg.URL)
