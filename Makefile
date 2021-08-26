@@ -18,6 +18,9 @@ tidy:
 	go mod tidy
 	go mod vendor
 
+fmt:
+	gofmt -w ./
+
 delete_reports:
 	rm -f ./reports/*.pdf
 	rm -f ./reports/*.csv

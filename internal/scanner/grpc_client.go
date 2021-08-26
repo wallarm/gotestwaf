@@ -16,41 +16,43 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+const GRPCServerDetectionTimeout = 3
+
 type GRPCData struct {
-	host string
+	host      string
 	available bool
-	tc *credentials.TransportCredentials
+	tc        credentials.TransportCredentials
 }
 
 func NewGRPCData(cfg *config.Config) (*GRPCData, error) {
 
-	var tc *credentials.TransportCredentials
+	var tc credentials.TransportCredentials
 
-	isTLS, host, err := hostFromUrl(cfg.URL)
+	isTLS, host, err := tlsAndHostFromUrl(cfg.URL)
 	if err != nil {
-		return nil ,err
+		return nil, err
 	}
 
 	if isTLS {
-		cNewTLS := credentials.NewTLS(&tls.Config{InsecureSkipVerify: !cfg.TLSVerify})
-		tc = &cNewTLS
+		tc = credentials.NewTLS(&tls.Config{InsecureSkipVerify: !cfg.TLSVerify})
+	} else {
+		tc = nil
 	}
 
-
 	return &GRPCData{
-		host:        host,
+		host:      host,
 		available: false,
-		tc: tc,
+		tc:        tc,
 	}, nil
 }
 
 func (g *GRPCData) CheckAvailability() (bool, error) {
-	ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctxWithTimeout, cancel := context.WithTimeout(context.Background(), GRPCServerDetectionTimeout*time.Second)
 	defer cancel()
 
 	var (
 		conn *grpc.ClientConn
-		err error
+		err  error
 	)
 
 	// Set up a connection to the server.
@@ -58,7 +60,7 @@ func (g *GRPCData) CheckAvailability() (bool, error) {
 	case nil:
 		conn, err = grpc.DialContext(ctxWithTimeout, g.host, grpc.WithInsecure(), grpc.WithBlock())
 	default:
-		conn, err = grpc.DialContext(ctxWithTimeout, g.host, grpc.WithTransportCredentials(*g.tc), grpc.WithBlock())
+		conn, err = grpc.DialContext(ctxWithTimeout, g.host, grpc.WithTransportCredentials(g.tc), grpc.WithBlock())
 	}
 
 	if err != nil {
@@ -84,7 +86,7 @@ func (g *GRPCData) Send(ctx context.Context, encoderName, payload string) (body 
 		return nil, 0, errors.Wrap(err, "encoding payload")
 	}
 
-	ctxWithTimeout, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, GRPCServerDetectionTimeout*time.Second)
 	defer cancel()
 
 	var conn *grpc.ClientConn
@@ -94,7 +96,7 @@ func (g *GRPCData) Send(ctx context.Context, encoderName, payload string) (body 
 	case nil:
 		conn, err = grpc.DialContext(ctxWithTimeout, g.host, grpc.WithInsecure(), grpc.WithBlock())
 	default:
-		conn, err = grpc.DialContext(ctxWithTimeout, g.host, grpc.WithTransportCredentials(*g.tc), grpc.WithBlock())
+		conn, err = grpc.DialContext(ctxWithTimeout, g.host, grpc.WithTransportCredentials(g.tc), grpc.WithBlock())
 	}
 
 	client := grpcSrv.NewServiceFooBarClient(conn)
@@ -106,41 +108,41 @@ func (g *GRPCData) Send(ctx context.Context, encoderName, payload string) (body 
 		// gRPC status code converting to HTTP status code
 		switch st.Code() {
 		case codes.OK:
-			statusCode=200
+			statusCode = 200
 		case codes.Canceled:
-			statusCode=499
+			statusCode = 499
 		case codes.Unknown:
-			statusCode=500
+			statusCode = 500
 		case codes.InvalidArgument:
-			statusCode=400
+			statusCode = 400
 		case codes.DeadlineExceeded:
-			statusCode=504
+			statusCode = 504
 		case codes.NotFound:
-			statusCode=404
+			statusCode = 404
 		case codes.AlreadyExists:
-			statusCode=409
+			statusCode = 409
 		case codes.PermissionDenied:
-			statusCode=403
+			statusCode = 403
 		case codes.ResourceExhausted:
-			statusCode=429
+			statusCode = 429
 		case codes.FailedPrecondition:
-			statusCode=400
+			statusCode = 400
 		case codes.Aborted:
-			statusCode=409
+			statusCode = 409
 		case codes.OutOfRange:
-			statusCode=400
+			statusCode = 400
 		case codes.Unimplemented:
-			statusCode=501
+			statusCode = 501
 		case codes.Internal:
-			statusCode=500
+			statusCode = 500
 		case codes.Unavailable:
-			statusCode=503
+			statusCode = 503
 		case codes.DataLoss:
-			statusCode=500
+			statusCode = 500
 		case codes.Unauthenticated:
-			statusCode=401
+			statusCode = 401
 		default:
-			statusCode=500
+			statusCode = 500
 		}
 
 		return nil, statusCode, nil
@@ -154,7 +156,7 @@ func (g *GRPCData) UpdateGRPCData(available bool) {
 }
 
 // returns isTLS, URL host:port, error
-func hostFromUrl(wafURL string) (bool, string, error) {
+func tlsAndHostFromUrl(wafURL string) (bool, string, error) {
 
 	isTLS := false
 

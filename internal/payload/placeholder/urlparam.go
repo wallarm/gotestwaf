@@ -17,7 +17,7 @@ func URLParam(requestURL, payload string) (*http.Request, error) {
 		return nil, err
 	}
 
-	reqURL.RawQuery = param+"="+payload
+	reqURL.RawQuery = param + "=" + payload
 	req, err := http.NewRequest("GET", reqURL.String(), nil)
 	if err != nil {
 		return nil, err

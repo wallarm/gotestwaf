@@ -118,9 +118,7 @@ func run(logger *log.Logger) error {
 		}
 
 		logger.Printf("WAF pre-check: OK. Blocking status code: %v\n", httpStatus)
-	}
-
-	if cfg.SkipWAFBlockCheck {
+	} else {
 		logger.Println("WAF pre-check: SKIPPED")
 	}
 
@@ -229,8 +227,8 @@ func parseFlags() {
 	flag.String("wafName", wafName, "Name of the WAF product")
 	flag.Bool("ignoreUnresolved", false, "If true, unresolved test cases will be considered as bypassed (affect score and results)")
 	flag.Bool("blockConnReset", false, "If true, connection resets will be considered as block")
-	flag.Bool("skipWAFBlockCheck", false, "If true, testing will begin without checking for the WAF presence")
-	flag.String("addHeader", "", "Pass additional header to target WAF")
+	flag.Bool("skipWAFBlockCheck", false, "If true, WAF detection tests will be skipped")
+	flag.String("addHeader", "", "An HTTP header to add to requests")
 	flag.Parse()
 }
 

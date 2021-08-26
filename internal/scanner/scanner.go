@@ -206,9 +206,9 @@ func (s *Scanner) produceTests(ctx context.Context, n int) <-chan *testWork {
 
 func (s *Scanner) scanURL(ctx context.Context, url string, blockConn bool, w *testWork) error {
 	var (
-		body []byte
+		body       []byte
 		statusCode int
-		err error
+		err        error
 	)
 
 	switch w.encoder {
