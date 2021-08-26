@@ -98,6 +98,9 @@ func (g *GRPCData) Send(ctx context.Context, encoderName, payload string) (body 
 	default:
 		conn, err = grpc.DialContext(ctxWithTimeout, g.host, grpc.WithTransportCredentials(g.tc), grpc.WithBlock())
 	}
+	if err != nil {
+		return nil, 0, errors.Wrap(err, "sending gRPC request")
+	}
 
 	client := grpcSrv.NewServiceFooBarClient(conn)
 
@@ -165,15 +168,19 @@ func tlsAndHostFromUrl(wafURL string) (bool, string, error) {
 		return isTLS, "", err
 	}
 
-	host := urlParse.Hostname()
+	host := urlParse.Host
 	if urlParse.Port() == "" {
 		switch urlParse.Scheme {
 		case "http":
 			host += ":80"
 		case "https":
 			host += ":443"
-			isTLS = true
 		}
 	}
+
+	if urlParse.Scheme == "https" {
+		isTLS = true
+	}
+
 	return isTLS, host, nil
 }

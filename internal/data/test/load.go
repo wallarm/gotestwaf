@@ -22,7 +22,7 @@ func Load(cfg *config.Config, logger *log.Logger) ([]Case, error) {
 	if cfg.TestCasesPath == "" {
 		return nil, errors.New("empty test cases path")
 	}
-	
+
 	if _, err := os.Stat(cfg.TestCasesPath); err != nil {
 		for path, _ := range _bindata {
 			if strings.HasSuffix(path, ".yaml") || strings.HasSuffix(path, ".png") {
@@ -64,7 +64,7 @@ func Load(cfg *config.Config, logger *log.Logger) ([]Case, error) {
 		if cfg.TestCase != "" && testCaseName != cfg.TestCase {
 			continue
 		}
-		
+
 		var yamlFile []byte
 		var err error
 		if loadBindData {
