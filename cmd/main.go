@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -239,28 +238,14 @@ func loadConfig(path string) (cfg *config.Config, err error) {
 	if err != nil {
 		return nil, err
 	}
-	
-	if _, err = os.Stat(path); err != nil {
-		asset, er := test.Asset("config.yaml")
-		if er != nil {
-			return
-		}
+	viper.AddConfigPath(".")
+	viper.SetConfigFile(path)
+	viper.AutomaticEnv()
 
-		err = viper.ReadConfig(bytes.NewReader(asset))
-		if err != nil {
-			return
-		}
-	} else {
-		viper.AddConfigPath(".")
-		viper.SetConfigFile(path)
-		viper.AutomaticEnv()
-
-		err = viper.ReadInConfig()
-		if err != nil {
-			return
-		}
+	err = viper.ReadInConfig()
+	if err != nil {
+		return
 	}
-
 	err = viper.Unmarshal(&cfg)
 	return
 }
