@@ -239,7 +239,7 @@ func loadConfig(path string) (cfg *config.Config, err error) {
 	if err != nil {
 		return nil, err
 	}
-
+	
 	if _, err = os.Stat(path); err != nil {
 		asset, er := test.Asset("config.yaml")
 		if er != nil {
