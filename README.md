@@ -170,6 +170,3 @@ Usage of /go/src/gotestwaf/gotestwaf:
       --workers int            The number of workers to scan (default 200)
       --wsURL string           WebSocket URL to check
 ```
-
-## Create bindata testcases
-``` go-bindata -pkg test -o internal/data/test/bindata_testcases.go testcases/... cmd/resources/logo.png config.yaml```

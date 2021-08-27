@@ -453,8 +453,7 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, wafName, url 
 
 	wallarmLogo, err := ioutil.ReadFile(fmt.Sprintf("cmd%sresources%slogo.png", string(os.PathSeparator), string(os.PathSeparator)))
 	if err != nil {
-		//return errors.Wrap(err, "can not load logo image")
-		wallarmLogo, err = Asset("cmd/resources/logo.png")
+		return errors.Wrap(err, "can not load logo image")
 	}
 	reader := bytes.NewReader(wallarmLogo)
 	pdf.RegisterImageReader("wallarm-logo", "PNG", reader)
