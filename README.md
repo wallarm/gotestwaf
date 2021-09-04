@@ -1,6 +1,9 @@
 # Go Test WAF
 
-An open-source Go project to test different web application firewalls (WAF) for detection logic and bypasses.
+GoTestWAF is a tool for API and OWASP attack simulation, that supports a wide range of API protocols including
+REST, GraphQL, gRPC, WebSockets, SOAP, XMLRPC, and others.
+
+It was designed to evaluate web application security solutions, such as API security proxies, Web Application Firewalls, IPS, API gateways, and others.
 
 # How it works
 
