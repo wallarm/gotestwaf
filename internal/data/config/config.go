@@ -7,7 +7,7 @@ type Config struct {
 	URL                string            `mapstructure:"url"`
 	WebSocketURL       string            `mapstructure:"wsURL"`
 	HTTPHeaders        map[string]string `mapstructure:"headers"`
-	TLSVerify          bool              `mapstructure:"tlsverify"`
+	TLSVerify          bool              `mapstructure:"tlsVerify"`
 	Proxy              string            `mapstructure:"proxy"`
 	MaxIdleConns       int               `mapstructure:"maxIdleConns"`
 	MaxRedirects       int               `mapstructure:"maxRedirects"`

@@ -16,6 +16,7 @@ import (
 	"github.com/pkg/errors"
 	flag "github.com/spf13/pflag"
 	"github.com/spf13/viper"
+
 	"github.com/wallarm/gotestwaf/internal/data/config"
 	"github.com/wallarm/gotestwaf/internal/data/test"
 	"github.com/wallarm/gotestwaf/internal/scanner"
@@ -46,7 +47,11 @@ func main() {
 }
 
 func run(logger *log.Logger) error {
-	parseFlags()
+	err := parseFlags()
+	if err != nil {
+		return err
+	}
+
 	if !verbose {
 		logger.SetOutput(ioutil.Discard)
 	}
@@ -194,14 +199,14 @@ func run(logger *log.Logger) error {
 	return nil
 }
 
-func parseFlags() {
+func parseFlags() error {
 	reportPath := filepath.Join(".", defaultReportPath)
 	testCasesPath := filepath.Join(".", defaultTestCasesPath)
 
 	flag.StringVar(&configPath, "configPath", defaultConfigPath, "Path to the config file")
 	flag.BoolVar(&verbose, "verbose", true, "If true, enable verbose logging")
 
-	flag.String("url", "http://localhost/", "URL to check")
+	urlParam := flag.String("url", "", "URL to check")
 	flag.String("wsURL", "", "WebSocket URL to check")
 	flag.String("proxy", "", "Proxy URL to use")
 	flag.Bool("tlsVerify", false, "If true, the received TLS certificate will be verified")
@@ -230,6 +235,12 @@ func parseFlags() {
 	flag.Bool("skipWAFBlockCheck", false, "If true, WAF detection tests will be skipped")
 	flag.String("addHeader", "", "An HTTP header to add to requests")
 	flag.Parse()
+
+	if *urlParam == "" {
+		return errors.New("url flag not set")
+	}
+
+	return nil
 }
 
 // loadConfig loads the specified config file and merges it with the parameters passed via CLI.
