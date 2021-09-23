@@ -9,8 +9,8 @@ IPS, API gateways, and others.
 ## How it works
 
 GoTestWAF generates malicious requests using encoded payloads placed in different parts of HTTP requests: its body, headers,
-URL parameters, etc. Generated requests are sent to the application security tool URL specified during GoTestWAF launch.
-The results of the security tool evaluation are recorded in the report file created on your machine.
+URL parameters, etc. Generated requests are sent to the application security solution URL specified during GoTestWAF launch.
+The results of the security solution evaluation are recorded in the report file created on your machine.
 
 Default conditions for request generation are defined in the `testcases` folder in the YAML files of the following format:
 
@@ -30,9 +30,9 @@ placeholder:
   - Header
 ```
 
-* `payload` is the string containing attack signs (e.g ```<script>alert(111)</script>``` or something more sophisticated).
-Since the format of the YAML string is required for payloads, payloads must be [encoded as binary data](https://yaml.org/type/binary.html).
-* `encoder` is the encoder to be applied to the payload before placing it to the HTTP request. Possible encoders are:
+* `payload` is a malicious attack sample (e.g XSS string like ```<script>alert(111)</script>``` or something more sophisticated).
+Since the format of the YAML string is required for payloads, they must be [encoded as binary data](https://yaml.org/type/binary.html).
+* `encoder` is an encoder to be applied to the payload before placing it to the HTTP request. Possible encoders are:
 
     * Base64
     * Base64Flat
@@ -50,20 +50,20 @@ Since the format of the YAML string is required for payloads, payloads must be [
     * URLPath
 
 Request generation is a three-step process involving the multiplication of payload amount by encoder and placeholder amounts.
-Let's say you defined 2 **payloads**, 3 **encoders** (Base64, JSUnicode, and URL) and 1 **placeholder** (HTTP GET variable).
-In this case, the tool will send 2x3x1 = 6 requests in a test case.
+Let's say you defined 2 **payloads**, 3 **encoders** (Base64, JSUnicode, and URL) and 1 **placeholder** (URLParameter - HTTP GET parameter).
+In this case, GoTestWAF will send 2x3x1 = 6 requests in a test case.
 
 During GoTestWAF launch, you can also choose test cases between two embedded: OWASP Top-10, OWASP-API,
 or your own (by using the [configuration option](https://github.com/wallarm/gotestwaf#configuration-options) `testCasePath`).
 
 ## Requirements
 
-* Gotestwaf supports all the popular operating systems (Linux, Windows, macOS), and can be built natively
+* GoTestwaf supports all the popular operating systems (Linux, Windows, macOS), and can be built natively
 if [Go](https://golang.org/doc/install) is installed in the system.
 * If running GoTestWAF as the Docker container, please ensure you have [installed and configured Docker](https://docs.docker.com/get-docker/),
-and GoTestWAF and evaluated application security tool are connected to the same [Docker network](https://docs.docker.com/network/).
+and GoTestWAF and evaluated application security solution are connected to the same [Docker network](https://docs.docker.com/network/).
 * For GoTestWAF to be successfully started, please ensure the IP address of the machine running GoTestWAF is whitelisted
-on the machine running the application security tool.
+on the machine running the application security solution.
 
 ## Quick start with Docker
 
@@ -77,15 +77,15 @@ The steps below walk through downloading and starting GoTestWAF with minimal con
 2. Start the GoTestWAF image:
 
     ```
-    docker run -v ${PWD}/reports:/go/src/gotestwaf/reports --network=<NETWORK_FOR_GOTESTWAF_AND_SECTOOL> \
-        wallarm/gotestwaf --url=<EVALUATED_SECURITY_TOOL_URL>
+    docker run -v ${PWD}/reports:/go/src/gotestwaf/reports --network=<NETWORK_FOR_GOTESTWAF_AND_SECSOLUTION> \
+        wallarm/gotestwaf --url=<EVALUATED_SECURITY_SOLUTION_URL>
     ```
 
     If required, you can replace `${PWD}/reports` with the path to another folder used to place the evaluation report.
 3. Find the report file `waf-evaluation-report-<date>.pdf` in the `reports` folder that you mapped to `/go/src/gotestwaf/reports`
 inside the container.
 
-You have successfully evaluated your application security tool by using GoTestWAF with minimal configuration.
+You have successfully evaluated your application security solution by using GoTestWAF with minimal configuration.
 To learn advanced configuration options, please use this [link](https://github.com/wallarm/gotestwaf#configuration-options).
 
 ## Demos
@@ -184,14 +184,14 @@ for example:
     git clone https://github.com/wallarm/gotestwaf.git
     cd gotestwaf
     docker build . --force-rm -t gotestwaf
-    docker run -v ${PWD}/reports:/go/src/gotestwaf/reports gotestwaf --url=<EVALUATED_SECURITY_TOOL_URL>
+    docker run -v ${PWD}/reports:/go/src/gotestwaf/reports gotestwaf --url=<EVALUATED_SECURITY_SOLUTION_URL>
     ```
 * Clone this repository and run GoTestWAF with [`go`](https://golang.org/doc/), for example:
 
     ```
     git clone https://github.com/wallarm/gotestwaf.git
     cd gotestwaf
-    go run ./cmd --url=<EVALUATED_SECURITY_TOOL_URL> --verbose
+    go run ./cmd --url=<EVALUATED_SECURITY_SOLUTION_URL> --verbose
     ```
 
 Supported GoTestWAF configuration options are described below.
