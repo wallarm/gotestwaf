@@ -5,9 +5,19 @@ import (
 	"net/url"
 )
 
+type URLParam struct {
+	name string
+}
+
+var DefaultURLParam = URLParam{name: "URLParam"}
+
+func (p URLParam) GetName() string {
+	return p.name
+}
+
 // Warning: this placeholder encodes URL anyways
-func URLParam(requestURL, payload string) (*http.Request, error) {
-	param, err := RandomHex(seed)
+func (p URLParam) CreateRequest(requestURL, payload string) (*http.Request, error) {
+	param, err := RandomHex(Seed)
 	if err != nil {
 		return nil, err
 	}

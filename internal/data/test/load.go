@@ -2,19 +2,19 @@ package test
 
 import (
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/wallarm/gotestwaf/internal/data/config"
 	"gopkg.in/yaml.v2"
+
+	"github.com/wallarm/gotestwaf/internal/data/config"
 )
 
 const testCaseExt = ".yml"
 
-func Load(cfg *config.Config, logger *log.Logger) ([]Case, error) {
+func Load(cfg *config.Config) ([]Case, error) {
 	var files []string
 	var testCases []Case
 

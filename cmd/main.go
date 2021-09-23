@@ -66,7 +66,7 @@ func run(logger *log.Logger) error {
 
 	logger.Println("Test cases loading started")
 
-	testCases, err := test.Load(cfg, logger)
+	testCases, err := test.Load(cfg)
 	if err != nil {
 		return errors.Wrap(err, "loading test case")
 	}
@@ -96,7 +96,7 @@ func run(logger *log.Logger) error {
 		grpcData.SetAvailability(available)
 	}
 
-	s := scanner.New(db, logger, cfg, httpClient, grpcData)
+	s := scanner.New(db, logger, cfg, httpClient, grpcData, false)
 
 	logger.Println("Scanned URL:", cfg.URL)
 	if !cfg.SkipWAFBlockCheck {

@@ -6,8 +6,8 @@ type GRPCEncoder struct {
 
 var DefaultGRPCEncoder = GRPCEncoder{name: "gRPC"}
 
-func (enc GRPCEncoder) GetName() *string {
-	return &enc.name
+func (enc GRPCEncoder) GetName() string {
+	return enc.name
 }
 
 func (enc GRPCEncoder) Encode(data string) (string, error) {
