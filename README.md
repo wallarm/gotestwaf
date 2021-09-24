@@ -77,7 +77,7 @@ The steps below walk through downloading and starting GoTestWAF with minimal con
 2. Start the GoTestWAF image:
 
     ```
-    docker run -v ${PWD}/reports:/go/src/gotestwaf/reports --network=<NETWORK_FOR_GOTESTWAF_AND_SECSOLUTION> \
+    docker run -v ${PWD}/reports:/go/src/gotestwaf/reports --network="host" \
         wallarm/gotestwaf --url=<EVALUATED_SECURITY_SOLUTION_URL>
     ```
 
@@ -98,26 +98,18 @@ and GoTestWAF evaluating ModSecurity. There are two options to run the demo envi
 
 ### Running the demo using Docker
 
-1. Create the Docker network to link GoTestWAF and ModSecurity to. For example, to create the Docker network named `gotestwaf-modsecurity`:
+1. Clone this repository, go to the local folder, run the following commands to create a ModSecurity-based environment:
 
     ```bash
-    docker network create gotestwaf-modsecurity
+    git clone https://github.com/wallarm/gotestwaf.git
+    cd gotestwaf
+    make modsec
     ```
-2. Start containerized [ModSecurity](https://hub.docker.com/r/owasp/modsecurity-crs/) with minimal configuration:
+2. Start containerized GoTestWAF with minimal configuration:
 
     ```bash
-    docker run -p <PORT_FOR_MODSECURITY>:80 -d -e PARANOIA=1 --rm --network=gotestwaf-modsecurity \
-        owasp/modsecurity-crs:nginx
-    ```
-
-    You will find more ModSecurity configuration options and other image tags on [Docker Hub](https://hub.docker.com/r/owasp/modsecurity-crs/).
-
-    Other options for the ModSecurity launch are described on the [ModSecurity GitHub](https://github.com/SpiderLabs/ModSecurity).
-3. Start containerized GoTestWAF with minimal configuration:
-
-    ```bash
-    docker run -v ${PWD}/reports:/go/src/gotestwaf/reports --network=gotestwaf-modsecurity \
-        wallarm/gotestwaf --url=<MODSECURITY_URL>
+    docker run -v ${PWD}/reports:/go/src/gotestwaf/reports --network="host" \
+        wallarm/gotestwaf --url=http://127.0.0.1:8080
     ```
 
     If required, you can replace `${PWD}/reports` with the path to another folder used to place the evaluation report.
@@ -127,7 +119,7 @@ and GoTestWAF evaluating ModSecurity. There are two options to run the demo envi
 You can also run NGINX‑based ModSecurity using OWASP Core Rule Set and GoTestWAF evaluating ModSecurity by using
 the `make` utility as follows (executed commands are defined in the Makefile located in the repository root):
 
-1. Clone this repository and go to the local folder:
+1. Clone this repository, go to the local folder, and run the following commands:
 
     ```
     git clone https://github.com/wallarm/gotestwaf.git
@@ -226,7 +218,7 @@ for example:
 * Build GoTestWAF as the Go module:
 
     ```
-    go build -mod vendor
+    go build -mod vendor -o gotestwaf ./cmd/main.go
     ```
 
 Supported GoTestWAF configuration options are described below.
