@@ -90,15 +90,20 @@ To learn advanced configuration options, please use this [link](https://github.c
 
 ## Demos
 
-You can try GoTestWAF by running the demo environment that deploys NGINX‑based [ModSecurity using OWASP Core Rule Set](https://hub.docker.com/r/owasp/modsecurity-crs/)
-and GoTestWAF evaluating ModSecurity.
+You can try GoTestWAF by running the demo environment that deploys NGINX‑based [ModSecurity using OWASP Core Rule Set](https://owasp.org/www-project-modsecurity-core-rule-set/)
+and GoTestWAF evaluating ModSecurity. There are two options to run the demo environment:
+
+* By using Docker
+* By using the `make` utility
+
+### Running the demo using Docker
 
 1. Create the Docker network to link GoTestWAF and ModSecurity to. For example, to create the Docker network named `gotestwaf-modsecurity`:
 
     ```bash
     docker network create gotestwaf-modsecurity
     ```
-2. Start containerized ModSecurity with minimal configuration:
+2. Start containerized [ModSecurity](https://hub.docker.com/r/owasp/modsecurity-crs/) with minimal configuration:
 
     ```bash
     docker run -p <PORT_FOR_MODSECURITY>:80 -d -e PARANOIA=1 --rm --network=gotestwaf-modsecurity \
@@ -116,62 +121,87 @@ and GoTestWAF evaluating ModSecurity.
     ```
 
     If required, you can replace `${PWD}/reports` with the path to another folder used to place the evaluation report.
-4. Check the evaluation results logged using the [`STDOUT` and `STDERR` Docker services](https://docs.docker.com/config/containers/logging/).
-For example:
+
+### Running the demo using the `make` utility
+
+You can also run NGINX‑based ModSecurity using OWASP Core Rule Set and GoTestWAF evaluating ModSecurity by using
+the `make` utility as follows (executed commands are defined in the Makefile located in the repository root):
+
+1. Clone this repository and go to the local folder:
 
     ```
-    GOTESTWAF : 2021/03/03 15:15:48.072331 main.go:61: Test cases loading started
-    GOTESTWAF : 2021/03/03 15:15:48.077093 main.go:68: Test cases loading finished
-    GOTESTWAF : 2021/03/03 15:15:48.077123 main.go:74: Scanned URL: http://127.0.0.1:8080/
-    GOTESTWAF : 2021/03/03 15:15:48.083134 main.go:85: WAF pre-check: OK. Blocking status code: 403
-    GOTESTWAF : 2021/03/03 15:15:48.083179 main.go:97: WebSocket pre-check. URL to check: ws://127.0.0.1:8080/
-    GOTESTWAF : 2021/03/03 15:15:48.251824 main.go:101: WebSocket pre-check: connection is not available, reason: websocket: bad handshake
-    GOTESTWAF : 2021/03/03 15:15:48.252047 main.go:129: Scanning http://127.0.0.1:8080/
-    GOTESTWAF : 2021/03/03 15:15:48.252076 scanner.go:124: Scanning started
-    GOTESTWAF : 2021/03/03 15:15:51.210216 scanner.go:129: Scanning Time:  2.958076338s
-    GOTESTWAF : 2021/03/03 15:15:51.210235 scanner.go:160: Scanning finished
-
-    Negative Tests:
-    +-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
-    |       TEST SET        |       TEST CASE       |     PERCENTAGE, %     |        BLOCKED        |       BYPASSED        |      UNRESOLVED       |
-    +-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
-    | community             | community-lfi         |                 66.67 |                     4 |                     2 |                     0 |
-    | community             | community-rce         |                 14.29 |                     6 |                    36 |                     0 |
-    | community             | community-sqli        |                 70.83 |                    34 |                    14 |                     0 |
-    | community             | community-xss         |                 91.78 |                   279 |                    25 |                     0 |
-    | community             | community-xxe         |                100.00 |                     4 |                     0 |                     0 |
-    | owasp                 | ldap-injection        |                  0.00 |                     0 |                     8 |                     0 |
-    | owasp                 | mail-injection        |                  0.00 |                     0 |                     6 |                     6 |
-    | owasp                 | nosql-injection       |                  0.00 |                     0 |                    12 |                     6 |
-    | owasp                 | path-traversal        |                 38.89 |                     7 |                    11 |                     6 |
-    | owasp                 | shell-injection       |                 37.50 |                     3 |                     5 |                     0 |
-    | owasp                 | sql-injection         |                 33.33 |                     8 |                    16 |                     8 |
-    | owasp                 | ss-include            |                 50.00 |                     5 |                     5 |                    10 |
-    | owasp                 | sst-injection         |                 45.45 |                     5 |                     6 |                     9 |
-    | owasp                 | xml-injection         |                100.00 |                    12 |                     0 |                     0 |
-    | owasp                 | xss-scripting         |                 56.25 |                     9 |                     7 |                    12 |
-    | owasp-api             | graphql               |                100.00 |                     1 |                     0 |                     0 |
-    | owasp-api             | rest                  |                100.00 |                     2 |                     0 |                     0 |
-    | owasp-api             | soap                  |                100.00 |                     2 |                     0 |                     0 |
-    +-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
-    |         DATE:         |       WAF NAME:       |  WAF AVERAGE SCORE:   |  BLOCKED (RESOLVED):  | BYPASSED (RESOLVED):  |      UNRESOLVED:      |
-    |      2021-03-03       |        GENERIC        |        55.83%         |   381/534 (71.35%)    |   153/534 (28.65%)    |    57/591 (9.64%)     |
-    +-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
-
-    Positive Tests:
-    +-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
-    |       TEST SET        |       TEST CASE       |     PERCENTAGE, %     |        BLOCKED        |       BYPASSED        |      UNRESOLVED       |
-    +-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
-    | false-pos             | texts                 |                 50.00 |                     1 |                     1 |                     6 |
-    +-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
-    |         DATE:         |       WAF NAME:       |  WAF POSITIVE SCORE:  | FALSE POSITIVE (RES): | TRUE POSITIVE (RES):  |      UNRESOLVED:      |
-    |      2021-03-03       |        GENERIC        |        50.00%         |     1/2 (50.00%)      |     1/2 (50.00%)      |     6/8 (75.00%)      |
-    +-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
-
-    PDF report is ready: reports/waf-evaluation-report-generic-2021-March-03-15-15-51.pdf
+    git clone https://github.com/wallarm/gotestwaf.git
+    cd gotestwaf
     ```
-3. Find the report file `waf-evaluation-report-<date>.pdf` in the `reports` folder that you mapped to `/go/src/gotestwaf/reports`
-inside the container.
+2. Start ModSecurity from the [Docker image](https://hub.docker.com/r/owasp/modsecurity-crs/) with minimal configuration:
+    
+    ```bash
+    make modsec
+    ```
+3. Start GoTestWAF with minimal configuration by using one of the following commands:
+
+    ```
+    make scan_local # to run GoTestWAF natively with go
+    make scan_local_from_docker # to run GoTestWAF from the Docker image
+    ```
+
+### Checking the evaluation results
+
+Check the evaluation results logged using the `STDOUT` and `STDERR` services. For example:
+
+```
+GOTESTWAF : 2021/03/03 15:15:48.072331 main.go:61: Test cases loading started
+GOTESTWAF : 2021/03/03 15:15:48.077093 main.go:68: Test cases loading finished
+GOTESTWAF : 2021/03/03 15:15:48.077123 main.go:74: Scanned URL: http://127.0.0.1:8080/
+GOTESTWAF : 2021/03/03 15:15:48.083134 main.go:85: WAF pre-check: OK. Blocking status code: 403
+GOTESTWAF : 2021/03/03 15:15:48.083179 main.go:97: WebSocket pre-check. URL to check: ws://127.0.0.1:8080/
+GOTESTWAF : 2021/03/03 15:15:48.251824 main.go:101: WebSocket pre-check: connection is not available, reason: websocket: bad handshake
+GOTESTWAF : 2021/03/03 15:15:48.252047 main.go:129: Scanning http://127.0.0.1:8080/
+GOTESTWAF : 2021/03/03 15:15:48.252076 scanner.go:124: Scanning started
+GOTESTWAF : 2021/03/03 15:15:51.210216 scanner.go:129: Scanning Time:  2.958076338s
+GOTESTWAF : 2021/03/03 15:15:51.210235 scanner.go:160: Scanning finished
+
+Negative Tests:
++-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
+|       TEST SET        |       TEST CASE       |     PERCENTAGE, %     |        BLOCKED        |       BYPASSED        |      UNRESOLVED       |
++-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
+| community             | community-lfi         |                 66.67 |                     4 |                     2 |                     0 |
+| community             | community-rce         |                 14.29 |                     6 |                    36 |                     0 |
+| community             | community-sqli        |                 70.83 |                    34 |                    14 |                     0 |
+| community             | community-xss         |                 91.78 |                   279 |                    25 |                     0 |
+| community             | community-xxe         |                100.00 |                     4 |                     0 |                     0 |
+| owasp                 | ldap-injection        |                  0.00 |                     0 |                     8 |                     0 |
+| owasp                 | mail-injection        |                  0.00 |                     0 |                     6 |                     6 |
+| owasp                 | nosql-injection       |                  0.00 |                     0 |                    12 |                     6 |
+| owasp                 | path-traversal        |                 38.89 |                     7 |                    11 |                     6 |
+| owasp                 | shell-injection       |                 37.50 |                     3 |                     5 |                     0 |
+| owasp                 | sql-injection         |                 33.33 |                     8 |                    16 |                     8 |
+| owasp                 | ss-include            |                 50.00 |                     5 |                     5 |                    10 |
+| owasp                 | sst-injection         |                 45.45 |                     5 |                     6 |                     9 |
+| owasp                 | xml-injection         |                100.00 |                    12 |                     0 |                     0 |
+| owasp                 | xss-scripting         |                 56.25 |                     9 |                     7 |                    12 |
+| owasp-api             | graphql               |                100.00 |                     1 |                     0 |                     0 |
+| owasp-api             | rest                  |                100.00 |                     2 |                     0 |                     0 |
+| owasp-api             | soap                  |                100.00 |                     2 |                     0 |                     0 |
++-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
+|         DATE:         |       WAF NAME:       |  WAF AVERAGE SCORE:   |  BLOCKED (RESOLVED):  | BYPASSED (RESOLVED):  |      UNRESOLVED:      |
+|      2021-03-03       |        GENERIC        |        55.83%         |   381/534 (71.35%)    |   153/534 (28.65%)    |    57/591 (9.64%)     |
++-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
+
+Positive Tests:
++-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
+|       TEST SET        |       TEST CASE       |     PERCENTAGE, %     |        BLOCKED        |       BYPASSED        |      UNRESOLVED       |
++-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
+| false-pos             | texts                 |                 50.00 |                     1 |                     1 |                     6 |
++-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
+|         DATE:         |       WAF NAME:       |  WAF POSITIVE SCORE:  | FALSE POSITIVE (RES): | TRUE POSITIVE (RES):  |      UNRESOLVED:      |
+|      2021-03-03       |        GENERIC        |        50.00%         |     1/2 (50.00%)      |     1/2 (50.00%)      |     6/8 (75.00%)      |
++-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
+
+PDF report is ready: reports/waf-evaluation-report-generic-2021-March-03-15-15-51.pdf
+```
+
+Find the report file `waf-evaluation-report-<date>.pdf` in the `reports` folder of the user directory.
 
 ## Other options to run GoTestWAF
 
@@ -192,6 +222,11 @@ for example:
     git clone https://github.com/wallarm/gotestwaf.git
     cd gotestwaf
     go run ./cmd --url=<EVALUATED_SECURITY_SOLUTION_URL> --verbose
+    ```
+* Build GoTestWAF as the Go module:
+
+    ```
+    go build -mod vendor
     ```
 
 Supported GoTestWAF configuration options are described below.
