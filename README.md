@@ -122,10 +122,11 @@ To run the demo environment:
         wallarm/gotestwaf --url=http://127.0.0.1:8080
     ```
 
-    Start the [Docker image](https://hub.docker.com/r/wallarm/gotestwaf) by using the following `make` command
-    (make sure ModSec is running on port 8080; if not, update the port value in the Makefile):
+    Build the GoTestWAF Docker image from the [Dockerfile](https://github.com/wallarm/gotestwaf/blob/master/Dockerfile) and run the
+    image by using the following `make` commands (make sure ModSec is running on port 8080; if not, update the port value in the Makefile):
 
     ```
+    make gotestwaf
     make scan_local_from_docker
     ```
 
