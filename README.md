@@ -30,7 +30,7 @@ placeholder:
   - Header
 ```
 
-* `payload` is a malicious attack sample (e.g XSS string like ```<script>alert(111)</script>``` or something more sophisticated).
+* `payload` is a malicious attack sample (e.g XSS payload like ```<script>alert(111)</script>``` or something more sophisticated).
 Since the format of the YAML string is required for payloads, they must be [encoded as binary data](https://yaml.org/type/binary.html).
 * `encoder` is an encoder to be applied to the payload before placing it to the HTTP request. Possible encoders are:
 
