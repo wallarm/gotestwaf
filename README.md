@@ -1,94 +1,148 @@
-# Go Test WAF
+# GoTestWAF
 
-GoTestWAF is a tool for API and OWASP attack simulation, that supports a wide range of API protocols including
+GoTestWAF is a tool for API and OWASP attack simulation that supports a wide range of API protocols including
 REST, GraphQL, gRPC, WebSockets, SOAP, XMLRPC, and others.
 
-It was designed to evaluate web application security solutions, such as API security proxies, Web Application Firewalls, IPS, API gateways, and others.
+It was designed to evaluate web application security solutions, such as API security proxies, Web Application Firewalls,
+IPS, API gateways, and others.
 
-# How it works
+## How it works
 
-It is a 3-steps requests generation process that multiply amount of payloads to encoders and placeholders.
-Let's say you defined 2 payloads, 3 encoders (Base64, JSON, and URLencode) and 1 placeholder (HTTP GET variable).
-In this case, the tool will send 2x3x1 = 6 requests in a testcase.
+GoTestWAF generates malicious requests using encoded payloads placed in different parts of HTTP requests: its body, headers,
+URL parameters, etc. Generated requests are sent to the application security solution URL specified during GoTestWAF launch.
+The results of the security solution evaluation are recorded in the report file created on your machine.
 
-## Payload
+Default conditions for request generation are defined in the `testcases` folder in the YAML files of the following format:
 
-The payload string you wanna send. Like ```<script>alert(111)</script>``` or something more sophisticated.
-There is no macroses like so far, but it's in our TODO list. 
-Since it's a YAML string, use binary encoding if you wanna to https://yaml.org/type/binary.html
-
-## Encoder
-
-Data encoder the tool should apply to the payload. Base64, JSON unicode (\u0027 instead of '), etc.
-
-## Placeholder
-
-A place inside HTTP request where encoded payload should be.
-Like URL parameter, URI, POST form parameter, or JSON POST body.
-
-## Caveats
-We recommend adding the scanner's IP address to the whitelists before executing the test.
-
-# Quick start
-## Dockerhub
-The latest gotestwaf always available via the dockerhub repository: https://hub.docker.com/r/wallarm/gotestwaf  
-It can be easily pulled via the following command:  
 ```
-docker pull wallarm/gotestwaf
-```
-## Local Docker build
-```
-docker build . --force-rm -t gotestwaf
-docker run -v ${PWD}/reports:/go/src/gotestwaf/reports gotestwaf --url=https://the-waf-you-wanna-test/
-```
-Find the report file `waf-test-report-<date>.pdf` in the `reports` folder that you mapped to `/go/src/gotestwaf/reports` inside the container.
-
-## Build
-Gotestwaf supports all the popular platforms (Linux, Windows, macOS), and can be built natively if Go is installed in the system.
-```
-go build -mod vendor
+payload:
+  - '"union select -7431.1, name, @aaa from u_base--w-'
+  - "'or 123.22=123.22"
+  - "' waitfor delay '00:00:10'--"
+  - "')) or pg_sleep(5)--"
+encoder:
+  - Base64Flat
+  - URL
+placeholder:
+  - UrlPath
+  - UrlParam
+  - JSUnicode
+  - Header
 ```
 
-# Examples
+* `payload` is a malicious attack sample (e.g XSS payload like ```<script>alert(111)</script>``` or something more sophisticated).
+Since the format of the YAML string is required for payloads, they must be [encoded as binary data](https://yaml.org/type/binary.html).
+* `encoder` is an encoder to be applied to the payload before placing it to the HTTP request. Possible encoders are:
 
-## Testing on OWASP ModSecurity Core Rule Set
+    * Base64
+    * Base64Flat
+    * JSUnicode
+    * URL
+    * Plain (to keep the payload string as-is)
+    * XML Entity
+* `placeholder` is a place inside HTTP request where encoded payload should be. Possible placeholders are:
 
-#### Build & run ModSecurity CRS docker image
-You can pull, build and run ModSecurity CRS docker image automatically:
-```
-make modsec
-```
-Or manually with your configuration flags to test:
-```
-docker pull owasp/modsecurity-crs
-docker run -p 8080:80 -d -e PARANOIA=1 --rm owasp/modsecurity-crs
-```
-You may choose the PARANOIA level to increase the level of security.  
-Learn more https://coreruleset.org/faq/
+    * Header
+    * RequestBody
+    * SOAPBody
+    * JSONBody
+    * URLParam
+    * URLPath
 
-#### Run gotestwaf
-If you want to test the functionality on the running ModSecurity CRS docker container, you can use the following commands:
-```
-make scan_local               (to run natively)
-make scan_local_from_docker   (to run from docker)
-```
-Or manually from docker:
-```
-docker run -v ${PWD}/reports:/go/src/gotestwaf/reports --network="host" gotestwaf --url=http://127.0.0.1:8080/ --verbose
-```
-And manually with `go run` (natively):
-```
-go run ./cmd --url=http://127.0.0.1:8080/ --verbose
-```
+Request generation is a three-step process involving the multiplication of payload amount by encoder and placeholder amounts.
+Let's say you defined 2 **payloads**, 3 **encoders** (Base64, JSUnicode, and URL) and 1 **placeholder** (URLParameter - HTTP GET parameter).
+In this case, GoTestWAF will send 2x3x1 = 6 requests in a test case.
 
-#### Run gotestwaf with WebSocket check
-You can additionally set the WebSocket URL to check via the `wsURL` flag and `verbose` flag to include more information about the checking process:  
-```
-docker run -v ${PWD}/reports:/go/src/gotestwaf/reports gotestwaf --url=http://172.17.0.1:8080/ --wsURL=ws://172.17.0.1:8080/api/ws --verbose
-```
+During GoTestWAF launch, you can also choose test cases between two embedded: OWASP Top-10, OWASP-API,
+or your own (by using the [configuration option](https://github.com/wallarm/gotestwaf#configuration-options) `testCasePath`).
 
+## Requirements
 
-#### Check results
+* GoTestwaf supports all the popular operating systems (Linux, Windows, macOS), and can be built natively
+if [Go](https://golang.org/doc/install) is installed in the system.
+* If running GoTestWAF as the Docker container, please ensure you have [installed and configured Docker](https://docs.docker.com/get-docker/),
+and GoTestWAF and evaluated application security solution are connected to the same [Docker network](https://docs.docker.com/network/).
+* For GoTestWAF to be successfully started, please ensure the IP address of the machine running GoTestWAF is whitelisted
+on the machine running the application security solution.
+
+## Quick start with Docker
+
+The steps below walk through downloading and starting GoTestWAF with minimal configuration on Docker.
+
+1. Pull the [GoTestWAF image](https://hub.docker.com/r/wallarm/gotestwaf) from Docker Hub:
+
+    ```
+    docker pull wallarm/gotestwaf
+    ```
+2. Start the GoTestWAF image:
+
+    ```
+    docker run -v ${PWD}/reports:/go/src/gotestwaf/reports --network="host" \
+        wallarm/gotestwaf --url=<EVALUATED_SECURITY_SOLUTION_URL>
+    ```
+
+    If required, you can replace `${PWD}/reports` with the path to another folder used to place the evaluation report.
+
+    If the evaluated security tool is available externally, you can skip the option `--network="host"`. This option enables interaction of Docker containers running on 127.0.0.1.
+3. Find the report file `waf-evaluation-report-<date>.pdf` in the `reports` folder that you mapped to `/go/src/gotestwaf/reports`
+inside the container.
+
+You have successfully evaluated your application security solution by using GoTestWAF with minimal configuration.
+To learn advanced configuration options, please use this [link](https://github.com/wallarm/gotestwaf#configuration-options).
+
+## Demos
+
+You can try GoTestWAF by running the demo environment that deploys NGINX‑based [ModSecurity using OWASP Core Rule Set](https://hub.docker.com/r/owasp/modsecurity-crs)
+and GoTestWAF evaluating ModSecurity on Docker.
+
+To run the demo environment:
+
+1. Clone this repository and go to the cloned directory:
+
+    ```
+    git clone https://github.com/wallarm/gotestwaf.git
+    cd gotestwaf
+    ```
+2. Start ModSecurity from the [Docker image](https://hub.docker.com/r/owasp/modsecurity-crs/) by using the following `make` command:
+    
+    ```bash
+    make modsec
+    ```
+
+    Settings for running the ModSecurity Docker container are defined in the rule `modsec` of the cloned Makefile. It runs the ModSecurity Docker container on port 8080 with minimal configuration defined in the cloned file `cmd/resources/default.conf` and the `PARANOIA` value set to 1.
+
+    If required, you can change these settings by editing the rule `modsec` in the cloned Makefile. Available options for ModSecurity configuration are described on [Docker Hub](https://hub.docker.com/r/owasp/modsecurity-crs/).
+3. Start GoTestWAF with minimal configuration by using one of the following methods:
+
+    Start the [Docker image](https://hub.docker.com/r/wallarm/gotestwaf) by using the following `docker pull` and `docker run` commands:
+
+    ```
+    docker pull wallarm/gotestwaf
+    docker run -v ${PWD}/reports:/go/src/gotestwaf/reports --network="host" \
+        wallarm/gotestwaf --url=http://127.0.0.1:8080
+    ```
+
+    Build the GoTestWAF Docker image from the [Dockerfile](https://github.com/wallarm/gotestwaf/blob/master/Dockerfile) and run the
+    image by using the following `make` commands (make sure ModSec is running on port 8080; if not, update the port value in the Makefile):
+
+    ```
+    make gotestwaf
+    make scan_local_from_docker
+    ```
+
+    Start GoTestWAF natively with go by using the following `make` command:
+    (make sure ModSec is running on port 8080; if not, update the port value in the Makefile):
+
+    ```
+    make scan_local
+    ```
+4. Find the [report](https://github.com/wallarm/gotestwaf#checking-the-evaluation-results) file `waf-evaluation-report-<date>.pdf` in
+the `reports` folder that you mapped to `/go/src/gotestwaf/reports` inside the container.
+
+### Checking the evaluation results
+
+Check the evaluation results logged using the `STDOUT` and `STDERR` services. For example:
+
 ```
 GOTESTWAF : 2021/03/03 15:15:48.072331 main.go:61: Test cases loading started
 GOTESTWAF : 2021/03/03 15:15:48.077093 main.go:68: Test cases loading finished
@@ -140,9 +194,44 @@ Positive Tests:
 
 PDF report is ready: reports/waf-evaluation-report-generic-2021-March-03-15-15-51.pdf
 ```
----
 
-### Configuration options
+The report file `waf-evaluation-report-<date>.pdf` is available in the `reports` folder of the user directory.
+
+## Other options to run GoTestWAF
+
+In addition to running the GoTestWAF Docker image downloaded from Docker Hub, you can run GoTestWAF by using the following options:
+
+* Clone this repository and build the GoTestWAF Docker image from the [Dockerfile](https://github.com/wallarm/gotestwaf/blob/master/Dockerfile), 
+for example:
+
+    ```
+    git clone https://github.com/wallarm/gotestwaf.git
+    cd gotestwaf
+    docker build . --force-rm -t gotestwaf
+    docker run -v ${PWD}/reports:/go/src/gotestwaf/reports --network="host" \
+        gotestwaf --url=<EVALUATED_SECURITY_SOLUTION_URL>
+    ```
+
+    If the evaluated security tool is available externally, you can skip the option `--network="host"`. This option enables interaction of Docker containers running on 127.0.0.1.
+* Clone this repository and run GoTestWAF with [`go`](https://golang.org/doc/), for example:
+
+    ```
+    git clone https://github.com/wallarm/gotestwaf.git
+    cd gotestwaf
+    go run ./cmd --url=<EVALUATED_SECURITY_SOLUTION_URL> --verbose
+    ```
+* Clone this repository and build GoTestWAF as the Go module:
+
+    ```
+    git clone https://github.com/wallarm/gotestwaf.git
+    cd gotestwaf
+    go build -mod vendor -o gotestwaf ./cmd/main.go
+    ```
+
+Supported GoTestWAF configuration options are described below.
+
+## Configuration options
+
 ```
 Usage of /go/src/gotestwaf/gotestwaf:
       --addHeader string       An HTTP header to add to requests
@@ -173,3 +262,23 @@ Usage of /go/src/gotestwaf/gotestwaf:
       --workers int            The number of workers to scan (default 200)
       --wsURL string           WebSocket URL to check
 ```
+
+The listed options can be passed to GoTestWAF as follows:
+
+* If running the GoTestWAF Docker container, pass the configuration options in the `docker run` command after the Docker image name.
+
+    For example, to run GoTestWAF with WebSocket check, you can specify the WebSocket URL via the `wsURL` option
+    and `verbose` flag to include more information about the checking process:
+
+    ```
+    docker run -v ${PWD}/reports:/go/src/gotestwaf/reports --network="host" wallarm/gotestwaf \
+        --url=http://127.0.0.1:8080/ --wsURL=ws://127.0.0.1:8080/api/ws --verbose
+    ```
+
+* If running GoTestWAF with `go run`, pass the configuration options and its values as the parameters for the main script.
+
+    For example, to run GoTestWAF with WebSocket check, you can specify the WebSocket URL via the `wsURL` option and `verbose` flag to include more information about the checking process:
+
+    ```
+    go run ./cmd --url=http://127.0.0.1:8080/ --wsURL=ws://127.0.0.1:8080/api/ws --verbose
+    ```
