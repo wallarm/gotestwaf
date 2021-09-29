@@ -272,7 +272,7 @@ The listed options can be passed to GoTestWAF as follows:
 
     ```
     docker run -v ${PWD}/reports:/go/src/gotestwaf/reports --network="host" wallarm/gotestwaf \
-        --url=http://127.17.0.1:8080/ --wsURL=ws://127.17.0.1:8080/api/ws --verbose
+        --url=http://127.0.0.1:8080/ --wsURL=ws://127.0.0.1:8080/api/ws --verbose
     ```
 
 * If running GoTestWAF with `go run`, pass the configuration options and its values as the parameters for the main script.
@@ -280,5 +280,5 @@ The listed options can be passed to GoTestWAF as follows:
     For example, to run GoTestWAF with WebSocket check, you can specify the WebSocket URL via the `wsURL` option and `verbose` flag to include more information about the checking process:
 
     ```
-    go run ./cmd --url=http://127.0.0.1:8080/ --wsURL=ws://127.17.0.1:8080/api/ws --verbose
+    go run ./cmd --url=http://127.0.0.1:8080/ --wsURL=ws://127.0.0.1:8080/api/ws --verbose
     ```
