@@ -4,23 +4,16 @@ import (
 	"context"
 	"log"
 	"os"
-	"path"
 	"testing"
 	"time"
 
 	"github.com/pkg/errors"
 
-	"github.com/wallarm/gotestwaf/internal/data/config"
 	"github.com/wallarm/gotestwaf/internal/data/test"
 	"github.com/wallarm/gotestwaf/internal/scanner"
 	"github.com/wallarm/gotestwaf/tests/integration/waf"
 
 	test_config "github.com/wallarm/gotestwaf/tests/integration/config"
-)
-
-var (
-	reportPrefix  = "waf-evaluation-report"
-	payloadPrefix = "waf-evaluation-payloads"
 )
 
 func TestGoTestWAF(t *testing.T) {
@@ -31,12 +24,7 @@ func TestGoTestWAF(t *testing.T) {
 
 	w := waf.New(errChan, allTestCases)
 
-	go func() {
-		err := w.Run()
-		if err != nil {
-			errChan <- err
-		}
-	}()
+	w.Run()
 
 	t.Cleanup(func() {
 		err := w.Shutdown()
@@ -69,37 +57,7 @@ func TestGoTestWAF(t *testing.T) {
 func runGoTestWAF(testCases []test.Case) error {
 	logger := log.New(os.Stdout, "GOTESTWAF : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 
-	tempDir := os.TempDir()
-
-	cfg := &config.Config{
-		Cookies:            nil,
-		URL:                "http://" + test_config.Address,
-		WebSocketURL:       "",
-		HTTPHeaders:        nil,
-		TLSVerify:          false,
-		Proxy:              "",
-		MaxIdleConns:       2,
-		MaxRedirects:       50,
-		IdleConnTimeout:    2,
-		FollowCookies:      false,
-		BlockStatusCode:    403,
-		PassStatusCode:     203,
-		BlockRegex:         "",
-		PassRegex:          "",
-		NonBlockedAsPassed: false,
-		Workers:            1,
-		RandomDelay:        400,
-		SendDelay:          200,
-		ReportPath:         path.Join(tempDir, "reports"),
-		TestCase:           "",
-		TestCasesPath:      "",
-		TestSet:            "",
-		WAFName:            "test-waf",
-		IgnoreUnresolved:   false,
-		BlockConnReset:     false,
-		SkipWAFBlockCheck:  false,
-		AddHeader:          "",
-	}
+	cfg := test_config.GetConfig()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -110,10 +68,14 @@ func runGoTestWAF(testCases []test.Case) error {
 		return errors.Wrap(err, "HTTP client")
 	}
 
+	cfg.URL = "http://" + test_config.GRPCAddress
+
 	grpcData, err := scanner.NewGRPCData(cfg)
 	if err != nil {
 		return errors.Wrap(err, "gRPC client")
 	}
+
+	cfg.URL = "http://" + test_config.HTTPAddress
 
 	logger.Printf("gRPC pre-check: IN PROGRESS")
 
@@ -138,6 +100,22 @@ func runGoTestWAF(testCases []test.Case) error {
 		}
 	}
 
+	logger.Printf("WebSocket pre-check. URL to check: %s\n", cfg.WebSocketURL)
+
+	available, blocked, err := s.WSPreCheck(cfg.WebSocketURL)
+	if !available && err != nil {
+		logger.Printf("WebSocket pre-check: connection is not available, "+
+			"reason: %s\n", err)
+	}
+	if available && blocked {
+		logger.Printf("WebSocket is available and payloads are "+
+			"blocked by the WAF, reason: %s\n", err)
+	}
+	if available && !blocked {
+		logger.Println("WebSocket is available and payloads are " +
+			"not blocked by the WAF")
+	}
+
 	logger.Printf("Scanning %s\n", cfg.URL)
 	err = s.Run(ctx, cfg.URL, cfg.BlockConnReset)
 	if err != nil {
@@ -145,25 +123,11 @@ func runGoTestWAF(testCases []test.Case) error {
 	}
 
 	reportTime := time.Now()
-	// reportSaveTime := reportTime.Format("2006-January-02-15-04-05")
 
-	// reportFile := filepath.Join(cfg.ReportPath, fmt.Sprintf("%s-%s-%s.pdf", reportPrefix, cfg.WAFName, reportSaveTime))
-
-	_ /*rows*/, err = db.RenderTable(reportTime, cfg.WAFName, cfg.IgnoreUnresolved)
+	_, err = db.RenderTable(reportTime, cfg.WAFName, cfg.IgnoreUnresolved)
 	if err != nil {
 		return errors.Wrap(err, "table rendering")
 	}
-
-	// err = db.ExportToPDF(reportFile, reportTime, cfg.WAFName, cfg.URL, rows, cfg.IgnoreUnresolved)
-	// if err != nil {
-	// 	return errors.Wrap(err, "PDF exporting")
-	// }
-
-	// payloadFiles := filepath.Join(cfg.ReportPath, fmt.Sprintf("%s-%s-%s.csv", payloadPrefix, cfg.WAFName, reportSaveTime))
-	// err = db.ExportPayloads(payloadFiles)
-	// if err != nil {
-	// 	return errors.Wrap(err, "payloads exporting")
-	// }
 
 	return nil
 }

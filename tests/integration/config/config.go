@@ -2,16 +2,24 @@ package config
 
 import (
 	"fmt"
+	"os"
+	"path"
+	"runtime"
 	"sync"
 
+	"github.com/wallarm/gotestwaf/internal/data/config"
 	"github.com/wallarm/gotestwaf/internal/data/test"
 	"github.com/wallarm/gotestwaf/internal/payload/encoder"
 	"github.com/wallarm/gotestwaf/internal/payload/placeholder"
 )
 
-const Host = "localhost"
-const Port = "8080"
-const Address = Host + ":" + Port
+const (
+	Host        = "localhost"
+	HTTPPort    = "8080"
+	GRPCPort    = "8090"
+	HTTPAddress = Host + ":" + HTTPPort
+	GRPCAddress = Host + ":" + GRPCPort
+)
 
 type TestCasesMap struct {
 	sync.Mutex
@@ -34,6 +42,38 @@ func (tcm *TestCasesMap) CountTestCases() int {
 	return len(tcm.m)
 }
 
+func GetConfig() *config.Config {
+	return &config.Config{
+		Cookies:            nil,
+		URL:                "http://" + HTTPAddress,
+		WebSocketURL:       "ws://" + HTTPAddress,
+		HTTPHeaders:        nil,
+		TLSVerify:          false,
+		Proxy:              "",
+		MaxIdleConns:       2,
+		MaxRedirects:       50,
+		IdleConnTimeout:    2,
+		FollowCookies:      false,
+		BlockStatusCode:    403,
+		PassStatusCode:     203,
+		BlockRegex:         "",
+		PassRegex:          "",
+		NonBlockedAsPassed: false,
+		Workers:            runtime.NumCPU(),
+		RandomDelay:        400,
+		SendDelay:          200,
+		ReportPath:         path.Join(os.TempDir(), "reports"),
+		TestCase:           "",
+		TestCasesPath:      "",
+		TestSet:            "",
+		WAFName:            "test-waf",
+		IgnoreUnresolved:   false,
+		BlockConnReset:     false,
+		SkipWAFBlockCheck:  false,
+		AddHeader:          "",
+	}
+}
+
 func GenerateTestCases() (testCases []test.Case, testCasesMap *TestCasesMap) {
 	var encoders []string
 	var placeholders []string
@@ -51,20 +91,24 @@ func GenerateTestCases() (testCases []test.Case, testCasesMap *TestCasesMap) {
 		placeholders = append(placeholders, placeholderName)
 	}
 
+	testSets := []string{"test-set1", "test-set2", "test-set3"}
 	payloads := []string{"bypassed", "blocked", "unresolved"}
 
-	for _, ph := range placeholders {
-		for _, enc := range encoders {
-			testCases = append(testCases, test.Case{
-				Payloads:       payloads,
-				Encoders:       []string{enc},
-				Placeholders:   []string{ph},
-				Set:            "test-set",
-				Name:           fmt.Sprintf("%s-%s", ph, enc),
-				IsTruePositive: true,
-			})
-			for _, p := range payloads {
-				testCasesMap.m[fmt.Sprintf("%s-%s-%s", p, ph, enc)] = struct{}{}
+	for _, ts := range testSets {
+		for _, ph := range placeholders {
+			for _, enc := range encoders {
+				name := fmt.Sprintf("%s-%s", ph, enc)
+				testCases = append(testCases, test.Case{
+					Payloads:       payloads,
+					Encoders:       []string{enc},
+					Placeholders:   []string{ph},
+					Set:            ts,
+					Name:           name,
+					IsTruePositive: true,
+				})
+				for _, p := range payloads {
+					testCasesMap.m[fmt.Sprintf("%s-%s-%s-%s-%s", ts, name, p, ph, enc)] = struct{}{}
+				}
 			}
 		}
 	}

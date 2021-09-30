@@ -191,7 +191,10 @@ func (s *Scanner) produceTests(ctx context.Context, n int) <-chan *testWork {
 				for _, e := range t.Encoders {
 					for _, placeholder := range t.Placeholders {
 						if s.isTestEnv {
-							testHeaderValue = fmt.Sprintf("%s-%s", placeholder, e)
+							testHeaderValue = fmt.Sprintf(
+								"set=%s,name=%s,placeholder=%s,encoder=%s",
+								t.Set, t.Name, placeholder, e,
+							)
 						} else {
 							testHeaderValue = ""
 						}
