@@ -82,11 +82,7 @@ func (c *HTTPClient) Send(
 		return nil, 0, errors.Wrap(err, "encoding payload")
 	}
 
-	req, err := placeholder.Apply(targetURL, placeholderName, encodedPayload)
-	if err != nil {
-		return nil, 0, errors.Wrap(err, "placeholder applying")
-	}
-
+	req := placeholder.Apply(targetURL, placeholderName, encodedPayload)
 	req = req.WithContext(ctx)
 
 	for header, value := range c.headers {

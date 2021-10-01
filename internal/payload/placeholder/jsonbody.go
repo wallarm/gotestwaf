@@ -9,17 +9,7 @@ import (
 	"github.com/wallarm/gotestwaf/internal/payload/encoder"
 )
 
-type JSONBody struct {
-	name string
-}
-
-var DefaultJSONBody = JSONBody{name: "JSONBody"}
-
-func (p JSONBody) GetName() string {
-	return p.name
-}
-
-func (p JSONBody) CreateRequest(requestURL, payload string) (*http.Request, error) {
+func JSONBody(requestURL, payload string) (*http.Request, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err
@@ -33,7 +23,7 @@ func (p JSONBody) CreateRequest(requestURL, payload string) (*http.Request, erro
 	if err != nil {
 		return nil, err
 	}
-	jsonPayload := fmt.Sprintf("{\"test\": true, \"%s\": \"%s\"}", param, encodedPayload)
+	jsonPayload := fmt.Sprintf("{\"test\":true, \"%s\": \"%s\"}", param, encodedPayload)
 	req, err := http.NewRequest("POST", reqURL.String(), strings.NewReader(jsonPayload))
 	if err != nil {
 		return nil, err

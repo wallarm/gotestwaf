@@ -10,7 +10,6 @@ import (
 	"github.com/wallarm/gotestwaf/internal/data/config"
 	"github.com/wallarm/gotestwaf/internal/data/test"
 	"github.com/wallarm/gotestwaf/internal/payload/encoder"
-	"github.com/wallarm/gotestwaf/internal/payload/placeholder"
 )
 
 const (
@@ -76,7 +75,6 @@ func GetConfig() *config.Config {
 
 func GenerateTestCases() (testCases []test.Case, testCasesMap *TestCasesMap) {
 	var encoders []string
-	var placeholders []string
 	testCasesMap = new(TestCasesMap)
 	testCasesMap.m = make(map[string]struct{})
 
@@ -87,10 +85,7 @@ func GenerateTestCases() (testCases []test.Case, testCasesMap *TestCasesMap) {
 		encoders = append(encoders, encoderName)
 	}
 
-	for placeholderName := range placeholder.Placeholders {
-		placeholders = append(placeholders, placeholderName)
-	}
-
+	placeholders := []string{"Header", "RequestBody", "SOAPBody", "JSONBody", "URLParam", "URLPath"}
 	testSets := []string{"test-set1", "test-set2", "test-set3"}
 	payloads := []string{"bypassed", "blocked", "unresolved"}
 
