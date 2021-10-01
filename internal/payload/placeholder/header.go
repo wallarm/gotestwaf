@@ -11,7 +11,7 @@ func Header(requestURL, payload string) (*http.Request, error) {
 		return nil, err
 	}
 
-	randomName, err := RandomHex(seed)
+	randomName, err := RandomHex(Seed)
 	if err != nil {
 		return nil, err
 	}

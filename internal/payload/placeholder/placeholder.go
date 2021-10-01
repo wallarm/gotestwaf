@@ -5,7 +5,7 @@ import (
 	"reflect"
 )
 
-const seed = 5
+const Seed = 5
 
 type Placeholder struct{}
 

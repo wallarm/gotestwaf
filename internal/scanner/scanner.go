@@ -13,6 +13,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
+
 	"github.com/wallarm/gotestwaf/internal/data/config"
 	"github.com/wallarm/gotestwaf/internal/data/test"
 	"github.com/wallarm/gotestwaf/internal/payload/encoder"
@@ -21,12 +22,13 @@ import (
 const preCheckVector = "<script>alert('union select password from users')</script>"
 
 type testWork struct {
-	setName        string
-	caseName       string
-	payload        string
-	encoder        string
-	placeholder    string
-	isTruePositive bool
+	setName         string
+	caseName        string
+	payload         string
+	encoder         string
+	placeholder     string
+	isTruePositive  bool
+	testHeaderValue string
 }
 
 type Scanner struct {
@@ -36,10 +38,10 @@ type Scanner struct {
 	httpClient *HTTPClient
 	grpcData   *GRPCData
 	wsClient   *websocket.Dialer
+	isTestEnv  bool
 }
 
-func New(db *test.DB, logger *log.Logger, cfg *config.Config, httpClient *HTTPClient, grpcData *GRPCData) *Scanner {
-	encoder.InitEncoders()
+func New(db *test.DB, logger *log.Logger, cfg *config.Config, httpClient *HTTPClient, grpcData *GRPCData, isTestEnv bool) *Scanner {
 	return &Scanner{
 		db:         db,
 		logger:     logger,
@@ -47,6 +49,7 @@ func New(db *test.DB, logger *log.Logger, cfg *config.Config, httpClient *HTTPCl
 		httpClient: httpClient,
 		grpcData:   grpcData,
 		wsClient:   websocket.DefaultDialer,
+		isTestEnv:  isTestEnv,
 	}
 }
 
@@ -67,7 +70,7 @@ func (s *Scanner) CheckPass(body []byte, statusCode int) (bool, error) {
 }
 
 func (s *Scanner) BenignPreCheck(url string) (blocked bool, statusCode int, err error) {
-	body, code, err := s.httpClient.Send(context.Background(), url, "URLParam", "URL", "")
+	body, code, err := s.httpClient.Send(context.Background(), url, "URLParam", "URL", "", "")
 	if err != nil {
 		return false, 0, err
 	}
@@ -79,7 +82,7 @@ func (s *Scanner) BenignPreCheck(url string) (blocked bool, statusCode int, err 
 }
 
 func (s *Scanner) PreCheck(url string) (blocked bool, statusCode int, err error) {
-	body, code, err := s.httpClient.Send(context.Background(), url, "URLParam", "URL", preCheckVector)
+	body, code, err := s.httpClient.Send(context.Background(), url, "URLParam", "URL", preCheckVector, "")
 	if err != nil {
 		return false, 0, err
 	}
@@ -180,16 +183,28 @@ func (s *Scanner) produceTests(ctx context.Context, n int) <-chan *testWork {
 
 	go func() {
 		defer close(testChan)
+
+		var testHeaderValue string
+
 		for _, t := range testCases {
 			for _, payload := range t.Payloads {
 				for _, e := range t.Encoders {
 					for _, placeholder := range t.Placeholders {
+						if s.isTestEnv {
+							testHeaderValue = fmt.Sprintf(
+								"set=%s,name=%s,placeholder=%s,encoder=%s",
+								t.Set, t.Name, placeholder, e,
+							)
+						} else {
+							testHeaderValue = ""
+						}
 						wrk := &testWork{t.Set,
 							t.Name,
 							payload,
 							e,
 							placeholder,
 							t.IsTruePositive,
+							testHeaderValue,
 						}
 						select {
 						case testChan <- wrk:
@@ -215,7 +230,7 @@ func (s *Scanner) scanURL(ctx context.Context, url string, blockConn bool, w *te
 	case *encoder.DefaultGRPCEncoder.GetName():
 		body, statusCode, err = s.grpcData.Send(ctx, w.encoder, w.payload)
 	default:
-		body, statusCode, err = s.httpClient.Send(ctx, url, w.placeholder, w.encoder, w.payload)
+		body, statusCode, err = s.httpClient.Send(ctx, url, w.placeholder, w.encoder, w.payload, w.testHeaderValue)
 	}
 
 	var blockedByReset bool

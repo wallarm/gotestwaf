@@ -14,7 +14,8 @@ The results of the security solution evaluation are recorded in the report file 
 
 Default conditions for request generation are defined in the `testcases` folder in the YAML files of the following format:
 
-```
+```yaml
+---
 payload:
   - '"union select -7431.1, name, @aaa from u_base--w-'
   - "'or 123.22=123.22"
@@ -28,6 +29,7 @@ placeholder:
   - UrlParam
   - JSUnicode
   - Header
+...
 ```
 
 * `payload` is a malicious attack sample (e.g XSS payload like ```<script>alert(111)</script>``` or something more sophisticated).
@@ -105,7 +107,7 @@ To run the demo environment:
     ```
 2. Start ModSecurity from the [Docker image](https://hub.docker.com/r/owasp/modsecurity-crs/) by using the following `make` command:
     
-    ```bash
+    ```
     make modsec
     ```
 

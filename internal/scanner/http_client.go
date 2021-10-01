@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+
 	"github.com/wallarm/gotestwaf/internal/data/config"
 	"github.com/wallarm/gotestwaf/internal/payload/encoder"
 	"github.com/wallarm/gotestwaf/internal/payload/placeholder"
@@ -72,8 +73,10 @@ func NewHTTPClient(cfg *config.Config) (*HTTPClient, error) {
 }
 
 func (c *HTTPClient) Send(
-	ctx context.Context, targetURL, placeholderName, encoderName, payload string) (
-	body []byte, statusCode int, err error) {
+	ctx context.Context,
+	targetURL, placeholderName, encoderName, payload string,
+	testHeaderValue string,
+) (body []byte, statusCode int, err error) {
 	encodedPayload, err := encoder.Apply(encoderName, payload)
 	if err != nil {
 		return nil, 0, errors.Wrap(err, "encoding payload")
@@ -84,6 +87,10 @@ func (c *HTTPClient) Send(
 
 	for header, value := range c.headers {
 		req.Header.Set(header, value)
+	}
+
+	if testHeaderValue != "" {
+		req.Header.Set("X-GoTestWAF-Test", testHeaderValue)
 	}
 
 	if len(c.cookies) > 0 && c.followCookies {

@@ -8,7 +8,7 @@ type Encoder interface {
 
 var Encoders map[string]Encoder
 
-func InitEncoders() {
+func init() {
 	Encoders = make(map[string]Encoder)
 	Encoders[*DefaultBase64Encoder.GetName()] = DefaultBase64Encoder
 	Encoders[*DefaultBase64FlatEncoder.GetName()] = DefaultBase64FlatEncoder

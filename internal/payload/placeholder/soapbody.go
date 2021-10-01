@@ -15,7 +15,7 @@ func SOAPBody(requestURL, payload string) (*http.Request, error) {
 		return nil, err
 	}
 
-	param, err := RandomHex(seed)
+	param, err := RandomHex(Seed)
 	if err != nil {
 		return nil, err
 	}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"sort"
 	"strconv"
 	"strings"
@@ -451,7 +452,7 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, wafName, url 
 
 	tableClip(pdf, columns, rows, 10)
 
-	wallarmLogo, err := ioutil.ReadFile(fmt.Sprintf("cmd%sresources%slogo.png", string(os.PathSeparator), string(os.PathSeparator)))
+	wallarmLogo, err := ioutil.ReadFile(path.Join("cmd", "resources", "logo.png"))
 	if err != nil {
 		return errors.Wrap(err, "can not load logo image")
 	}

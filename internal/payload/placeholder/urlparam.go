@@ -7,7 +7,7 @@ import (
 
 // Warning: this placeholder encodes URL anyways
 func URLParam(requestURL, payload string) (*http.Request, error) {
-	param, err := RandomHex(seed)
+	param, err := RandomHex(Seed)
 	if err != nil {
 		return nil, err
 	}
