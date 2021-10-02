@@ -19,7 +19,10 @@ import (
 	"github.com/wallarm/gotestwaf/internal/payload/encoder"
 )
 
-const preCheckVector = "<script>alert('union select password from users')</script>"
+const (
+	preCheckVector        = "<script>alert('union select password from users')</script>"
+	wsPreCheckReadTimeout = time.Second * 1
+)
 
 type testWork struct {
 	setName         string
@@ -98,34 +101,39 @@ func (s *Scanner) WSPreCheck(url string) (available, blocked bool, err error) {
 	if err != nil {
 		return false, false, err
 	}
+	defer wsClient.Close()
 
 	wsPreCheckVectors := [...]string{
 		fmt.Sprintf("{\"message\": \"%[1]s\", \"%[1]s\": \"%[1]s\"}", preCheckVector),
 		preCheckVector,
 	}
 
-	wsError := make(chan error, 1)
+	block := make(chan error)
+	receivedCtr := 0
 
 	go func() {
-		defer close(wsError)
+		defer close(block)
 		for {
+			wsClient.SetReadDeadline(time.Now().Add(wsPreCheckReadTimeout))
 			_, _, err := wsClient.ReadMessage()
 			if err != nil {
-				wsError <- err
+				return
 			}
+			receivedCtr++
 		}
 	}()
 
-	for _, payload := range wsPreCheckVectors {
-		select {
-		case err := <-wsError:
-			return true, true, err
-		default:
-			err := wsClient.WriteMessage(websocket.TextMessage, []byte(payload))
-			if err != nil {
-				return true, true, err
-			}
+	for i, payload := range wsPreCheckVectors {
+		err = wsClient.WriteMessage(websocket.TextMessage, []byte(payload))
+		if err != nil && i == 0 {
+			return true, false, err
+		} else if err != nil {
+			return true, true, nil
 		}
+	}
+
+	if _, open := <-block; !open && receivedCtr != len(wsPreCheckVectors) {
+		return true, true, nil
 	}
 
 	return true, false, nil

@@ -201,6 +201,9 @@ func (waf *WAF) websocketRequestHandler(conn *websocket.Conn) {
 	for {
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
+			if websocket.IsCloseError(err, websocket.CloseAbnormalClosure) {
+				return
+			}
 			waf.errChan <- fmt.Errorf("couldn't read message from websocket: %v", err)
 			return
 		}
