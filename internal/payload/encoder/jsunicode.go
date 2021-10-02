@@ -13,8 +13,8 @@ type JSUnicodeEncoder struct {
 
 var DefaultJSUnicodeEncoder = JSUnicodeEncoder{name: "JSUnicode"}
 
-func (enc JSUnicodeEncoder) GetName() *string {
-	return &enc.name
+func (enc JSUnicodeEncoder) GetName() string {
+	return enc.name
 }
 
 func (enc JSUnicodeEncoder) Encode(data string) (string, error) {
