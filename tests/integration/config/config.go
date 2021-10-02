@@ -79,7 +79,7 @@ func GenerateTestCases() (testCases []test.Case, testCasesMap *TestCasesMap) {
 	testCasesMap.m = make(map[string]struct{})
 
 	for encoderName, _ := range encoder.Encoders {
-		if encoderName == *encoder.DefaultGRPCEncoder.GetName() {
+		if encoderName == encoder.DefaultGRPCEncoder.GetName() {
 			continue
 		}
 		encoders = append(encoders, encoderName)
