@@ -74,7 +74,7 @@ func getPayloadFromURLParam(r *http.Request) (string, error) {
 }
 
 func getPayloadFromURLPath(r *http.Request) (string, error) {
-	payload := r.URL.Path[1 : len(r.URL.Path)-1]
+	payload := r.URL.Path[1:]
 	if recoveryMessage := recover(); recoveryMessage != nil {
 		return "", fmt.Errorf("couldn't get payload from URL path: %s", recoveryMessage)
 	}
