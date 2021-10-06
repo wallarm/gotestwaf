@@ -12,11 +12,13 @@ func URLPath(requestURL, payload string) (*http.Request, error) {
 	}
 
 	urlWithPayload := reqURL.String()
-	if urlWithPayload[len(urlWithPayload)-1] == '/' {
-		urlWithPayload += payload
-	} else {
-		urlWithPayload += "/" + payload
+	for i := len(urlWithPayload) - 1; i >= 0; i-- {
+		if urlWithPayload[i] != '/' {
+			urlWithPayload = urlWithPayload[:i+1]
+			break
+		}
 	}
+	urlWithPayload += "/" + payload
 
 	req, err := http.NewRequest("GET", urlWithPayload, nil)
 	if err != nil {
