@@ -1,8 +1,16 @@
+---
 payload:
   - '../../../../../etc/passwd'
   - '.../.../WINDOWS/win.ini'
   - '..\..\..\..\usr/lib\libinjection.so.6'
   - 'file=/etc/passwd'
+  - '../WEB-INF/web.xml'
+  - 'file://0000::001/var/run/secrets/kubernetes.io/serviceaccount'
+  - '\\0::001\c$\windows\win.ini'
+  - '\\::1\c$\users\default\ntuser.dat'
+  - '\\localhost\c$\windows\win.ini'
+  - 'file:////////////////////////c|\windows\win.ini'
+  - 'php://filter/zlib.deflate/convert.base64-encode/resource=/etc/passwd'
 encoder:
   - Base64Flat
   - URL

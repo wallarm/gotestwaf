@@ -146,16 +146,18 @@ the `reports` folder that you mapped to `/go/src/gotestwaf/reports` inside the c
 Check the evaluation results logged using the `STDOUT` and `STDERR` services. For example:
 
 ```
-GOTESTWAF : 2021/03/03 15:15:48.072331 main.go:61: Test cases loading started
-GOTESTWAF : 2021/03/03 15:15:48.077093 main.go:68: Test cases loading finished
-GOTESTWAF : 2021/03/03 15:15:48.077123 main.go:74: Scanned URL: http://127.0.0.1:8080/
-GOTESTWAF : 2021/03/03 15:15:48.083134 main.go:85: WAF pre-check: OK. Blocking status code: 403
-GOTESTWAF : 2021/03/03 15:15:48.083179 main.go:97: WebSocket pre-check. URL to check: ws://127.0.0.1:8080/
-GOTESTWAF : 2021/03/03 15:15:48.251824 main.go:101: WebSocket pre-check: connection is not available, reason: websocket: bad handshake
-GOTESTWAF : 2021/03/03 15:15:48.252047 main.go:129: Scanning http://127.0.0.1:8080/
-GOTESTWAF : 2021/03/03 15:15:48.252076 scanner.go:124: Scanning started
-GOTESTWAF : 2021/03/03 15:15:51.210216 scanner.go:129: Scanning Time:  2.958076338s
-GOTESTWAF : 2021/03/03 15:15:51.210235 scanner.go:160: Scanning finished
+GOTESTWAF : 2021/10/06 10:10:48.979602 main.go:67: Test cases loading started
+GOTESTWAF : 2021/10/06 10:10:48.982322 main.go:74: Test cases loading finished
+GOTESTWAF : 2021/10/06 10:10:48.982355 main.go:87: gRPC pre-check: IN PROGRESS
+GOTESTWAF : 2021/10/06 10:10:51.982773 main.go:91: gRPC pre-check: connection is not available, reason: sending gRPC request: context deadline exceeded
+GOTESTWAF : 2021/10/06 10:10:51.982821 main.go:101: Scanned URL: http://127.0.0.1:8080
+GOTESTWAF : 2021/10/06 10:10:51.993973 main.go:125: WAF pre-check: OK. Blocking status code: 403
+GOTESTWAF : 2021/10/06 10:10:51.994076 main.go:140: WebSocket pre-check. URL to check: ws://127.0.0.1:8080
+GOTESTWAF : 2021/10/06 10:10:52.003577 main.go:144: WebSocket pre-check: connection is not available, reason: websocket: bad handshake
+GOTESTWAF : 2021/10/06 10:10:52.004231 main.go:172: Scanning http://127.0.0.1:8080
+GOTESTWAF : 2021/10/06 10:10:52.004283 scanner.go:149: Scanning started
+GOTESTWAF : 2021/10/06 10:10:54.984851 scanner.go:154: Scanning Time:  2.980531431s
+GOTESTWAF : 2021/10/06 10:10:54.984905 scanner.go:185: Scanning finished
 
 Negative Tests:
 +-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
@@ -166,35 +168,39 @@ Negative Tests:
 | community             | community-sqli        |                 70.83 |                    34 |                    14 |                     0 |
 | community             | community-xss         |                 91.78 |                   279 |                    25 |                     0 |
 | community             | community-xxe         |                100.00 |                     4 |                     0 |                     0 |
-| owasp                 | ldap-injection        |                  0.00 |                     0 |                     8 |                     0 |
-| owasp                 | mail-injection        |                  0.00 |                     0 |                     6 |                     6 |
-| owasp                 | nosql-injection       |                  0.00 |                     0 |                    12 |                     6 |
-| owasp                 | path-traversal        |                 38.89 |                     7 |                    11 |                     6 |
-| owasp                 | shell-injection       |                 37.50 |                     3 |                     5 |                     0 |
-| owasp                 | sql-injection         |                 33.33 |                     8 |                    16 |                     8 |
-| owasp                 | ss-include            |                 50.00 |                     5 |                     5 |                    10 |
-| owasp                 | sst-injection         |                 45.45 |                     5 |                     6 |                     9 |
-| owasp                 | xml-injection         |                100.00 |                    12 |                     0 |                     0 |
-| owasp                 | xss-scripting         |                 56.25 |                     9 |                     7 |                    12 |
-| owasp-api             | graphql               |                100.00 |                     1 |                     0 |                     0 |
+| owasp                 | crlf                  |                 44.44 |                     4 |                     5 |                     0 |
+| owasp                 | ldap-injection        |                 12.50 |                     1 |                     7 |                     0 |
+| owasp                 | mail-injection        |                 25.00 |                     3 |                     9 |                     0 |
+| owasp                 | nosql-injection       |                  0.00 |                     0 |                    18 |                     0 |
+| owasp                 | path-traversal        |                 19.70 |                    13 |                    53 |                     0 |
+| owasp                 | rce                   |                 33.33 |                     8 |                    16 |                     0 |
+| owasp                 | shell-injection       |                 25.00 |                     6 |                    18 |                     0 |
+| owasp                 | sql-injection         |                 25.00 |                    12 |                    36 |                     0 |
+| owasp                 | ss-include            |                 25.00 |                     5 |                    15 |                     0 |
+| owasp                 | sst-injection         |                 15.62 |                     5 |                    27 |                     0 |
+| owasp                 | xml-injection         |                100.00 |                    26 |                     0 |                     0 |
+| owasp                 | xss-scripting         |                 25.00 |                    17 |                    51 |                     0 |
+| owasp-api             | graphql               |                  0.00 |                     0 |                     2 |                     0 |
+| owasp-api             | graphql-post          |                100.00 |                     3 |                     0 |                     0 |
+| owasp-api             | grpc                  |                  0.00 |                     0 |                     0 |                     2 |
 | owasp-api             | rest                  |                100.00 |                     2 |                     0 |                     0 |
 | owasp-api             | soap                  |                100.00 |                     2 |                     0 |                     0 |
 +-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
 |         DATE:         |       WAF NAME:       |  WAF AVERAGE SCORE:   |  BLOCKED (RESOLVED):  | BYPASSED (RESOLVED):  |      UNRESOLVED:      |
-|      2021-03-03       |        GENERIC        |        55.83%         |   381/534 (71.35%)    |   153/534 (28.65%)    |    57/591 (9.64%)     |
+|      2021-10-06       |        GENERIC        |        45.19%         |   434/768 (56.51%)    |   334/768 (43.49%)    |     2/770 (0.26%)     |
 +-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
 
 Positive Tests:
 +-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
 |       TEST SET        |       TEST CASE       |     PERCENTAGE, %     |        BLOCKED        |       BYPASSED        |      UNRESOLVED       |
 +-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
-| false-pos             | texts                 |                 50.00 |                     1 |                     1 |                     6 |
+| false-pos             | texts                 |                 17.65 |                    14 |                     3 |                     0 |
 +-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
 |         DATE:         |       WAF NAME:       |  WAF POSITIVE SCORE:  | FALSE POSITIVE (RES): | TRUE POSITIVE (RES):  |      UNRESOLVED:      |
-|      2021-03-03       |        GENERIC        |        50.00%         |     1/2 (50.00%)      |     1/2 (50.00%)      |     6/8 (75.00%)      |
+|      2021-10-06       |        GENERIC        |        17.65%         |    14/17 (82.35%)     |     3/17 (17.65%)     |     0/17 (0.00%)      |
 +-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
 
-PDF report is ready: reports/waf-evaluation-report-generic-2021-March-03-15-15-51.pdf
+PDF report is ready: reports/waf-evaluation-report-generic-2021-October-06-10-10-54.pdf
 ```
 
 The report file `waf-evaluation-report-<date>.pdf` is available in the `reports` folder of the user directory.

