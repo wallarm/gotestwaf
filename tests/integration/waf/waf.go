@@ -193,7 +193,7 @@ func (waf *WAF) httpRequestHandler(w http.ResponseWriter, r *http.Request) {
 
 	testCase := fmt.Sprintf("%s-%s-%s-%s-%s", set, name, value, placeholder, encoder)
 	if !waf.casesMap.CheckTestCaseAvailability(testCase) {
-		waf.errChan <- fmt.Errorf("received unknown payload: %s", testCaseParameters)
+		waf.errChan <- fmt.Errorf("received unknown payload: %s", testCase)
 	}
 }
 
