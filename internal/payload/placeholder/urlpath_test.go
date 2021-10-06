@@ -10,6 +10,7 @@ func TestURLPath(t *testing.T) {
 	}{
 		{"http://example.com", "hello-world", "http://example.com/hello-world"},
 		{"http://example.com/", "hello-world", "http://example.com/hello-world"},
+		{"http://example.com////", "hello-world", "http://example.com/hello-world"},
 		{"http://example.com", "/hello-world", "http://example.com//hello-world"},
 		{"http://example.com/", "/hello-world", "http://example.com//hello-world"},
 		{"http://example.com", "%0d%0aSet-Cookie:crlf=injection", "http://example.com/%0d%0aSet-Cookie:crlf=injection"},
