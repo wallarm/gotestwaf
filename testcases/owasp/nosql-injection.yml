@@ -1,3 +1,4 @@
+---
 payload:
   - 'db.injection.insert({success:1});'
   - "true, $where: '99 == 88'"

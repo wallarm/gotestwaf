@@ -1,3 +1,4 @@
+---
 payload:
   - '<script>aaa</script>'
   - '1e1 union select users from password'
