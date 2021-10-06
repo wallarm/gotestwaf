@@ -240,6 +240,13 @@ func parseFlags() error {
 		return errors.New("url flag not set")
 	}
 
+	validURL, err := url.Parse(*urlParam)
+	if err != nil || validURL.Scheme == "" || validURL.Host == "" {
+		return errors.New("URL is not valid")
+	}
+
+	*urlParam = validURL.String()
+
 	return nil
 }
 
