@@ -10,5 +10,5 @@ encoder:
   - Base64Flat
   - URL
 placeholder:
-  - JSONBody
+  - JSONRequest
   - URLParam

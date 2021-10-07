@@ -85,7 +85,7 @@ func GenerateTestCases() (testCases []test.Case, testCasesMap *TestCasesMap) {
 		encoders = append(encoders, encoderName)
 	}
 
-	placeholders := []string{"Header", "RequestBody", "SOAPBody", "JSONBody", "URLParam", "URLPath"}
+	placeholders := []string{"Header", "RequestBody", "SOAPBody", "JSONRequest", "URLParam", "URLPath"}
 	testSets := []string{"test-set1", "test-set2", "test-set3"}
 	payloads := []string{"bypassed", "blocked", "unresolved"}
 

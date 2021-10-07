@@ -6,4 +6,4 @@ payload:
 encoder:
   - Plain
 placeholder:
-  - RequestBody
+  - JSONBody

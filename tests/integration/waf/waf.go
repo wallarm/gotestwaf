@@ -146,8 +146,8 @@ func (waf *WAF) httpRequestHandler(w http.ResponseWriter, r *http.Request) {
 		placeholderValue, err = getPayloadFromRequestBody(r)
 	case "SOAPBody":
 		placeholderValue, err = getPayloadFromSOAPBody(r)
-	case "JSONBody":
-		placeholderValue, err = getPayloadFromJSONBody(r)
+	case "JSONRequest":
+		placeholderValue, err = getPayloadFromJSONRequest(r)
 	case "URLParam":
 		placeholderValue, err = getPayloadFromURLParam(r)
 	case "URLPath":

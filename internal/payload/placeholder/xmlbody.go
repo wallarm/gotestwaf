@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func JSONBody(requestURL, payload string) (*http.Request, error) {
+func XMLBody(requestURL, payload string) (*http.Request, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err
@@ -17,7 +17,7 @@ func JSONBody(requestURL, payload string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Content-Type", "text/xml")
 
 	return req, nil
 }

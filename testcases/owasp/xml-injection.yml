@@ -37,4 +37,4 @@ encoder:
   - Base64Flat
   - Plain
 placeholder:
-  - RequestBody
+  - XMLBody

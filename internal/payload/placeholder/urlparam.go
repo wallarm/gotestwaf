@@ -3,9 +3,9 @@ package placeholder
 import (
 	"net/http"
 	"net/url"
+	"strings"
 )
 
-// Warning: this placeholder encodes URL anyways
 func URLParam(requestURL, payload string) (*http.Request, error) {
 	param, err := RandomHex(Seed)
 	if err != nil {
@@ -17,8 +17,25 @@ func URLParam(requestURL, payload string) (*http.Request, error) {
 		return nil, err
 	}
 
-	reqURL.RawQuery = param + "=" + payload
-	req, err := http.NewRequest("GET", reqURL.String(), nil)
+	reqURL.Fragment = ""
+	urlWithPayload := reqURL.String()
+	if reqURL.RawQuery == "" {
+		for i := len(urlWithPayload) - 1; i >= 0; i-- {
+			if urlWithPayload[i] != '/' {
+				if strings.HasSuffix(reqURL.Path, urlWithPayload[i:]) {
+					urlWithPayload = urlWithPayload[:i+1] + "?"
+				} else {
+					urlWithPayload = urlWithPayload[:i+1] + "/?"
+				}
+				break
+			}
+		}
+	} else {
+		urlWithPayload += "&"
+	}
+	urlWithPayload += param + "=" + payload
+
+	req, err := http.NewRequest("GET", urlWithPayload, nil)
 	if err != nil {
 		return nil, err
 	}

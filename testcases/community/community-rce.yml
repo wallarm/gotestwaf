@@ -25,5 +25,5 @@ encoder:
 - URL
 placeholder:
 - URLParam
-- JSONBody
+- JSONRequest
 ...

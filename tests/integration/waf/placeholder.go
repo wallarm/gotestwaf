@@ -49,7 +49,7 @@ func getPayloadFromSOAPBody(r *http.Request) (string, error) {
 	return decodeXMLEntity(match[0][14 : len(match[0])-15])
 }
 
-func getPayloadFromJSONBody(r *http.Request) (string, error) {
+func getPayloadFromJSONRequest(r *http.Request) (string, error) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return "", fmt.Errorf("couldn't read request body: %v", err)

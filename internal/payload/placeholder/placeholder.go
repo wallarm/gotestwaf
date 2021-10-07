@@ -21,6 +21,10 @@ func (p Placeholder) SOAPBody(url, data string) (*http.Request, error) {
 	return SOAPBody(url, data)
 }
 
+func (p Placeholder) JSONRequest(url, data string) (*http.Request, error) {
+	return JSONRequest(url, data)
+}
+
 func (p Placeholder) JSONBody(url, data string) (*http.Request, error) {
 	return JSONBody(url, data)
 }
@@ -31,6 +35,14 @@ func (p Placeholder) URLParam(url, data string) (*http.Request, error) {
 
 func (p Placeholder) URLPath(url, data string) (*http.Request, error) {
 	return URLPath(url, data)
+}
+
+func (p Placeholder) FormBody(url, data string) (*http.Request, error) {
+	return FormBody(url, data)
+}
+
+func (p Placeholder) XMLBody(url, data string) (*http.Request, error) {
+	return XMLBody(url, data)
 }
 
 func Apply(host, placeholder, data string) *http.Request {
