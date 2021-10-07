@@ -26,7 +26,10 @@ func TestGoTestWAF(t *testing.T) {
 
 	w.Run()
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	t.Cleanup(func() {
+		cancel()
 		err := w.Shutdown()
 		if err != nil {
 			t.Logf("WAF shutdown error: %v", err)
@@ -34,7 +37,7 @@ func TestGoTestWAF(t *testing.T) {
 	})
 
 	go func() {
-		err := runGoTestWAF(testCases)
+		err := runGoTestWAF(ctx, testCases)
 		if err != nil {
 			errChan <- err
 		} else {
@@ -45,6 +48,7 @@ func TestGoTestWAF(t *testing.T) {
 	select {
 	case err := <-errChan:
 		if err != nil {
+			cancel()
 			t.Fatalf("got an error during the test: %v", err)
 		}
 	case <-done:
@@ -54,13 +58,10 @@ func TestGoTestWAF(t *testing.T) {
 	}
 }
 
-func runGoTestWAF(testCases []test.Case) error {
+func runGoTestWAF(ctx context.Context, testCases []test.Case) error {
 	logger := log.New(os.Stdout, "GOTESTWAF : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 
 	cfg := test_config.GetConfig()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	db := test.NewDB(testCases)
 	httpClient, err := scanner.NewHTTPClient(cfg)
