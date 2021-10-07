@@ -5,7 +5,6 @@ import (
 	"net/url"
 )
 
-// Warning: this placeholder encodes URL anyways
 func URLParam(requestURL, payload string) (*http.Request, error) {
 	param, err := RandomHex(Seed)
 	if err != nil {
@@ -17,8 +16,15 @@ func URLParam(requestURL, payload string) (*http.Request, error) {
 		return nil, err
 	}
 
-	reqURL.RawQuery = param + "=" + payload
-	req, err := http.NewRequest("GET", reqURL.String(), nil)
+	urlWithPayload := reqURL.String()
+	if reqURL.RawQuery == "" {
+		urlWithPayload += "?"
+	} else {
+		urlWithPayload += "&"
+	}
+	urlWithPayload += param + "=" + payload
+
+	req, err := http.NewRequest("GET", urlWithPayload, nil)
 	if err != nil {
 		return nil, err
 	}
