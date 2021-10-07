@@ -3,6 +3,7 @@ package placeholder
 import (
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 func URLParam(requestURL, payload string) (*http.Request, error) {
@@ -16,9 +17,19 @@ func URLParam(requestURL, payload string) (*http.Request, error) {
 		return nil, err
 	}
 
+	reqURL.Fragment = ""
 	urlWithPayload := reqURL.String()
 	if reqURL.RawQuery == "" {
-		urlWithPayload += "?"
+		for i := len(urlWithPayload) - 1; i >= 0; i-- {
+			if urlWithPayload[i] != '/' {
+				if strings.HasSuffix(reqURL.Path, urlWithPayload[i:]) {
+					urlWithPayload = urlWithPayload[:i+1] + "?"
+				} else {
+					urlWithPayload = urlWithPayload[:i+1] + "/?"
+				}
+				break
+			}
+		}
 	} else {
 		urlWithPayload += "&"
 	}
