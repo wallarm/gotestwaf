@@ -9,5 +9,5 @@ encoder:
 placeholder:
   - URLParam
   - URLPath
-  - JSONBody
+  - JSONRequest
   - Header

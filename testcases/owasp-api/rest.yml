@@ -5,4 +5,4 @@ payload:
 encoder:
   - Plain
 placeholder:
-  - JSONBody
+  - JSONRequest

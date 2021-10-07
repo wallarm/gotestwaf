@@ -17,4 +17,4 @@ encoder:
 placeholder:
   - URLPath
   - URLParam
-  - JSONBody
+  - JSONRequest

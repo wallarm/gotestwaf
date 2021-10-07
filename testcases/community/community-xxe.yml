@@ -6,5 +6,5 @@ encoder:
 - URL
 placeholder:
 - URLParam
-- JSONBody
+- XMLBody
 ...
