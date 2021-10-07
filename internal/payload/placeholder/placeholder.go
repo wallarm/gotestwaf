@@ -33,6 +33,14 @@ func (p Placeholder) URLPath(url, data string) (*http.Request, error) {
 	return URLPath(url, data)
 }
 
+func (p Placeholder) FormBody(url, data string) (*http.Request, error) {
+	return FormBody(url, data)
+}
+
+func (p Placeholder) XMLBody(url, data string) (*http.Request, error) {
+	return XMLBody(url, data)
+}
+
 func Apply(host, placeholder, data string) *http.Request {
 	var p Placeholder
 	inputs := make([]reflect.Value, 2)
