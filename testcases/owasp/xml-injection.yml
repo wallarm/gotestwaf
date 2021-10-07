@@ -34,7 +34,6 @@ payload:
     <lastName>&ent;</lastName>
     </userInfo>
 encoder:
-  - Base64Flat
   - Plain
 placeholder:
   - XMLBody

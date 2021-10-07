@@ -146,18 +146,18 @@ the `reports` folder that you mapped to `/go/src/gotestwaf/reports` inside the c
 Check the evaluation results logged using the `STDOUT` and `STDERR` services. For example:
 
 ```
-GOTESTWAF : 2021/10/06 10:10:48.979602 main.go:67: Test cases loading started
-GOTESTWAF : 2021/10/06 10:10:48.982322 main.go:74: Test cases loading finished
-GOTESTWAF : 2021/10/06 10:10:48.982355 main.go:87: gRPC pre-check: IN PROGRESS
-GOTESTWAF : 2021/10/06 10:10:51.982773 main.go:91: gRPC pre-check: connection is not available, reason: sending gRPC request: context deadline exceeded
-GOTESTWAF : 2021/10/06 10:10:51.982821 main.go:101: Scanned URL: http://127.0.0.1:8080
-GOTESTWAF : 2021/10/06 10:10:51.993973 main.go:125: WAF pre-check: OK. Blocking status code: 403
-GOTESTWAF : 2021/10/06 10:10:51.994076 main.go:140: WebSocket pre-check. URL to check: ws://127.0.0.1:8080
-GOTESTWAF : 2021/10/06 10:10:52.003577 main.go:144: WebSocket pre-check: connection is not available, reason: websocket: bad handshake
-GOTESTWAF : 2021/10/06 10:10:52.004231 main.go:172: Scanning http://127.0.0.1:8080
-GOTESTWAF : 2021/10/06 10:10:52.004283 scanner.go:149: Scanning started
-GOTESTWAF : 2021/10/06 10:10:54.984851 scanner.go:154: Scanning Time:  2.980531431s
-GOTESTWAF : 2021/10/06 10:10:54.984905 scanner.go:185: Scanning finished
+GOTESTWAF : 2021/10/07 16:06:38.401836 main.go:67: Test cases loading started
+GOTESTWAF : 2021/10/07 16:06:38.403985 main.go:74: Test cases loading finished
+GOTESTWAF : 2021/10/07 16:06:38.404007 main.go:87: gRPC pre-check: IN PROGRESS
+GOTESTWAF : 2021/10/07 16:06:41.404701 main.go:91: gRPC pre-check: connection is not available, reason: sending gRPC request: context deadline exceeded
+GOTESTWAF : 2021/10/07 16:06:41.404759 main.go:101: Scanned URL: http://172.17.0.1:8080/
+GOTESTWAF : 2021/10/07 16:06:41.415870 main.go:125: WAF pre-check: OK. Blocking status code: 403
+GOTESTWAF : 2021/10/07 16:06:41.415969 main.go:140: WebSocket pre-check. URL to check: ws://172.17.0.1:8080/
+GOTESTWAF : 2021/10/07 16:06:41.426661 main.go:144: WebSocket pre-check: connection is not available, reason: websocket: bad handshake
+GOTESTWAF : 2021/10/07 16:06:41.427029 main.go:172: Scanning http://172.17.0.1:8080/
+GOTESTWAF : 2021/10/07 16:06:41.427117 scanner.go:149: Scanning started
+GOTESTWAF : 2021/10/07 16:06:44.321301 scanner.go:154: Scanning Time:  2.89414802s
+GOTESTWAF : 2021/10/07 16:06:44.321342 scanner.go:185: Scanning finished
 
 Negative Tests:
 +-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
@@ -167,27 +167,28 @@ Negative Tests:
 | community             | community-rce         |                 14.29 |                     6 |                    36 |                     0 |
 | community             | community-sqli        |                 70.83 |                    34 |                    14 |                     0 |
 | community             | community-xss         |                 91.78 |                   279 |                    25 |                     0 |
-| community             | community-xxe         |                100.00 |                     4 |                     0 |                     0 |
-| owasp                 | crlf                  |                 44.44 |                     4 |                     5 |                     0 |
+| community             | community-xxe         |                  0.00 |                     0 |                     2 |                     0 |
+| owasp                 | crlf                  |                 87.50 |                     7 |                     1 |                     0 |
 | owasp                 | ldap-injection        |                 12.50 |                     1 |                     7 |                     0 |
 | owasp                 | mail-injection        |                 25.00 |                     3 |                     9 |                     0 |
 | owasp                 | nosql-injection       |                  0.00 |                     0 |                    18 |                     0 |
-| owasp                 | path-traversal        |                 19.70 |                    13 |                    53 |                     0 |
-| owasp                 | rce                   |                 33.33 |                     8 |                    16 |                     0 |
+| owasp                 | path-traversal        |                 25.00 |                    16 |                    48 |                     2 |
+| owasp                 | rce                   |                 22.22 |                     4 |                    14 |                     0 |
+| owasp                 | rce-urlparam          |                 33.33 |                     1 |                     2 |                     0 |
 | owasp                 | shell-injection       |                 25.00 |                     6 |                    18 |                     0 |
 | owasp                 | sql-injection         |                 25.00 |                    12 |                    36 |                     0 |
 | owasp                 | ss-include            |                 25.00 |                     5 |                    15 |                     0 |
 | owasp                 | sst-injection         |                 15.62 |                     5 |                    27 |                     0 |
-| owasp                 | xml-injection         |                100.00 |                    26 |                     0 |                     0 |
+| owasp                 | xml-injection         |                  0.00 |                     0 |                    13 |                     0 |
 | owasp                 | xss-scripting         |                 25.00 |                    17 |                    51 |                     0 |
 | owasp-api             | graphql               |                  0.00 |                     0 |                     2 |                     0 |
-| owasp-api             | graphql-post          |                100.00 |                     3 |                     0 |                     0 |
+| owasp-api             | graphql-post          |                 33.33 |                     1 |                     2 |                     0 |
 | owasp-api             | grpc                  |                  0.00 |                     0 |                     0 |                     2 |
 | owasp-api             | rest                  |                100.00 |                     2 |                     0 |                     0 |
 | owasp-api             | soap                  |                100.00 |                     2 |                     0 |                     0 |
 +-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
 |         DATE:         |       WAF NAME:       |  WAF AVERAGE SCORE:   |  BLOCKED (RESOLVED):  | BYPASSED (RESOLVED):  |      UNRESOLVED:      |
-|      2021-10-06       |        GENERIC        |        45.19%         |   434/768 (56.51%)    |   334/768 (43.49%)    |     2/770 (0.26%)     |
+|      2021-10-07       |        GENERIC        |        34.70%         |   405/747 (54.22%)    |   342/747 (45.78%)    |     4/751 (0.53%)     |
 +-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
 
 Positive Tests:
@@ -197,10 +198,10 @@ Positive Tests:
 | false-pos             | texts                 |                 17.65 |                    14 |                     3 |                     0 |
 +-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
 |         DATE:         |       WAF NAME:       |  WAF POSITIVE SCORE:  | FALSE POSITIVE (RES): | TRUE POSITIVE (RES):  |      UNRESOLVED:      |
-|      2021-10-06       |        GENERIC        |        17.65%         |    14/17 (82.35%)     |     3/17 (17.65%)     |     0/17 (0.00%)      |
+|      2021-10-07       |        GENERIC        |        17.65%         |    14/17 (82.35%)     |     3/17 (17.65%)     |     0/17 (0.00%)      |
 +-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
 
-PDF report is ready: reports/waf-evaluation-report-generic-2021-October-06-10-10-54.pdf
+PDF report is ready: reports/waf-evaluation-report-generic-2021-October-07-16-06-44.pdf
 ```
 
 The report file `waf-evaluation-report-<date>.pdf` is available in the `reports` folder of the user directory.

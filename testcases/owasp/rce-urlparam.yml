@@ -5,8 +5,5 @@ payload:
   - "() { :; }; echo ; /bin/bash -c 'cat /etc/passwd'"
 encoder:
   - URL
-  - Plain
 placeholder:
-  - URLPath
-  - JSONRequest
-  - Header
+  - URLParam
