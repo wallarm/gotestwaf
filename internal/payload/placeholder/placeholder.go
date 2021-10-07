@@ -21,8 +21,8 @@ func (p Placeholder) SOAPBody(url, data string) (*http.Request, error) {
 	return SOAPBody(url, data)
 }
 
-func (p Placeholder) JSONBody(url, data string) (*http.Request, error) {
-	return JSONBody(url, data)
+func (p Placeholder) JSONRequest(url, data string) (*http.Request, error) {
+	return JSONRequest(url, data)
 }
 
 func (p Placeholder) URLParam(url, data string) (*http.Request, error) {
