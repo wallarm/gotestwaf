@@ -1,7 +1,8 @@
 FROM golang:1.17-alpine AS build
+ARG GOTESTWAF_VERSION="unknown"
 WORKDIR /app/
 COPY . .
-RUN go build -o gotestwaf ./cmd/main.go
+RUN go build -ldflags "-X main.Version=${GOTESTWAF_VERSION}" -o gotestwaf ./cmd/
 
 FROM alpine
 WORKDIR /app
