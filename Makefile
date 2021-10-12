@@ -16,7 +16,7 @@ scan_local:
 	go run ./cmd --url=http://127.0.0.1:8080/ --verbose
 
 scan_local_from_docker:
-	docker run -v ${PWD}/reports:/go/src/gotestwaf/reports --network="host" \
+	docker run -v ${PWD}/reports:/app/reports --network="host" \
 		gotestwaf --url=http://127.0.0.1:8080/ --verbose
 
 test:

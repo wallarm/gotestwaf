@@ -1,9 +1,12 @@
-FROM golang:1.13-alpine
-
-WORKDIR $GOPATH/src/gotestwaf
+FROM golang:1.17-alpine AS build
+WORKDIR /app/
 COPY . .
+RUN go build -o gotestwaf ./cmd/main.go
 
-ENV GO111MODULE=on
-RUN go build -o gotestwaf -mod vendor /go/src/gotestwaf/cmd/main.go
+FROM alpine
+WORKDIR /app
+COPY --from=build /app/gotestwaf ./
+COPY ./testcases/ ./testcases/
+COPY ./config.yaml ./
 
-ENTRYPOINT ["/go/src/gotestwaf/gotestwaf"]
+ENTRYPOINT ["/app/gotestwaf"]
