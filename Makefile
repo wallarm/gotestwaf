@@ -33,7 +33,7 @@ tidy:
 	go mod vendor
 
 fmt:
-	go fmt -w $(shell go list ./... | grep -v /vendor/)
+	go fmt $(shell go list ./... | grep -v /vendor/)
 
 delete_reports:
 	rm -f ./reports/*.pdf
