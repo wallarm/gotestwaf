@@ -56,6 +56,8 @@ func run(logger *log.Logger) error {
 		logger.SetOutput(ioutil.Discard)
 	}
 
+	logger.Printf("GoTestWAF %s\n", Version)
+
 	cfg, err := loadConfig(configPath)
 	if err != nil {
 		return errors.Wrap(err, "loading config")
@@ -203,6 +205,21 @@ func parseFlags() error {
 	reportPath := filepath.Join(".", defaultReportPath)
 	testCasesPath := filepath.Join(".", defaultTestCasesPath)
 
+	flag.Usage = func() {
+		flag.CommandLine.SetOutput(os.Stdout)
+		usage := `GoTestWAF is a tool for API and OWASP attack simulation that supports a
+wide range of API protocols including REST, GraphQL, gRPC, WebSockets,
+SOAP, XMLRPC, and others.
+Homepage: https://github.com/wallarm/gotestwaf
+
+Usage: %s [OPTIONS] --url <url>
+
+Options:
+`
+		fmt.Fprintf(os.Stdout, usage, os.Args[0])
+		flag.PrintDefaults()
+	}
+
 	flag.StringVar(&configPath, "configPath", defaultConfigPath, "Path to the config file")
 	flag.BoolVar(&verbose, "verbose", true, "If true, enable verbose logging")
 
@@ -234,7 +251,13 @@ func parseFlags() error {
 	flag.Bool("blockConnReset", false, "If true, connection resets will be considered as block")
 	flag.Bool("skipWAFBlockCheck", false, "If true, WAF detection tests will be skipped")
 	flag.String("addHeader", "", "An HTTP header to add to requests")
+	showVersion := flag.Bool("version", false, "Show GoTestWAF version and exit")
 	flag.Parse()
+
+	if *showVersion == true {
+		fmt.Fprintf(os.Stderr, "GoTestWAF %s\n", Version)
+		os.Exit(0)
+	}
 
 	if *urlParam == "" {
 		return errors.New("url flag not set")
