@@ -1,8 +1,10 @@
+GOTESTWAF_VERSION := $(shell git describe)
+
 gotestwaf:
 	docker build . --force-rm -t gotestwaf
 
 gotestwaf-bin:
-	go build -o gotestwaf ./cmd/main.go
+	go build -ldflags "-X main.Version=$(GOTESTWAF_VERSION)" -o gotestwaf ./cmd
 
 modsec:
 	docker pull mendhak/http-https-echo:20
