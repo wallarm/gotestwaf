@@ -214,7 +214,7 @@ Usage: %s [OPTIONS] --url <url>
 
 Options:
 `
-		fmt.Fprintf(os.Stderr, usage, os.Args[0])
+		fmt.Fprintf(os.Stdout, usage, os.Args[0])
 		flag.PrintDefaults()
 	}
 
