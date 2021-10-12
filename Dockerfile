@@ -1,12 +1,13 @@
-FROM golang:1.13-alpine
-
+FROM golang:1.17-alpine AS build
 ARG GOTESTWAF_VERSION="unknown"
-
-WORKDIR $GOPATH/src/gotestwaf
+WORKDIR /app/
 COPY . .
+RUN go build -ldflags "-X main.Version=${GOTESTWAF_VERSION}" -o gotestwaf ./cmd/
 
-ENV GO111MODULE=on
-RUN go build -ldflags "-X main.Version=${GOTESTWAF_VERSION}" \
-	-o gotestwaf -mod vendor /go/src/gotestwaf/cmd/
+FROM alpine
+WORKDIR /app
+COPY --from=build /app/gotestwaf ./
+COPY ./testcases/ ./testcases/
+COPY ./config.yaml ./
 
-ENTRYPOINT ["/go/src/gotestwaf/gotestwaf"]
+ENTRYPOINT ["/app/gotestwaf"]

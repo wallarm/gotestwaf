@@ -3,9 +3,7 @@ package test
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
-	"path"
 	"sort"
 	"strconv"
 	"strings"
@@ -16,6 +14,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/wcharczuk/go-chart"
 	"github.com/wcharczuk/go-chart/drawing"
+
+	"github.com/wallarm/gotestwaf/resources"
 )
 
 const (
@@ -452,11 +452,7 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, wafName, url 
 
 	tableClip(pdf, columns, rows, 10)
 
-	wallarmLogo, err := ioutil.ReadFile(path.Join("cmd", "resources", "logo.png"))
-	if err != nil {
-		return errors.Wrap(err, "can not load logo image")
-	}
-	reader := bytes.NewReader(wallarmLogo)
+	reader := bytes.NewReader(resources.WallarmLogo)
 	pdf.RegisterImageReader("wallarm-logo", "PNG", reader)
 	pdf.Image("wallarm-logo", 15, 280, 20, 0, false, "", 0, wallarmLink)
 
@@ -536,7 +532,7 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, wafName, url 
 		tableClip(pdf, columns, unresolvedRaws, 10)
 	}
 
-	if err = pdf.OutputFileAndClose(reportFile); err != nil {
+	if err := pdf.OutputFileAndClose(reportFile); err != nil {
 		return errors.Wrap(err, "PDF generation error")
 	}
 

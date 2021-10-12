@@ -82,14 +82,14 @@ The steps below walk through downloading and starting GoTestWAF with minimal con
 2. Start the GoTestWAF image:
 
     ```
-    docker run -v ${PWD}/reports:/go/src/gotestwaf/reports --network="host" \
+    docker run -v ${PWD}/reports:/app/reports --network="host" \
         wallarm/gotestwaf --url=<EVALUATED_SECURITY_SOLUTION_URL>
     ```
 
     If required, you can replace `${PWD}/reports` with the path to another folder used to place the evaluation report.
 
     If the evaluated security tool is available externally, you can skip the option `--network="host"`. This option enables interaction of Docker containers running on 127.0.0.1.
-3. Find the report file `waf-evaluation-report-<date>.pdf` in the `reports` folder that you mapped to `/go/src/gotestwaf/reports`
+3. Find the report file `waf-evaluation-report-<date>.pdf` in the `reports` folder that you mapped to `/app/reports`
 inside the container.
 
 You have successfully evaluated your application security solution by using GoTestWAF with minimal configuration.
@@ -114,7 +114,7 @@ To run the demo environment:
     make modsec
     ```
 
-    Settings for running the ModSecurity Docker container are defined in the rule `modsec` of the cloned Makefile. It runs the ModSecurity Docker container on port 8080 with minimal configuration defined in the cloned file `cmd/resources/default.conf` and the `PARANOIA` value set to 1.
+    Settings for running the ModSecurity Docker container are defined in the rule `modsec` of the cloned Makefile. It runs the ModSecurity Docker container on port 8080 with minimal configuration defined in the cloned file `./resources/default.conf` and the `PARANOIA` value set to 1.
 
     If required, you can change these settings by editing the rule `modsec` in the cloned Makefile. Available options for ModSecurity configuration are described on [Docker Hub](https://hub.docker.com/r/owasp/modsecurity-crs/).
 3. Start GoTestWAF with minimal configuration by using one of the following methods:
@@ -123,7 +123,7 @@ To run the demo environment:
 
     ```
     docker pull wallarm/gotestwaf
-    docker run -v ${PWD}/reports:/go/src/gotestwaf/reports --network="host" \
+    docker run -v ${PWD}/reports:/app/reports --network="host" \
         wallarm/gotestwaf --url=http://127.0.0.1:8080
     ```
 
@@ -142,7 +142,7 @@ To run the demo environment:
     make scan_local
     ```
 4. Find the [report](https://github.com/wallarm/gotestwaf#checking-the-evaluation-results) file `waf-evaluation-report-<date>.pdf` in
-the `reports` folder that you mapped to `/go/src/gotestwaf/reports` inside the container.
+the `reports` folder that you mapped to `/app/reports` inside the container.
 
 ### Checking the evaluation results
 
@@ -220,7 +220,7 @@ for example:
     git clone https://github.com/wallarm/gotestwaf.git
     cd gotestwaf
     docker build . --force-rm -t gotestwaf
-    docker run -v ${PWD}/reports:/go/src/gotestwaf/reports --network="host" \
+    docker run -v ${PWD}/reports:/app/reports --network="host" \
         gotestwaf --url=<EVALUATED_SECURITY_SOLUTION_URL>
     ```
 
@@ -245,7 +245,7 @@ Supported GoTestWAF configuration options are described below.
 ## Configuration options
 
 ```
-Usage of /go/src/gotestwaf/gotestwaf:
+Usage of /app/gotestwaf:
       --addHeader string       An HTTP header to add to requests
       --blockConnReset         If true, connection resets will be considered as block
       --blockRegex string      Regex to detect a blocking page with the same HTTP response status code as a not blocked request
@@ -283,7 +283,7 @@ The listed options can be passed to GoTestWAF as follows:
     and `verbose` flag to include more information about the checking process:
 
     ```
-    docker run -v ${PWD}/reports:/go/src/gotestwaf/reports --network="host" wallarm/gotestwaf \
+    docker run -v ${PWD}/reports:/app/reports --network="host" wallarm/gotestwaf \
         --url=http://127.0.0.1:8080/ --wsURL=ws://127.0.0.1:8080/api/ws --verbose
     ```
 
