@@ -56,6 +56,8 @@ func run(logger *log.Logger) error {
 		logger.SetOutput(ioutil.Discard)
 	}
 
+	logger.Printf("GoTestWAF %s\n", Version)
+
 	cfg, err := loadConfig(configPath)
 	if err != nil {
 		return errors.Wrap(err, "loading config")
