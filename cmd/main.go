@@ -20,6 +20,7 @@ import (
 	"github.com/wallarm/gotestwaf/internal/data/config"
 	"github.com/wallarm/gotestwaf/internal/data/test"
 	"github.com/wallarm/gotestwaf/internal/scanner"
+	"github.com/wallarm/gotestwaf/internal/version"
 )
 
 const (
@@ -56,7 +57,7 @@ func run(logger *log.Logger) error {
 		logger.SetOutput(ioutil.Discard)
 	}
 
-	logger.Printf("GoTestWAF %s\n", Version)
+	logger.Printf("GoTestWAF %s\n", version.Version)
 
 	cfg, err := loadConfig(configPath)
 	if err != nil {
@@ -255,7 +256,7 @@ Options:
 	flag.Parse()
 
 	if *showVersion == true {
-		fmt.Fprintf(os.Stderr, "GoTestWAF %s\n", Version)
+		fmt.Fprintf(os.Stderr, "GoTestWAF %s\n", version.Version)
 		os.Exit(0)
 	}
 
