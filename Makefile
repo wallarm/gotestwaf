@@ -5,7 +5,8 @@ gotestwaf:
 		--force-rm -t gotestwaf .
 
 gotestwaf-bin:
-	go build -ldflags "-X main.Version=$(GOTESTWAF_VERSION)" -o gotestwaf ./cmd
+	go build -ldflags "-X github.com/wallarm/gotestwaf/internal/version.Version=$(GOTESTWAF_VERSION)" \
+		-o gotestwaf ./cmd
 
 modsec:
 	docker pull mendhak/http-https-echo:20

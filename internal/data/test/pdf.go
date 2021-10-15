@@ -15,6 +15,7 @@ import (
 	"github.com/wcharczuk/go-chart"
 	"github.com/wcharczuk/go-chart/drawing"
 
+	"github.com/wallarm/gotestwaf/internal/version"
 	"github.com/wallarm/gotestwaf/resources"
 )
 
@@ -407,6 +408,9 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, wafName, url 
 	pdf.Ln(lineBreakSize / 2)
 
 	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF Testing Date: %s", reportTime.Format("02 January 2006")))
+	pdf.Ln(lineBreakSize / 2)
+
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("GoTestWAF version:\n%s", version.Version))
 	pdf.Ln(lineBreakSize)
 
 	currentY := pdf.GetY()

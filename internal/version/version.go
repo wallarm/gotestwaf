@@ -1,3 +1,3 @@
-package main
+package version
 
 var Version = "unknown"
