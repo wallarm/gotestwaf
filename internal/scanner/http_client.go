@@ -33,9 +33,7 @@ func NewHTTPClient(cfg *config.Config) (*HTTPClient, error) {
 
 	if cfg.Proxy != "" {
 		proxyURL, _ := url.Parse(cfg.Proxy)
-		tr = &http.Transport{
-			Proxy: http.ProxyURL(proxyURL),
-		}
+		tr.Proxy = http.ProxyURL(proxyURL)
 	}
 
 	jar, err := cookiejar.New(nil)
