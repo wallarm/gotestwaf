@@ -240,7 +240,7 @@ Options:
 		"Regex to a detect normal (not blocked) web page with the same HTTP status code as a blocked request")
 	flag.Bool("nonBlockedAsPassed", false,
 		"If true, count requests that weren't blocked as passed. If false, requests that don't satisfy to PassStatuscode/PassRegExp as blocked")
-	flag.Int("workers", 200, "The number of workers to scan")
+	flag.Int("workers", 5, "The number of workers to scan")
 	flag.Int("sendDelay", 400, "Delay in ms between requests")
 	flag.Int("randomDelay", 400, "Random delay in ms in addition to the delay between requests")
 	flag.String("testCase", "", "If set then only this test case will be run")
