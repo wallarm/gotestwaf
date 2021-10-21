@@ -22,7 +22,7 @@ func (db *DB) ExportPayloads(payloadsExportFile string) error {
 		return err
 	}
 
-	for _, failedTest := range db.failedTests {
+	for _, failedTest := range db.blockedTests {
 		p := failedTest.Payload
 		e := failedTest.Encoder
 		ep, err := encoder.Apply(e, p)
