@@ -520,9 +520,9 @@ func (db *DB) ExportToPDF(reportFile string, reportTime time.Time, wafName, url 
 	}
 
 	// Num of bypasses: failed tests minus positive cases minus unknown cases
-	unresolvedRequests := db.overallRequests - negativeBypassNumber - negativeBlockedNumber - positiveTrueNumber - positiveFalseNumber
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("Total: %v bypasses in %v tests, %v unresolved cases / %v test cases",
-		negativeBypassNumber, db.overallRequests, unresolvedRequests, db.overallCompletedTestCases))
+	unresolvedRequests := db.overallRequests - negativeBypassNumber - negativeBlockedNumber - positiveTrueNumber - positiveFalseNumber - failedNumber
+	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("Total: %v bypasses in %v tests, %v unresolved cases, %v failed cases / %v test cases",
+		negativeBypassNumber, db.overallRequests, unresolvedRequests, failedNumber, db.overallCompletedTestCases))
 	pdf.Ln(lineBreakSize)
 
 	columns := []float64{0.17, 0.16, 0.16, 0.1, 0.11, 0.13, 0.08, 0.08}
