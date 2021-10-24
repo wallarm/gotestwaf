@@ -252,8 +252,13 @@ func (s *Scanner) scanURL(ctx context.Context, url string, blockConn bool, w *te
 
 	var blockedByReset bool
 	if err != nil {
-		if blockConn && (errors.Is(err, io.EOF) || errors.Is(err, syscall.ECONNRESET)) {
-			blockedByReset = true
+		if errors.Is(err, io.EOF) || errors.Is(err, syscall.ECONNRESET) {
+			if blockConn {
+				blockedByReset = true
+			} else {
+				s.db.UpdateNaTests(info, s.cfg.NonBlockedAsPassed)
+				return nil
+			}
 		} else {
 			info.Reason = err.Error()
 			s.db.UpdateFailedTests(info)
