@@ -241,12 +241,29 @@ func (s *Scanner) scanURL(ctx context.Context, url string, blockConn bool, w *te
 		body, statusCode, err = s.httpClient.Send(ctx, url, w.placeholder, w.encoder, w.payload, w.testHeaderValue)
 	}
 
+	info := &test.Info{
+		Set:                w.setName,
+		Case:               w.caseName,
+		Payload:            w.payload,
+		Encoder:            w.encoder,
+		Placeholder:        w.placeholder,
+		ResponseStatusCode: statusCode,
+	}
+
 	var blockedByReset bool
 	if err != nil {
-		if blockConn && (errors.Is(err, io.EOF) || errors.Is(err, syscall.ECONNRESET)) {
-			blockedByReset = true
+		if errors.Is(err, io.EOF) || errors.Is(err, syscall.ECONNRESET) {
+			if blockConn {
+				blockedByReset = true
+			} else {
+				s.db.UpdateNaTests(info, s.cfg.NonBlockedAsPassed)
+				return nil
+			}
 		} else {
-			return errors.Wrap(err, "http sending")
+			info.Reason = err.Error()
+			s.db.UpdateFailedTests(info)
+			s.logger.Printf("http sending: %s\n", err.Error())
+			return nil
 		}
 	}
 
@@ -265,14 +282,6 @@ func (s *Scanner) scanURL(ctx context.Context, url string, blockConn bool, w *te
 		}
 	}
 
-	info := &test.Info{
-		Set:                w.setName,
-		Case:               w.caseName,
-		Payload:            w.payload,
-		Encoder:            w.encoder,
-		Placeholder:        w.placeholder,
-		ResponseStatusCode: statusCode,
-	}
 	if (blocked && passed) || (!blocked && !passed) {
 		s.db.UpdateNaTests(info, s.cfg.NonBlockedAsPassed)
 	} else {
@@ -282,7 +291,7 @@ func (s *Scanner) scanURL(ctx context.Context, url string, blockConn bool, w *te
 			(!blocked && !w.isTruePositive) {
 			s.db.UpdatePassedTests(info)
 		} else {
-			s.db.UpdateFailedTests(info)
+			s.db.UpdateBlockedTests(info)
 		}
 	}
 	return nil
