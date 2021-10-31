@@ -1,4 +1,4 @@
-package test
+package report
 
 import (
 	"bytes"
@@ -67,10 +67,11 @@ func drawDetectionScoreChart(bypassed, blocked, failed, overall int) (*bytes.Buf
 	return drawChart(parts, overall, "Detection Score")
 }
 
-func drawPositiveTestScoreChart(bypassed, blocked, overall int) (*bytes.Buffer, error) {
+func drawPositiveTestScoreChart(bypassed, blocked, failed, overall int) (*bytes.Buffer, error) {
 	parts := []chartPart{
 		{bypassed, "Bypassed", drawing.ColorFromAlphaMixedRGBA(234, 67, 54, 255)},
 		{blocked, "Blocked", drawing.ColorFromAlphaMixedRGBA(66, 133, 244, 255)},
+		{failed, "Failed", drawing.ColorFromAlphaMixedRGBA(193, 193, 193, 255)},
 	}
 	return drawChart(parts, overall, "Positive Tests Score")
 }

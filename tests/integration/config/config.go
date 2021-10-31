@@ -7,8 +7,8 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/wallarm/gotestwaf/internal/data/config"
-	"github.com/wallarm/gotestwaf/internal/data/test"
+	"github.com/wallarm/gotestwaf/internal/config"
+	"github.com/wallarm/gotestwaf/internal/db"
 	"github.com/wallarm/gotestwaf/internal/payload/encoder"
 )
 
@@ -73,7 +73,7 @@ func GetConfig() *config.Config {
 	}
 }
 
-func GenerateTestCases() (testCases []test.Case, testCasesMap *TestCasesMap) {
+func GenerateTestCases() (testCases []db.Case, testCasesMap *TestCasesMap) {
 	var encoders []string
 	testCasesMap = new(TestCasesMap)
 	testCasesMap.m = make(map[string]struct{})
@@ -93,7 +93,7 @@ func GenerateTestCases() (testCases []test.Case, testCasesMap *TestCasesMap) {
 		for _, ph := range placeholders {
 			for _, enc := range encoders {
 				name := fmt.Sprintf("%s-%s", ph, enc)
-				testCases = append(testCases, test.Case{
+				testCases = append(testCases, db.Case{
 					Payloads:       payloads,
 					Encoders:       []string{enc},
 					Placeholders:   []string{ph},

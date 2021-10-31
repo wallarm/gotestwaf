@@ -1,4 +1,4 @@
-package test
+package db
 
 type Info struct {
 	Payload            string

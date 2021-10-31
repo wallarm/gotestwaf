@@ -1,23 +1,18 @@
-package test
+package db
 
 import (
 	"sync"
 )
 
 type DB struct {
-	mu           sync.Mutex
+	sync.Mutex
+
 	counters     map[string]map[string]map[string]int
 	passedTests  []Info
 	blockedTests []Info
 	failedTests  []Info
 	naTests      []Info
 	tests        []Case
-
-	overallPassedRequestsPercentage float32
-	overallCompletedTestCases       float32
-	overallRequests                 int
-	overallRequestsBlocked          int
-	wafScore                        float32
 }
 
 func NewDB(tests []Case) *DB {
@@ -38,16 +33,16 @@ func NewDB(tests []Case) *DB {
 }
 
 func (db *DB) UpdatePassedTests(t *Info) {
-	db.mu.Lock()
-	defer db.mu.Unlock()
+	db.Lock()
+	defer db.Unlock()
 	db.counters[t.Set][t.Case]["passed"]++
 	db.passedTests = append(db.passedTests, *t)
 }
 
-func (db *DB) UpdateNaTests(t *Info, nonBlockedAsPassed bool) {
-	db.mu.Lock()
-	defer db.mu.Unlock()
-	if nonBlockedAsPassed {
+func (db *DB) UpdateNaTests(t *Info, ignoreUnresolved, nonBlockedAsPassed bool) {
+	db.Lock()
+	defer db.Unlock()
+	if ignoreUnresolved || nonBlockedAsPassed {
 		db.counters[t.Set][t.Case]["passed"]++
 	} else {
 		db.counters[t.Set][t.Case]["blocked"]++
@@ -56,19 +51,29 @@ func (db *DB) UpdateNaTests(t *Info, nonBlockedAsPassed bool) {
 }
 
 func (db *DB) UpdateBlockedTests(t *Info) {
-	db.mu.Lock()
-	defer db.mu.Unlock()
+	db.Lock()
+	defer db.Unlock()
 	db.counters[t.Set][t.Case]["blocked"]++
 	db.blockedTests = append(db.blockedTests, *t)
 }
 
 func (db *DB) UpdateFailedTests(t *Info) {
-	db.mu.Lock()
-	defer db.mu.Unlock()
+	db.Lock()
+	defer db.Unlock()
 	db.counters[t.Set][t.Case]["failed"]++
 	db.failedTests = append(db.failedTests, *t)
 }
 
 func (db *DB) GetTestCases() []Case {
 	return db.tests
+}
+
+func (db *DB) GetNumberOfAllTestCases() int64 {
+	var res int64
+
+	for _, t := range db.tests {
+		res += int64(len(t.Payloads) * len(t.Encoders) * len(t.Placeholders))
+	}
+
+	return res
 }

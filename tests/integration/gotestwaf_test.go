@@ -9,7 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/wallarm/gotestwaf/internal/data/test"
+	"github.com/wallarm/gotestwaf/internal/db"
 	"github.com/wallarm/gotestwaf/internal/scanner"
 	"github.com/wallarm/gotestwaf/tests/integration/waf"
 
@@ -58,12 +58,12 @@ func TestGoTestWAF(t *testing.T) {
 	}
 }
 
-func runGoTestWAF(ctx context.Context, testCases []test.Case) error {
+func runGoTestWAF(ctx context.Context, testCases []db.Case) error {
 	logger := log.New(os.Stdout, "GOTESTWAF : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 
 	cfg := test_config.GetConfig()
 
-	db := test.NewDB(testCases)
+	db := db.NewDB(testCases)
 	httpClient, err := scanner.NewHTTPClient(cfg)
 	if err != nil {
 		return errors.Wrap(err, "HTTP client")

@@ -1,4 +1,4 @@
-package test
+package db
 
 import (
 	"encoding/csv"
@@ -29,7 +29,7 @@ func (db *DB) ExportPayloads(payloadsExportFile string) error {
 		if err != nil {
 			return err
 		}
-		err = csvWriter.Write([]string{ep, "failed", strconv.Itoa(failedTest.ResponseStatusCode), failedTest.Placeholder, failedTest.Encoder, failedTest.Case})
+		err = csvWriter.Write([]string{ep, "blocked", strconv.Itoa(failedTest.ResponseStatusCode), failedTest.Placeholder, failedTest.Encoder, failedTest.Case})
 		if err != nil {
 			return err
 		}
