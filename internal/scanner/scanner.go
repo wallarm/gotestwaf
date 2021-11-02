@@ -158,7 +158,7 @@ func (s *Scanner) Run(ctx context.Context, url string, blockConn bool) error {
 	testChan := s.produceTests(ctx, gn)
 
 	bar := progressbar.NewOptions64(
-		s.db.GetNumberOfAllTestCases(),
+		int64(s.db.GetNumberOfAllTestCases()),
 		progressbar.OptionShowCount(),
 		progressbar.OptionSetPredictTime(false),
 		progressbar.OptionFullWidth(),

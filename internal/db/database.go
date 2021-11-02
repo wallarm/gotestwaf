@@ -13,6 +13,8 @@ type DB struct {
 	failedTests  []Info
 	naTests      []Info
 	tests        []Case
+
+	numberOfTests uint
 }
 
 func NewDB(tests []Case) *DB {
@@ -28,7 +30,10 @@ func NewDB(tests []Case) *DB {
 		if _, ok := r.counters[test.Set][test.Name]; !ok {
 			r.counters[test.Set][test.Name] = map[string]int{}
 		}
+
+		r.numberOfTests += uint(len(test.Payloads) * len(test.Encoders) * len(test.Placeholders))
 	}
+
 	return &r
 }
 
@@ -68,12 +73,6 @@ func (db *DB) GetTestCases() []Case {
 	return db.tests
 }
 
-func (db *DB) GetNumberOfAllTestCases() int64 {
-	var res int64
-
-	for _, t := range db.tests {
-		res += int64(len(t.Payloads) * len(t.Encoders) * len(t.Placeholders))
-	}
-
-	return res
+func (db *DB) GetNumberOfAllTestCases() uint {
+	return db.numberOfTests
 }
