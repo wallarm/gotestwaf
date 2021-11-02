@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/wallarm/gotestwaf/internal/db"
+	"github.com/wallarm/gotestwaf/internal/report"
 	"github.com/wallarm/gotestwaf/internal/scanner"
 	"github.com/wallarm/gotestwaf/tests/integration/waf"
 
@@ -118,14 +119,15 @@ func runGoTestWAF(ctx context.Context, testCases []db.Case) error {
 	}
 
 	logger.Printf("Scanning %s\n", cfg.URL)
-	err = s.Run(ctx, cfg.URL, cfg.BlockConnReset)
+	err = s.Run(ctx)
 	if err != nil {
 		return errors.Wrap(err, "run scanning")
 	}
 
 	reportTime := time.Now()
 
-	_, err = db.RenderTable(reportTime, cfg.WAFName, cfg.IgnoreUnresolved)
+	stat := db.GetStatistics(cfg.IgnoreUnresolved, cfg.NonBlockedAsPassed)
+	report.RenderConsoleTable(stat, reportTime, "Test", cfg.IgnoreUnresolved)
 	if err != nil {
 		return errors.Wrap(err, "table rendering")
 	}

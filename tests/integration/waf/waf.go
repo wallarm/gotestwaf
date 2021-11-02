@@ -16,6 +16,8 @@ import (
 	"github.com/wallarm/gotestwaf/tests/integration/config"
 )
 
+var _ http.Handler = &WAF{}
+
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
@@ -140,18 +142,24 @@ func (waf *WAF) httpRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch placeholder {
+	case "FormBody":
+		placeholderValue, err = getPayloadFromFormBody(r)
 	case "Header":
 		placeholderValue, err = getPayloadFromHeader(r)
+	case "JSONBody":
+		placeholderValue, err = getPayloadFromJSONBody(r)
+	case "JSONRequest":
+		placeholderValue, err = getPayloadFromJSONRequest(r)
 	case "RequestBody":
 		placeholderValue, err = getPayloadFromRequestBody(r)
 	case "SOAPBody":
 		placeholderValue, err = getPayloadFromSOAPBody(r)
-	case "JSONRequest":
-		placeholderValue, err = getPayloadFromJSONRequest(r)
 	case "URLParam":
 		placeholderValue, err = getPayloadFromURLParam(r)
 	case "URLPath":
 		placeholderValue, err = getPayloadFromURLPath(r)
+	case "XMLBody":
+		placeholderValue, err = getPayloadFromXMLBody(r)
 	default:
 		waf.errChan <- fmt.Errorf("unknown placeholder: %s", placeholder)
 	}
