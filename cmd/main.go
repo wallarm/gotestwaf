@@ -174,7 +174,7 @@ func run(logger *log.Logger) error {
 	}()
 
 	logger.Printf("Scanning %s\n", cfg.URL)
-	err = s.Run(ctx, cfg.URL, cfg.BlockConnReset)
+	err = s.Run(ctx)
 	if err != nil {
 		return errors.Wrap(err, "run scanning")
 	}

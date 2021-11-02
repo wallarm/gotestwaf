@@ -140,7 +140,7 @@ func (s *Scanner) WSPreCheck(url string) (available, blocked bool, err error) {
 	return true, false, nil
 }
 
-func (s *Scanner) Run(ctx context.Context, url string, blockConn bool) error {
+func (s *Scanner) Run(ctx context.Context) error {
 	gn := s.cfg.Workers
 	var wg sync.WaitGroup
 	wg.Add(gn)
@@ -184,7 +184,7 @@ func (s *Scanner) Run(ctx context.Context, url string, blockConn bool) error {
 					}
 					time.Sleep(time.Duration(s.cfg.SendDelay+rand.Intn(s.cfg.RandomDelay)) * time.Millisecond)
 
-					if err := s.scanURL(ctx, url, blockConn, w); err != nil {
+					if err := s.scanURL(ctx, s.cfg.URL, s.cfg.BlockConnReset, w); err != nil {
 						s.logger.Println(err)
 					}
 					bar.Add(1)
