@@ -139,7 +139,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 			// If we don't want to count UNRESOLVED requests as BYPASSED, we need to subtract them
 			// from blocked requests (in other case we will count them as usual), and add this
 			// subtracted value to the overall requests
-			if !ignoreUnresolved && !nonBlockedAsPassed {
+			if !ignoreUnresolved || !nonBlockedAsPassed {
 				blockedRequests -= unresolvedRequests
 			}
 

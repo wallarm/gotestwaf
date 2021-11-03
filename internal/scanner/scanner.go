@@ -273,7 +273,7 @@ func (s *Scanner) scanURL(ctx context.Context, url string, blockConn bool, w *te
 			if blockConn {
 				blockedByReset = true
 			} else {
-				s.db.UpdateNaTests(info, s.cfg.IgnoreUnresolved, s.cfg.NonBlockedAsPassed)
+				s.db.UpdateNaTests(info, s.cfg.IgnoreUnresolved, s.cfg.NonBlockedAsPassed, w.isTruePositive)
 				return nil
 			}
 		} else {
@@ -300,7 +300,7 @@ func (s *Scanner) scanURL(ctx context.Context, url string, blockConn bool, w *te
 	}
 
 	if (blocked && passed) || (!blocked && !passed) {
-		s.db.UpdateNaTests(info, s.cfg.IgnoreUnresolved, s.cfg.NonBlockedAsPassed)
+		s.db.UpdateNaTests(info, s.cfg.IgnoreUnresolved, s.cfg.NonBlockedAsPassed, w.isTruePositive)
 	} else {
 		if blocked {
 			s.db.UpdateBlockedTests(info)

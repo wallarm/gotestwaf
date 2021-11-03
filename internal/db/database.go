@@ -44,10 +44,10 @@ func (db *DB) UpdatePassedTests(t *Info) {
 	db.passedTests = append(db.passedTests, *t)
 }
 
-func (db *DB) UpdateNaTests(t *Info, ignoreUnresolved, nonBlockedAsPassed bool) {
+func (db *DB) UpdateNaTests(t *Info, ignoreUnresolved, nonBlockedAsPassed, isTruePositive bool) {
 	db.Lock()
 	defer db.Unlock()
-	if ignoreUnresolved || nonBlockedAsPassed {
+	if (ignoreUnresolved || nonBlockedAsPassed) && isTruePositive {
 		db.counters[t.Set][t.Case]["passed"]++
 	} else {
 		db.counters[t.Set][t.Case]["blocked"]++
