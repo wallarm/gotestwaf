@@ -1,2 +1,2 @@
-vendor/* linguist-generated=true
-*.pb.go linguist-generated=true
+vendor/** linguist-vendored
+**/*.pb.go linguist-generated
