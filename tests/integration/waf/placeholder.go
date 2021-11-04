@@ -17,6 +17,14 @@ var (
 	urlParamRegexp = regexp.MustCompile(fmt.Sprintf("[a-fA-F0-9]{%d}", ph.Seed*2))
 )
 
+func getPayloadFromFormBody(r *http.Request) (string, error) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return "", fmt.Errorf("couldn't get payload from form body: %v", err)
+	}
+	return string(body), nil
+}
+
 func getPayloadFromHeader(r *http.Request) (string, error) {
 	for header, values := range r.Header {
 		if matched := headerRegexp.MatchString(header); matched {
@@ -25,6 +33,28 @@ func getPayloadFromHeader(r *http.Request) (string, error) {
 	}
 
 	return "", errors.New("couldn't get payload from header: required header not found")
+}
+
+func getPayloadFromJSONBody(r *http.Request) (string, error) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return "", fmt.Errorf("couldn't get payload from JSON body: %v", err)
+	}
+	return string(body), nil
+}
+
+func getPayloadFromJSONRequest(r *http.Request) (string, error) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return "", fmt.Errorf("couldn't read request body: %v", err)
+	}
+
+	match := jsonBodyRegexp.FindAllString(string(body), -1)
+	if match == nil {
+		return "", errors.New("couldn't get payload from JSON: payload not found")
+	}
+
+	return decodeJSUnicode(match[0][15 : len(match[0])-1])
 }
 
 func getPayloadFromRequestBody(r *http.Request) (string, error) {
@@ -49,20 +79,6 @@ func getPayloadFromSOAPBody(r *http.Request) (string, error) {
 	return decodeXMLEntity(match[0][14 : len(match[0])-15])
 }
 
-func getPayloadFromJSONRequest(r *http.Request) (string, error) {
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return "", fmt.Errorf("couldn't read request body: %v", err)
-	}
-
-	match := jsonBodyRegexp.FindAllString(string(body), -1)
-	if match == nil {
-		return "", errors.New("couldn't get payload from JSON: payload not found")
-	}
-
-	return decodeJSUnicode(match[0][15 : len(match[0])-1])
-}
-
 func getPayloadFromURLParam(r *http.Request) (string, error) {
 	for key, values := range r.URL.Query() {
 		if matched := urlParamRegexp.MatchString(key); matched {
@@ -80,4 +96,12 @@ func getPayloadFromURLPath(r *http.Request) (string, error) {
 	}
 
 	return payload, nil
+}
+
+func getPayloadFromXMLBody(r *http.Request) (string, error) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return "", fmt.Errorf("couldn't get payload from XML body: %v", err)
+	}
+	return string(body), nil
 }

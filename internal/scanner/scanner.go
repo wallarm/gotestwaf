@@ -13,9 +13,10 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
+	"github.com/schollz/progressbar/v3"
 
-	"github.com/wallarm/gotestwaf/internal/data/config"
-	"github.com/wallarm/gotestwaf/internal/data/test"
+	"github.com/wallarm/gotestwaf/internal/config"
+	"github.com/wallarm/gotestwaf/internal/db"
 	"github.com/wallarm/gotestwaf/internal/payload/encoder"
 )
 
@@ -37,14 +38,14 @@ type testWork struct {
 type Scanner struct {
 	logger     *log.Logger
 	cfg        *config.Config
-	db         *test.DB
+	db         *db.DB
 	httpClient *HTTPClient
 	grpcData   *GRPCData
 	wsClient   *websocket.Dialer
 	isTestEnv  bool
 }
 
-func New(db *test.DB, logger *log.Logger, cfg *config.Config, httpClient *HTTPClient, grpcData *GRPCData, isTestEnv bool) *Scanner {
+func New(db *db.DB, logger *log.Logger, cfg *config.Config, httpClient *HTTPClient, grpcData *GRPCData, isTestEnv bool) *Scanner {
 	return &Scanner{
 		db:         db,
 		logger:     logger,
@@ -139,7 +140,7 @@ func (s *Scanner) WSPreCheck(url string) (available, blocked bool, err error) {
 	return true, false, nil
 }
 
-func (s *Scanner) Run(ctx context.Context, url string, blockConn bool) error {
+func (s *Scanner) Run(ctx context.Context) error {
 	gn := s.cfg.Workers
 	var wg sync.WaitGroup
 	wg.Add(gn)
@@ -156,6 +157,22 @@ func (s *Scanner) Run(ctx context.Context, url string, blockConn bool) error {
 
 	testChan := s.produceTests(ctx, gn)
 
+	bar := progressbar.NewOptions64(
+		int64(s.db.GetNumberOfAllTestCases()),
+		progressbar.OptionShowCount(),
+		progressbar.OptionSetPredictTime(false),
+		progressbar.OptionFullWidth(),
+		progressbar.OptionClearOnFinish(),
+		progressbar.OptionSetDescription("Sending requests..."),
+		progressbar.OptionSetTheme(progressbar.Theme{
+			Saucer:        "=",
+			SaucerHead:    ">",
+			SaucerPadding: " ",
+			BarStart:      "[",
+			BarEnd:        "]",
+		}),
+	)
+
 	for e := 0; e < gn; e++ {
 		go func(ctx context.Context) {
 			defer wg.Done()
@@ -167,10 +184,10 @@ func (s *Scanner) Run(ctx context.Context, url string, blockConn bool) error {
 					}
 					time.Sleep(time.Duration(s.cfg.SendDelay+rand.Intn(s.cfg.RandomDelay)) * time.Millisecond)
 
-					if err := s.scanURL(ctx, url, blockConn, w); err != nil {
+					if err := s.scanURL(ctx, s.cfg.URL, s.cfg.BlockConnReset, w); err != nil {
 						s.logger.Println(err)
-						return
 					}
+					bar.Add(1)
 				case <-ctx.Done():
 					return
 				}
@@ -179,7 +196,7 @@ func (s *Scanner) Run(ctx context.Context, url string, blockConn bool) error {
 	}
 
 	wg.Wait()
-	if err := errors.Cause(ctx.Err()); err == context.Canceled {
+	if errors.Is(ctx.Err(), context.Canceled) {
 		return ctx.Err()
 	}
 	return nil
@@ -241,7 +258,7 @@ func (s *Scanner) scanURL(ctx context.Context, url string, blockConn bool, w *te
 		body, statusCode, err = s.httpClient.Send(ctx, url, w.placeholder, w.encoder, w.payload, w.testHeaderValue)
 	}
 
-	info := &test.Info{
+	info := &db.Info{
 		Set:                w.setName,
 		Case:               w.caseName,
 		Payload:            w.payload,
@@ -256,7 +273,7 @@ func (s *Scanner) scanURL(ctx context.Context, url string, blockConn bool, w *te
 			if blockConn {
 				blockedByReset = true
 			} else {
-				s.db.UpdateNaTests(info, s.cfg.NonBlockedAsPassed)
+				s.db.UpdateNaTests(info, s.cfg.IgnoreUnresolved, s.cfg.NonBlockedAsPassed, w.isTruePositive)
 				return nil
 			}
 		} else {
@@ -283,15 +300,12 @@ func (s *Scanner) scanURL(ctx context.Context, url string, blockConn bool, w *te
 	}
 
 	if (blocked && passed) || (!blocked && !passed) {
-		s.db.UpdateNaTests(info, s.cfg.NonBlockedAsPassed)
+		s.db.UpdateNaTests(info, s.cfg.IgnoreUnresolved, s.cfg.NonBlockedAsPassed, w.isTruePositive)
 	} else {
-		// true negatives for malicious payloads (IsTruePositive is true)
-		// and false positives checks (IsTruePositive is false)
-		if (blocked && w.isTruePositive) ||
-			(!blocked && !w.isTruePositive) {
-			s.db.UpdatePassedTests(info)
-		} else {
+		if blocked {
 			s.db.UpdateBlockedTests(info)
+		} else {
+			s.db.UpdatePassedTests(info)
 		}
 	}
 	return nil

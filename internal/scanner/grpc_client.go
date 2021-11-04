@@ -7,13 +7,14 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/wallarm/gotestwaf/internal/data/config"
-	"github.com/wallarm/gotestwaf/internal/payload/encoder"
-	grpcSrv "github.com/wallarm/gotestwaf/internal/payload/encoder/grpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
+
+	"github.com/wallarm/gotestwaf/internal/config"
+	"github.com/wallarm/gotestwaf/internal/payload/encoder"
+	grpcSrv "github.com/wallarm/gotestwaf/internal/payload/encoder/grpc"
 )
 
 const GRPCServerDetectionTimeout = 3

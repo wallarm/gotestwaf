@@ -17,8 +17,9 @@ import (
 	flag "github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"github.com/wallarm/gotestwaf/internal/data/config"
-	"github.com/wallarm/gotestwaf/internal/data/test"
+	"github.com/wallarm/gotestwaf/internal/config"
+	"github.com/wallarm/gotestwaf/internal/db"
+	"github.com/wallarm/gotestwaf/internal/report"
 	"github.com/wallarm/gotestwaf/internal/scanner"
 	"github.com/wallarm/gotestwaf/internal/version"
 )
@@ -69,14 +70,14 @@ func run(logger *log.Logger) error {
 
 	logger.Println("Test cases loading started")
 
-	testCases, err := test.Load(cfg)
+	testCases, err := db.LoadTestCases(cfg)
 	if err != nil {
 		return errors.Wrap(err, "loading test case")
 	}
 
 	logger.Println("Test cases loading finished")
 
-	db := test.NewDB(testCases)
+	db := db.NewDB(testCases)
 	httpClient, err := scanner.NewHTTPClient(cfg)
 	if err != nil {
 		return errors.Wrap(err, "HTTP client")
@@ -173,7 +174,7 @@ func run(logger *log.Logger) error {
 	}()
 
 	logger.Printf("Scanning %s\n", cfg.URL)
-	err = s.Run(ctx, cfg.URL, cfg.BlockConnReset)
+	err = s.Run(ctx)
 	if err != nil {
 		return errors.Wrap(err, "run scanning")
 	}
@@ -183,15 +184,13 @@ func run(logger *log.Logger) error {
 
 	reportFile := filepath.Join(cfg.ReportPath, fmt.Sprintf("%s-%s-%s.pdf", reportPrefix, cfg.WAFName, reportSaveTime))
 
-	rows, err := db.RenderTable(reportTime, cfg.WAFName, cfg.IgnoreUnresolved)
-	if err != nil {
-		return errors.Wrap(err, "table rendering")
-	}
-
-	err = db.ExportToPDF(reportFile, reportTime, cfg.WAFName, cfg.URL, rows, cfg.IgnoreUnresolved)
+	stat := db.GetStatistics(cfg.IgnoreUnresolved, cfg.NonBlockedAsPassed)
+	report.RenderConsoleTable(stat, reportTime, wafName, cfg.IgnoreUnresolved)
+	err = report.ExportToPDF(stat, reportFile, reportTime, cfg.WAFName, cfg.URL, cfg.IgnoreUnresolved)
 	if err != nil {
 		return errors.Wrap(err, "PDF exporting")
 	}
+	fmt.Printf("\nPDF report is ready: %s\n", reportFile)
 
 	payloadFiles := filepath.Join(cfg.ReportPath, fmt.Sprintf("%s-%s-%s.csv", payloadPrefix, cfg.WAFName, reportSaveTime))
 	err = db.ExportPayloads(payloadFiles)
@@ -222,7 +221,7 @@ Options:
 	}
 
 	flag.StringVar(&configPath, "configPath", defaultConfigPath, "Path to the config file")
-	flag.BoolVar(&verbose, "verbose", true, "If true, enable verbose logging")
+	flag.BoolVar(&verbose, "verbose", false, "If true, enable verbose logging")
 
 	urlParam := flag.String("url", "", "URL to check")
 	flag.String("wsURL", "", "WebSocket URL to check")

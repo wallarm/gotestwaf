@@ -1,0 +1,2 @@
+vendor/** linguist-vendored
+**/*.pb.go linguist-generated
