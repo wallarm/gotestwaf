@@ -192,7 +192,7 @@ func ExportToPDF(s *db.Statistics, reportFile string, reportTime time.Time, wafN
 		positiveTrueRows = append(positiveTrueRows, rowAppend)
 	}
 
-	allFailedTests := append(s.Failed, s.PositiveTests.Failed...)
+	allFailedTests := append(s.Failed[:len(s.Failed):len(s.Failed)], s.PositiveTests.Failed...)
 	for _, row := range allFailedTests {
 		rowAppend := []string{
 			row.Payload,
@@ -200,8 +200,7 @@ func ExportToPDF(s *db.Statistics, reportFile string, reportTime time.Time, wafN
 			row.Encoder,
 			row.Placeholder,
 		}
-		failedRows = append(failedRows, rowAppend)
-		failedRows = append(failedRows, []string{row.Reason})
+		failedRows = append(failedRows, rowAppend, []string{row.Reason})
 	}
 
 	// Title page
@@ -359,7 +358,9 @@ func ExportToPDF(s *db.Statistics, reportFile string, reportTime time.Time, wafN
 
 	if !ignoreUnresolved {
 		unresolvedRows := [][]string{baseHeader}
-		allUnresolvedTests := append(s.Unresolved, s.PositiveTests.Unresolved...)
+		allUnresolvedTests := append(
+			s.Unresolved[:len(s.Unresolved):len(s.Unresolved)],
+			s.PositiveTests.Unresolved...)
 		for _, row := range allUnresolvedTests {
 			rowAppend := []string{
 				row.Payload,

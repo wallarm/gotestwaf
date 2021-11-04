@@ -183,7 +183,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 				s.SummaryTable = append(s.SummaryTable, row)
 
 				if totalResolvedRequests != 0 {
-					overallCompletedTestCases += 1
+					overallCompletedTestCases++
 					overallPassedRequestsPercentage += blockedRequestsPercentage
 				}
 			}
