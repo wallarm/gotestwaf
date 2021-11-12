@@ -12,7 +12,13 @@ func FormBody(requestURL, payload string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", reqURL.String(), strings.NewReader(payload))
+	randomName, err := RandomHex(Seed)
+	if err != nil {
+		return nil, err
+	}
+
+	bodyPayload := randomName + "=" + payload
+	req, err := http.NewRequest("POST", reqURL.String(), strings.NewReader(bodyPayload))
 	if err != nil {
 		return nil, err
 	}
