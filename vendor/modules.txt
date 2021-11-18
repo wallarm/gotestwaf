@@ -1,26 +1,29 @@
-# github.com/blend/go-sdk v1.20210918.2
-## explicit; go 1.16
+# github.com/SebastiaanKlippert/go-wkhtmltopdf v1.7.2
+## explicit
+github.com/SebastiaanKlippert/go-wkhtmltopdf
 # github.com/fsnotify/fsnotify v1.4.7
-## explicit
 github.com/fsnotify/fsnotify
-# github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
+# github.com/go-echarts/go-echarts/v2 v2.2.4
 ## explicit
-github.com/golang/freetype/raster
-github.com/golang/freetype/truetype
+github.com/go-echarts/go-echarts/v2/charts
+github.com/go-echarts/go-echarts/v2/datasets
+github.com/go-echarts/go-echarts/v2/opts
+github.com/go-echarts/go-echarts/v2/render
+github.com/go-echarts/go-echarts/v2/templates
+github.com/go-echarts/go-echarts/v2/types
 # github.com/golang/protobuf v1.4.3
-## explicit; go 1.9
+## explicit
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
 # github.com/google/go-cmp v0.5.3
-## explicit; go 1.8
+## explicit
 # github.com/gorilla/websocket v1.4.2
-## explicit; go 1.12
+## explicit
 github.com/gorilla/websocket
 # github.com/hashicorp/hcl v1.0.0
-## explicit
 github.com/hashicorp/hcl
 github.com/hashicorp/hcl/hcl/ast
 github.com/hashicorp/hcl/hcl/parser
@@ -31,79 +34,50 @@ github.com/hashicorp/hcl/hcl/token
 github.com/hashicorp/hcl/json/parser
 github.com/hashicorp/hcl/json/scanner
 github.com/hashicorp/hcl/json/token
-# github.com/jung-kurt/gofpdf v1.16.2
-## explicit; go 1.12
-github.com/jung-kurt/gofpdf
 # github.com/leanovate/gopter v0.2.9
-## explicit; go 1.12
+## explicit
 github.com/leanovate/gopter
 github.com/leanovate/gopter/gen
 github.com/leanovate/gopter/prop
 # github.com/magiconair/properties v1.8.1
-## explicit
 github.com/magiconair/properties
 # github.com/mattn/go-runewidth v0.0.13
-## explicit; go 1.9
 github.com/mattn/go-runewidth
 # github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db
-## explicit
 github.com/mitchellh/colorstring
 # github.com/mitchellh/mapstructure v1.1.2
-## explicit
 github.com/mitchellh/mapstructure
 # github.com/olekukonko/tablewriter v0.0.4
-## explicit; go 1.12
+## explicit
 github.com/olekukonko/tablewriter
 # github.com/pelletier/go-toml v1.2.0
-## explicit
 github.com/pelletier/go-toml
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
 # github.com/rivo/uniseg v0.2.0
-## explicit; go 1.12
 github.com/rivo/uniseg
 # github.com/schollz/progressbar/v3 v3.8.3
-## explicit; go 1.13
+## explicit
 github.com/schollz/progressbar/v3
 # github.com/spf13/afero v1.1.2
-## explicit
 github.com/spf13/afero
 github.com/spf13/afero/mem
 # github.com/spf13/cast v1.3.0
-## explicit
 github.com/spf13/cast
 # github.com/spf13/jwalterweatherman v1.0.0
-## explicit
 github.com/spf13/jwalterweatherman
 # github.com/spf13/pflag v1.0.5
-## explicit; go 1.12
+## explicit
 github.com/spf13/pflag
 # github.com/spf13/viper v1.7.1
-## explicit; go 1.12
+## explicit
 github.com/spf13/viper
 # github.com/subosito/gotenv v1.2.0
-## explicit
 github.com/subosito/gotenv
-# github.com/wcharczuk/go-chart v2.0.1+incompatible
-## explicit
-github.com/wcharczuk/go-chart
-github.com/wcharczuk/go-chart/drawing
-github.com/wcharczuk/go-chart/matrix
-github.com/wcharczuk/go-chart/roboto
-github.com/wcharczuk/go-chart/seq
-github.com/wcharczuk/go-chart/util
 # golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
-## explicit; go 1.17
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/image v0.0.0-20190910094157-69e4b8554b2a
-## explicit; go 1.12
-golang.org/x/image/draw
-golang.org/x/image/font
-golang.org/x/image/math/f64
-golang.org/x/image/math/fixed
 # golang.org/x/net v0.0.0-20210226172049-e18ecbb05110
-## explicit; go 1.11
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
@@ -111,16 +85,15 @@ golang.org/x/net/idna
 golang.org/x/net/internal/timeseries
 golang.org/x/net/trace
 # golang.org/x/sys v0.0.0-20211031064116-611d5d643895
-## explicit; go 1.17
+## explicit
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b
-## explicit; go 1.17
 golang.org/x/term
 # golang.org/x/text v0.3.6
-## explicit; go 1.11
+## explicit
 golang.org/x/text/encoding
 golang.org/x/text/encoding/internal
 golang.org/x/text/encoding/internal/identifier
@@ -131,11 +104,13 @@ golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
+# golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
+## explicit
 # google.golang.org/genproto v0.0.0-20200825200019-8632dd797987
-## explicit; go 1.11
+## explicit
 google.golang.org/genproto/googleapis/rpc/status
 # google.golang.org/grpc v1.34.0
-## explicit; go 1.11
+## explicit
 google.golang.org/grpc
 google.golang.org/grpc/attributes
 google.golang.org/grpc/backoff
@@ -180,7 +155,7 @@ google.golang.org/grpc/stats
 google.golang.org/grpc/status
 google.golang.org/grpc/tap
 # google.golang.org/protobuf v1.25.0
-## explicit; go 1.9
+## explicit
 google.golang.org/protobuf/encoding/prototext
 google.golang.org/protobuf/encoding/protowire
 google.golang.org/protobuf/internal/descfmt
@@ -211,7 +186,6 @@ google.golang.org/protobuf/types/known/anypb
 google.golang.org/protobuf/types/known/durationpb
 google.golang.org/protobuf/types/known/timestamppb
 # gopkg.in/ini.v1 v1.51.0
-## explicit
 gopkg.in/ini.v1
 # gopkg.in/yaml.v2 v2.2.8
 ## explicit

@@ -1,0 +1,5 @@
+testfiles/*.pdf
+*.pdf
+.idea/
+*.exe
+wkhtmltopdf.exe.12.4
