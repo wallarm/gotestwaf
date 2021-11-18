@@ -62,6 +62,7 @@ type SummaryTableRow struct {
 type TestDetails struct {
 	Payload     string
 	TestCase    string
+	TestSet     string
 	Encoder     string
 	Placeholder string
 	Status      int
@@ -228,6 +229,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 		testDetails := TestDetails{
 			Payload:     blockedTest.Payload,
 			TestCase:    blockedTest.Case,
+			TestSet:     blockedTest.Set,
 			Encoder:     blockedTest.Encoder,
 			Placeholder: blockedTest.Placeholder,
 			Status:      blockedTest.ResponseStatusCode,
@@ -244,6 +246,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 		testDetails := TestDetails{
 			Payload:     passedTest.Payload,
 			TestCase:    passedTest.Case,
+			TestSet:     passedTest.Set,
 			Encoder:     passedTest.Encoder,
 			Placeholder: passedTest.Placeholder,
 			Status:      passedTest.ResponseStatusCode,
@@ -260,6 +263,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 		testDetails := TestDetails{
 			Payload:     unresolvedTest.Payload,
 			TestCase:    unresolvedTest.Case,
+			TestSet:     unresolvedTest.Set,
 			Encoder:     unresolvedTest.Encoder,
 			Placeholder: unresolvedTest.Placeholder,
 			Status:      unresolvedTest.ResponseStatusCode,
