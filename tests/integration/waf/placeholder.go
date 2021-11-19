@@ -17,7 +17,7 @@ var (
 	urlParamRegexp = regexp.MustCompile(fmt.Sprintf("[a-fA-F0-9]{%d}", ph.Seed*2))
 )
 
-func getPayloadFromFormBody(r *http.Request) (string, error) {
+func getPayloadFromHTMLForm(r *http.Request) (string, error) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return "", fmt.Errorf("couldn't get payload from form body: %v", err)
