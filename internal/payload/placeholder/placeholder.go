@@ -41,6 +41,10 @@ func (p Placeholder) HTMLForm(url, data string) (*http.Request, error) {
 	return HTMLForm(url, data)
 }
 
+func (p Placeholder) HTMLMultipartForm(url, data string) (*http.Request, error) {
+	return HTMLMultipartForm(url, data)
+}
+
 func (p Placeholder) XMLBody(url, data string) (*http.Request, error) {
 	return XMLBody(url, data)
 }
