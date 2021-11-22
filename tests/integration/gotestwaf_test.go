@@ -54,7 +54,8 @@ func TestGoTestWAF(t *testing.T) {
 		}
 	case <-done:
 		if allTestCases.CountTestCases() != 0 {
-			t.Fatal("not all tests cases were processed")
+			remaining := allTestCases.GetRemainingValues()
+			t.Fatalf("not all tests cases were processed: %v", remaining)
 		}
 	}
 }
