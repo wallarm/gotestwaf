@@ -49,6 +49,7 @@ Since the format of the YAML string is required for payloads, they must be [enco
     * JSONRequest
     * JSONBody
     * HTMLForm
+    * HTMLMultipartForm
     * SOAPBody
     * XMLBody
     * URLParam
