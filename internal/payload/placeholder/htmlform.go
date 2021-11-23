@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func FormBody(requestURL, payload string) (*http.Request, error) {
+func HTMLForm(requestURL, payload string) (*http.Request, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err
