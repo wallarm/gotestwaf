@@ -9,7 +9,17 @@ import (
 	"github.com/wallarm/gotestwaf/internal/payload/encoder"
 )
 
-func JSONRequest(requestURL, payload string) (*http.Request, error) {
+type JSONRequest struct {
+	name string
+}
+
+var DefaultJSONRequest = JSONRequest{name: "JSONRequest"}
+
+func (p JSONRequest) GetName() string {
+	return p.name
+}
+
+func (p JSONRequest) CreateRequest(requestURL, payload string) (*http.Request, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err

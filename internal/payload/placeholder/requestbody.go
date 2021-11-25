@@ -6,7 +6,17 @@ import (
 	"strings"
 )
 
-func RequestBody(requestURL, payload string) (*http.Request, error) {
+type RequestBody struct {
+	name string
+}
+
+var DefaultRequestBody = RequestBody{name: "RequestBody"}
+
+func (p RequestBody) GetName() string {
+	return p.name
+}
+
+func (p RequestBody) CreateRequest(requestURL, payload string) (*http.Request, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err

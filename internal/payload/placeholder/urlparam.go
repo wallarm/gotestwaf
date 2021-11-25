@@ -6,7 +6,17 @@ import (
 	"strings"
 )
 
-func URLParam(requestURL, payload string) (*http.Request, error) {
+type URLParam struct {
+	name string
+}
+
+var DefaultURLParam = URLParam{name: "URLParam"}
+
+func (p URLParam) GetName() string {
+	return p.name
+}
+
+func (p URLParam) CreateRequest(requestURL, payload string) (*http.Request, error) {
 	param, err := RandomHex(Seed)
 	if err != nil {
 		return nil, err
