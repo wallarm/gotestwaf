@@ -7,7 +7,17 @@ import (
 	"net/url"
 )
 
-func HTMLMultipartForm(requestURL, payload string) (*http.Request, error) {
+type HTMLMultipartForm struct {
+	name string
+}
+
+var DefaultHTMLMultipartForm = HTMLMultipartForm{name: "HTMLMultipartForm"}
+
+func (p HTMLMultipartForm) GetName() string {
+	return p.name
+}
+
+func (p HTMLMultipartForm) CreateRequest(requestURL, payload string) (*http.Request, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err

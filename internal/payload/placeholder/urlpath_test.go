@@ -22,7 +22,7 @@ func TestURLPath(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		req, err := URLPath(test.requestURL, test.payload)
+		req, err := DefaultURLPath.CreateRequest(test.requestURL, test.payload)
 		if err != nil {
 			t.Fatalf("got an error while testing: %v", err)
 		}

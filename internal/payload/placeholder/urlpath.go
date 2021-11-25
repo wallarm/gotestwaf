@@ -5,7 +5,17 @@ import (
 	"net/url"
 )
 
-func URLPath(requestURL, payload string) (*http.Request, error) {
+type URLPath struct {
+	name string
+}
+
+var DefaultURLPath = URLPath{name: "URLPath"}
+
+func (p URLPath) GetName() string {
+	return p.name
+}
+
+func (p URLPath) CreateRequest(requestURL, payload string) (*http.Request, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err

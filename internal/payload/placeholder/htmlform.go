@@ -6,7 +6,17 @@ import (
 	"strings"
 )
 
-func HTMLForm(requestURL, payload string) (*http.Request, error) {
+type HTMLForm struct {
+	name string
+}
+
+var DefaultHTMLForm = HTMLForm{name: "HTMLForm"}
+
+func (p HTMLForm) GetName() string {
+	return p.name
+}
+
+func (p HTMLForm) CreateRequest(requestURL, payload string) (*http.Request, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err

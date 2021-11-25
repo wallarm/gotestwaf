@@ -5,7 +5,17 @@ import (
 	"net/url"
 )
 
-func Header(requestURL, payload string) (*http.Request, error) {
+type Header struct {
+	name string
+}
+
+var DefaultHeader = Header{name: "Header"}
+
+func (p Header) GetName() string {
+	return p.name
+}
+
+func (p Header) CreateRequest(requestURL, payload string) (*http.Request, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err
