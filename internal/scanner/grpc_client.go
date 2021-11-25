@@ -248,6 +248,10 @@ func (g *GRPCConn) IsAvailable() bool {
 }
 
 func (g *GRPCConn) Close() error {
+	if g.conn == nil {
+		return nil
+	}
+
 	return g.conn.Close()
 }
 
