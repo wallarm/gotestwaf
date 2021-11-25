@@ -25,5 +25,7 @@ encoder:
 - URL
 placeholder:
 - URLParam
+- HTMLForm
+- HTMLMultipartForm
 - JSONRequest
 ...

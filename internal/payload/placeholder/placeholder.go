@@ -37,8 +37,12 @@ func (p Placeholder) URLPath(url, data string) (*http.Request, error) {
 	return URLPath(url, data)
 }
 
-func (p Placeholder) FormBody(url, data string) (*http.Request, error) {
-	return FormBody(url, data)
+func (p Placeholder) HTMLForm(url, data string) (*http.Request, error) {
+	return HTMLForm(url, data)
+}
+
+func (p Placeholder) HTMLMultipartForm(url, data string) (*http.Request, error) {
+	return HTMLMultipartForm(url, data)
 }
 
 func (p Placeholder) XMLBody(url, data string) (*http.Request, error) {
