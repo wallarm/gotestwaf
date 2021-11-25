@@ -30,39 +30,33 @@ const (
 	grpcServerDetectionTimeout = 3 * time.Second
 )
 
-type GRPCData struct {
-	host      string
-	available bool
-	tc        credentials.TransportCredentials
-	tlsConf   *tls.Config
+type GRPCConn struct {
+	host           string
+	transportCreds credentials.TransportCredentials
+	tlsConf        *tls.Config
+
+	conn *grpc.ClientConn
+
+	isAvailable bool
 }
 
-func NewGRPCData(cfg *config.Config) (*GRPCData, error) {
-	var tc credentials.TransportCredentials
-	var tlsConf *tls.Config
-
+func NewGRPCConn(cfg *config.Config) (*GRPCConn, error) {
 	isTLS, host, err := tlsAndHostFromUrl(cfg.URL)
 	if err != nil {
 		return nil, err
 	}
 
+	g := &GRPCConn{host: host}
+
 	if isTLS {
-		tlsConf = &tls.Config{InsecureSkipVerify: !cfg.TLSVerify}
-		tc = credentials.NewTLS(tlsConf)
-	} else {
-		tlsConf = nil
-		tc = nil
+		g.tlsConf = &tls.Config{InsecureSkipVerify: !cfg.TLSVerify}
+		g.transportCreds = credentials.NewTLS(g.tlsConf)
 	}
 
-	return &GRPCData{
-		host:      host,
-		available: false,
-		tlsConf:   tlsConf,
-		tc:        tc,
-	}, nil
+	return g, nil
 }
 
-func (g *GRPCData) httpTest() (bool, error) {
+func (g *GRPCConn) httpTest() (bool, error) {
 	var http2transport *http2.Transport
 	var scheme string
 
@@ -117,7 +111,7 @@ func (g *GRPCData) httpTest() (bool, error) {
 	return false, nil
 }
 
-func (g *GRPCData) healthCheckTest() (bool, error) {
+func (g *GRPCConn) healthCheckTest() (bool, error) {
 	ctxWithTimeout, cancel := context.WithTimeout(context.Background(), grpcServerDetectionTimeout)
 	defer cancel()
 
@@ -126,11 +120,10 @@ func (g *GRPCData) healthCheckTest() (bool, error) {
 		err  error
 	)
 
-	switch g.tc {
-	case nil:
+	if g.transportCreds == nil {
 		conn, err = grpc.DialContext(ctxWithTimeout, g.host, grpc.WithInsecure(), grpc.WithBlock())
-	default:
-		conn, err = grpc.DialContext(ctxWithTimeout, g.host, grpc.WithTransportCredentials(g.tc), grpc.WithBlock())
+	} else {
+		conn, err = grpc.DialContext(ctxWithTimeout, g.host, grpc.WithTransportCredentials(g.transportCreds), grpc.WithBlock())
 	}
 
 	if err != nil {
@@ -150,7 +143,7 @@ func (g *GRPCData) healthCheckTest() (bool, error) {
 	return false, nil
 }
 
-func (g *GRPCData) CheckAvailability() (bool, error) {
+func (g *GRPCConn) CheckAvailability() (bool, error) {
 	ok, err := g.httpTest()
 	if err != nil {
 		return false, errors.Wrap(err, "checking gRPC availability via HTTP test")
@@ -161,20 +154,15 @@ func (g *GRPCData) CheckAvailability() (bool, error) {
 		if err != nil {
 			return false, errors.Wrap(err, "checking gRPC availability via gRPC health check")
 		}
-
-		return ok, nil
 	}
 
-	return false, nil
+	g.isAvailable = ok
+
+	return ok, nil
 }
 
-func (g *GRPCData) SetAvailability(status bool) {
-	g.available = status
-}
-
-func (g *GRPCData) Send(ctx context.Context, encoderName, payload string) (body []byte, statusCode int, err error) {
-
-	if !g.available {
+func (g *GRPCConn) Send(ctx context.Context, encoderName, payload string) (body []byte, statusCode int, err error) {
+	if !g.isAvailable {
 		return nil, 0, nil
 	}
 
@@ -189,14 +177,18 @@ func (g *GRPCData) Send(ctx context.Context, encoderName, payload string) (body 
 	var conn *grpc.ClientConn
 
 	// Set up a connection to the server.
-	switch g.tc {
-	case nil:
-		conn, err = grpc.DialContext(ctxWithTimeout, g.host, grpc.WithInsecure(), grpc.WithBlock())
-	default:
-		conn, err = grpc.DialContext(ctxWithTimeout, g.host, grpc.WithTransportCredentials(g.tc), grpc.WithBlock())
-	}
-	if err != nil {
-		return nil, 0, errors.Wrap(err, "sending gRPC request")
+	if g.conn == nil {
+		switch g.transportCreds {
+		case nil:
+			conn, err = grpc.DialContext(ctxWithTimeout, g.host, grpc.WithInsecure(), grpc.WithBlock())
+		default:
+			conn, err = grpc.DialContext(ctxWithTimeout, g.host, grpc.WithTransportCredentials(g.transportCreds), grpc.WithBlock())
+		}
+		if err != nil {
+			return nil, 0, errors.Wrap(err, "sending gRPC request")
+		}
+
+		g.conn = conn
 	}
 
 	client := grpcSrv.NewServiceFooBarClient(conn)
@@ -251,13 +243,16 @@ func (g *GRPCData) Send(ctx context.Context, encoderName, payload string) (body 
 	return []byte(resp.GetValue()), 200, nil
 }
 
-func (g *GRPCData) UpdateGRPCData(available bool) {
-	g.available = available
+func (g *GRPCConn) IsAvailable() bool {
+	return g.isAvailable
+}
+
+func (g *GRPCConn) Close() error {
+	return g.conn.Close()
 }
 
 // returns isTLS, URL host:port, error
 func tlsAndHostFromUrl(wafURL string) (bool, string, error) {
-
 	isTLS := false
 
 	urlParse, err := url.Parse(wafURL)
