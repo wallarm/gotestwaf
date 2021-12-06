@@ -54,7 +54,8 @@ func TestGoTestWAF(t *testing.T) {
 		}
 	case <-done:
 		if allTestCases.CountTestCases() != 0 {
-			t.Fatal("not all tests cases were processed")
+			remaining := allTestCases.GetRemainingValues()
+			t.Fatalf("not all tests cases were processed: %v", remaining)
 		}
 	}
 }
@@ -72,7 +73,7 @@ func runGoTestWAF(ctx context.Context, testCases []db.Case) error {
 
 	cfg.URL = "http://" + test_config.GRPCAddress
 
-	grpcData, err := scanner.NewGRPCData(cfg)
+	grpcConn, err := scanner.NewGRPCConn(cfg)
 	if err != nil {
 		return errors.Wrap(err, "gRPC client")
 	}
@@ -81,17 +82,18 @@ func runGoTestWAF(ctx context.Context, testCases []db.Case) error {
 
 	logger.Printf("gRPC pre-check: IN PROGRESS")
 
-	available, err := grpcData.CheckAvailability()
+	available, err := grpcConn.CheckAvailability()
 	if err != nil {
 		logger.Printf("gRPC pre-check: connection is not available, "+
 			"reason: %s\n", err)
 	}
 	if available {
-		logger.Printf("gRPC pre-check: OK")
-		grpcData.SetAvailability(available)
+		logger.Printf("gRPC pre-check: GRPC IS AVAILABLE")
+	} else {
+		logger.Printf("gRPC pre-check: GRPC IS NOT AVAILABLE")
 	}
 
-	s := scanner.New(db, logger, cfg, httpClient, grpcData, true)
+	s := scanner.New(db, logger, cfg, httpClient, grpcConn, true)
 
 	logger.Println("Scanned URL:", cfg.URL)
 

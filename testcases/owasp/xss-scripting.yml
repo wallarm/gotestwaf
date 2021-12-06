@@ -23,5 +23,7 @@ encoder:
 placeholder:
   - URLPath
   - URLParam
+  - HTMLForm
+  - HTMLMultipartForm
 type: "XSS"
 ...

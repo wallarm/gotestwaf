@@ -83,24 +83,25 @@ func run(logger *log.Logger) error {
 		return errors.Wrap(err, "HTTP client")
 	}
 
-	grpcData, err := scanner.NewGRPCData(cfg)
+	grpcConn, err := scanner.NewGRPCConn(cfg)
 	if err != nil {
 		return errors.Wrap(err, "gRPC client")
 	}
 
 	logger.Printf("gRPC pre-check: IN PROGRESS")
 
-	available, err := grpcData.CheckAvailability()
+	available, err := grpcConn.CheckAvailability()
 	if err != nil {
 		logger.Printf("gRPC pre-check: connection is not available, "+
 			"reason: %s\n", err)
 	}
 	if available {
-		logger.Printf("gRPC pre-check: OK")
-		grpcData.SetAvailability(available)
+		logger.Printf("gRPC pre-check: GRPC IS AVAILABLE")
+	} else {
+		logger.Printf("gRPC pre-check: GRPC IS NOT AVAILABLE")
 	}
 
-	s := scanner.New(db, logger, cfg, httpClient, grpcData, false)
+	s := scanner.New(db, logger, cfg, httpClient, grpcConn, false)
 
 	logger.Println("Scanned URL:", cfg.URL)
 	if !cfg.SkipWAFBlockCheck {

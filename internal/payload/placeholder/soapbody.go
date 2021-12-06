@@ -9,7 +9,17 @@ import (
 	"github.com/wallarm/gotestwaf/internal/payload/encoder"
 )
 
-func SOAPBody(requestURL, payload string) (*http.Request, error) {
+type SOAPBody struct {
+	name string
+}
+
+var DefaultSOAPBody = SOAPBody{name: "SOAPBody"}
+
+func (p SOAPBody) GetName() string {
+	return p.name
+}
+
+func (p SOAPBody) CreateRequest(requestURL, payload string) (*http.Request, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err

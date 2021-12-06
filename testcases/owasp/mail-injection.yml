@@ -9,5 +9,7 @@ encoder:
 placeholder:
   - URLPath
   - URLParam
+  - HTMLForm
+  - HTMLMultipartForm
 type: "Mail Injection"
 ...

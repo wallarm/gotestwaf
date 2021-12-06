@@ -17,6 +17,8 @@ encoder:
 placeholder:
   - URLPath
   - URLParam
+  - HTMLForm
+  - HTMLMultipartForm
   - JSONRequest
 type: "Path Traversal"
 ...

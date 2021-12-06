@@ -32,7 +32,7 @@ func TestURLParam(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		req, err := URLParam(test.requestURL, test.payload)
+		req, err := DefaultURLParam.CreateRequest(test.requestURL, test.payload)
 		if err != nil {
 			t.Fatalf("got an error while testing: %v", err)
 		}

@@ -41,18 +41,18 @@ type Scanner struct {
 	cfg        *config.Config
 	db         *db.DB
 	httpClient *HTTPClient
-	grpcData   *GRPCData
+	grpcConn   *GRPCConn
 	wsClient   *websocket.Dialer
 	isTestEnv  bool
 }
 
-func New(db *db.DB, logger *log.Logger, cfg *config.Config, httpClient *HTTPClient, grpcData *GRPCData, isTestEnv bool) *Scanner {
+func New(db *db.DB, logger *log.Logger, cfg *config.Config, httpClient *HTTPClient, grpcConn *GRPCConn, isTestEnv bool) *Scanner {
 	return &Scanner{
 		db:         db,
 		logger:     logger,
 		cfg:        cfg,
 		httpClient: httpClient,
-		grpcData:   grpcData,
+		grpcConn:   grpcConn,
 		wsClient:   websocket.DefaultDialer,
 		isTestEnv:  isTestEnv,
 	}
@@ -146,15 +146,15 @@ func (s *Scanner) Run(ctx context.Context) error {
 	var wg sync.WaitGroup
 	wg.Add(gn)
 
+	defer s.grpcConn.Close()
+
 	rand.Seed(time.Now().UnixNano())
 
 	s.logger.Println("Scanning started")
 	defer s.logger.Println("Scanning finished")
 
 	start := time.Now()
-	defer func() {
-		s.logger.Println("Scanning Time: ", time.Since(start))
-	}()
+	defer s.logger.Println("Scanning Time: ", time.Since(start))
 
 	testChan := s.produceTests(ctx, gn)
 
@@ -200,6 +200,7 @@ func (s *Scanner) Run(ctx context.Context) error {
 	if errors.Is(ctx.Err(), context.Canceled) {
 		return ctx.Err()
 	}
+
 	return nil
 }
 
@@ -255,7 +256,12 @@ func (s *Scanner) scanURL(ctx context.Context, url string, blockConn bool, w *te
 
 	switch w.encoder {
 	case encoder.DefaultGRPCEncoder.GetName():
-		body, statusCode, err = s.grpcData.Send(ctx, w.encoder, w.payload)
+		if !s.grpcConn.IsAvailable() {
+			return nil
+		}
+
+		body, statusCode, err = s.grpcConn.Send(ctx, w.encoder, w.payload)
+
 	default:
 		body, statusCode, err = s.httpClient.Send(ctx, url, w.placeholder, w.encoder, w.payload, w.testHeaderValue)
 	}

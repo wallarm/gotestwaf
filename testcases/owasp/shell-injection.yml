@@ -12,5 +12,7 @@ encoder:
 placeholder:
   - JSONRequest
   - URLParam
+  - HTMLForm
+  - HTMLMultipartForm
 type: "Shell"
 ...

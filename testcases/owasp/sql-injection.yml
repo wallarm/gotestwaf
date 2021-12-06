@@ -14,5 +14,7 @@ placeholder:
   - URLParam
   - JSONRequest
   - Header
+  - HTMLForm
+  - HTMLMultipartForm
 type: "SQL Injection"
 ...

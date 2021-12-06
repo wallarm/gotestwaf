@@ -9,6 +9,8 @@ encoder:
 placeholder:
   - URLPath
   - URLParam
+  - HTMLForm
+  - HTMLMultipartForm
   - JSONRequest
 type: "NoSQL Injection"
 ...

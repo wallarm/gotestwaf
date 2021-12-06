@@ -11,5 +11,7 @@ encoder:
 placeholder:
   - URLPath
   - URLParam
+  - HTMLForm
+  - HTMLMultipartForm
 type: "SS Injection"
 ...

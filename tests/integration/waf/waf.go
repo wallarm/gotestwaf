@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"google.golang.org/grpc"
@@ -52,7 +53,15 @@ func New(errChan chan<- error, casesMap *config.TestCasesMap) *WAF {
 
 func (waf *WAF) Run() {
 	go func() {
-		err := waf.httpServer.ListenAndServe()
+		conn, err := net.DialTimeout("tcp", config.HTTPAddress, time.Second)
+		if err == nil {
+			if conn != nil {
+				conn.Close()
+			}
+			waf.errChan <- fmt.Errorf("port %s is already in use", config.HTTPPort)
+		}
+
+		err = waf.httpServer.ListenAndServe()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			waf.errChan <- fmt.Errorf("HTTP listen and serve error: %v", err)
 		}
@@ -142,10 +151,12 @@ func (waf *WAF) httpRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch placeholder {
-	case "FormBody":
-		placeholderValue, err = getPayloadFromFormBody(r)
 	case "Header":
 		placeholderValue, err = getPayloadFromHeader(r)
+	case "HTMLForm":
+		placeholderValue, err = getPayloadFromHTMLForm(r)
+	case "HTMLMultipartForm":
+		placeholderValue, err = getPayloadFromHTMLMultipartForm(r)
 	case "JSONBody":
 		placeholderValue, err = getPayloadFromJSONBody(r)
 	case "JSONRequest":

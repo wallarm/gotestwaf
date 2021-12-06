@@ -17,14 +17,6 @@ var (
 	urlParamRegexp = regexp.MustCompile(fmt.Sprintf("[a-fA-F0-9]{%d}", ph.Seed*2))
 )
 
-func getPayloadFromFormBody(r *http.Request) (string, error) {
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return "", fmt.Errorf("couldn't get payload from form body: %v", err)
-	}
-	return string(body), nil
-}
-
 func getPayloadFromHeader(r *http.Request) (string, error) {
 	for header, values := range r.Header {
 		if matched := headerRegexp.MatchString(header); matched {
@@ -33,6 +25,37 @@ func getPayloadFromHeader(r *http.Request) (string, error) {
 	}
 
 	return "", errors.New("couldn't get payload from header: required header not found")
+}
+
+func getPayloadFromHTMLForm(r *http.Request) (string, error) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return "", fmt.Errorf("couldn't get payload from form body: %v", err)
+	}
+
+	payload := string(body)
+
+	match := urlParamRegexp.MatchString(payload)
+	if !match {
+		return "", errors.New("couldn't get payload from form body: payload not found")
+	}
+
+	return payload[ph.Seed*2+1:], nil
+}
+
+func getPayloadFromHTMLMultipartForm(r *http.Request) (string, error) {
+	err := r.ParseMultipartForm(1 << 10)
+	if err != nil {
+		return "", fmt.Errorf("couldn't parse multipart form: %v", err)
+	}
+
+	for paramName, values := range r.MultipartForm.Value {
+		if matched := urlParamRegexp.MatchString(paramName); matched {
+			return values[0], nil
+		}
+	}
+
+	return "", errors.New("couldn't get payload from multipart form body")
 }
 
 func getPayloadFromJSONBody(r *http.Request) (string, error) {

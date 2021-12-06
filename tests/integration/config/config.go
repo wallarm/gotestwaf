@@ -5,11 +5,13 @@ import (
 	"os"
 	"path"
 	"runtime"
+	"sort"
 	"sync"
 
 	"github.com/wallarm/gotestwaf/internal/config"
 	"github.com/wallarm/gotestwaf/internal/db"
 	"github.com/wallarm/gotestwaf/internal/payload/encoder"
+	"github.com/wallarm/gotestwaf/internal/payload/placeholder"
 )
 
 const (
@@ -39,6 +41,21 @@ func (tcm *TestCasesMap) CountTestCases() int {
 	tcm.Lock()
 	defer tcm.Unlock()
 	return len(tcm.m)
+}
+
+func (tcm *TestCasesMap) GetRemainingValues() []string {
+	var res []string
+
+	tcm.Lock()
+	defer tcm.Unlock()
+
+	for k, _ := range tcm.m {
+		res = append(res, k)
+	}
+
+	sort.Strings(res)
+
+	return res
 }
 
 func GetConfig() *config.Config {
@@ -75,6 +92,7 @@ func GetConfig() *config.Config {
 
 func GenerateTestCases() (testCases []db.Case, testCasesMap *TestCasesMap) {
 	var encoders []string
+	var placeholders []string
 	testCasesMap = new(TestCasesMap)
 	testCasesMap.m = make(map[string]struct{})
 
@@ -85,7 +103,10 @@ func GenerateTestCases() (testCases []db.Case, testCasesMap *TestCasesMap) {
 		encoders = append(encoders, encoderName)
 	}
 
-	placeholders := []string{"Header", "RequestBody", "SOAPBody", "JSONRequest", "URLParam", "URLPath"}
+	for placeholderName, _ := range placeholder.Placeholders {
+		placeholders = append(placeholders, placeholderName)
+	}
+
 	testSets := []string{"test-set1", "test-set2", "test-set3"}
 	payloads := []string{"bypassed", "blocked", "unresolved"}
 

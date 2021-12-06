@@ -6,5 +6,7 @@ encoder:
   - URL
 placeholder:
   - URLParam
+  - HTMLForm
+  - HTMLMultipartForm
 type: "GraphQL"
 ...
