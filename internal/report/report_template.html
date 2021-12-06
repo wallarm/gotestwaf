@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GoTestWaf report</title>
+    <script src="https://go-echarts.github.io/go-echarts-assets/assets/echarts.min.js"></script>
+    <style>
+        /*vars*/
+        :root {
+            /*colors tokens*/
+            --black: #000000;
+            --white: #FFFFFF;
+            --grey: #FAFAFB;
+            --blue: #3942EA;
+            --green: #56CC54;
+            --yellow: #FDBE10;
+            --orange: #FC7303;
+            --orange-red: #F26344;
+            --red: #F24444;
+            --light-blue: #DEE0FC;
+            --light-green: #E1F9D9;
+            --light-yellow: #FEF2B9;
+            --light-orange: #FEE1B4;
+            --light-orange-red: #f8e6df;
+            --light-red: #f8d2c4;
+            --dark-grey: #ECECEC;
+
+            /*border-radius tokens*/
+            --br-small: 4px;
+            --br-medium: 8px;
+        }
+
+        /*normalize*/
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        * {
+            margin: 0;
+        }
+        html, body {
+            height: 100%;
+        }
+        body {
+            font-family: Inter, sans-serif;
+            font-style: normal;
+            font-size: 10px;
+            line-height: 1.5;
+            isolation: isolate;
+            -webkit-font-smoothing: antialiased;
+        }
+        img, picture, video, canvas, svg {
+            display: block;
+            max-width: 100%;
+        }
+        input, button, textarea, select {
+            font: inherit;
+        }
+        p, h1, h2, h3, h4, h5, h6 {
+            overflow-wrap: break-word;
+        }
+
+        /*styles*/
+        .container {
+            width: 720px;
+            padding: 40px;
+            min-height: 100%;
+            margin: 0 auto;
+            color: var(--black);
+        }
+        .mono {
+            font-family: Inter, monospace;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: 900;
+        }
+
+        .sub-title, .detail__title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+        .about {
+            display: flex;
+            min-height: 130px;
+            margin: 24px 0 16px;
+            overflow: hidden;
+            border-radius: var(--br-medium);
+        }
+        .about__grade-a {
+            border: 1px solid var(--green);
+        }
+        .about__grade-b {
+            border: 1px solid var(--yellow);
+        }
+        .about__grade-c {
+            border: 1px solid var(--orange);
+        }
+        .about__grade-d {
+            border: 1px solid var(--orange-red);
+        }
+        .about__grade-f {
+            border: 1px solid var(--red);
+        }
+        .grade {
+            flex: 0 0 160px;
+            height: 100%;
+            padding: 12px 16px;
+        }
+        .about__grade-a .grade {
+            background: var(--green);
+        }
+        .about__grade-b .grade {
+            background: var(--yellow);
+        }
+        .about__grade-c .grade {
+            background: var(--orange);
+        }
+        .about__grade-d .grade {
+            background: var(--orange-red);
+        }
+        .about__grade-f .grade {
+            background: var(--red);
+        }
+        .grade__title {
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+        .grade__info{
+            position: relative;
+        }
+        .grade__info-grade {
+            font-weight: 900;
+            font-size: 80px;
+            line-height: 100%;
+        }
+        .grade__info-pont {
+            position: absolute;
+            top: -10px;
+            font-weight: 900;
+            font-size: 80px;
+            line-height: 100%;
+        }
+        .grade__info-ratio {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            font-size: 12px;
+        }
+        .desc {
+            flex: 1;
+            padding: 12px;
+        }
+        .desc__info-row {
+            margin-bottom: 8px;
+        }
+        .row__name {
+            font-weight: 700;
+        }
+        .row__content {
+            font-weight: 400;
+        }
+        .grid {
+            display: grid;
+            grid-auto-columns: 1fr;
+            grid-auto-rows: 50px 1fr;
+            gap: 4px;
+        }
+        .grid__head, .grid__row, .grid__footer {
+            display: grid;
+            grid-template-columns: 220px repeat(3, 136px) ;
+            grid-template-rows: 1fr;
+            gap: 4px;
+        }
+        .head__item, .row__item {
+            border-radius: var(--br-small);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px;
+            background: var(--grey);
+        }
+        .row__item--na {
+            background: var(--dark-grey);
+        }
+        .row__item--a {
+            background: var(--light-green);
+        }
+        .row__item--b {
+            background: var(--light-yellow);
+        }
+        .row__item--c {
+            background: var(--light-orange);
+        }
+        .row__item--d {
+            background: var(--light-orange-red);
+        }
+        .row__item--f {
+            background: var(--light-red);
+        }
+        .row__item-grade {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: var(--br-small);
+        }
+        .row__item-grade--na {
+            color: var(--black);
+            background: var(--grey);
+        }
+        .row__item-grade--a {
+            color: var(--white);
+            background: var(--green);
+        }
+        .row__item-grade--b {
+            color: var(--black);
+            background: var(--yellow);
+        }
+        .row__item-grade--c {
+            color: var(--white);
+            background: var(--orange);
+        }
+        .row__item-grade--d {
+            color: var(--white);
+            background: var(--orange-red);
+        }
+        .row__item-grade--f {
+            color: var(--white);
+            background: var(--red);
+        }
+        .row__item-value  {
+            font-size: 12px;
+        }
+        .grid__footer {
+            position: relative;
+            margin-top: 4px;
+        }
+        .grid__footer::before {
+            content: '';
+            position: absolute;
+            z-index: 10;
+            top: -4px;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: var(--black);
+        }
+        .chart {
+            margin: 24px 0;
+        }
+        .benchmark {
+            page-break-after: always;
+        }
+        .benchmark__text {
+            margin: 4px 0 16px;
+        }
+        .detail {
+            margin: 24px 0 0;
+        }
+        .detail__sub-title {
+            margin: 12px 0;
+            font-size: 14px;
+            font-weight: 700;
+        }
+        .summary__grid{
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 4px;
+        }
+        .summary__grid--head, .summary__grid--row {
+            display: grid;
+            grid-template-columns: repeat(8, minmax(45px, 90px));
+            gap: 4px;
+
+        }
+        .summary__grid--head-item, .positive__grid--head-item {
+            font-weight: 700;
+        }
+        .positive__grid {
+            margin: 12px 0;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 4px;
+        }
+        .positive__grid--head,
+        .positive__grid--row {
+            display: grid;
+            grid-template-columns: 350px repeat(3, minmax(45px, 125px)) 40px;
+            gap: 4px;
+        }
+        .positive__grid--failed--head,
+        .positive__grid--failed--row {
+            display: grid;
+            grid-template-columns: 390px repeat(3, minmax(45px, 125px));
+            gap: 4px;
+        }
+        .positive__grid--failed--reason--row {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 4px;
+        }
+        .summary__grid--head-item, .summary__grid--row-item, .positive__grid--head-item, .positive__grid--row-item {
+            display: flex;
+            align-items: center;
+            padding: 4px;
+            word-break: break-all;
+            word-wrap: break-word;
+            border-radius: var(--br-small);
+            background: var(--grey);
+        }
+    </style>
+</head>
+
+<body>
+    <main class="container">
+        <h1 class="title">API Security / WAF Testing Results</h1>
+        <div class="about about__grade-{{.Overall.ClassSuffix}}">
+            <div class="grade">
+                <h4 class="grade__title">Overall grade:</h4>
+                <div class="grade__info">
+                    {{$length := len .Overall.Mark}} {{if eq $length 2}}
+                    <span class="grade__info-grade">{{printf "%c" (index .Overall.Mark 0)}}</span>
+                    <span class="grade__info-pont">{{printf "%c" (index .Overall.Mark 1)}}</span>
+                    {{else}}
+                    <span class="grade__info-grade">{{.Overall.Mark}}</span>
+                    {{end}}
+                    <span class="grade__info-ratio">{{printf "%.1f" .Overall.Percentage}} / 100</span>
+                </div>
+            </div>
+            <div class="desc">
+                <div class="desc__info">
+                    <div class="desc__info-row">
+                        <span class="row__name">WAF name</span>
+                        :
+                        <span class="row__content">{{.WafName}}</span>
+                        <br>
+                        <span class="row__name">URL</span>
+                        :
+                        <span class="row__content">{{.Url}}</span>
+                        <br>
+                        <span class="row__name">WAF Testing Date</span>
+                        :
+                        <span class="row__content">{{.WafTestingDate}}</span>
+                        <br>
+                        <span class="row__name">GoTestWAF version</span>
+                        :
+                        <span class="row__content">{{.GtwVersion}}</span>
+                    </div>
+                </div>
+                <!--<div class="desc__text">
+                    <p>Monetization of gaming was a fresh concept, growing in tandem with larger builds, open worlds, and sequences.Now, the market continues to grow.</p>
+                </div>-->
+            </div>
+        </div>
+        <div class="grid">
+            <div class="grid__head">
+                <div class="head__item">Type</div>
+                <div class="head__item">True-negative tests blocked</div>
+                <div class="head__item">True-positive tests passed</div>
+                <div class="head__item">Grade</div>
+            </div>
+            <div class="grid__row">
+                <div class="row__item">API Security</div>
+                <div class="row__item row__item--{{.ApiSec.TrueNegative.ClassSuffix}}">
+                    <div class="row__item-grade row__item-grade--{{.ApiSec.TrueNegative.ClassSuffix}}">{{.ApiSec.TrueNegative.Mark}}</div>
+                    <div class="row__item-value">{{printf "%.1f%%" .ApiSec.TrueNegative.Percentage}}</div>
+                </div>
+                <div class="row__item row__item--{{.ApiSec.TruePositive.ClassSuffix}}">
+                    <div class="row__item-grade row__item-grade--{{.ApiSec.TruePositive.ClassSuffix}}">{{.ApiSec.TruePositive.Mark}}</div>
+                    <div class="row__item-value">{{printf "%.1f%%" .ApiSec.TruePositive.Percentage}}</div>
+                </div>
+                <div class="row__item row__item--{{.ApiSec.Grade.ClassSuffix}}">
+                    <div class="row__item-grade row__item-grade--{{.ApiSec.Grade.ClassSuffix}}">{{.ApiSec.Grade.Mark}}</div>
+                    <div class="row__item-value">{{printf "%.1f%%" .ApiSec.Grade.Percentage}}</div>
+                </div>
+            </div>
+            <div class="grid__row">
+                <div class="row__item">Application Security</div>
+                <div class="row__item row__item--{{.AppSec.TrueNegative.ClassSuffix}}">
+                    <div class="row__item-grade row__item-grade--{{.AppSec.TrueNegative.ClassSuffix}}">{{.AppSec.TrueNegative.Mark}}</div>
+                    <div class="row__item-value">{{printf "%.1f%%" .AppSec.TrueNegative.Percentage}}</div>
+                </div>
+                <div class="row__item row__item--{{.AppSec.TruePositive.ClassSuffix}}">
+                    <div class="row__item-grade row__item-grade--{{.AppSec.TruePositive.ClassSuffix}}">{{.AppSec.TruePositive.Mark}}</div>
+                    <div class="row__item-value">{{printf "%.1f%%" .AppSec.TruePositive.Percentage}}</div>
+                </div>
+                <div class="row__item row__item--{{.AppSec.Grade.ClassSuffix}}">
+                    <div class="row__item-grade row__item-grade--{{.AppSec.Grade.ClassSuffix}}">{{.AppSec.Grade.Mark}}</div>
+                    <div class="row__item-value">{{printf "%.1f%%" .AppSec.Grade.Percentage}}</div>
+                </div>
+            </div>
+        </div>
+        {{if or (ne .ApiChartScript nil) (ne .AppChartScript nil)}}
+        <div class="chart">
+            {{if ne .AppChartScript nil}}
+            <div id="app_chart" style="width:1fr; height:500px; break-inside: avoid;"></div>
+            {{.AppChartScript}}
+            {{end}}
+            {{if ne .ApiChartScript nil}}
+            <div id="api_chart" style="width:1fr; height:500px; break-inside: avoid;"></div>
+            {{.ApiChartScript}}
+            {{end}}
+        </div>
+        {{end}}
+        <div class="benchmark">
+            <h2 class="sub-title">Benchmarks against other solutions</h2>
+            <!--<p class="benchmark__text">Monetization of gaming was a fresh concept, growing in tandem with larger builds, open worlds, and sequences.Now, the market continues to grow.</p>-->
+            <div class="grid">
+                <div class="grid__head">
+                    <div class="head__item">Type</div>
+                    <div class="head__item">API Security</div>
+                    <div class="head__item">Application Security</div>
+                    <div class="head__item">Overall score</div>
+                </div>
+                {{range $row := .ComparisonTable}}
+                <div class="grid__row">
+                    <div class="row__item">{{$row.Name}}</div>
+                    <div class="row__item row__item--{{$row.ApiSec.ClassSuffix}}">
+                        <div class="row__item-grade row__item-grade--{{$row.ApiSec.ClassSuffix}}">{{$row.ApiSec.Mark}}</div>
+                        <div class="row__item-value">{{printf "%.1f%%" $row.ApiSec.Percentage}}</div>
+                    </div>
+                    <div class="row__item row__item--{{$row.AppSec.ClassSuffix}}">
+                        <div class="row__item-grade row__item-grade--{{$row.AppSec.ClassSuffix}}">{{$row.AppSec.Mark}}</div>
+                        <div class="row__item-value">{{printf "%.1f%%" $row.AppSec.Percentage}}</div>
+                    </div>
+                    <div class="row__item row__item--{{$row.OverallScore.ClassSuffix}}">
+                        <div class="row__item-grade row__item-grade--{{$row.OverallScore.ClassSuffix}}">{{$row.OverallScore.Mark}}</div>
+                        <div class="row__item-value">{{printf "%.1f%%" $row.OverallScore.Percentage}}</div>
+                    </div>
+                </div>
+                {{end}}
+
+                <div class="grid__footer">
+                    <div class="row__item">Your project</div>
+                    <div class="row__item row__item--{{.ApiSec.Grade.ClassSuffix}}">
+                        <div class="row__item-grade row__item-grade--{{.ApiSec.Grade.ClassSuffix}}">{{.ApiSec.Grade.Mark}}</div>
+                        <div class="row__item-value">{{printf "%.1f%%" .ApiSec.Grade.Percentage}}</div>
+                    </div>
+                    <div class="row__item row__item--{{.AppSec.Grade.ClassSuffix}}">
+                        <div class="row__item-grade row__item-grade--{{.AppSec.Grade.ClassSuffix}}">{{.AppSec.Grade.Mark}}</div>
+                        <div class="row__item-value">{{printf "%.1f%%" .AppSec.Grade.Percentage}}</div>
+                    </div>
+                    <div class="row__item row__item--{{.Overall.ClassSuffix}}">
+                        <div class="row__item-grade row__item-grade--{{.Overall.ClassSuffix}}">{{.Overall.Mark}}</div>
+                        <div class="row__item-value">{{printf "%.1f%%" .Overall.Percentage}}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="detail">
+            <h2 class="detail__title">Details</h2>
+            <h3 class="detail__sub-title">Summary</h3>
+            <div class="summary__grid">
+                <div class="summary__grid--head">
+                    <div class="summary__grid--head-item">Test set</div>
+                    <div class="summary__grid--head-item">Test case</div>
+                    <div class="summary__grid--head-item">Percentage</div>
+                    <div class="summary__grid--head-item">Blocked</div>
+                    <div class="summary__grid--head-item">Bypassed</div>
+                    {{if not .IgnoreUnresolved}}
+                    <div class="summary__grid--head-item">Unresolved</div>
+                    {{end}}
+                    <div class="summary__grid--head-item">Sent</div>
+                    <div class="summary__grid--head-item">Failed</div>
+                </div>
+                {{range $row := .SummaryTable}}
+                <div class="summary__grid--row">
+                    <div class="summary__grid--row-item">{{$row.TestSet}}</div>
+                    <div class="summary__grid--row-item">{{$row.TestCase}}</div>
+                    <div class="summary__grid--row-item">{{printf "%.2f%%" $row.Percentage}}</div>
+                    <div class="summary__grid--row-item">{{$row.Blocked}}</div>
+                    <div class="summary__grid--row-item">{{$row.Bypassed}}</div>
+                    {{if not $.IgnoreUnresolved}}
+                    <div class="summary__grid--row-item">{{$row.Unresolved}}</div>
+                    {{end}}
+                    <div class="summary__grid--row-item">{{$row.Sent}}</div>
+                    <div class="summary__grid--row-item">{{$row.Failed}}</div>
+                </div>
+                {{end}}
+            </div>
+            <h3 class="detail__sub-title">Positive Tests</h3>
+            <p>{{.PositiveTests.BlockedRequestsNumber}} false positive requests identified as blocked (failed, bad behavior)</p>
+            {{if .PositiveTests.BlockedRequestsNumber}}
+            <div class="positive__grid">
+                <div class="positive__grid--head">
+                    <div class="positive__grid--head-item">Payload</div>
+                    <div class="positive__grid--head-item">Test case</div>
+                    <div class="positive__grid--head-item">Encoder</div>
+                    <div class="positive__grid--head-item">Placeholder</div>
+                    <div class="positive__grid--head-item">Status</div>
+                </div>
+                {{range $row := .PositiveTests.Blocked}}
+                <div class="positive__grid--row">
+                    <div class="positive__grid--row-item mono">{{$row.Payload}}</div>
+                    <div class="positive__grid--row-item">{{$row.TestCase}}</div>
+                    <div class="positive__grid--row-item">{{$row.Encoder}}</div>
+                    <div class="positive__grid--row-item">{{$row.Placeholder}}</div>
+                    <div class="positive__grid--row-item">{{$row.Status}}</div>
+                </div>
+                {{end}}
+            </div>
+            {{end}}
+            <p>{{.PositiveTests.BypassedRequestsNumber}} true positive requests identified as bypassed (passed, good behavior)</p>
+            {{if .PositiveTests.BypassedRequestsNumber}}
+            <div class="positive__grid">
+                <div class="positive__grid--head">
+                    <div class="positive__grid--head-item">Payload</div>
+                    <div class="positive__grid--head-item">Test case</div>
+                    <div class="positive__grid--head-item">Encoder</div>
+                    <div class="positive__grid--head-item">Placeholder</div>
+                    <div class="positive__grid--head-item">Status</div>
+                </div>
+                {{range $row := .PositiveTests.Bypassed}}
+                <div class="positive__grid--row">
+                    <div class="positive__grid--row-item mono">{{$row.Payload}}</div>
+                    <div class="positive__grid--row-item">{{$row.TestCase}}</div>
+                    <div class="positive__grid--row-item">{{$row.Encoder}}</div>
+                    <div class="positive__grid--row-item">{{$row.Placeholder}}</div>
+                    <div class="positive__grid--row-item">{{$row.Status}}</div>
+                </div>
+                {{end}}
+            </div>
+            {{end}}
+            {{if .PositiveTests.UnresolvedRequestsNumber}}
+            <p>{{.PositiveTests.UnresolvedRequestsNumber}} true positive requests identified as unresolved</p>
+            <div class="positive__grid">
+                <div class="positive__grid--head">
+                    <div class="positive__grid--head-item">Payload</div>
+                    <div class="positive__grid--head-item">Test case</div>
+                    <div class="positive__grid--head-item">Encoder</div>
+                    <div class="positive__grid--head-item">Placeholder</div>
+                    <div class="positive__grid--head-item">Status</div>
+                </div>
+                {{range $row := .PositiveTests.Unresolved}}
+                <div class="positive__grid--row">
+                    <div class="positive__grid--row-item mono">{{$row.Payload}}</div>
+                    <div class="positive__grid--row-item">{{$row.TestCase}}</div>
+                    <div class="positive__grid--row-item">{{$row.Encoder}}</div>
+                    <div class="positive__grid--row-item">{{$row.Placeholder}}</div>
+                    <div class="positive__grid--row-item">{{$row.Status}}</div>
+                </div>
+                {{end}}
+            </div>
+            {{end}}
+            {{if .PositiveTests.FailedRequestsNumber}}
+            <p>{{.PositiveTests.FailedRequestsNumber}} true positive requests are failed</p>
+            <div class="positive__grid">
+                <div class="positive__grid--failed--head">
+                    <div class="positive__grid--head-item">Payload</div>
+                    <div class="positive__grid--head-item">Test case</div>
+                    <div class="positive__grid--head-item">Encoder</div>
+                    <div class="positive__grid--head-item">Placeholder</div>
+                </div>
+                {{range $row := .PositiveTests.Failed}}
+                <div class="positive__grid--failed--row">
+                    <div class="positive__grid--row-item mono">{{$row.Payload}}</div>
+                    <div class="positive__grid--row-item">{{$row.TestCase}}</div>
+                    <div class="positive__grid--row-item">{{$row.Encoder}}</div>
+                    <div class="positive__grid--row-item">{{$row.Placeholder}}</div>
+                </div>
+                {{$length := len $row.Reason}}{{if ne $length 0}}
+                <div class="positive__grid--failed--reason--row">
+                    <div class="positive__grid--row-item">Reason: {{$row.Reason}}</div>
+                </div>
+                {{end}}
+                {{end}}
+            </div>
+            {{end}}
+            <h3 class="detail__sub-title">Bypasses in Details</h3>
+            <p>{{.NegativeTests.BypassedRequestsNumber}} malicious requests have bypassed the WAF</p>
+            {{if .NegativeTests.BypassedRequestsNumber}}
+            <div class="positive__grid">
+                <div class="positive__grid--head">
+                    <div class="positive__grid--head-item">Payload</div>
+                    <div class="positive__grid--head-item">Test case</div>
+                    <div class="positive__grid--head-item">Encoder</div>
+                    <div class="positive__grid--head-item">Placeholder</div>
+                    <div class="positive__grid--head-item">Status</div>
+                </div>
+                {{range $row := .NegativeTests.Blocked}}
+                <div class="positive__grid--row">
+                    <div class="positive__grid--row-item mono">{{$row.Payload}}</div>
+                    <div class="positive__grid--row-item">{{$row.TestCase}}</div>
+                    <div class="positive__grid--row-item">{{$row.Encoder}}</div>
+                    <div class="positive__grid--row-item">{{$row.Placeholder}}</div>
+                    <div class="positive__grid--row-item">{{$row.Status}}</div>
+                </div>
+                {{end}}
+            </div>
+            {{end}}
+            {{if .NegativeTests.UnresolvedRequestsNumber}}
+            <h3 class="detail__sub-title">Unresolved requests in Details</h3>
+            <p>{{.NegativeTests.UnresolvedRequestsNumber}} requests identified as blocked and passed or as not-blocked and not-passed</p>
+            <div class="positive__grid">
+                <div class="positive__grid--head">
+                    <div class="positive__grid--head-item">Payload</div>
+                    <div class="positive__grid--head-item">Test case</div>
+                    <div class="positive__grid--head-item">Encoder</div>
+                    <div class="positive__grid--head-item">Placeholder</div>
+                    <div class="positive__grid--head-item">Status</div>
+                </div>
+                {{range $row := .NegativeTests.Unresolved}}
+                <div class="positive__grid--row">
+                    <div class="positive__grid--row-item mono">{{$row.Payload}}</div>
+                    <div class="positive__grid--row-item">{{$row.TestCase}}</div>
+                    <div class="positive__grid--row-item">{{$row.Encoder}}</div>
+                    <div class="positive__grid--row-item">{{$row.Placeholder}}</div>
+                    <div class="positive__grid--row-item">{{$row.Status}}</div>
+                </div>
+                {{end}}
+            </div>
+            {{end}}
+            {{if .NegativeTests.FailedRequestsNumber}}
+            <h3 class="detail__sub-title">Failed requests in Details</h3>
+            <p>{{.NegativeTests.FailedRequestsNumber}} requests are failed</p>
+            <div class="positive__grid">
+                <div class="positive__grid--failed--head">
+                    <div class="positive__grid--head-item">Payload</div>
+                    <div class="positive__grid--head-item">Test case</div>
+                    <div class="positive__grid--head-item">Encoder</div>
+                    <div class="positive__grid--head-item">Placeholder</div>
+                </div>
+                {{range $row := .NegativeTests.Failed}}
+                <div class="positive__grid--failed--row">
+                    <div class="positive__grid--row-item mono">{{$row.Payload}}</div>
+                    <div class="positive__grid--row-item">{{$row.TestCase}}</div>
+                    <div class="positive__grid--row-item">{{$row.Encoder}}</div>
+                    <div class="positive__grid--row-item">{{$row.Placeholder}}</div>
+                </div>
+                {{$length := len $row.Reason}}{{if ne $length 0}}
+                <div class="positive__grid--failed--reason--row">
+                    <div class="positive__grid--row-item">Reason: {{$row.Reason}}</div>
+                </div>
+                {{end}}
+                {{end}}
+            </div>
+            {{end}}
+        </div>
+    </main>
+</body>
+</html>

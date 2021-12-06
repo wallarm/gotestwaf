@@ -5,12 +5,9 @@ import (
 	_ "embed"
 	"html/template"
 	"io"
-	"log"
 	"os"
 	"strings"
 	"time"
-
-	"github.com/SebastiaanKlippert/go-wkhtmltopdf"
 
 	"github.com/wallarm/gotestwaf/internal/db"
 	"github.com/wallarm/gotestwaf/internal/version"
@@ -22,9 +19,16 @@ const naMark = "N/A"
 var htmlTemplate string
 
 type grade struct {
-	Percentage float32
-	Mark       string
-	Color      string
+	Percentage  float32
+	Mark        string
+	ClassSuffix string
+}
+
+type comparisonTableRow struct {
+	Name         string
+	ApiSec       grade
+	AppSec       grade
+	OverallScore grade
 }
 
 type reportInfo struct {
@@ -35,7 +39,8 @@ type reportInfo struct {
 	WafTestingDate string
 	GtwVersion     string
 
-	ChartScript template.HTML
+	ApiChartScript *template.HTML
+	AppChartScript *template.HTML
 
 	Overall grade
 	ApiSec  struct {
@@ -49,11 +54,7 @@ type reportInfo struct {
 		Grade        grade
 	}
 
-	ComparisonTable []struct {
-		ApiSec       grade
-		AppSec       grade
-		OverallScore grade
-	}
+	ComparisonTable []comparisonTableRow
 
 	SummaryTable []db.SummaryTableRow
 
@@ -88,9 +89,9 @@ func isApiTest(setName string) bool {
 
 func computeGrade(value float32, all int) grade {
 	g := grade{
-		Percentage: 0.0,
-		Mark:       naMark,
-		Color:      gray,
+		Percentage:  0.0,
+		Mark:        naMark,
+		ClassSuffix: "na",
 	}
 
 	if all == 0 {
@@ -105,49 +106,52 @@ func computeGrade(value float32, all int) grade {
 	switch {
 	case g.Percentage >= 97.0:
 		g.Mark = "A+"
-		g.Color = green
+		g.ClassSuffix = "a"
 	case g.Percentage >= 93.0:
 		g.Mark = "A"
-		g.Color = green
+		g.ClassSuffix = "a"
 	case g.Percentage >= 90.0:
 		g.Mark = "A-"
-		g.Color = green
+		g.ClassSuffix = "a"
 	case g.Percentage >= 87.0:
 		g.Mark = "B+"
-		g.Color = lightGreen
+		g.ClassSuffix = "b"
 	case g.Percentage >= 83.0:
 		g.Mark = "B"
-		g.Color = lightGreen
+		g.ClassSuffix = "b"
 	case g.Percentage >= 80.0:
 		g.Mark = "B-"
-		g.Color = lightGreen
+		g.ClassSuffix = "b"
 	case g.Percentage >= 77.0:
 		g.Mark = "C+"
-		g.Color = yellow
+		g.ClassSuffix = "c"
 	case g.Percentage >= 73.0:
 		g.Mark = "C"
-		g.Color = yellow
+		g.ClassSuffix = "c"
 	case g.Percentage >= 70.0:
 		g.Mark = "C-"
-		g.Color = yellow
+		g.ClassSuffix = "c"
 	case g.Percentage >= 67.0:
 		g.Mark = "D+"
-		g.Color = orange
+		g.ClassSuffix = "d"
 	case g.Percentage >= 63.0:
 		g.Mark = "D"
-		g.Color = orange
+		g.ClassSuffix = "d"
 	case g.Percentage >= 60.0:
 		g.Mark = "D-"
-		g.Color = orange
+		g.ClassSuffix = "d"
 	case g.Percentage < 60.0:
 		g.Mark = "F"
-		g.Color = red
+		g.ClassSuffix = "f"
 	}
 
 	return g
 }
 
-func ExportToPDF(s *db.Statistics, reportFile string, reportTime time.Time, wafName string, url string, ignoreUnresolved bool) error {
+func ExportToPDF(
+	s *db.Statistics, reportFile string, reportTime time.Time,
+	wafName string, url string, ignoreUnresolved bool, toHTML bool,
+) error {
 	data := reportInfo{
 		IgnoreUnresolved: ignoreUnresolved,
 		WafName:          wafName,
@@ -155,6 +159,32 @@ func ExportToPDF(s *db.Statistics, reportFile string, reportTime time.Time, wafN
 		WafTestingDate:   reportTime.Format("02 January 2006"),
 		GtwVersion:       version.Version,
 		SummaryTable:     append(s.SummaryTable, s.PositiveTests.SummaryTable...),
+		ComparisonTable: []comparisonTableRow{
+			{
+				Name:         "ModSecurity PARANOIA=1",
+				ApiSec:       computeGrade(55.6, 1),
+				AppSec:       computeGrade(35.9, 1),
+				OverallScore: computeGrade(55.6+35.9, 2),
+			},
+			{
+				Name:         "ModSecurity PARANOIA=2",
+				ApiSec:       computeGrade(77.8, 1),
+				AppSec:       computeGrade(37.5, 1),
+				OverallScore: computeGrade(77.8+37.5, 2),
+			},
+			{
+				Name:         "ModSecurity PARANOIA=3",
+				ApiSec:       computeGrade(88.9, 1),
+				AppSec:       computeGrade(40.8, 1),
+				OverallScore: computeGrade(88.9+40.8, 2),
+			},
+			{
+				Name:         "ModSecurity PARANOIA=4",
+				ApiSec:       computeGrade(100, 1),
+				AppSec:       computeGrade(36.9, 1),
+				OverallScore: computeGrade(100+36.9, 2),
+			},
+		},
 	}
 
 	var apiSecNegBlockedNum int
@@ -242,13 +272,19 @@ func ExportToPDF(s *db.Statistics, reportFile string, reportTime time.Time, wafN
 	data.Overall = computeGrade(
 		data.ApiSec.Grade.Percentage+data.AppSec.Grade.Percentage, divider)
 
-	sumTable := append(s.SummaryTable, s.PositiveTests.SummaryTable...)
-	script, err := generateChartScript(sumTable)
+	apiChart, appChart, err := generateCharts(s)
 	if err != nil {
 		return err
 	}
 
-	data.ChartScript = template.HTML(*script)
+	if apiChart != nil {
+		v := template.HTML(*apiChart)
+		data.ApiChartScript = &v
+	}
+	if appChart != nil {
+		v := template.HTML(*appChart)
+		data.AppChartScript = &v
+	}
 
 	data.NegativeTests.Blocked = s.Blocked
 	data.NegativeTests.Bypassed = s.Bypasses
@@ -274,12 +310,6 @@ func ExportToPDF(s *db.Statistics, reportFile string, reportTime time.Time, wafN
 		},
 	}).Parse(htmlTemplate))
 
-	// TODO: delete
-	f1, err := os.Create("report.html")
-	if err != nil {
-		return err
-	}
-
 	var buffer bytes.Buffer
 
 	err = templ.Execute(io.MultiWriter(&buffer), data)
@@ -287,37 +317,22 @@ func ExportToPDF(s *db.Statistics, reportFile string, reportTime time.Time, wafN
 		return err
 	}
 
-	// TODO: delete
-	_, err = f1.Write(buffer.Bytes())
-	if err != nil {
-		return err
-	}
+	if toHTML {
+		report, err := os.Create(reportFile + ".html")
+		if err != nil {
+			return err
+		}
+		defer report.Close()
 
-	// Create new PDF generator
-	pdfg, err := wkhtmltopdf.NewPDFGenerator()
-	if err != nil {
-		log.Fatal(err)
-	}
-	pdfg.PageSize.Set(wkhtmltopdf.PageSizeA4)
-	pdfg.Dpi.Set(192)
-
-	page := wkhtmltopdf.NewPageReader(&buffer)
-	page.DebugJavascript.Set(true)
-	page.NoStopSlowScripts.Set(true)
-
-	// Add a new page
-	pdfg.AddPage(page)
-
-	// Create PDF document in internal buffer
-	err = pdfg.Create()
-	if err != nil {
-		return err
-	}
-
-	// Write buffer contents to file on disk
-	err = pdfg.WriteFile(reportFile)
-	if err != nil {
-		return err
+		_, err = report.Write(buffer.Bytes())
+		if err != nil {
+			return err
+		}
+	} else {
+		err = renderToPDF(buffer.Bytes(), reportFile+".pdf")
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
