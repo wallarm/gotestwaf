@@ -8,3 +8,5 @@ encoder:
 placeholder:
   - URLParam
   - JSONRequest
+type: "LDAP Injection"
+...

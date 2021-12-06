@@ -12,3 +12,5 @@ encoder:
   - Plain
 placeholder:
   - URLPath
+type: "CRLF Injection"
+...

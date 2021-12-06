@@ -6,3 +6,5 @@ encoder:
   - Plain
 placeholder:
   - SOAPBody
+type: "SOAP"
+...

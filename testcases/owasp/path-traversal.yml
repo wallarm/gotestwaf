@@ -18,3 +18,5 @@ placeholder:
   - URLPath
   - URLParam
   - JSONRequest
+type: "Path Traversal"
+...

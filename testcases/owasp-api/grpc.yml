@@ -6,3 +6,5 @@ encoder:
   - gRPC
 placeholder:
   - RequestBody
+type: "gRPC"
+...

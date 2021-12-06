@@ -10,3 +10,5 @@ placeholder:
   - URLPath
   - URLParam
   - JSONRequest
+type: "NoSQL Injection"
+...

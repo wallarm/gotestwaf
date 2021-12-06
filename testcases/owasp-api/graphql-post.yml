@@ -8,3 +8,5 @@ encoder:
   - Plain
 placeholder:
   - JSONBody
+type: "GraphQL"
+...

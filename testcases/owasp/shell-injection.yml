@@ -12,3 +12,5 @@ encoder:
 placeholder:
   - JSONRequest
   - URLParam
+type: "Shell"
+...

@@ -11,3 +11,5 @@ encoder:
 placeholder:
   - URLPath
   - URLParam
+type: "SS Injection"
+...
