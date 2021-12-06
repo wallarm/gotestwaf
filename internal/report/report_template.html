@@ -480,7 +480,7 @@
                 </div>
                 {{end}}
             </div>
-            <h3 class="detail__sub-title">Positive Tests</h3>
+            <h3 class="detail__sub-title">False Positive Tests</h3>
             <p>{{.PositiveTests.BlockedRequestsNumber}} false positive requests identified as blocked (failed, bad behavior)</p>
             {{if .PositiveTests.BlockedRequestsNumber}}
             <div class="positive__grid">
@@ -502,7 +502,7 @@
                 {{end}}
             </div>
             {{end}}
-            <p>{{.PositiveTests.BypassedRequestsNumber}} true positive requests identified as bypassed (passed, good behavior)</p>
+            <p>{{.PositiveTests.BypassedRequestsNumber}} false positive requests identified as bypassed (passed, good behavior)</p>
             {{if .PositiveTests.BypassedRequestsNumber}}
             <div class="positive__grid">
                 <div class="positive__grid--head">
