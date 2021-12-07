@@ -1,12 +1,14 @@
-# github.com/blend/go-sdk v1.20210918.2
-## explicit; go 1.16
 # github.com/fsnotify/fsnotify v1.4.7
 ## explicit
 github.com/fsnotify/fsnotify
-# github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
-## explicit
-github.com/golang/freetype/raster
-github.com/golang/freetype/truetype
+# github.com/go-echarts/go-echarts/v2 v2.2.4
+## explicit; go 1.15
+github.com/go-echarts/go-echarts/v2/charts
+github.com/go-echarts/go-echarts/v2/datasets
+github.com/go-echarts/go-echarts/v2/opts
+github.com/go-echarts/go-echarts/v2/render
+github.com/go-echarts/go-echarts/v2/templates
+github.com/go-echarts/go-echarts/v2/types
 # github.com/golang/protobuf v1.4.3
 ## explicit; go 1.9
 github.com/golang/protobuf/proto
@@ -31,9 +33,8 @@ github.com/hashicorp/hcl/hcl/token
 github.com/hashicorp/hcl/json/parser
 github.com/hashicorp/hcl/json/scanner
 github.com/hashicorp/hcl/json/token
-# github.com/jung-kurt/gofpdf v1.16.2
+# github.com/kr/pretty v0.3.0
 ## explicit; go 1.12
-github.com/jung-kurt/gofpdf
 # github.com/leanovate/gopter v0.2.9
 ## explicit; go 1.12
 github.com/leanovate/gopter
@@ -63,6 +64,8 @@ github.com/pkg/errors
 # github.com/rivo/uniseg v0.2.0
 ## explicit; go 1.12
 github.com/rivo/uniseg
+# github.com/rogpeppe/go-internal v1.8.0
+## explicit; go 1.11
 # github.com/schollz/progressbar/v3 v3.8.3
 ## explicit; go 1.13
 github.com/schollz/progressbar/v3
@@ -85,23 +88,9 @@ github.com/spf13/viper
 # github.com/subosito/gotenv v1.2.0
 ## explicit
 github.com/subosito/gotenv
-# github.com/wcharczuk/go-chart v2.0.1+incompatible
-## explicit
-github.com/wcharczuk/go-chart
-github.com/wcharczuk/go-chart/drawing
-github.com/wcharczuk/go-chart/matrix
-github.com/wcharczuk/go-chart/roboto
-github.com/wcharczuk/go-chart/seq
-github.com/wcharczuk/go-chart/util
 # golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
 ## explicit; go 1.17
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/image v0.0.0-20190910094157-69e4b8554b2a
-## explicit; go 1.12
-golang.org/x/image/draw
-golang.org/x/image/font
-golang.org/x/image/math/f64
-golang.org/x/image/math/fixed
 # golang.org/x/net v0.0.0-20210226172049-e18ecbb05110
 ## explicit; go 1.11
 golang.org/x/net/http/httpguts
@@ -213,9 +202,13 @@ google.golang.org/protobuf/runtime/protoimpl
 google.golang.org/protobuf/types/known/anypb
 google.golang.org/protobuf/types/known/durationpb
 google.golang.org/protobuf/types/known/timestamppb
+# gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c
+## explicit; go 1.11
 # gopkg.in/ini.v1 v1.51.0
 ## explicit
 gopkg.in/ini.v1
 # gopkg.in/yaml.v2 v2.2.8
 ## explicit
 gopkg.in/yaml.v2
+# gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+## explicit

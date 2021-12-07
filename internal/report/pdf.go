@@ -2,406 +2,337 @@ package report
 
 import (
 	"bytes"
-	"fmt"
+	_ "embed"
+	"html/template"
+	"io"
+	"os"
+	"strings"
 	"time"
-
-	"github.com/jung-kurt/gofpdf"
-	"github.com/pkg/errors"
 
 	"github.com/wallarm/gotestwaf/internal/db"
 	"github.com/wallarm/gotestwaf/internal/version"
-	"github.com/wallarm/gotestwaf/resources"
 )
 
-const (
-	MARGECELL = 2 // marge top/bottom of cell
+const naMark = "N/A"
 
-	wallarmLink = "https://wallarm.com/?utm_campaign=gtw_tool&utm_medium=pdf&utm_source=github"
+//go:embed report_template.html
+var htmlTemplate string
 
-	cellWidth     = 10
-	cellHeight    = 10
-	lineBreakSize = 10
-	pageWidth     = 210
-)
+type grade struct {
+	Percentage  float32
+	Mark        string
+	ClassSuffix string
+}
 
-func tableClip(pdf *gofpdf.Fpdf, cols []float64, rows [][]string, fontSize float64) {
-	pagew, pageh := pdf.GetPageSize()
-	_ = pagew
-	mleft, mright, mtop, mbottom := pdf.GetMargins()
-	_ = mleft
-	_ = mright
-	_ = mtop
+type comparisonTableRow struct {
+	Name         string
+	ApiSec       grade
+	AppSec       grade
+	OverallScore grade
+}
 
-	maxContentWidth := pagew - mleft - mright
+type reportInfo struct {
+	IgnoreUnresolved bool
 
-	for j, row := range rows {
-		_, lineHt := pdf.GetFontSize()
-		height := lineHt + MARGECELL
+	WafName        string
+	Url            string
+	WafTestingDate string
+	GtwVersion     string
 
-		x, y := pdf.GetXY()
+	ApiChartScript *template.HTML
+	AppChartScript *template.HTML
 
-		// Founds max number of lines in the cell to create one size cells in the row.
-		nLines := make([]int, len(row))
-		var maxNLine int
-		for i, txt := range row {
-			width := cols[i] * maxContentWidth
-			nLines[i] = len(pdf.SplitLines([]byte(txt), width))
-			if maxNLine < nLines[i] {
-				maxNLine = nLines[i]
-			}
-		}
-		// add a new page if the height of the row doesn't fit on the page
-		if y+height*float64(maxNLine) >= pageh-mbottom {
-			pdf.AddPage()
-			x, y = pdf.GetXY()
-		}
-		for i, txt := range row {
-			if j == 0 {
-				pdf.SetFont("Arial", "B", fontSize)
-			} else {
-				pdf.SetFont("Arial", "", fontSize)
-			}
-			width := cols[i] * maxContentWidth
+	Overall grade
+	ApiSec  struct {
+		TrueNegative grade
+		TruePositive grade
+		Grade        grade
+	}
+	AppSec struct {
+		TrueNegative grade
+		TruePositive grade
+		Grade        grade
+	}
 
-			if nLines[i] < maxNLine {
-				// draw one line cell with height of highest cell in the row
-				pdf.MultiCell(width, height*float64(maxNLine), txt, "1", "", false)
-			} else {
-				// draw multiline cell with exposed height of one line
-				pdf.MultiCell(width, height, txt, "1", "", false)
-			}
+	ComparisonTable []comparisonTableRow
 
-			x += width
-			pdf.SetXY(x, y)
-		}
-		pdf.Ln(height * float64(maxNLine))
+	SummaryTable []db.SummaryTableRow
+
+	NegativeTests struct {
+		Blocked    []db.TestDetails
+		Bypassed   []db.TestDetails
+		Unresolved []db.TestDetails
+		Failed     []db.FailedDetails
+
+		BlockedRequestsNumber    int
+		BypassedRequestsNumber   int
+		UnresolvedRequestsNumber int
+		FailedRequestsNumber     int
+	}
+
+	PositiveTests struct {
+		Blocked    []db.TestDetails
+		Bypassed   []db.TestDetails
+		Unresolved []db.TestDetails
+		Failed     []db.FailedDetails
+
+		BlockedRequestsNumber    int
+		BypassedRequestsNumber   int
+		UnresolvedRequestsNumber int
+		FailedRequestsNumber     int
 	}
 }
 
-func tableClipFailed(pdf *gofpdf.Fpdf, cols []float64, rows [][]string, fontSize float64) {
-	pagew, pageh := pdf.GetPageSize()
-	_ = pagew
-	mleft, mright, mtop, mbottom := pdf.GetMargins()
-	_ = mleft
-	_ = mright
-	_ = mtop
-
-	maxContentWidth := pagew - mleft - mright
-
-	for j := 0; j < len(rows); j += 2 {
-		// process row with multiple cells: "Payload", "Test Case", "Encoder", "Placeholder"
-		row := rows[j]
-		_, lineHt := pdf.GetFontSize()
-		height := lineHt + MARGECELL
-
-		x, y := pdf.GetXY()
-
-		// Founds max number of lines in the cell to create one size cells in the row.
-		nLines := make([]int, len(row))
-		var maxNLine int
-		for i, txt := range row {
-			width := cols[i] * maxContentWidth
-			nLines[i] = len(pdf.SplitLines([]byte(txt), width))
-			if maxNLine < nLines[i] {
-				maxNLine = nLines[i]
-			}
-		}
-		// add a new page if the height of the row doesn't fit on the page
-		if y+height*float64(maxNLine) >= pageh-mbottom {
-			pdf.AddPage()
-			x, y = pdf.GetXY()
-		}
-		for i, txt := range row {
-			pdf.SetFont("Arial", "", fontSize)
-
-			width := cols[i] * maxContentWidth
-
-			if nLines[i] < maxNLine {
-				// draw one line cell with height of highest cell in the row
-				pdf.MultiCell(width, height*float64(maxNLine), txt, "1", "", false)
-			} else {
-				// draw multiline cell with exposed height of one line
-				pdf.MultiCell(width, height, txt, "1", "", false)
-			}
-
-			x += width
-			pdf.SetXY(x, y)
-		}
-		pdf.Ln(height * float64(maxNLine))
-
-		// process row with single cell: "Reason"
-		row = rows[j+1]
-
-		maxNLine = len(pdf.SplitLines([]byte(row[0]), maxContentWidth))
-
-		// add a new page if the height of the row doesn't fit on the page
-		if y+height*float64(maxNLine) >= pageh-mbottom {
-			pdf.AddPage()
-			x, y = pdf.GetXY()
-		}
-
-		pdf.MultiCell(maxContentWidth, height, row[0], "1", "", false)
-	}
+func isApiTest(setName string) bool {
+	return strings.Contains(setName, "api")
 }
 
-func ExportToPDF(s *db.Statistics, reportFile string, reportTime time.Time, wafName string, url string, ignoreUnresolved bool) error {
-	summaryHeader := []string{"Test set", "Test case", "Percentage, %", "Blocked", "Bypassed"}
-	if !ignoreUnresolved {
-		summaryHeader = append(summaryHeader, "Unresolved")
-	}
-	summaryHeader = append(summaryHeader, "Sent", "Failed")
-
-	baseHeader := []string{"Payload", "Test Case", "Encoder", "Placeholder", "Status"}
-	failedHeader := []string{"Payload", "Test Case", "Encoder", "Placeholder"}
-
-	negativeBypassRows := [][]string{baseHeader}
-	positiveFalseRows := [][]string{baseHeader}
-	positiveTrueRows := [][]string{baseHeader}
-	failedRows := [][]string{failedHeader}
-
-	for _, row := range s.Bypasses {
-		rowAppend := []string{
-			row.Payload,
-			row.TestCase,
-			row.Encoder,
-			row.Placeholder,
-			fmt.Sprintf("%d", row.Status),
-		}
-		negativeBypassRows = append(negativeBypassRows, rowAppend)
+func computeGrade(value float32, all int) grade {
+	g := grade{
+		Percentage:  0.0,
+		Mark:        naMark,
+		ClassSuffix: "na",
 	}
 
-	for _, row := range s.PositiveTests.FalsePositive {
-		rowAppend := []string{
-			row.Payload,
-			row.TestCase,
-			row.Encoder,
-			row.Placeholder,
-			fmt.Sprintf("%d", row.Status),
-		}
-		positiveFalseRows = append(positiveFalseRows, rowAppend)
+	if all == 0 {
+		return g
 	}
 
-	for _, row := range s.PositiveTests.TruePositive {
-		rowAppend := []string{
-			row.Payload,
-			row.TestCase,
-			row.Encoder,
-			row.Placeholder,
-			fmt.Sprintf("%d", row.Status),
-		}
-		positiveTrueRows = append(positiveTrueRows, rowAppend)
+	g.Percentage = value / float32(all)
+	if g.Percentage <= 1 {
+		g.Percentage *= 100
 	}
 
-	allFailedTests := append(s.Failed[:len(s.Failed):len(s.Failed)], s.PositiveTests.Failed...)
-	for _, row := range allFailedTests {
-		rowAppend := []string{
-			row.Payload,
-			row.TestCase,
-			row.Encoder,
-			row.Placeholder,
-		}
-		failedRows = append(failedRows, rowAppend, []string{row.Reason})
+	switch {
+	case g.Percentage >= 97.0:
+		g.Mark = "A+"
+		g.ClassSuffix = "a"
+	case g.Percentage >= 93.0:
+		g.Mark = "A"
+		g.ClassSuffix = "a"
+	case g.Percentage >= 90.0:
+		g.Mark = "A-"
+		g.ClassSuffix = "a"
+	case g.Percentage >= 87.0:
+		g.Mark = "B+"
+		g.ClassSuffix = "b"
+	case g.Percentage >= 83.0:
+		g.Mark = "B"
+		g.ClassSuffix = "b"
+	case g.Percentage >= 80.0:
+		g.Mark = "B-"
+		g.ClassSuffix = "b"
+	case g.Percentage >= 77.0:
+		g.Mark = "C+"
+		g.ClassSuffix = "c"
+	case g.Percentage >= 73.0:
+		g.Mark = "C"
+		g.ClassSuffix = "c"
+	case g.Percentage >= 70.0:
+		g.Mark = "C-"
+		g.ClassSuffix = "c"
+	case g.Percentage >= 67.0:
+		g.Mark = "D+"
+		g.ClassSuffix = "d"
+	case g.Percentage >= 63.0:
+		g.Mark = "D"
+		g.ClassSuffix = "d"
+	case g.Percentage >= 60.0:
+		g.Mark = "D-"
+		g.ClassSuffix = "d"
+	case g.Percentage < 60.0:
+		g.Mark = "F"
+		g.ClassSuffix = "f"
 	}
 
-	// Title page
-	pdf := gofpdf.New("P", "mm", "A4", "")
-	pdf.AddPage()
+	return g
+}
 
-	pdf.SetFont("Arial", "", 24)
-	pdf.Cell(cellWidth, cellHeight, "WAF Testing Results")
-	pdf.Ln(lineBreakSize)
-
-	pdf.SetFont("Arial", "B", 12)
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF Average Score: %.2f%%", s.WafScore))
-	pdf.Ln(lineBreakSize / 2)
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF Detection Score: %.2f%%", s.ResolvedBlockedRequestsPercentage))
-	pdf.Ln(lineBreakSize / 2)
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF Positive Tests Score: %.2f%%", s.PositiveTests.ResolvedTrueRequestsPercentage))
-	pdf.Ln(lineBreakSize)
-
-	pdf.SetFont("Arial", "", 12)
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF Name: %s", wafName))
-	pdf.Ln(lineBreakSize / 2)
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF URL: %s", url))
-	pdf.Ln(lineBreakSize / 2)
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("WAF Testing Date: %s", reportTime.Format("02 January 2006")))
-	pdf.Ln(lineBreakSize / 2)
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("GoTestWAF version:\n%s", version.Version))
-	pdf.Ln(lineBreakSize)
-
-	currentY := pdf.GetY()
-
-	// Charts
-	onlyNegativeChartFlow := false
-	// Show only negative chart if positive chart is not available
-	if s.PositiveTests.ResolvedRequestsNumber == 0 {
-		onlyNegativeChartFlow = true
+func ExportToPDF(
+	s *db.Statistics, reportFile string, reportTime time.Time,
+	wafName string, url string, ignoreUnresolved bool, toHTML bool,
+) error {
+	data := reportInfo{
+		IgnoreUnresolved: ignoreUnresolved,
+		WafName:          wafName,
+		Url:              url,
+		WafTestingDate:   reportTime.Format("02 January 2006"),
+		GtwVersion:       version.Version,
+		SummaryTable:     append(s.SummaryTable, s.PositiveTests.SummaryTable...),
+		ComparisonTable: []comparisonTableRow{
+			{
+				Name:         "ModSecurity PARANOIA=1",
+				ApiSec:       computeGrade(38.5, 1),
+				AppSec:       computeGrade(49.4, 1),
+				OverallScore: computeGrade(43.9, 1),
+			},
+			{
+				Name:         "ModSecurity PARANOIA=2",
+				ApiSec:       computeGrade(76.9, 1),
+				AppSec:       computeGrade(46.7, 1),
+				OverallScore: computeGrade(61.8, 1),
+			},
+			{
+				Name:         "ModSecurity PARANOIA=3",
+				ApiSec:       computeGrade(92.3, 1),
+				AppSec:       computeGrade(43.1, 1),
+				OverallScore: computeGrade(67.7, 1),
+			},
+			{
+				Name:         "ModSecurity PARANOIA=4",
+				ApiSec:       computeGrade(100, 1),
+				AppSec:       computeGrade(42.4, 1),
+				OverallScore: computeGrade(71.2, 1),
+			},
+		},
 	}
 
-	// Negative tests chart
-	if s.ResolvedRequestsNumber != 0 {
-		chartBuf, err := drawDetectionScoreChart(
-			s.BypassedRequestsNumber, s.BlockedRequestsNumber, s.FailedRequestsNumber,
-			s.BypassedRequestsNumber+s.BlockedRequestsNumber+s.FailedRequestsNumber,
-		)
-		if err != nil {
-			return errors.Wrap(err, "Plot generation error (negative tests)")
-		}
-		imageInfo := pdf.RegisterImageReader("Overall Plot", "PNG", chartBuf)
-		if pdf.Ok() {
-			imgWd, imgHt := imageInfo.Extent()
-			imgWd, imgHt = imgWd/2, imgHt/2
-			pdf.Image("Overall Plot", pageWidth/20, currentY,
-				imgWd, imgHt, onlyNegativeChartFlow, "PNG", 0, "")
+	var apiSecNegBlockedNum int
+	var apiSecNegNum int
+	var appSecNegBlockedNum int
+	var appSecNegNum int
+
+	for _, test := range s.Blocked {
+		if isApiTest(test.TestSet) {
+			apiSecNegNum++
+			apiSecNegBlockedNum++
+		} else {
+			appSecNegNum++
+			appSecNegBlockedNum++
 		}
 	}
-
-	// Positive tests chart
-	if s.PositiveTests.ResolvedRequestsNumber != 0 {
-		chartFalseBuf, err := drawPositiveTestScoreChart(
-			s.PositiveTests.BypassedRequestsNumber, s.PositiveTests.BlockedRequestsNumber, s.PositiveTests.FailedRequestsNumber,
-			s.PositiveTests.BypassedRequestsNumber+s.PositiveTests.BlockedRequestsNumber+s.PositiveTests.FailedRequestsNumber,
-		)
-		if err != nil {
-			return errors.Wrap(err, "Plot generation error (positive tests)")
-		}
-		imageInfoFalse := pdf.RegisterImageReader("False Pos Plot", "PNG", chartFalseBuf)
-		if pdf.Ok() {
-			imgWd, imgHt := imageInfoFalse.Extent()
-			imgWd, imgHt = imgWd/2, imgHt/2
-			pdf.Image("False Pos Plot", pageWidth-imgWd-pageWidth/20, currentY,
-				imgWd, imgHt, true, "PNG", 0, "")
+	for _, test := range s.Bypasses {
+		if isApiTest(test.TestSet) {
+			apiSecNegNum++
+		} else {
+			appSecNegNum++
 		}
 	}
 
-	// Brief numbers
-	unresolvedRequestsNumber := s.UnresolvedRequestsNumber + s.PositiveTests.UnresolvedRequestsNumber
-	failedRequestsNumber := s.FailedRequestsNumber + s.PositiveTests.FailedRequestsNumber
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("Total: %v bypasses in %v tests, %v unresolved cases, %v failed cases / %v test cases",
-		s.BypassedRequestsNumber, s.ResolvedRequestsNumber, unresolvedRequestsNumber, failedRequestsNumber, s.OverallRequests))
-	pdf.Ln(lineBreakSize)
+	var apiSecPosBypassNum int
+	var apiSecPosNum int
+	var appSecPosBypassNum int
+	var appSecPosNum int
 
-	// Summary table
-	summaryTable := [][]string{summaryHeader}
-	for _, row := range s.SummaryTable {
-		rowAppend := []string{
-			row.TestSet,
-			row.TestCase,
-			fmt.Sprintf("%.2f", row.Percentage),
-			fmt.Sprintf("%d", row.Blocked),
-			fmt.Sprintf("%d", row.Bypassed),
+	for _, test := range s.PositiveTests.TruePositive {
+		if isApiTest(test.TestSet) {
+			apiSecPosNum++
+			apiSecPosBypassNum++
+		} else {
+			appSecPosNum++
+			appSecPosBypassNum++
 		}
-		if !ignoreUnresolved {
-			rowAppend = append(rowAppend, fmt.Sprintf("%d", row.Unresolved))
+	}
+	for _, test := range s.PositiveTests.FalsePositive {
+		if isApiTest(test.TestSet) {
+			apiSecPosNum++
+		} else {
+			appSecPosNum++
 		}
-		rowAppend = append(rowAppend,
-			fmt.Sprintf("%d", row.Sent),
-			fmt.Sprintf("%d", row.Failed),
-		)
-		summaryTable = append(summaryTable, rowAppend)
 	}
 
-	columns := []float64{0.17, 0.16, 0.16, 0.1, 0.11, 0.13, 0.08, 0.08}
-	if ignoreUnresolved {
-		columns = append(columns[:5], columns[6:]...)
+	divider := 0
+	data.ApiSec.TrueNegative = computeGrade(float32(apiSecNegBlockedNum), apiSecNegNum)
+	data.ApiSec.TruePositive = computeGrade(float32(apiSecPosBypassNum), apiSecPosNum)
+	if data.ApiSec.TrueNegative.Mark != naMark {
+		divider++
 	}
-	tableClip(pdf, columns, summaryTable, 10)
-
-	// Wallarm logo
-	reader := bytes.NewReader(resources.WallarmLogo)
-	pdf.RegisterImageReader("wallarm-logo", "PNG", reader)
-	pdf.Image("wallarm-logo", 15, 280, 20, 0, false, "", 0, wallarmLink)
-
-	// Positive tests page
-	pdf.AddPage()
-	pdf.SetFont("Arial", "", 24)
-	pdf.Cell(cellWidth, cellHeight, "Positive Tests in Details")
-	pdf.Ln(lineBreakSize)
-
-	columns = []float64{0.51, 0.15, 0.12, 0.14, 0.08}
-
-	// False Positive payloads block
-	pdf.SetFont("Arial", "", 12)
-	pdf.Cell(cellWidth, cellHeight,
-		fmt.Sprintf("\n%d false positive requests identified as blocked (failed, bad behavior)",
-			s.PositiveTests.BlockedRequestsNumber),
+	if data.ApiSec.TruePositive.Mark != naMark {
+		divider++
+	}
+	data.ApiSec.Grade = computeGrade(
+		data.ApiSec.TrueNegative.Percentage+
+			data.ApiSec.TruePositive.Percentage,
+		divider,
 	)
-	pdf.Ln(lineBreakSize)
-	pdf.SetFont("Arial", "", 10)
 
-	tableClip(pdf, columns, positiveFalseRows, 10)
+	divider = 0
 
-	// True Positive payloads block
-	pdf.SetFont("Arial", "", 12)
-	pdf.Cell(cellWidth, cellHeight,
-		fmt.Sprintf("\n%d true positive requests identified as bypassed (passed, good behavior)",
-			s.PositiveTests.BypassedRequestsNumber),
+	data.AppSec.TrueNegative = computeGrade(float32(appSecNegBlockedNum), appSecNegNum)
+	data.AppSec.TruePositive = computeGrade(float32(appSecPosBypassNum), appSecPosNum)
+	if data.AppSec.TrueNegative.Mark != naMark {
+		divider++
+	}
+	if data.AppSec.TruePositive.Mark != naMark {
+		divider++
+	}
+	data.AppSec.Grade = computeGrade(
+		data.AppSec.TrueNegative.Percentage+
+			data.AppSec.TruePositive.Percentage,
+		divider,
 	)
-	pdf.Ln(lineBreakSize)
-	pdf.SetFont("Arial", "", 10)
 
-	tableClip(pdf, columns, positiveTrueRows, 10)
+	divider = 0
+	if data.ApiSec.Grade.Mark != naMark {
+		divider++
+	}
+	if data.AppSec.Grade.Mark != naMark {
+		divider++
+	}
+	data.Overall = computeGrade(
+		data.ApiSec.Grade.Percentage+data.AppSec.Grade.Percentage, divider)
 
-	// Malicious payloads page
-	pdf.AddPage()
-	pdf.SetFont("Arial", "", 24)
-	pdf.Cell(cellWidth, cellHeight, "Bypasses in Details")
-	pdf.Ln(lineBreakSize)
-
-	pdf.SetFont("Arial", "", 12)
-	pdf.Cell(cellWidth, cellHeight,
-		fmt.Sprintf("\n%d malicious requests have bypassed the WAF", s.BypassedRequestsNumber))
-	pdf.Ln(lineBreakSize)
-
-	pdf.SetFont("Arial", "", 10)
-	tableClip(pdf, columns, negativeBypassRows, 10)
-
-	if !ignoreUnresolved {
-		unresolvedRows := [][]string{baseHeader}
-		allUnresolvedTests := append(
-			s.Unresolved[:len(s.Unresolved):len(s.Unresolved)],
-			s.PositiveTests.Unresolved...)
-		for _, row := range allUnresolvedTests {
-			rowAppend := []string{
-				row.Payload,
-				row.TestCase,
-				row.Encoder,
-				row.Placeholder,
-				fmt.Sprintf("%d", row.Status),
-			}
-			unresolvedRows = append(unresolvedRows, rowAppend)
-		}
-
-		pdf.AddPage()
-		pdf.SetFont("Arial", "", 24)
-		pdf.Cell(cellWidth, cellHeight, "Unresolved Test Cases")
-		pdf.Ln(lineBreakSize)
-		pdf.SetFont("Arial", "", 12)
-		pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("\n%d requests indentified as blocked and passed or as not-blocked and not-passed",
-			len(allUnresolvedTests)))
-		pdf.Ln(lineBreakSize)
-		pdf.SetFont("Arial", "", 10)
-
-		tableClip(pdf, columns, unresolvedRows, 10)
+	apiChart, appChart, err := generateCharts(s)
+	if err != nil {
+		return err
 	}
 
-	// Failed requests
-	pdf.AddPage()
-	pdf.SetFont("Arial", "", 24)
-	pdf.Cell(cellWidth, cellHeight, "Failed Test Cases")
-	pdf.Ln(lineBreakSize)
-	pdf.SetFont("Arial", "", 12)
-	pdf.Cell(cellWidth, cellHeight, fmt.Sprintf("\n%d failed requests",
-		len(allFailedTests)))
-	pdf.Ln(lineBreakSize)
-	pdf.SetFont("Arial", "", 10)
+	if apiChart != nil {
+		v := template.HTML(*apiChart)
+		data.ApiChartScript = &v
+	}
+	if appChart != nil {
+		v := template.HTML(*appChart)
+		data.AppChartScript = &v
+	}
 
-	columns = []float64{0.59, 0.15, 0.12, 0.14}
-	tableClip(pdf, columns, failedRows[:1], 8)
-	tableClipFailed(pdf, columns, failedRows[1:], 8)
+	data.NegativeTests.Blocked = s.Blocked
+	data.NegativeTests.Bypassed = s.Bypasses
+	data.NegativeTests.Unresolved = s.Unresolved
+	data.NegativeTests.Failed = s.Failed
+	data.NegativeTests.BlockedRequestsNumber = s.BlockedRequestsNumber
+	data.NegativeTests.BypassedRequestsNumber = s.BypassedRequestsNumber
+	data.NegativeTests.UnresolvedRequestsNumber = s.UnresolvedRequestsNumber
+	data.NegativeTests.FailedRequestsNumber = s.FailedRequestsNumber
 
-	if err := pdf.OutputFileAndClose(reportFile); err != nil {
-		return errors.Wrap(err, "PDF generation error")
+	data.PositiveTests.Blocked = s.PositiveTests.FalsePositive
+	data.PositiveTests.Bypassed = s.PositiveTests.TruePositive
+	data.PositiveTests.Unresolved = s.PositiveTests.Unresolved
+	data.PositiveTests.Failed = s.PositiveTests.Failed
+	data.PositiveTests.BlockedRequestsNumber = s.PositiveTests.BlockedRequestsNumber
+	data.PositiveTests.BypassedRequestsNumber = s.PositiveTests.BypassedRequestsNumber
+	data.PositiveTests.UnresolvedRequestsNumber = s.PositiveTests.UnresolvedRequestsNumber
+	data.PositiveTests.FailedRequestsNumber = s.PositiveTests.FailedRequestsNumber
+
+	templ := template.Must(template.New("report").Funcs(template.FuncMap{
+		"script": func(b []byte) template.HTML {
+			return template.HTML(b)
+		},
+	}).Parse(htmlTemplate))
+
+	var buffer bytes.Buffer
+
+	err = templ.Execute(io.MultiWriter(&buffer), data)
+	if err != nil {
+		return err
+	}
+
+	if toHTML {
+		report, err := os.Create(reportFile + ".html")
+		if err != nil {
+			return err
+		}
+		defer report.Close()
+
+		_, err = report.Write(buffer.Bytes())
+		if err != nil {
+			return err
+		}
+	} else {
+		err = renderToPDF(buffer.Bytes(), reportFile+".pdf")
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

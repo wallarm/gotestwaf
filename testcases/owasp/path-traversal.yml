@@ -20,3 +20,5 @@ placeholder:
   - HTMLForm
   - HTMLMultipartForm
   - JSONRequest
+type: "Path Traversal"
+...

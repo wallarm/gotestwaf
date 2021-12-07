@@ -16,3 +16,5 @@ placeholder:
   - URLParam
   - HTMLForm
   - HTMLMultipartForm
+type: "SST Injection"
+...

@@ -11,3 +11,5 @@ placeholder:
   - URLParam
   - HTMLForm
   - HTMLMultipartForm
+type: "Mail Injection"
+...

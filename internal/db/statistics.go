@@ -62,9 +62,11 @@ type SummaryTableRow struct {
 type TestDetails struct {
 	Payload     string
 	TestCase    string
+	TestSet     string
 	Encoder     string
 	Placeholder string
 	Status      int
+	Type        string
 }
 
 type FailedDetails struct {
@@ -73,6 +75,7 @@ type FailedDetails struct {
 	Encoder     string
 	Placeholder string
 	Reason      string
+	Type        string
 }
 
 func calculatePercentage(first, second int) float32 {
@@ -228,9 +231,11 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 		testDetails := TestDetails{
 			Payload:     blockedTest.Payload,
 			TestCase:    blockedTest.Case,
+			TestSet:     blockedTest.Set,
 			Encoder:     blockedTest.Encoder,
 			Placeholder: blockedTest.Placeholder,
 			Status:      blockedTest.ResponseStatusCode,
+			Type:        blockedTest.Type,
 		}
 
 		if isPositiveTest(blockedTest.Set) {
@@ -244,9 +249,11 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 		testDetails := TestDetails{
 			Payload:     passedTest.Payload,
 			TestCase:    passedTest.Case,
+			TestSet:     passedTest.Set,
 			Encoder:     passedTest.Encoder,
 			Placeholder: passedTest.Placeholder,
 			Status:      passedTest.ResponseStatusCode,
+			Type:        passedTest.Type,
 		}
 
 		if isPositiveTest(passedTest.Set) {
@@ -260,9 +267,11 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 		testDetails := TestDetails{
 			Payload:     unresolvedTest.Payload,
 			TestCase:    unresolvedTest.Case,
+			TestSet:     unresolvedTest.Set,
 			Encoder:     unresolvedTest.Encoder,
 			Placeholder: unresolvedTest.Placeholder,
 			Status:      unresolvedTest.ResponseStatusCode,
+			Type:        unresolvedTest.Type,
 		}
 
 		if ignoreUnresolved || nonBlockedAsPassed {
@@ -287,6 +296,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 			Encoder:     failedTest.Encoder,
 			Placeholder: failedTest.Placeholder,
 			Reason:      failedTest.Reason,
+			Type:        failedTest.Type,
 		}
 
 		if isPositiveTest(failedTest.Set) {

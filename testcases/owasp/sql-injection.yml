@@ -16,3 +16,5 @@ placeholder:
   - Header
   - HTMLForm
   - HTMLMultipartForm
+type: "SQL Injection"
+...

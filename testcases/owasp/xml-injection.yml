@@ -37,3 +37,5 @@ encoder:
   - Plain
 placeholder:
   - XMLBody
+type: "XXE"
+...

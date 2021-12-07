@@ -12,3 +12,5 @@ placeholder:
   - HTMLForm
   - HTMLMultipartForm
   - JSONRequest
+type: "NoSQL Injection"
+...

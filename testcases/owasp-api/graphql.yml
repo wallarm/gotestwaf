@@ -8,3 +8,5 @@ placeholder:
   - URLParam
   - HTMLForm
   - HTMLMultipartForm
+type: "GraphQL"
+...

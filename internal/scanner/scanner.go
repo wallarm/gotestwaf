@@ -31,6 +31,7 @@ type testWork struct {
 	payload         string
 	encoder         string
 	placeholder     string
+	testType        string
 	isTruePositive  bool
 	testHeaderValue string
 }
@@ -229,6 +230,7 @@ func (s *Scanner) produceTests(ctx context.Context, n int) <-chan *testWork {
 							payload,
 							e,
 							placeholder,
+							t.Type,
 							t.IsTruePositive,
 							testHeaderValue,
 						}
@@ -271,6 +273,7 @@ func (s *Scanner) scanURL(ctx context.Context, url string, blockConn bool, w *te
 		Encoder:            w.encoder,
 		Placeholder:        w.placeholder,
 		ResponseStatusCode: statusCode,
+		Type:               w.testType,
 	}
 
 	var blockedByReset bool

@@ -9,3 +9,5 @@ placeholder:
   - URLParam
   - HTMLForm
   - HTMLMultipartForm
+type: "RCE"
+...

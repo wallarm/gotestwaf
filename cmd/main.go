@@ -183,11 +183,11 @@ func run(logger *log.Logger) error {
 	reportTime := time.Now()
 	reportSaveTime := reportTime.Format("2006-January-02-15-04-05")
 
-	reportFile := filepath.Join(cfg.ReportPath, fmt.Sprintf("%s-%s-%s.pdf", reportPrefix, cfg.WAFName, reportSaveTime))
+	reportFile := filepath.Join(cfg.ReportPath, fmt.Sprintf("%s-%s-%s", reportPrefix, cfg.WAFName, reportSaveTime))
 
 	stat := db.GetStatistics(cfg.IgnoreUnresolved, cfg.NonBlockedAsPassed)
 	report.RenderConsoleTable(stat, reportTime, wafName, cfg.IgnoreUnresolved)
-	err = report.ExportToPDF(stat, reportFile, reportTime, cfg.WAFName, cfg.URL, cfg.IgnoreUnresolved)
+	err = report.ExportToPDF(stat, reportFile, reportTime, cfg.WAFName, cfg.URL, cfg.IgnoreUnresolved, cfg.RenderToHTML)
 	if err != nil {
 		return errors.Wrap(err, "PDF exporting")
 	}
@@ -246,6 +246,7 @@ Options:
 	flag.String("testCase", "", "If set then only this test case will be run")
 	flag.String("testSet", "", "If set then only this test set's cases will be run")
 	flag.String("reportPath", reportPath, "A directory to store reports")
+	flag.Bool("renderToHTML", false, "Save report as HTML page instead of PDF")
 	flag.String("testCasesPath", testCasesPath, "Path to a folder with test cases")
 	flag.String("wafName", wafName, "Name of the WAF product")
 	flag.Bool("ignoreUnresolved", false, "If true, unresolved test cases will be considered as bypassed (affect score and results)")

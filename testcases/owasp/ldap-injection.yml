@@ -10,3 +10,5 @@ placeholder:
   - HTMLForm
   - HTMLMultipartForm
   - JSONRequest
+type: "LDAP Injection"
+...

@@ -10,3 +10,5 @@ placeholder:
   - URLPath
   - JSONRequest
   - Header
+type: "RCE"
+...
