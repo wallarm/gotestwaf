@@ -210,6 +210,8 @@ PDF report is ready: reports/waf-evaluation-report-generic-2021-October-07-16-06
 
 The report file `waf-evaluation-report-<date>.pdf` is available in the `reports` folder of the user directory.
 
+![report](./report.jpeg)
+
 ## Other options to run GoTestWAF
 
 In addition to running the GoTestWAF Docker image downloaded from Docker Hub, you can run GoTestWAF by using the following options:
