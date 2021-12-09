@@ -211,7 +211,6 @@ PDF report is ready: reports/waf-evaluation-report-generic-2021-October-07-16-06
 The report file `waf-evaluation-report-<date>.pdf` is available in the `reports` folder of the user directory.
 
 ![report](./report.jpeg)
-![schema](https://assets.website-files.com/5ff66329429d880392f6cba2/61976ae6f3380973f3a319ff_Firewall%20vs.%20Web%20Application%20Firewall.png)
 
 ## Other options to run GoTestWAF
 
