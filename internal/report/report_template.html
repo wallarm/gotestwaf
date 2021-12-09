@@ -315,7 +315,7 @@
 
 <body>
     <main class="container">
-        <h1 class="title">API Security / WAF Testing Results</h1>
+        <h1 class="title">API / Application Security Testing Results</h1>
         <div class="about about__grade-{{.Overall.ClassSuffix}}">
             <div class="grade">
                 <h4 class="grade__title">Overall grade:</h4>
@@ -332,7 +332,7 @@
             <div class="desc">
                 <div class="desc__info">
                     <div class="desc__info-row">
-                        <span class="row__name">WAF name</span>
+                        <span class="row__name">Project name</span>
                         :
                         <span class="row__content">{{.WafName}}</span>
                         <br>
@@ -340,7 +340,7 @@
                         :
                         <span class="row__content">{{.Url}}</span>
                         <br>
-                        <span class="row__name">WAF Testing Date</span>
+                        <span class="row__name">Testing Date</span>
                         :
                         <span class="row__content">{{.WafTestingDate}}</span>
                         <br>
@@ -569,7 +569,7 @@
             </div>
             {{end}}
             <h3 class="detail__sub-title">Bypasses in Details</h3>
-            <p>{{.NegativeTests.BypassedRequestsNumber}} malicious requests have bypassed the WAF</p>
+            <p>{{.NegativeTests.BypassedRequestsNumber}} malicious requests have bypassed the security solution</p>
             {{if .NegativeTests.BypassedRequestsNumber}}
             <div class="positive__grid">
                 <div class="positive__grid--head">

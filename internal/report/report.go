@@ -48,8 +48,8 @@ func RenderConsoleTable(s *db.Statistics, reportTime time.Time, wafName string, 
 
 	footerNegativeTests := []string{
 		fmt.Sprintf("Date:\n%s", reportTime.Format("2006-01-02")),
-		fmt.Sprintf("WAF Name:\n%s", wafName),
-		fmt.Sprintf("WAF Average Score:\n%.2f%%", s.WafScore),
+		fmt.Sprintf("Project Name:\n%s", wafName),
+		fmt.Sprintf("Average Score:\n%.2f%%", s.WafScore),
 		fmt.Sprintf("Blocked (Resolved):\n%d/%d (%.2f%%)",
 			s.BlockedRequestsNumber,
 			s.ResolvedRequestsNumber,
@@ -108,8 +108,8 @@ func RenderConsoleTable(s *db.Statistics, reportTime time.Time, wafName string, 
 
 	footerPositiveTests := []string{
 		fmt.Sprintf("Date:\n%s", reportTime.Format("2006-01-02")),
-		fmt.Sprintf("WAF Name:\n%s", wafName),
-		fmt.Sprintf("WAF Positive Score:\n%.2f%%", s.PositiveTests.ResolvedTrueRequestsPercentage),
+		fmt.Sprintf("Project Name:\n%s", wafName),
+		fmt.Sprintf("False Positive Score:\n%.2f%%", s.PositiveTests.ResolvedTrueRequestsPercentage),
 		fmt.Sprintf("Blocked (Resolved):\n%d/%d (%.2f%%)",
 			s.PositiveTests.BlockedRequestsNumber,
 			s.PositiveTests.ResolvedRequestsNumber,
