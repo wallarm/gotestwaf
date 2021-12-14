@@ -184,6 +184,11 @@ func run(logger *log.Logger) error {
 	reportSaveTime := reportTime.Format("2006-January-02-15-04-05")
 
 	reportFile := filepath.Join(cfg.ReportPath, fmt.Sprintf("%s-%s-%s", reportPrefix, cfg.WAFName, reportSaveTime))
+	if cfg.RenderToHTML {
+		reportFile += ".html"
+	} else {
+		reportFile += ".pdf"
+	}
 
 	stat := db.GetStatistics(cfg.IgnoreUnresolved, cfg.NonBlockedAsPassed)
 	report.RenderConsoleTable(stat, reportTime, wafName, cfg.IgnoreUnresolved)
@@ -191,7 +196,7 @@ func run(logger *log.Logger) error {
 	if err != nil {
 		return errors.Wrap(err, "PDF exporting")
 	}
-	fmt.Printf("\nPDF report is ready: %s\n", reportFile)
+	fmt.Printf("\nreport is ready: %s\n", reportFile)
 
 	payloadFiles := filepath.Join(cfg.ReportPath, fmt.Sprintf("%s-%s-%s.csv", payloadPrefix, cfg.WAFName, reportSaveTime))
 	err = db.ExportPayloads(payloadFiles)
