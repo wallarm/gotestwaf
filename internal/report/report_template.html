@@ -579,7 +579,7 @@
                     <div class="positive__grid--head-item">Placeholder</div>
                     <div class="positive__grid--head-item">Status</div>
                 </div>
-                {{range $row := .NegativeTests.Blocked}}
+                {{range $row := .NegativeTests.Bypassed}}
                 <div class="positive__grid--row">
                     <div class="positive__grid--row-item mono">{{$row.Payload}}</div>
                     <div class="positive__grid--row-item">{{$row.TestCase}}</div>
