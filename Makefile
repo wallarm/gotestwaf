@@ -17,11 +17,11 @@ modsec:
 		owasp/modsecurity-crs:3.3.2-nginx
 
 scan_local:
-	go run ./cmd --url=http://127.0.0.1:8080/ --verbose
+	go run ./cmd --url=http://127.0.0.1:8080/ --verbose --workers 200
 
 scan_local_from_docker:
 	docker run -v ${PWD}/reports:/app/reports --network="host" \
-		gotestwaf --url=http://127.0.0.1:8080/ --verbose
+		gotestwaf --url=http://127.0.0.1:8080/ --verbose --workers 200
 
 test:
 	go test -count=1 -v ./...
