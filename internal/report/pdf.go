@@ -318,7 +318,7 @@ func ExportToPDF(
 	}
 
 	if toHTML {
-		report, err := os.Create(reportFile + ".html")
+		report, err := os.Create(reportFile)
 		if err != nil {
 			return err
 		}
@@ -329,11 +329,13 @@ func ExportToPDF(
 			return err
 		}
 	} else {
-		err = renderToPDF(buffer.Bytes(), reportFile+".pdf")
+		err = renderToPDF(buffer.Bytes(), reportFile)
 		if err != nil {
 			return err
 		}
 	}
 
-	return nil
+	err = os.Chmod(reportFile, 0644)
+
+	return err
 }
