@@ -16,6 +16,33 @@ modsec:
 		-v ${PWD}/resources/default.conf:/etc/nginx/conf.d/default.conf \
 		owasp/modsecurity-crs:3.3.2-nginx
 
+modsec_stat: gotestwaf
+	docker pull owasp/modsecurity-crs:3.3.2-nginx
+	docker run --rm -d -p 8080:80 -p 8443:443 -e PARANOIA=1 --name modsec_paranoia_1 \
+		-v ${PWD}/resources/default.conf:/etc/nginx/conf.d/default.conf \
+		owasp/modsecurity-crs:3.3.2-nginx
+	docker run -v ${PWD}/reports:/app/reports --network="host" \
+		gotestwaf --url=http://127.0.0.1:8080/ --verbose --workers 100 --ignoreUnresolved --wafName "ModSecurity PARANOIA 1"
+	docker kill modsec_paranoia_1
+	docker run --rm -d -p 8080:80 -p 8443:443 -e PARANOIA=2 --name modsec_paranoia_2 \
+		-v ${PWD}/resources/default.conf:/etc/nginx/conf.d/default.conf \
+		owasp/modsecurity-crs:3.3.2-nginx
+	docker run -v ${PWD}/reports:/app/reports --network="host" \
+		gotestwaf --url=http://127.0.0.1:8080/ --verbose --workers 100 --ignoreUnresolved --wafName "ModSecurity PARANOIA 2"
+	docker kill modsec_paranoia_2
+	docker run --rm -d -p 8080:80 -p 8443:443 -e PARANOIA=3 --name modsec_paranoia_3 \
+		-v ${PWD}/resources/default.conf:/etc/nginx/conf.d/default.conf \
+		owasp/modsecurity-crs:3.3.2-nginx
+	docker run -v ${PWD}/reports:/app/reports --network="host" \
+		gotestwaf --url=http://127.0.0.1:8080/ --verbose --workers 100 --ignoreUnresolved --wafName "ModSecurity PARANOIA 3"
+	docker kill modsec_paranoia_3
+	docker run --rm -d -p 8080:80 -p 8443:443 -e PARANOIA=4 --name modsec_paranoia_4 \
+		-v ${PWD}/resources/default.conf:/etc/nginx/conf.d/default.conf \
+		owasp/modsecurity-crs:3.3.2-nginx
+	docker run -v ${PWD}/reports:/app/reports --network="host" \
+		gotestwaf --url=http://127.0.0.1:8080/ --verbose --workers 100 --ignoreUnresolved --wafName "ModSecurity PARANOIA 4"
+	docker kill modsec_paranoia_4
+
 scan_local:
 	go run ./cmd --url=http://127.0.0.1:8080/ --verbose --workers 200
 
