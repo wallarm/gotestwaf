@@ -162,27 +162,27 @@ func ExportToPDF(
 		ComparisonTable: []comparisonTableRow{
 			{
 				Name:         "ModSecurity PARANOIA=1",
-				ApiSec:       computeGrade(38.5, 1),
-				AppSec:       computeGrade(49.4, 1),
-				OverallScore: computeGrade(43.9, 1),
+				ApiSec:       computeGrade(42.9, 1),
+				AppSec:       computeGrade(30.3, 1),
+				OverallScore: computeGrade(36.6, 1),
 			},
 			{
 				Name:         "ModSecurity PARANOIA=2",
-				ApiSec:       computeGrade(76.9, 1),
-				AppSec:       computeGrade(46.7, 1),
-				OverallScore: computeGrade(61.8, 1),
+				ApiSec:       computeGrade(78.6, 1),
+				AppSec:       computeGrade(34.7, 1),
+				OverallScore: computeGrade(56.6, 1),
 			},
 			{
 				Name:         "ModSecurity PARANOIA=3",
-				ApiSec:       computeGrade(92.3, 1),
-				AppSec:       computeGrade(43.1, 1),
-				OverallScore: computeGrade(67.7, 1),
+				ApiSec:       computeGrade(92.9, 1),
+				AppSec:       computeGrade(39.4, 1),
+				OverallScore: computeGrade(66.2, 1),
 			},
 			{
 				Name:         "ModSecurity PARANOIA=4",
 				ApiSec:       computeGrade(100, 1),
-				AppSec:       computeGrade(42.4, 1),
-				OverallScore: computeGrade(71.2, 1),
+				AppSec:       computeGrade(40.8, 1),
+				OverallScore: computeGrade(70.4, 1),
 			},
 		},
 	}
