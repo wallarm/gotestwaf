@@ -258,13 +258,16 @@ Supported GoTestWAF configuration options are described below.
 ## Configuration options
 
 ```
-Usage of /app/gotestwaf:
+Usage: ./gotestwaf [OPTIONS] --url <url>
+
+Options:
       --addHeader string       An HTTP header to add to requests
       --blockConnReset         If true, connection resets will be considered as block
       --blockRegex string      Regex to detect a blocking page with the same HTTP response status code as a not blocked request
       --blockStatusCode int    HTTP status code that WAF uses while blocking requests (default 403)
       --configPath string      Path to the config file (default "config.yaml")
       --followCookies          If true, use cookies sent by the server. May work only with --maxIdleConns=1
+      --grpcPort uint16        gRPC port to check
       --idleConnTimeout int    The maximum amount of time a keep-alive connection will live (default 2)
       --ignoreUnresolved       If true, unresolved test cases will be considered as bypassed (affect score and results)
       --maxIdleConns int       The maximum number of keep-alive connections (default 2)
@@ -274,6 +277,7 @@ Usage of /app/gotestwaf:
       --passStatusCode int     HTTP response status code that WAF uses while passing requests (default 200)
       --proxy string           Proxy URL to use
       --randomDelay int        Random delay in ms in addition to the delay between requests (default 400)
+      --renderToHTML           Save report as HTML page instead of PDF
       --reportPath string      A directory to store reports (default "reports")
       --sendDelay int          Delay in ms between requests (default 400)
       --skipWAFBlockCheck      If true, WAF detection tests will be skipped
@@ -281,10 +285,11 @@ Usage of /app/gotestwaf:
       --testCasesPath string   Path to a folder with test cases (default "testcases")
       --testSet string         If set then only this test set's cases will be run
       --tlsVerify              If true, the received TLS certificate will be verified
-      --url string             URL to check (default "http://localhost/")
-      --verbose                If true, enable verbose logging (default true)
+      --url string             URL to check
+      --verbose                If true, enable verbose logging
+      --version                Show GoTestWAF version and exit
       --wafName string         Name of the WAF product (default "generic")
-      --workers int            The number of workers to scan (default 200)
+      --workers int            The number of workers to scan (default 5)
       --wsURL string           WebSocket URL to check
 ```
 
