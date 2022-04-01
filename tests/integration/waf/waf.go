@@ -45,8 +45,13 @@ func New(errChan chan<- error, casesMap *config.TestCasesMap) *WAF {
 		Handler: mux,
 	}
 
+	grpcServer := &grpcServer{
+		errChan:  errChan,
+		casesMap: casesMap,
+	}
+
 	waf.grpcServer = grpc.NewServer()
-	pb.RegisterServiceFooBarServer(waf.grpcServer, &grpcServer{})
+	pb.RegisterServiceFooBarServer(waf.grpcServer, grpcServer)
 
 	return waf
 }
@@ -192,7 +197,7 @@ func (waf *WAF) httpRequestHandler(w http.ResponseWriter, r *http.Request) {
 		value, err = decodePlain(placeholderValue)
 	case "XMLEntity":
 		value, err = decodeXMLEntity(placeholderValue)
-	case "GRPC":
+	case "gRPC":
 		value, err = decodeGRPC(placeholderValue)
 	default:
 		waf.errChan <- fmt.Errorf("unknown encoder: %s", encoder)
@@ -203,7 +208,7 @@ func (waf *WAF) httpRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if matched, _ := regexp.MatchString("bypassed", value); matched {
-		w.WriteHeader(http.StatusNonAuthoritativeInfo)
+		w.WriteHeader(http.StatusOK)
 	} else if matched, _ = regexp.MatchString("blocked", value); matched {
 		w.WriteHeader(http.StatusForbidden)
 	} else {

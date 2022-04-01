@@ -71,14 +71,10 @@ func runGoTestWAF(ctx context.Context, testCases []db.Case) error {
 		return errors.Wrap(err, "HTTP client")
 	}
 
-	cfg.URL = "http://" + test_config.GRPCAddress
-
 	grpcConn, err := scanner.NewGRPCConn(cfg)
 	if err != nil {
 		return errors.Wrap(err, "gRPC client")
 	}
-
-	cfg.URL = "http://" + test_config.HTTPAddress
 
 	logger.Printf("gRPC pre-check: IN PROGRESS")
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -41,12 +42,19 @@ type GRPCConn struct {
 }
 
 func NewGRPCConn(cfg *config.Config) (*GRPCConn, error) {
-	isTLS, host, err := tlsAndHostFromUrl(cfg.URL)
+	g := &GRPCConn{isAvailable: true}
+
+	if cfg.GRPCPort == 0 {
+		g.isAvailable = false
+		return g, nil
+	}
+
+	isTLS, host, err := tlsAndHostFromUrl(cfg.URL, cfg.GRPCPort)
 	if err != nil {
 		return nil, err
 	}
 
-	g := &GRPCConn{host: host}
+	g.host = host
 
 	if isTLS {
 		g.tlsConf = &tls.Config{InsecureSkipVerify: !cfg.TLSVerify}
@@ -144,14 +152,20 @@ func (g *GRPCConn) healthCheckTest() (bool, error) {
 }
 
 func (g *GRPCConn) CheckAvailability() (bool, error) {
+	if !g.isAvailable {
+		return false, nil
+	}
+
 	ok, err := g.httpTest()
 	if err != nil {
+		g.isAvailable = false
 		return false, errors.Wrap(err, "checking gRPC availability via HTTP test")
 	}
 
 	if ok {
 		ok, err = g.healthCheckTest()
 		if err != nil {
+			g.isAvailable = false
 			return false, errors.Wrap(err, "checking gRPC availability via gRPC health check")
 		}
 	}
@@ -174,10 +188,10 @@ func (g *GRPCConn) Send(ctx context.Context, encoderName, payload string) (body 
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, grpcServerDetectionTimeout)
 	defer cancel()
 
-	var conn *grpc.ClientConn
-
 	// Set up a connection to the server.
 	if g.conn == nil {
+		var conn *grpc.ClientConn
+
 		switch g.transportCreds {
 		case nil:
 			conn, err = grpc.DialContext(ctxWithTimeout, g.host, grpc.WithInsecure(), grpc.WithBlock())
@@ -191,7 +205,7 @@ func (g *GRPCConn) Send(ctx context.Context, encoderName, payload string) (body 
 		g.conn = conn
 	}
 
-	client := grpcSrv.NewServiceFooBarClient(conn)
+	client := grpcSrv.NewServiceFooBarClient(g.conn)
 
 	resp, err := client.Foo(ctx, &grpcSrv.Request{Value: encodedPayload})
 	if err != nil {
@@ -256,7 +270,7 @@ func (g *GRPCConn) Close() error {
 }
 
 // returns isTLS, URL host:port, error
-func tlsAndHostFromUrl(wafURL string) (bool, string, error) {
+func tlsAndHostFromUrl(wafURL string, port uint16) (bool, string, error) {
 	isTLS := false
 
 	urlParse, err := url.Parse(wafURL)
@@ -264,15 +278,16 @@ func tlsAndHostFromUrl(wafURL string) (bool, string, error) {
 		return isTLS, "", err
 	}
 
-	host := urlParse.Host
-	if urlParse.Port() == "" {
-		switch urlParse.Scheme {
-		case "http":
-			host += ":80"
-		case "https":
-			host += ":443"
+	host, _, err := net.SplitHostPort(urlParse.Host)
+	if err != nil {
+		if strings.Contains(err.Error(), "port") {
+			host = urlParse.Host
+		} else {
+			return false, "", err
 		}
 	}
+
+	host = net.JoinHostPort(host, fmt.Sprintf("%d", port))
 
 	if urlParse.Scheme == "https" {
 		isTLS = true

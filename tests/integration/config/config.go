@@ -18,6 +18,7 @@ const (
 	Host        = "localhost"
 	HTTPPort    = "8080"
 	GRPCPort    = "8090"
+	GRPCPortInt = 8090
 	HTTPAddress = Host + ":" + HTTPPort
 	GRPCAddress = Host + ":" + GRPCPort
 )
@@ -62,6 +63,7 @@ func GetConfig() *config.Config {
 	return &config.Config{
 		Cookies:            nil,
 		URL:                "http://" + HTTPAddress,
+		GRPCPort:           GRPCPortInt,
 		WebSocketURL:       "ws://" + HTTPAddress,
 		HTTPHeaders:        nil,
 		TLSVerify:          false,
@@ -71,7 +73,7 @@ func GetConfig() *config.Config {
 		IdleConnTimeout:    2,
 		FollowCookies:      false,
 		BlockStatusCode:    403,
-		PassStatusCode:     203,
+		PassStatusCode:     200,
 		BlockRegex:         "",
 		PassRegex:          "",
 		NonBlockedAsPassed: false,
@@ -91,15 +93,15 @@ func GetConfig() *config.Config {
 }
 
 func GenerateTestCases() (testCases []db.Case, testCasesMap *TestCasesMap) {
+	grpcEncoder := encoder.DefaultGRPCEncoder.GetName()
+	requestBodyPlaceholder := placeholder.DefaultRequestBody.GetName()
+
 	var encoders []string
 	var placeholders []string
 	testCasesMap = new(TestCasesMap)
 	testCasesMap.m = make(map[string]struct{})
 
 	for encoderName, _ := range encoder.Encoders {
-		if encoderName == encoder.DefaultGRPCEncoder.GetName() {
-			continue
-		}
 		encoders = append(encoders, encoderName)
 	}
 
@@ -113,6 +115,10 @@ func GenerateTestCases() (testCases []db.Case, testCasesMap *TestCasesMap) {
 	for _, ts := range testSets {
 		for _, ph := range placeholders {
 			for _, enc := range encoders {
+				if enc == grpcEncoder && ph != requestBodyPlaceholder {
+					continue
+				}
+
 				name := fmt.Sprintf("%s-%s", ph, enc)
 				testCases = append(testCases, db.Case{
 					Payloads:       payloads,
@@ -122,6 +128,7 @@ func GenerateTestCases() (testCases []db.Case, testCasesMap *TestCasesMap) {
 					Name:           name,
 					IsTruePositive: true,
 				})
+
 				for _, p := range payloads {
 					testCasesMap.m[fmt.Sprintf("%s-%s-%s-%s-%s", ts, name, p, ph, enc)] = struct{}{}
 				}

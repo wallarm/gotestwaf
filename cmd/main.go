@@ -231,6 +231,7 @@ Options:
 
 	urlParam := flag.String("url", "", "URL to check")
 	flag.String("wsURL", "", "WebSocket URL to check")
+	flag.Uint16("grpcPort", 0, "gRPC port to check")
 	flag.String("proxy", "", "Proxy URL to use")
 	flag.Bool("tlsVerify", false, "If true, the received TLS certificate will be verified")
 	flag.Int("maxIdleConns", 2, "The maximum number of keep-alive connections")
