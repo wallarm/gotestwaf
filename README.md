@@ -275,6 +275,7 @@ Usage of /app/gotestwaf:
       --proxy string           Proxy URL to use
       --randomDelay int        Random delay in ms in addition to the delay between requests (default 400)
       --reportPath string      A directory to store reports (default "reports")
+      --renderToHTML           If true, renders the report as an HTML file instead of PDF (default false)
       --sendDelay int          Delay in ms between requests (default 400)
       --skipWAFBlockCheck      If true, WAF detection tests will be skipped
       --testCase string        If set then only this test case will be run
