@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"path"
 	"runtime"
@@ -14,13 +15,9 @@ import (
 	"github.com/wallarm/gotestwaf/internal/payload/placeholder"
 )
 
-const (
-	Host        = "localhost"
-	HTTPPort    = "8080"
-	GRPCPort    = "8090"
-	GRPCPortInt = 8090
-	HTTPAddress = Host + ":" + HTTPPort
-	GRPCAddress = Host + ":" + GRPCPort
+var (
+	HTTPPort int
+	GRPCPort int
 )
 
 type TestCasesMap struct {
@@ -59,12 +56,43 @@ func (tcm *TestCasesMap) GetRemainingValues() []string {
 	return res
 }
 
+func getFreePort() (int, error) {
+	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
+	if err != nil {
+		return 0, err
+	}
+
+	l, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		return 0, err
+	}
+	defer l.Close()
+	return l.Addr().(*net.TCPAddr).Port, nil
+}
+
+func PickUpTestPorts() error {
+	httpPort, err := getFreePort()
+	if err != nil {
+		return err
+	}
+
+	grpcPort, err := getFreePort()
+	if err != nil {
+		return err
+	}
+
+	HTTPPort = httpPort
+	GRPCPort = grpcPort
+
+	return nil
+}
+
 func GetConfig() *config.Config {
 	return &config.Config{
 		Cookies:            nil,
-		URL:                "http://" + HTTPAddress,
-		GRPCPort:           GRPCPortInt,
-		WebSocketURL:       "ws://" + HTTPAddress,
+		URL:                fmt.Sprintf("http://localhost:%d", HTTPPort),
+		GRPCPort:           uint16(GRPCPort),
+		WebSocketURL:       fmt.Sprintf("ws://localhost:%d", HTTPPort),
 		HTTPHeaders:        nil,
 		TLSVerify:          false,
 		Proxy:              "",

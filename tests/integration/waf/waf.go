@@ -41,7 +41,7 @@ func New(errChan chan<- error, casesMap *config.TestCasesMap) *WAF {
 	mux.Handle("/", waf)
 
 	waf.httpServer = &http.Server{
-		Addr:    config.HTTPAddress,
+		Addr:    fmt.Sprintf("localhost:%d", config.HTTPPort),
 		Handler: mux,
 	}
 
@@ -58,7 +58,7 @@ func New(errChan chan<- error, casesMap *config.TestCasesMap) *WAF {
 
 func (waf *WAF) Run() {
 	go func() {
-		conn, err := net.DialTimeout("tcp", config.HTTPAddress, time.Second)
+		conn, err := net.DialTimeout("tcp", fmt.Sprintf("localhost:%d", config.HTTPPort), time.Second)
 		if err == nil {
 			if conn != nil {
 				conn.Close()
@@ -73,7 +73,7 @@ func (waf *WAF) Run() {
 	}()
 
 	go func() {
-		lis, err := net.Listen("tcp", config.GRPCAddress)
+		lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", config.GRPCPort))
 		if err != nil {
 			waf.errChan <- fmt.Errorf("failed to listen for grpc connections: %v", err)
 		}

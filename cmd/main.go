@@ -88,7 +88,7 @@ func run(logger *log.Logger) error {
 		return errors.Wrap(err, "gRPC client")
 	}
 
-	logger.Printf("gRPC pre-check: IN PROGRESS")
+	logger.Printf("gRPC pre-check: in progress")
 
 	available, err := grpcConn.CheckAvailability()
 	if err != nil {
@@ -96,9 +96,9 @@ func run(logger *log.Logger) error {
 			"reason: %s\n", err)
 	}
 	if available {
-		logger.Printf("gRPC pre-check: GRPC IS AVAILABLE")
+		logger.Printf("gRPC pre-check: gRPC is available")
 	} else {
-		logger.Printf("gRPC pre-check: GRPC IS NOT AVAILABLE")
+		logger.Printf("gRPC pre-check: gRPC is not available")
 	}
 
 	s := scanner.New(db, logger, cfg, httpClient, grpcConn, false)

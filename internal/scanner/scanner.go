@@ -261,11 +261,9 @@ func (s *Scanner) scanURL(ctx context.Context, url string, blockConn bool, w *te
 			return nil
 		}
 
-		var newCtx context.Context
+		newCtx := ctx
 		if w.testHeaderValue != "" {
 			newCtx = metadata.AppendToOutgoingContext(ctx, "X-GoTestWAF-Test", w.testHeaderValue)
-		} else {
-			newCtx = ctx
 		}
 
 		body, statusCode, err = s.grpcConn.Send(newCtx, w.encoder, w.payload)
