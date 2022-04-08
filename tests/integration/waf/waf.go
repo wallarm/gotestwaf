@@ -63,7 +63,7 @@ func (waf *WAF) Run() {
 			if conn != nil {
 				conn.Close()
 			}
-			waf.errChan <- fmt.Errorf("port %s is already in use", config.HTTPPort)
+			waf.errChan <- fmt.Errorf("port %d is already in use", config.HTTPPort)
 		}
 
 		err = waf.httpServer.ListenAndServe()
