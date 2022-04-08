@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 	"github.com/schollz/progressbar/v3"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/wallarm/gotestwaf/internal/config"
 	"github.com/wallarm/gotestwaf/internal/db"
@@ -260,7 +261,12 @@ func (s *Scanner) scanURL(ctx context.Context, url string, blockConn bool, w *te
 			return nil
 		}
 
-		body, statusCode, err = s.grpcConn.Send(ctx, w.encoder, w.payload)
+		newCtx := ctx
+		if w.testHeaderValue != "" {
+			newCtx = metadata.AppendToOutgoingContext(ctx, "X-GoTestWAF-Test", w.testHeaderValue)
+		}
+
+		body, statusCode, err = s.grpcConn.Send(newCtx, w.encoder, w.payload)
 
 	default:
 		body, statusCode, err = s.httpClient.Send(ctx, url, w.placeholder, w.encoder, w.payload, w.testHeaderValue)

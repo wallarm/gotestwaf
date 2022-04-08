@@ -21,6 +21,11 @@ func TestGoTestWAF(t *testing.T) {
 	done := make(chan bool)
 	errChan := make(chan error)
 
+	err := test_config.PickUpTestPorts()
+	if err != nil {
+		t.Fatalf("couldn't pickup two tcp ports for testing: %s", err)
+	}
+
 	testCases, allTestCases := test_config.GenerateTestCases()
 
 	w := waf.New(errChan, allTestCases)
@@ -71,16 +76,12 @@ func runGoTestWAF(ctx context.Context, testCases []db.Case) error {
 		return errors.Wrap(err, "HTTP client")
 	}
 
-	cfg.URL = "http://" + test_config.GRPCAddress
-
 	grpcConn, err := scanner.NewGRPCConn(cfg)
 	if err != nil {
 		return errors.Wrap(err, "gRPC client")
 	}
 
-	cfg.URL = "http://" + test_config.HTTPAddress
-
-	logger.Printf("gRPC pre-check: IN PROGRESS")
+	logger.Printf("gRPC pre-check: in progress")
 
 	available, err := grpcConn.CheckAvailability()
 	if err != nil {
@@ -88,9 +89,9 @@ func runGoTestWAF(ctx context.Context, testCases []db.Case) error {
 			"reason: %s\n", err)
 	}
 	if available {
-		logger.Printf("gRPC pre-check: GRPC IS AVAILABLE")
+		logger.Printf("gRPC pre-check: gRPC is available")
 	} else {
-		logger.Printf("gRPC pre-check: GRPC IS NOT AVAILABLE")
+		logger.Printf("gRPC pre-check: gRPC is not available")
 	}
 
 	s := scanner.New(db, logger, cfg, httpClient, grpcConn, true)

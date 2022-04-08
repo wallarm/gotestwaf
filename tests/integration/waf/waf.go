@@ -41,24 +41,29 @@ func New(errChan chan<- error, casesMap *config.TestCasesMap) *WAF {
 	mux.Handle("/", waf)
 
 	waf.httpServer = &http.Server{
-		Addr:    config.HTTPAddress,
+		Addr:    fmt.Sprintf("localhost:%d", config.HTTPPort),
 		Handler: mux,
 	}
 
+	grpcServer := &grpcServer{
+		errChan:  errChan,
+		casesMap: casesMap,
+	}
+
 	waf.grpcServer = grpc.NewServer()
-	pb.RegisterServiceFooBarServer(waf.grpcServer, &grpcServer{})
+	pb.RegisterServiceFooBarServer(waf.grpcServer, grpcServer)
 
 	return waf
 }
 
 func (waf *WAF) Run() {
 	go func() {
-		conn, err := net.DialTimeout("tcp", config.HTTPAddress, time.Second)
+		conn, err := net.DialTimeout("tcp", fmt.Sprintf("localhost:%d", config.HTTPPort), time.Second)
 		if err == nil {
 			if conn != nil {
 				conn.Close()
 			}
-			waf.errChan <- fmt.Errorf("port %s is already in use", config.HTTPPort)
+			waf.errChan <- fmt.Errorf("port %d is already in use", config.HTTPPort)
 		}
 
 		err = waf.httpServer.ListenAndServe()
@@ -68,7 +73,7 @@ func (waf *WAF) Run() {
 	}()
 
 	go func() {
-		lis, err := net.Listen("tcp", config.GRPCAddress)
+		lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", config.GRPCPort))
 		if err != nil {
 			waf.errChan <- fmt.Errorf("failed to listen for grpc connections: %v", err)
 		}
@@ -192,7 +197,7 @@ func (waf *WAF) httpRequestHandler(w http.ResponseWriter, r *http.Request) {
 		value, err = decodePlain(placeholderValue)
 	case "XMLEntity":
 		value, err = decodeXMLEntity(placeholderValue)
-	case "GRPC":
+	case "gRPC":
 		value, err = decodeGRPC(placeholderValue)
 	default:
 		waf.errChan <- fmt.Errorf("unknown encoder: %s", encoder)
@@ -203,7 +208,7 @@ func (waf *WAF) httpRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if matched, _ := regexp.MatchString("bypassed", value); matched {
-		w.WriteHeader(http.StatusNonAuthoritativeInfo)
+		w.WriteHeader(http.StatusOK)
 	} else if matched, _ = regexp.MatchString("blocked", value); matched {
 		w.WriteHeader(http.StatusForbidden)
 	} else {

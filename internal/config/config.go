@@ -6,6 +6,7 @@ type Config struct {
 	Cookies            []*http.Cookie
 	URL                string            `mapstructure:"url"`
 	WebSocketURL       string            `mapstructure:"wsURL"`
+	GRPCPort           uint16            `mapstructure:"grpcPort"`
 	HTTPHeaders        map[string]string `mapstructure:"headers"`
 	TLSVerify          bool              `mapstructure:"tlsVerify"`
 	Proxy              string            `mapstructure:"proxy"`
