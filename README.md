@@ -7,13 +7,13 @@ It was designed to evaluate web application security solutions, such as API secu
 IPS, API gateways, and others.
 
 ---
-* [How it works](https://github.com/wallarm/gotestwaf#how-it-works)
-* [Requirements](https://github.com/wallarm/gotestwaf#requirements)
-* [Quick start with Docker](https://github.com/wallarm/gotestwaf#quick-start-with-docker)
-* [Checking evaluation results](https://github.com/wallarm/gotestwaf#checking-the-evaluation-results)
-* [Demos](https://github.com/wallarm/gotestwaf#demos)
-* [Other options to run GoTestWAF](https://github.com/wallarm/gotestwaf#other-options-to-run-gotestwaf)
-* [Configuration options](https://github.com/wallarm/gotestwaf#configuration-options)
+* [How it works](#how-it-works)
+* [Requirements](#requirements)
+* [Quick start with Docker](#quick-start-with-docker)
+* [Checking evaluation results](#checking-the-evaluation-results)
+* [Demos](#demos)
+* [Other options to run GoTestWAF](#other-options-to-run-gotestwaf)
+* [Configuration options](#configuration-options)
 ---
 
 ## How it works
@@ -171,7 +171,7 @@ PDF report is ready: reports/waf-evaluation-report-generic-2021-October-07-16-06
 
 The report file `waf-evaluation-report-<date>.pdf` is available in the `reports` folder of the user directory.
 
-![report](./report.jpeg)
+![Example of GoTestWaf report](./docs/report_preview.png)
 
 ## Demos
 
