@@ -392,15 +392,15 @@
                 </div>
             </div>
         </div>
-        {{if or (ne .ApiChartScript nil) (ne .AppChartScript nil)}}
+        {{if or ($.ApiChartScript) ($.AppChartScript)}}
         <div class="chart">
-            {{if ne .AppChartScript nil}}
+            {{if $.AppChartScript}}
             <div id="app_chart" style="width:1fr; height:450px; break-inside: avoid;"></div>
-            {{.AppChartScript}}
+            {{$.AppChartScript}}
             {{end}}
-            {{if ne .ApiChartScript nil}}
+            {{if $.ApiChartScript}}
             <div id="api_chart" style="width:1fr; height:450px; break-inside: avoid;"></div>
-            {{.ApiChartScript}}
+            {{$.ApiChartScript}}
             {{end}}
         </div>
         {{end}}
