@@ -70,7 +70,7 @@ Let's say you defined 2 **payloads**, 3 **encoders** (Base64, JSUnicode, and URL
 In this case, GoTestWAF will send 2x3x1 = 6 requests in a test case.
 
 During GoTestWAF launch, you can also choose test cases between two embedded: OWASP Top-10, OWASP-API,
-or your own (by using the [configuration option](https://github.com/wallarm/gotestwaf#configuration-options) `testCasePath`).
+or your own (by using the [configuration option](#configuration-options) `testCasePath`).
 
 ## Requirements
 
@@ -104,7 +104,7 @@ The steps below walk through downloading and starting GoTestWAF with minimal con
 inside the container.
 
 You have successfully evaluated your application security solution by using GoTestWAF with minimal configuration.
-To learn advanced configuration options, please use this [link](https://github.com/wallarm/gotestwaf#configuration-options).
+To learn advanced configuration options, please use this [link](#configuration-options).
 
 ## Checking the evaluation results
 
@@ -205,7 +205,7 @@ To run the demo environment:
         wallarm/gotestwaf --url=http://127.0.0.1:8080
     ```
 
-    Build the GoTestWAF Docker image from the [Dockerfile](https://github.com/wallarm/gotestwaf/blob/master/Dockerfile) and run the
+    Build the GoTestWAF Docker image from the [Dockerfile](./Dockerfile) and run the
     image by using the following `make` commands (make sure ModSec is running on port 8080; if not, update the port value in the Makefile):
 
     ```
@@ -219,14 +219,14 @@ To run the demo environment:
     ```
     make scan_local
     ```
-4. Find the [report](https://github.com/wallarm/gotestwaf#checking-the-evaluation-results) file `waf-evaluation-report-<date>.pdf` in
+4. Find the [report](#checking-the-evaluation-results) file `waf-evaluation-report-<date>.pdf` in
 the `reports` folder that you mapped to `/app/reports` inside the container.
 
 ## Other options to run GoTestWAF
 
 In addition to running the GoTestWAF Docker image downloaded from Docker Hub, you can run GoTestWAF by using the following options:
 
-* Clone this repository and build the GoTestWAF Docker image from the [Dockerfile](https://github.com/wallarm/gotestwaf/blob/master/Dockerfile), 
+* Clone this repository and build the GoTestWAF Docker image from the [Dockerfile](./Dockerfile), 
 for example:
 
     ```
@@ -277,9 +277,9 @@ Options:
       --passStatusCode int     HTTP response status code that WAF uses while passing requests (default 200)
       --proxy string           Proxy URL to use
       --randomDelay int        Random delay in ms in addition to the delay between requests (default 400)
-      --renderToHTML           Save report as HTML page instead of PDF
+      --renderToHTML           If true, renders the report as HTML file instead of PDF
+      --reportName time        Report file name. Supports time package template format (default "waf-evaluation-report-2006-January-02-15-04-05")
       --reportPath string      A directory to store reports (default "reports")
-      --renderToHTML           If true, renders the report as an HTML file instead of PDF (default false)
       --sendDelay int          Delay in ms between requests (default 400)
       --skipWAFBlockCheck      If true, WAF detection tests will be skipped
       --testCase string        If set then only this test case will be run
