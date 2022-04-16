@@ -251,7 +251,7 @@ Options:
 	flag.String("testCase", "", "If set then only this test case will be run")
 	flag.String("testSet", "", "If set then only this test set's cases will be run")
 	flag.String("reportPath", reportPath, "A directory to store reports")
-	flag.String("reportName", defaultReportName, "Report file name. Supports `time` package template format")
+	flag.String("reportName", defaultReportName, "Report file name. Supports `time' package template format")
 	flag.Bool("renderToHTML", false, "If true, renders the report as HTML file instead of PDF")
 	flag.String("testCasesPath", testCasesPath, "Path to a folder with test cases")
 	flag.String("wafName", wafName, "Name of the WAF product")
