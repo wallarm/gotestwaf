@@ -169,7 +169,7 @@ Positive Tests:
 PDF report is ready: reports/waf-evaluation-report-generic-2021-October-07-16-06-44.pdf
 ```
 
-The report file `waf-evaluation-report-<date>.pdf` is available in the `reports` folder of the user directory.
+The report file `waf-evaluation-report-<date>.pdf` is available in the `reports` folder of the user directory. You can also specify the directory to save the reports with the `reportPath` parameter and the name of the report file with the `reportName` parameter. To learn advanced configuration options, please use this [link](#configuration-options).
 
 ![Example of GoTestWaf report](./docs/report_preview.png)
 
@@ -278,7 +278,7 @@ Options:
       --proxy string           Proxy URL to use
       --randomDelay int        Random delay in ms in addition to the delay between requests (default 400)
       --renderToHTML           If true, renders the report as HTML file instead of PDF
-      --reportName time        Report file name. Supports time package template format (default "waf-evaluation-report-2006-January-02-15-04-05")
+      --reportName string      Report file name. Supports `time' package template format (default "waf-evaluation-report-2006-January-02-15-04-05")
       --reportPath string      A directory to store reports (default "reports")
       --sendDelay int          Delay in ms between requests (default 400)
       --skipWAFBlockCheck      If true, WAF detection tests will be skipped
@@ -313,3 +313,20 @@ The listed options can be passed to GoTestWAF as follows:
     ```
     go run ./cmd --url=http://127.0.0.1:8080/ --wsURL=ws://127.0.0.1:8080/api/ws --verbose
     ```
+
+### Report name
+
+With the `reportName` option you can set your own filename for GoTestWAF reports. This option supports golang's `time` package for timestamps. Details can be found [there](https://pkg.go.dev/time#pkg-constants). You can use following placeholders to add timestamp to your report name:
+
+* Year: `2006`, `06`
+* Month: `Jan`, `January`
+* Textual day of the week: `Mon`, `Monday`
+* Numeric day of the month: `2`, `_2`, `02`
+* Numeric day of the year: `__2`, `002`
+* Hour: `15`, `3`, `03` (PM or AM)
+* Minute: `4`, `04`
+* Second: `5`, `05`
+* AM/PM mark: `PM`
+* Numeric zones: `Z0700` = Z or ±hhmm, `Z07:00` = Z or ±hh:mm, `Z07` = Z or ±hh
+
+For example, default `reportName` is `waf-evaluation-report-2006-January-02-15-04-05`, where `2006` will be replaced with actual year, `January` - month, `02` - day, `15` - hour, `04` - minute and `05` - second.
