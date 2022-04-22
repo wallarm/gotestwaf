@@ -26,12 +26,11 @@ import (
 
 const (
 	defaultReportPath    = "reports"
+	defaultReportName    = "waf-evaluation-report-2006-January-02-15-04-05"
 	defaultTestCasesPath = "testcases"
 	defaultConfigPath    = "config.yaml"
 
-	wafName       = "generic"
-	reportPrefix  = "waf-evaluation-report"
-	payloadPrefix = "waf-evaluation-payloads"
+	wafName = "generic"
 )
 
 var (
@@ -181,9 +180,9 @@ func run(logger *log.Logger) error {
 	}
 
 	reportTime := time.Now()
-	reportSaveTime := reportTime.Format("2006-January-02-15-04-05")
+	reportName := reportTime.Format(cfg.ReportName)
 
-	reportFile := filepath.Join(cfg.ReportPath, fmt.Sprintf("%s-%s-%s", reportPrefix, cfg.WAFName, reportSaveTime))
+	reportFile := filepath.Join(cfg.ReportPath, reportName)
 	if cfg.RenderToHTML {
 		reportFile += ".html"
 	} else {
@@ -198,7 +197,7 @@ func run(logger *log.Logger) error {
 	}
 	fmt.Printf("\nreport is ready: %s\n", reportFile)
 
-	payloadFiles := filepath.Join(cfg.ReportPath, fmt.Sprintf("%s-%s-%s.csv", payloadPrefix, cfg.WAFName, reportSaveTime))
+	payloadFiles := filepath.Join(cfg.ReportPath, reportName+".csv")
 	err = db.ExportPayloads(payloadFiles)
 	if err != nil {
 		errors.Wrap(err, "payloads exporting")
@@ -252,7 +251,8 @@ Options:
 	flag.String("testCase", "", "If set then only this test case will be run")
 	flag.String("testSet", "", "If set then only this test set's cases will be run")
 	flag.String("reportPath", reportPath, "A directory to store reports")
-	flag.Bool("renderToHTML", false, "Save report as HTML page instead of PDF")
+	flag.String("reportName", defaultReportName, "Report file name. Supports `time' package template format")
+	flag.Bool("renderToHTML", false, "If true, renders the report as HTML file instead of PDF")
 	flag.String("testCasesPath", testCasesPath, "Path to a folder with test cases")
 	flag.String("wafName", wafName, "Name of the WAF product")
 	flag.Bool("ignoreUnresolved", false, "If true, unresolved test cases will be considered as bypassed (affect score and results)")
