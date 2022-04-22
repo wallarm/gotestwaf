@@ -187,14 +187,20 @@ To run the demo environment:
     cd gotestwaf
     ```
 2. Start ModSecurity from the [Docker image](https://hub.docker.com/r/owasp/modsecurity-crs/) by using the following `make` command:
-    
+
     ```
     make modsec
     ```
 
-    Settings for running the ModSecurity Docker container are defined in the rule `modsec` of the cloned Makefile. It runs the ModSecurity Docker container on port 8080 with minimal configuration defined in the cloned file `./resources/default.conf` and the `PARANOIA` value set to 1.
+    Settings for running the ModSecurity Docker container are defined in the rule `modsec` of the cloned Makefile. It runs the ModSecurity Docker container on port 8080 with minimal configuration defined in the cloned file `./resources/default.conf.template` and the `PARANOIA` value set to 1.
 
     If required, you can change these settings by editing the rule `modsec` in the cloned Makefile. Available options for ModSecurity configuration are described on [Docker Hub](https://hub.docker.com/r/owasp/modsecurity-crs/).
+
+    To stop ModSecurity containers use the following command:
+    ```
+    make modsec_down
+    ```
+
 3. Start GoTestWAF with minimal configuration by using one of the following methods:
 
     Start the [Docker image](https://hub.docker.com/r/wallarm/gotestwaf) by using the following `docker pull` and `docker run` commands:
