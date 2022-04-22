@@ -4,17 +4,20 @@ gotestwaf:
 	docker build --build-arg GOTESTWAF_VERSION="$(GOTESTWAF_VERSION)" \
 		--force-rm -t gotestwaf .
 
-gotestwaf-bin:
+gotestwaf_bin:
 	go build -ldflags "-X github.com/wallarm/gotestwaf/internal/version.Version=$(GOTESTWAF_VERSION)" \
 		-o gotestwaf ./cmd
 
 modsec:
 	docker pull mendhak/http-https-echo:20
-	docker run -d --rm -p 8088:8080 -t mendhak/http-https-echo:20
+	docker run --rm -d --name gotestwaf_test_app -p 8088:8080 -t mendhak/http-https-echo:20
 	docker pull owasp/modsecurity-crs:3.3.2-nginx
-	docker run --rm -d -p 8080:80 -p 8443:443 -e PARANOIA=1 \
-		-v ${PWD}/resources/default.conf:/etc/nginx/conf.d/default.conf \
+	docker run --rm -d --name gotestwaf_modsec -p 8080:80 -p 8443:443 -e PARANOIA=1  \
+		-v ${PWD}/resources/default.conf.template:/etc/nginx/templates/conf.d/default.conf.template \
 		owasp/modsecurity-crs:3.3.2-nginx
+
+modsec_down:
+	docker kill gotestwaf_test_app gotestwaf_modsec
 
 modsec_stat: gotestwaf
 	docker pull owasp/modsecurity-crs:3.3.2-nginx
@@ -67,5 +70,5 @@ delete_reports:
 	rm -f ./reports/*.pdf
 	rm -f ./reports/*.csv
 
-.PHONY: gotestwaf gotestwaf-bin modsec scan_local \
+.PHONY: gotestwaf gotestwaf-bin modsec modsec_down scan_local \
 	scan_local_from_docker test lint tidy fmt delete_reports
