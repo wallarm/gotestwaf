@@ -12,7 +12,7 @@ modsec:
 	docker pull mendhak/http-https-echo:20
 	docker run --rm -d --name gotestwaf_test_app -p 8088:8080 -t mendhak/http-https-echo:20
 	docker pull owasp/modsecurity-crs:3.3.2-nginx
-	docker run --rm -d --name gotestwaf_modsec -p 8080:80 -p 8443:443 -e PARANOIA=1  \
+	docker run --rm -d --name gotestwaf_modsec -p 8080:80 -p 8443:443 -e PARANOIA=1 \
 		-v ${PWD}/resources/default.conf.template:/etc/nginx/templates/conf.d/default.conf.template \
 		owasp/modsecurity-crs:3.3.2-nginx
 
@@ -70,5 +70,5 @@ delete_reports:
 	rm -f ./reports/*.pdf
 	rm -f ./reports/*.csv
 
-.PHONY: gotestwaf gotestwaf-bin modsec modsec_down scan_local \
+.PHONY: gotestwaf gotestwaf_bin modsec modsec_down scan_local \
 	scan_local_from_docker test lint tidy fmt delete_reports
