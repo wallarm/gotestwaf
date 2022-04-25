@@ -1,4 +1,5 @@
 GOTESTWAF_VERSION := $(shell git describe)
+BACKEND ?= "http://172.17.0.1:8088"
 
 gotestwaf:
 	docker build --build-arg GOTESTWAF_VERSION="$(GOTESTWAF_VERSION)" \
@@ -12,7 +13,7 @@ modsec:
 	docker pull mendhak/http-https-echo:20
 	docker run --rm -d --name gotestwaf_test_app -p 8088:8080 -t mendhak/http-https-echo:20
 	docker pull owasp/modsecurity-crs:3.3.2-nginx
-	docker run --rm -d --name gotestwaf_modsec -p 8080:80 -p 8443:443 -e PARANOIA=1 \
+	docker run --rm -d --name gotestwaf_modsec -p 8080:80 -p 8443:443 -e BACKEND=$(BACKEND) -e PARANOIA=1 \
 		-v ${PWD}/resources/default.conf.template:/etc/nginx/templates/conf.d/default.conf.template \
 		owasp/modsecurity-crs:3.3.2-nginx
 
