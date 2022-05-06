@@ -113,6 +113,6 @@ payload:
 encoder:
   - URL
 placeholder:
-  - RequestBody
-type: "XSS"
+  - HTMLForm
+type: "8KB XSS"
 ...
