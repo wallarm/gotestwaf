@@ -1,9 +1,10 @@
 package config
 
-import "net/http"
+import (
+	"net/http"
+)
 
 type Config struct {
-	Cookies            []*http.Cookie
 	URL                string            `mapstructure:"url"`
 	WebSocketURL       string            `mapstructure:"wsURL"`
 	GRPCPort           uint16            `mapstructure:"grpcPort"`
@@ -32,5 +33,8 @@ type Config struct {
 	BlockConnReset     bool              `mapstructure:"blockConnReset"`
 	SkipWAFBlockCheck  bool              `mapstructure:"skipWAFBlockCheck"`
 	AddHeader          string            `mapstructure:"addHeader"`
+	OpenAPIFile        string            `mapstructure:"openapiFile"`
 	RenderToHTML       bool              `mapstructure:"renderToHTML"`
+
+	Cookies []*http.Cookie
 }

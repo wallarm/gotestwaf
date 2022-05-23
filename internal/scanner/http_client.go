@@ -70,7 +70,7 @@ func NewHTTPClient(cfg *config.Config) (*HTTPClient, error) {
 	}, nil
 }
 
-func (c *HTTPClient) Send(
+func (c *HTTPClient) SendPayload(
 	ctx context.Context,
 	targetURL, placeholderName, encoderName, payload string,
 	testHeaderValue string,
@@ -87,6 +87,38 @@ func (c *HTTPClient) Send(
 
 	req = req.WithContext(ctx)
 
+	for header, value := range c.headers {
+		req.Header.Set(header, value)
+	}
+
+	if testHeaderValue != "" {
+		req.Header.Set("X-GoTestWAF-Test", testHeaderValue)
+	}
+
+	if len(c.cookies) > 0 && c.followCookies {
+		c.client.Jar.SetCookies(req.URL, c.cookies)
+	}
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return nil, 0, errors.Wrap(err, "sending http request")
+	}
+	defer resp.Body.Close()
+
+	body, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, 0, errors.Wrap(err, "reading response body")
+	}
+	statusCode = resp.StatusCode
+
+	if len(resp.Cookies()) > 0 {
+		c.cookies = append(c.cookies, resp.Cookies()...)
+	}
+
+	return body, statusCode, nil
+}
+
+func (c *HTTPClient) SendRequest(req *http.Request, testHeaderValue string) (body []byte, statusCode int, err error) {
 	for header, value := range c.headers {
 		req.Header.Set(header, value)
 	}

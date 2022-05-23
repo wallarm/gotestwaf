@@ -18,6 +18,7 @@ import (
 
 	"github.com/wallarm/gotestwaf/internal/config"
 	"github.com/wallarm/gotestwaf/internal/db"
+	"github.com/wallarm/gotestwaf/internal/openapi"
 	"github.com/wallarm/gotestwaf/internal/payload/encoder"
 )
 
@@ -37,70 +38,134 @@ type testWork struct {
 	testHeaderValue string
 }
 
+// Scanner allows you to test WAF in various ways with given payloads.
 type Scanner struct {
-	logger     *log.Logger
-	cfg        *config.Config
-	db         *db.DB
-	httpClient *HTTPClient
-	grpcConn   *GRPCConn
-	wsClient   *websocket.Dialer
-	isTestEnv  bool
+	logger           *log.Logger
+	cfg              *config.Config
+	db               *db.DB
+	httpClient       *HTTPClient
+	grpcConn         *GRPCConn
+	requestTemplates openapi.Templates
+	wsClient         *websocket.Dialer
+	isTestEnv        bool
 }
 
-func New(db *db.DB, logger *log.Logger, cfg *config.Config, httpClient *HTTPClient, grpcConn *GRPCConn, isTestEnv bool) *Scanner {
+// New creates a new Scanner.
+func New(
+	logger *log.Logger,
+	cfg *config.Config,
+	db *db.DB,
+	requestTemplates openapi.Templates,
+	isTestEnv bool,
+) (*Scanner, error) {
+	httpClient, err := NewHTTPClient(cfg)
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't create HTTP client")
+	}
+
+	grpcConn, err := NewGRPCConn(cfg)
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't create gRPC client")
+	}
+
 	return &Scanner{
-		db:         db,
-		logger:     logger,
-		cfg:        cfg,
-		httpClient: httpClient,
-		grpcConn:   grpcConn,
-		wsClient:   websocket.DefaultDialer,
-		isTestEnv:  isTestEnv,
+		logger:           logger,
+		cfg:              cfg,
+		db:               db,
+		httpClient:       httpClient,
+		grpcConn:         grpcConn,
+		requestTemplates: requestTemplates,
+		wsClient:         websocket.DefaultDialer,
+		isTestEnv:        isTestEnv,
+	}, nil
+}
+
+// CheckGRPCAvailability checks if the gRPC server is available at the given URL.
+func (s *Scanner) CheckGRPCAvailability() {
+	s.logger.Printf("gRPC pre-check: in progress")
+	available, err := s.grpcConn.CheckAvailability()
+	if err != nil {
+		s.logger.Printf("gRPC pre-check: connection is not available, reason: %s\n", err)
+	}
+	if available {
+		s.logger.Printf("gRPC pre-check: gRPC is available")
+	} else {
+		s.logger.Printf("gRPC pre-check: gRPC is not available")
 	}
 }
 
-func (s *Scanner) CheckBlocking(body []byte, statusCode int) (bool, error) {
-	if s.cfg.BlockRegex != "" {
-		m, _ := regexp.MatchString(s.cfg.BlockRegex, string(body))
-		return m, nil
+// WAFBlockCheck checks if WAF exists and blocks malicious requests.
+func (s *Scanner) WAFBlockCheck() error {
+	s.logger.Println("WAF pre-check. URL to check:", s.cfg.URL)
+
+	if !s.cfg.SkipWAFBlockCheck {
+		ok, httpStatus, err := s.preCheck(preCheckVector)
+		if err != nil {
+			if s.cfg.BlockConnReset && (errors.Is(err, io.EOF) || errors.Is(err, syscall.ECONNRESET)) {
+				s.logger.Println("Connection reset, trying benign request to make sure that service is available")
+				blockedBenign, httpStatusBenign, errBenign := s.preCheck("")
+				if !blockedBenign {
+					s.logger.Printf("Service is available (HTTP status: %d), WAF resets connections. Consider this behavior as block", httpStatusBenign)
+					ok = true
+				}
+				if errBenign != nil {
+					return errors.Wrap(errBenign, "running benign request pre-check")
+				}
+			} else {
+				return errors.Wrap(err, "running pre-check")
+			}
+		}
+
+		if !ok {
+			return errors.Errorf("WAF was not detected. "+
+				"Please use the '--blockStatusCode' or '--blockRegex' flags. Use '--help' for additional info."+
+				"\nBaseline attack status code: %v\n", httpStatus)
+		}
+
+		s.logger.Printf("WAF pre-check: OK. Blocking status code: %v\n", httpStatus)
+	} else {
+		s.logger.Println("WAF pre-check: SKIPPED")
 	}
-	return statusCode == s.cfg.BlockStatusCode, nil
+
+	return nil
 }
 
-func (s *Scanner) CheckPass(body []byte, statusCode int) (bool, error) {
-	if s.cfg.PassRegex != "" {
-		m, _ := regexp.MatchString(s.cfg.PassRegex, string(body))
-		return m, nil
-	}
-	return statusCode == s.cfg.PassStatusCode, nil
-}
-
-func (s *Scanner) BenignPreCheck(url string) (blocked bool, statusCode int, err error) {
-	body, code, err := s.httpClient.Send(context.Background(), url, "URLParam", "URL", "", "")
+// preCheck sends given payload during the pre-check stage.
+func (s *Scanner) preCheck(payload string) (blocked bool, statusCode int, err error) {
+	body, code, err := s.httpClient.SendPayload(context.Background(), s.cfg.URL, "URLParam", "URL", payload, "")
 	if err != nil {
 		return false, 0, err
 	}
-	blocked, err = s.CheckBlocking(body, code)
+	blocked, err = s.checkBlocking(body, code)
 	if err != nil {
 		return false, 0, err
 	}
 	return blocked, code, nil
 }
 
-func (s *Scanner) PreCheck(url string) (blocked bool, statusCode int, err error) {
-	body, code, err := s.httpClient.Send(context.Background(), url, "URLParam", "URL", preCheckVector, "")
-	if err != nil {
-		return false, 0, err
+// WAFwsBlockCheck checks if WebSocket exists and is protected by WAF.
+func (s *Scanner) WAFwsBlockCheck() {
+	s.logger.Println("WebSocket pre-check. URL to check:", s.cfg.WebSocketURL)
+
+	if !s.cfg.SkipWAFBlockCheck {
+		available, blocked, err := s.wsPreCheck()
+		if !available && err != nil {
+			s.logger.Printf("WebSocket pre-check: connection is not available, reason: %s\n", err)
+		}
+		if available && blocked {
+			s.logger.Printf("WebSocket is available and payloads are blocked by the WAF, reason: %s\n", err)
+		}
+		if available && !blocked {
+			s.logger.Println("WebSocket is available and payloads are not blocked by the WAF")
+		}
+	} else {
+		s.logger.Println("WebSocket pre-check: SKIPPED")
 	}
-	blocked, err = s.CheckBlocking(body, code)
-	if err != nil {
-		return false, 0, err
-	}
-	return blocked, code, nil
 }
 
-func (s *Scanner) WSPreCheck(url string) (available, blocked bool, err error) {
-	wsClient, _, err := s.wsClient.Dial(url, nil)
+// wsPreCheck sends the payload and analyzes response.
+func (s *Scanner) wsPreCheck() (available, blocked bool, err error) {
+	wsClient, _, err := s.wsClient.Dial(s.cfg.WebSocketURL, nil)
 	if err != nil {
 		return false, false, err
 	}
@@ -142,6 +207,7 @@ func (s *Scanner) WSPreCheck(url string) (available, blocked bool, err error) {
 	return true, false, nil
 }
 
+// Run starts a host scan to check WAF security.
 func (s *Scanner) Run(ctx context.Context) error {
 	gn := s.cfg.Workers
 	var wg sync.WaitGroup
@@ -151,6 +217,7 @@ func (s *Scanner) Run(ctx context.Context) error {
 
 	rand.Seed(time.Now().UnixNano())
 
+	s.logger.Printf("Scanning %s\n", s.cfg.URL)
 	s.logger.Println("Scanning started")
 	defer s.logger.Println("Scanning finished")
 
@@ -186,7 +253,7 @@ func (s *Scanner) Run(ctx context.Context) error {
 					}
 					time.Sleep(time.Duration(s.cfg.SendDelay+rand.Intn(s.cfg.RandomDelay)) * time.Millisecond)
 
-					if err := s.scanURL(ctx, s.cfg.URL, s.cfg.BlockConnReset, w); err != nil {
+					if err := s.scanURL(ctx, w); err != nil {
 						s.logger.Println(err)
 					}
 					bar.Add(1)
@@ -205,6 +272,28 @@ func (s *Scanner) Run(ctx context.Context) error {
 	return nil
 }
 
+// checkBlocking checks the response status-code or request body using
+// a regular expression to determine if the request has been blocked.
+func (s *Scanner) checkBlocking(body []byte, statusCode int) (bool, error) {
+	if s.cfg.BlockRegex != "" {
+		m, _ := regexp.MatchString(s.cfg.BlockRegex, string(body))
+		return m, nil
+	}
+	return statusCode == s.cfg.BlockStatusCode, nil
+}
+
+// checkPass checks the response status-code or request body using
+// a regular expression to determine if the request has been passed.
+func (s *Scanner) checkPass(body []byte, statusCode int) (bool, error) {
+	if s.cfg.PassRegex != "" {
+		m, _ := regexp.MatchString(s.cfg.PassRegex, string(body))
+		return m, nil
+	}
+	return statusCode == s.cfg.PassStatusCode, nil
+}
+
+// produceTests generates all combinations of payload, encoder, and placeholder
+// for n goroutines.
 func (s *Scanner) produceTests(ctx context.Context, n int) <-chan *testWork {
 	testChan := make(chan *testWork, n)
 	testCases := s.db.GetTestCases()
@@ -248,15 +337,16 @@ func (s *Scanner) produceTests(ctx context.Context, n int) <-chan *testWork {
 	return testChan
 }
 
-func (s *Scanner) scanURL(ctx context.Context, url string, blockConn bool, w *testWork) error {
+// scanURL scans the host with the given combination of payload, encoder and
+// placeholder.
+func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 	var (
 		body       []byte
 		statusCode int
 		err        error
 	)
 
-	switch w.encoder {
-	case encoder.DefaultGRPCEncoder.GetName():
+	if w.encoder == encoder.DefaultGRPCEncoder.GetName() {
 		if !s.grpcConn.IsAvailable() {
 			return nil
 		}
@@ -267,11 +357,45 @@ func (s *Scanner) scanURL(ctx context.Context, url string, blockConn bool, w *te
 		}
 
 		body, statusCode, err = s.grpcConn.Send(newCtx, w.encoder, w.payload)
-
-	default:
-		body, statusCode, err = s.httpClient.Send(ctx, url, w.placeholder, w.encoder, w.payload, w.testHeaderValue)
+		err = s.updateDB(w, body, statusCode, err)
+		return err
 	}
 
+	if s.requestTemplates != nil {
+		templates := s.requestTemplates[w.placeholder]
+
+		encodedPayload, err := encoder.Apply(w.encoder, w.payload)
+		if err != nil {
+			return errors.Wrap(err, "encoding payload")
+		}
+
+		for _, template := range templates {
+			req, err := template.CreateRequest(ctx, w.placeholder, encodedPayload)
+			if err != nil {
+				return errors.Wrap(err, "create request from template")
+			}
+
+			body, statusCode, err = s.httpClient.SendRequest(req, w.testHeaderValue)
+			err = s.updateDB(w, body, statusCode, err)
+			return err
+		}
+
+		return nil
+	}
+
+	body, statusCode, err = s.httpClient.SendPayload(ctx, s.cfg.URL, w.placeholder, w.encoder, w.payload, w.testHeaderValue)
+	err = s.updateDB(w, body, statusCode, err)
+
+	return err
+}
+
+// updateDB updates the success of a query in the database.
+func (s *Scanner) updateDB(
+	w *testWork,
+	body []byte,
+	statusCode int,
+	err error,
+) error {
 	info := &db.Info{
 		Set:                w.setName,
 		Case:               w.caseName,
@@ -285,7 +409,7 @@ func (s *Scanner) scanURL(ctx context.Context, url string, blockConn bool, w *te
 	var blockedByReset bool
 	if err != nil {
 		if errors.Is(err, io.EOF) || errors.Is(err, syscall.ECONNRESET) {
-			if blockConn {
+			if s.cfg.BlockConnReset {
 				blockedByReset = true
 			} else {
 				s.db.UpdateNaTests(info, s.cfg.IgnoreUnresolved, s.cfg.NonBlockedAsPassed, w.isTruePositive)
@@ -303,12 +427,12 @@ func (s *Scanner) scanURL(ctx context.Context, url string, blockConn bool, w *te
 	if blockedByReset {
 		blocked = true
 	} else {
-		blocked, err = s.CheckBlocking(body, statusCode)
+		blocked, err = s.checkBlocking(body, statusCode)
 		if err != nil {
 			return errors.Wrap(err, "failed to check blocking:")
 		}
 
-		passed, err = s.CheckPass(body, statusCode)
+		passed, err = s.checkPass(body, statusCode)
 		if err != nil {
 			return errors.Wrap(err, "failed to check passed or not:")
 		}
@@ -323,5 +447,6 @@ func (s *Scanner) scanURL(ctx context.Context, url string, blockConn bool, w *te
 			s.db.UpdatePassedTests(info)
 		}
 	}
+
 	return nil
 }
