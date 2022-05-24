@@ -1,6 +1,13 @@
 # github.com/fsnotify/fsnotify v1.4.7
 ## explicit
 github.com/fsnotify/fsnotify
+# github.com/getkin/kin-openapi v0.94.0
+## explicit; go 1.16
+github.com/getkin/kin-openapi/jsoninfo
+github.com/getkin/kin-openapi/openapi3
+# github.com/ghodss/yaml v1.0.0
+## explicit
+github.com/ghodss/yaml
 # github.com/go-echarts/go-echarts/v2 v2.2.4
 ## explicit; go 1.15
 github.com/go-echarts/go-echarts/v2/charts
@@ -9,6 +16,12 @@ github.com/go-echarts/go-echarts/v2/opts
 github.com/go-echarts/go-echarts/v2/render
 github.com/go-echarts/go-echarts/v2/templates
 github.com/go-echarts/go-echarts/v2/types
+# github.com/go-openapi/jsonpointer v0.19.5
+## explicit; go 1.13
+github.com/go-openapi/jsonpointer
+# github.com/go-openapi/swag v0.19.5
+## explicit
+github.com/go-openapi/swag
 # github.com/golang/protobuf v1.4.3
 ## explicit; go 1.9
 github.com/golang/protobuf/proto
@@ -43,6 +56,11 @@ github.com/leanovate/gopter/prop
 # github.com/magiconair/properties v1.8.1
 ## explicit
 github.com/magiconair/properties
+# github.com/mailru/easyjson v0.0.0-20190626092158-b2ccc519800e
+## explicit
+github.com/mailru/easyjson/buffer
+github.com/mailru/easyjson/jlexer
+github.com/mailru/easyjson/jwriter
 # github.com/mattn/go-runewidth v0.0.13
 ## explicit; go 1.9
 github.com/mattn/go-runewidth
@@ -207,7 +225,7 @@ google.golang.org/protobuf/types/known/timestamppb
 # gopkg.in/ini.v1 v1.51.0
 ## explicit
 gopkg.in/ini.v1
-# gopkg.in/yaml.v2 v2.2.8
+# gopkg.in/yaml.v2 v2.3.0
 ## explicit
 gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b

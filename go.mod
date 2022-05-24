@@ -3,6 +3,7 @@ module github.com/wallarm/gotestwaf
 go 1.17
 
 require (
+	github.com/getkin/kin-openapi v0.94.0
 	github.com/go-echarts/go-echarts/v2 v2.2.4
 	github.com/gorilla/websocket v1.4.2
 	github.com/leanovate/gopter v0.2.9
@@ -14,7 +15,7 @@ require (
 	golang.org/x/text v0.3.6
 	google.golang.org/grpc v1.42.0
 	google.golang.org/protobuf v1.25.0
-	gopkg.in/yaml.v2 v2.2.8
+	gopkg.in/yaml.v2 v2.3.0
 )
 
 require (
@@ -37,9 +38,13 @@ require (
 )
 
 require (
+	github.com/ghodss/yaml v1.0.0 // indirect
+	github.com/go-openapi/jsonpointer v0.19.5 // indirect
+	github.com/go-openapi/swag v0.19.5 // indirect
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/google/go-cmp v0.5.3 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
+	github.com/mailru/easyjson v0.0.0-20190626092158-b2ccc519800e // indirect
 	github.com/rogpeppe/go-internal v1.8.0 // indirect
 	golang.org/x/sys v0.0.0-20211031064116-611d5d643895 // indirect
 	google.golang.org/genproto v0.0.0-20200825200019-8632dd797987 // indirect
