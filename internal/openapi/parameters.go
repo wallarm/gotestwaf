@@ -2,63 +2,76 @@ package openapi
 
 import (
 	"fmt"
-	"math/rand"
+	"math"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
+const defaultPlaceholderSize = 16
+const defaultMaxInt = 10000
+const defaultStringSize = 16
+
 // allParameters contains names of parameters and their value placeholders.
 type allParameters struct {
-	pathParameters  map[string]string
-	queryParameters map[string]string
-	headers         map[string]string
+	pathParameters  map[string]*parameterSpec
+	queryParameters map[string]*parameterSpec
+	headers         map[string]*parameterSpec
 
 	supportedPlaceholders map[string]interface{}
 }
 
+// parameterSpec contains a specific value for any parameter and
+// length limits for string parameters.
+type parameterSpec struct {
+	paramType string
+	value     string
+	minLength uint64
+	maxLength uint64
+}
+
 // parseParameters returns information about parameters in path, query and headers.
 func parseParameters(parameters openapi3.Parameters) (*allParameters, error) {
-	pathParams := make(map[string]string)
-	queryParams := make(map[string]string)
-	headers := make(map[string]string)
+	pathParams := make(map[string]*parameterSpec)
+	queryParams := make(map[string]*parameterSpec)
+	headers := make(map[string]*parameterSpec)
 	supportedPlaceholders := make(map[string]interface{})
 
 	if parameters != nil {
 		for _, p := range parameters {
 			switch p.Value.In {
 			case openapi3.ParameterInPath:
-				param, value, paramType, err := parsePathParameter(p.Value)
+				param, spec, err := parsePathParameter(p.Value)
 				if err != nil {
 					return nil, err
 				}
 
-				pathParams[param] = value
+				pathParams[param] = spec
 
-				if paramType == openapi3.TypeString {
+				if spec.paramType == openapi3.TypeString {
 					supportedPlaceholders[urlPathPlaceholder] = nil
 				}
 
 			case openapi3.ParameterInQuery:
-				param, value, paramType, err := parseQueryParameter(p.Value)
+				param, spec, err := parseQueryParameter(p.Value)
 				if err != nil {
 					return nil, err
 				}
 
-				queryParams[param] = value
+				queryParams[param] = spec
 
-				if paramType == openapi3.TypeString {
+				if spec.paramType == openapi3.TypeString {
 					supportedPlaceholders[urlParamPlaceholder] = nil
 				}
 
 			case openapi3.ParameterInHeader:
-				header, value, paramType, err := parseHeaderParameter(p.Value)
+				header, spec, err := parseHeaderParameter(p.Value)
 				if err != nil {
 					return nil, err
 				}
 
-				headers[header] = value
+				headers[header] = spec
 
-				if paramType == openapi3.TypeString {
+				if spec.paramType == openapi3.TypeString {
 					supportedPlaceholders[headerPlaceholder] = nil
 				}
 
@@ -81,23 +94,34 @@ func parseParameters(parameters openapi3.Parameters) (*allParameters, error) {
 
 // parseHeaderParameter returns the path parameter name, path parameter value
 // placeholder and value type.
-func parsePathParameter(parameter *openapi3.Parameter) (paramName, value, paramType string, err error) {
-	paramName = parameter.Name
+func parsePathParameter(parameter *openapi3.Parameter) (paramName string, spec *parameterSpec, err error) {
+	paramName = "{" + parameter.Name + "}"
+	spec = &parameterSpec{}
 
 	style := parameter.Style
 	if style != "" && style != openapi3.SerializationSimple {
-		return "", "", "", fmt.Errorf("unsupported path parameter style: %s", style)
+		return "", nil, fmt.Errorf("unsupported path parameter style: %s", style)
 	}
 
 	schema := parameter.Schema.Value
-	paramType = schema.Type
+	spec.paramType = schema.Type
 	switch schema.Type {
 	case openapi3.TypeInteger:
-		value = fmt.Sprintf("%d", rand.Uint64())
+		randInt := genRandomInt(schema.Min, schema.Max, schema.ExclusiveMin, schema.ExclusiveMax)
+		spec.value = fmt.Sprintf("%d", randInt)
+
 	case openapi3.TypeString:
-		value = parameterStringPlaceholder
+		spec.minLength = schema.MinLength
+		if schema.MaxLength == nil {
+			spec.maxLength = math.MaxUint64
+			spec.value = genRandomString(spec.minLength, spec.minLength+defaultStringSize)
+		} else {
+			spec.maxLength = *schema.MaxLength
+			spec.value = genRandomString(spec.minLength, spec.maxLength)
+		}
+
 	default:
-		return "", "", "", fmt.Errorf("unsupported path parameter type: %s", schema.Type)
+		return "", nil, fmt.Errorf("unsupported path parameter type: %s", schema.Type)
 	}
 
 	return
@@ -105,35 +129,58 @@ func parsePathParameter(parameter *openapi3.Parameter) (paramName, value, paramT
 
 // parseHeaderParameter returns the query parameter name, query parameter value
 // placeholder and value type.
-func parseQueryParameter(parameter *openapi3.Parameter) (paramName, value, paramType string, err error) {
+func parseQueryParameter(parameter *openapi3.Parameter) (paramName string, spec *parameterSpec, err error) {
 	paramName = parameter.Name
+	spec = &parameterSpec{}
 
 	style := parameter.Style
 	if style != "" &&
 		style != openapi3.SerializationForm {
-		return "", "", "", fmt.Errorf("unsupported query parameter style: %s", style)
+		return "", nil, fmt.Errorf("unsupported query parameter style: %s", style)
 	}
 
 	schema := parameter.Schema.Value
-	paramType = schema.Type
+	spec.paramType = schema.Type
 	switch schema.Type {
 	case openapi3.TypeInteger:
-		value = fmt.Sprintf("%d", rand.Uint64())
+		randInt := genRandomInt(schema.Min, schema.Max, schema.ExclusiveMin, schema.ExclusiveMax)
+		spec.value = fmt.Sprintf("%d", randInt)
+
 	case openapi3.TypeString:
-		value = parameterStringPlaceholder
+		spec.minLength = schema.MinLength
+		if schema.MaxLength == nil {
+			spec.maxLength = math.MaxUint64
+			spec.value = genRandomString(spec.minLength, spec.minLength+defaultStringSize)
+		} else {
+			spec.maxLength = *schema.MaxLength
+			spec.value = genRandomString(spec.minLength, spec.maxLength)
+		}
+
 	case openapi3.TypeArray:
 		items := schema.Items.Value
-		paramType = items.Type
+		spec.paramType = items.Type
+
 		switch items.Type {
 		case openapi3.TypeInteger:
-			value = fmt.Sprintf("%d", rand.Uint64())
+			randInt := genRandomInt(schema.Min, schema.Max, schema.ExclusiveMin, schema.ExclusiveMax)
+			spec.value = fmt.Sprintf("%d", randInt)
+
 		case openapi3.TypeString:
-			value = parameterStringPlaceholder
+			spec.minLength = schema.MinLength
+			if schema.MaxLength == nil {
+				spec.maxLength = math.MaxUint64
+				spec.value = genRandomString(spec.minLength, spec.minLength+defaultStringSize)
+			} else {
+				spec.maxLength = *schema.MaxLength
+				spec.value = genRandomString(spec.minLength, spec.maxLength)
+			}
+
 		default:
-			return "", "", "", fmt.Errorf("unsupported type of items in query parameter array: %s", items.Type)
+			return "", nil, fmt.Errorf("unsupported type of items in query parameter array: %s", items.Type)
 		}
+
 	default:
-		return "", "", "", fmt.Errorf("unsupported query parameter type: %s", schema.Type)
+		return "", nil, fmt.Errorf("unsupported query parameter type: %s", schema.Type)
 	}
 
 	return
@@ -141,24 +188,35 @@ func parseQueryParameter(parameter *openapi3.Parameter) (paramName, value, param
 
 // parseHeaderParameter returns the header name, header value placeholder and
 // value type.
-func parseHeaderParameter(parameter *openapi3.Parameter) (paramName, value, paramType string, err error) {
+func parseHeaderParameter(parameter *openapi3.Parameter) (paramName string, spec *parameterSpec, err error) {
 	paramName = parameter.Name
+	spec = &parameterSpec{}
 
 	style := parameter.Style
 	if style != "" &&
 		style != openapi3.SerializationSimple {
-		return "", "", "", fmt.Errorf("unsupported header parameter style: %s", style)
+		return "", nil, fmt.Errorf("unsupported header parameter style: %s", style)
 	}
 
 	schema := parameter.Schema.Value
-	paramType = schema.Type
+	spec.paramType = schema.Type
 	switch schema.Type {
 	case openapi3.TypeInteger:
-		value = fmt.Sprintf("%d", rand.Uint64())
+		randInt := genRandomInt(schema.Min, schema.Max, schema.ExclusiveMin, schema.ExclusiveMax)
+		spec.value = fmt.Sprintf("%d", randInt)
+
 	case openapi3.TypeString:
-		value = headerStringPlaceholder
+		spec.minLength = schema.MinLength
+		if schema.MaxLength == nil {
+			spec.maxLength = math.MaxUint64
+			spec.value = genRandomString(spec.minLength, spec.minLength+defaultStringSize)
+		} else {
+			spec.maxLength = *schema.MaxLength
+			spec.value = genRandomString(spec.minLength, spec.maxLength)
+		}
+
 	default:
-		return "", "", "", fmt.Errorf("unsupported header parameter type: %s", schema.Type)
+		return "", nil, fmt.Errorf("unsupported header parameter type: %s", schema.Type)
 	}
 
 	return

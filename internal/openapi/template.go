@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/pkg/errors"
 )
 
 // Templates contains all templates generated from OpenAPI file. Templates are
@@ -18,11 +19,16 @@ type Templates map[string][]*Template
 
 // Template contains all information about template.
 type Template struct {
-	Method          string
-	URL             string
-	QueryParameters map[string]string
-	Headers         map[string]string
-	RequestBody     map[string]string
+	Method string
+	Path   string
+	URL    string
+
+	PathParameters        map[string]*parameterSpec
+	QueryParameters       map[string]*parameterSpec
+	Headers               map[string]*parameterSpec
+	RequestBodyParameters map[string]*parameterSpec
+
+	RequestBody map[string]string
 
 	Doc *openapi3.T
 
@@ -127,14 +133,20 @@ func pathTemplates(openapiDoc *openapi3.T, basePath string, path string, pathInf
 
 // operationTemplates parses every operation in paths.
 func operationTemplates(openapiDoc *openapi3.T, basePath string, path string, operationName string, operationInfo *openapi3.Operation) (*Template, error) {
-	params, err := parseParameters(operationInfo.Parameters)
-	if err != nil {
-		return nil, err
+	template := &Template{
+		Method: operationName,
+		Path:   path,
+		Doc:    openapiDoc,
 	}
 
-	for paramName, value := range params.pathParameters {
-		path = strings.ReplaceAll(path, "{"+paramName+"}", value)
+	params, err := parseParameters(operationInfo.Parameters)
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't parse request parameters")
 	}
+
+	template.PathParameters = params.pathParameters
+	template.QueryParameters = params.queryParameters
+	template.Headers = params.headers
 
 	templateURL, err := url.Parse(basePath)
 	if err != nil {
@@ -142,15 +154,22 @@ func operationTemplates(openapiDoc *openapi3.T, basePath string, path string, op
 	}
 	templateURL.Path = goPath.Join(templateURL.Path, path)
 
+	template.URL = templateURL.String()
+
 	placeholders := params.supportedPlaceholders
 
 	requestBody := make(map[string]string)
+	requestBodyParameters := make(map[string]*parameterSpec)
 
 	if operationInfo.RequestBody != nil {
 		for contentType, mediaType := range operationInfo.RequestBody.Value.Content {
-			rawBodyStruct, strAvailable, err := schemaToMap(mediaType.Schema.Value)
+			rawBodyStruct, strAvailable, paramSpec, err := schemaToMap(mediaType.Schema.Value)
 			if err != nil {
-				return nil, err
+				return nil, errors.Wrap(err, "couldn't parse request body schema")
+			}
+
+			for k, v := range paramSpec {
+				requestBodyParameters[k] = v
 			}
 
 			switch contentType {
@@ -205,15 +224,9 @@ func operationTemplates(openapiDoc *openapi3.T, basePath string, path string, op
 		}
 	}
 
-	template := &Template{
-		Method:          operationName,
-		URL:             templateURL.String(),
-		QueryParameters: params.queryParameters,
-		Headers:         params.headers,
-		RequestBody:     requestBody,
-		Doc:             openapiDoc,
-		Placeholders:    placeholders,
-	}
+	template.RequestBodyParameters = requestBodyParameters
+	template.RequestBody = requestBody
+	template.Placeholders = placeholders
 
 	return template, nil
 }
@@ -233,45 +246,101 @@ func (t *Template) CreateRequest(ctx context.Context, placeholder string, payloa
 
 	switch placeholder {
 	case headerPlaceholder:
-		for header, value := range t.Headers {
-			if value == headerStringPlaceholder {
-				value = payload
+		for header, spec := range t.Headers {
+			if spec.paramType == openapi3.TypeString {
+				payloadLen := uint64(len(payload))
+				if spec.minLength <= payloadLen && payloadLen <= spec.maxLength {
+					headers[header] = payload
+					continue
+				}
 			}
-			headers[header] = value
+
+			headers[header] = spec.value
 		}
 
 	case urlPathPlaceholder:
-		path = strings.ReplaceAll(path, pathStringPlaceholder, payload)
+		for param, spec := range t.PathParameters {
+			if spec.paramType == openapi3.TypeString {
+				payloadLen := uint64(len(payload))
+				if spec.minLength <= payloadLen && payloadLen <= spec.maxLength {
+					path = strings.ReplaceAll(path, param, payload)
+					continue
+				}
+			}
+
+			path = strings.ReplaceAll(path, param, spec.value)
+		}
 
 	case urlParamPlaceholder:
-		for param, value := range t.QueryParameters {
-			if value == parameterStringPlaceholder {
-				value = payload
+		for param, spec := range t.QueryParameters {
+			if spec.paramType == openapi3.TypeString {
+				payloadLen := uint64(len(payload))
+				if spec.minLength <= payloadLen && payloadLen <= spec.maxLength {
+					queryParams[param] = payload
+					continue
+				}
 			}
-			queryParams[param] = value
+
+			queryParams[param] = spec.value
 		}
 
 	case htmlFormPlaceholder:
 		body = t.RequestBody[xWwwFormContentType]
-		body = strings.ReplaceAll(body, bodyStringPlaceholder, payload)
 		contentType = xWwwFormContentType
+
+		for paramDefaultValue, spec := range t.RequestBodyParameters {
+			if spec.paramType == openapi3.TypeString {
+				payloadLen := uint64(len(payload))
+				if spec.minLength <= payloadLen && payloadLen <= spec.maxLength {
+					body = strings.ReplaceAll(body, paramDefaultValue, payload)
+					continue
+				}
+			}
+		}
 
 	case jsonBodyPlaceholder:
 		fallthrough
 	case jsonRequestPlaceholder:
 		body = t.RequestBody[jsonContentType]
-		body = strings.ReplaceAll(body, bodyStringPlaceholder, payload)
 		contentType = jsonContentType
+
+		for paramDefaultValue, spec := range t.RequestBodyParameters {
+			if spec.paramType == openapi3.TypeString {
+				payloadLen := uint64(len(payload))
+				if spec.minLength <= payloadLen && payloadLen <= spec.maxLength {
+					body = strings.ReplaceAll(body, paramDefaultValue, payload)
+					continue
+				}
+			}
+		}
 
 	case xmlBodyPlaceholder:
 		body = t.RequestBody[xmlContentType]
-		body = strings.ReplaceAll(body, bodyStringPlaceholder, payload)
 		contentType = xmlContentType
+
+		for paramDefaultValue, spec := range t.RequestBodyParameters {
+			if spec.paramType == openapi3.TypeString {
+				payloadLen := uint64(len(payload))
+				if spec.minLength <= payloadLen && payloadLen <= spec.maxLength {
+					body = strings.ReplaceAll(body, paramDefaultValue, payload)
+					continue
+				}
+			}
+		}
 
 	case requestBodyPlaceholder:
 		body = t.RequestBody[plainTextContentType]
-		body = strings.ReplaceAll(body, bodyStringPlaceholder, payload)
 		contentType = plainTextContentType
+
+		for paramDefaultValue, spec := range t.RequestBodyParameters {
+			if spec.paramType == openapi3.TypeString {
+				payloadLen := uint64(len(payload))
+				if spec.minLength <= payloadLen && payloadLen <= spec.maxLength {
+					body = strings.ReplaceAll(body, paramDefaultValue, payload)
+					continue
+				}
+			}
+		}
 
 	default:
 		return nil, nil
@@ -279,7 +348,7 @@ func (t *Template) CreateRequest(ctx context.Context, placeholder string, payloa
 
 	req, err := http.NewRequestWithContext(ctx, t.Method, path, bytes.NewReader([]byte(body)))
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "couldn't create request")
 	}
 
 	var params []string
