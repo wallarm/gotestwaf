@@ -74,15 +74,15 @@ func (c *HTTPClient) SendPayload(
 	ctx context.Context,
 	targetURL, placeholderName, encoderName, payload string,
 	testHeaderValue string,
-) (body []byte, statusCode int, err error) {
+) (body string, statusCode int, err error) {
 	encodedPayload, err := encoder.Apply(encoderName, payload)
 	if err != nil {
-		return nil, 0, errors.Wrap(err, "encoding payload")
+		return "", 0, errors.Wrap(err, "encoding payload")
 	}
 
 	req, err := placeholder.Apply(targetURL, placeholderName, encodedPayload)
 	if err != nil {
-		return nil, 0, errors.Wrap(err, "apply placeholder")
+		return "", 0, errors.Wrap(err, "apply placeholder")
 	}
 
 	req = req.WithContext(ctx)
@@ -101,13 +101,13 @@ func (c *HTTPClient) SendPayload(
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return nil, 0, errors.Wrap(err, "sending http request")
+		return "", 0, errors.Wrap(err, "sending http request")
 	}
 	defer resp.Body.Close()
 
-	body, err = ioutil.ReadAll(resp.Body)
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, 0, errors.Wrap(err, "reading response body")
+		return "", 0, errors.Wrap(err, "reading response body")
 	}
 	statusCode = resp.StatusCode
 
@@ -115,10 +115,15 @@ func (c *HTTPClient) SendPayload(
 		c.cookies = append(c.cookies, resp.Cookies()...)
 	}
 
-	return body, statusCode, nil
+	return string(bodyBytes), statusCode, nil
 }
 
-func (c *HTTPClient) SendRequest(req *http.Request, testHeaderValue string) (body []byte, statusCode int, err error) {
+func (c *HTTPClient) SendRequest(req *http.Request, testHeaderValue string) (
+	respHeaders http.Header,
+	body string,
+	statusCode int,
+	err error,
+) {
 	for header, value := range c.headers {
 		req.Header.Set(header, value)
 	}
@@ -133,13 +138,13 @@ func (c *HTTPClient) SendRequest(req *http.Request, testHeaderValue string) (bod
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return nil, 0, errors.Wrap(err, "sending http request")
+		return nil, "", 0, errors.Wrap(err, "sending http request")
 	}
 	defer resp.Body.Close()
 
-	body, err = ioutil.ReadAll(resp.Body)
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, 0, errors.Wrap(err, "reading response body")
+		return nil, "", 0, errors.Wrap(err, "reading response body")
 	}
 	statusCode = resp.StatusCode
 
@@ -147,5 +152,5 @@ func (c *HTTPClient) SendRequest(req *http.Request, testHeaderValue string) (bod
 		c.cookies = append(c.cookies, resp.Cookies()...)
 	}
 
-	return body, statusCode, nil
+	return resp.Header, string(bodyBytes), statusCode, nil
 }

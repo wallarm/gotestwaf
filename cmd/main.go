@@ -11,6 +11,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/routers"
 	"github.com/pkg/errors"
 
 	"github.com/wallarm/gotestwaf/internal/db"
@@ -58,12 +60,18 @@ func run(ctx context.Context, logger *log.Logger) error {
 
 	logger.Printf("GoTestWAF %s\n", version.Version)
 
+	var openapiDoc *openapi3.T
+	var router routers.Router
 	var templates openapi.Templates
+
 	if cfg.OpenAPIFile != "" {
-		openapiDoc, err := openapi.LoadOpenAPISpec(ctx, cfg.OpenAPIFile)
+		openapiDoc, router, err = openapi.LoadOpenAPISpec(ctx, cfg.OpenAPIFile)
 		if err != nil {
-			return errors.Wrap(err, "couldn't load OpenAPI file")
+			return errors.Wrap(err, "couldn't load OpenAPI spec")
 		}
+		openapiDoc.Servers = append(openapiDoc.Servers, &openapi3.Server{
+			URL: cfg.URL,
+		})
 
 		templates, err = openapi.NewTemplates(openapiDoc, cfg.URL)
 		if err != nil {
@@ -80,7 +88,7 @@ func run(ctx context.Context, logger *log.Logger) error {
 
 	db := db.NewDB(testCases)
 
-	s, err := scanner.New(logger, cfg, db, templates, false)
+	s, err := scanner.New(logger, cfg, db, templates, router, false)
 	if err != nil {
 		return errors.Wrap(err, "couldn't create scanner")
 	}

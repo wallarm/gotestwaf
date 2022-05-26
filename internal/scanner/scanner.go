@@ -4,13 +4,18 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"math/rand"
+	"net/http"
 	"regexp"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
 
+	"github.com/getkin/kin-openapi/openapi3filter"
+	"github.com/getkin/kin-openapi/routers"
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 	"github.com/schollz/progressbar/v3"
@@ -40,14 +45,19 @@ type testWork struct {
 
 // Scanner allows you to test WAF in various ways with given payloads.
 type Scanner struct {
-	logger           *log.Logger
-	cfg              *config.Config
-	db               *db.DB
-	httpClient       *HTTPClient
-	grpcConn         *GRPCConn
+	logger *log.Logger
+
+	cfg *config.Config
+	db  *db.DB
+
+	httpClient *HTTPClient
+	grpcConn   *GRPCConn
+	wsClient   *websocket.Dialer
+
 	requestTemplates openapi.Templates
-	wsClient         *websocket.Dialer
-	isTestEnv        bool
+	router           routers.Router
+
+	isTestEnv bool
 }
 
 // New creates a new Scanner.
@@ -56,6 +66,7 @@ func New(
 	cfg *config.Config,
 	db *db.DB,
 	requestTemplates openapi.Templates,
+	router routers.Router,
 	isTestEnv bool,
 ) (*Scanner, error) {
 	httpClient, err := NewHTTPClient(cfg)
@@ -75,6 +86,7 @@ func New(
 		httpClient:       httpClient,
 		grpcConn:         grpcConn,
 		requestTemplates: requestTemplates,
+		router:           router,
 		wsClient:         websocket.DefaultDialer,
 		isTestEnv:        isTestEnv,
 	}, nil
@@ -274,9 +286,9 @@ func (s *Scanner) Run(ctx context.Context) error {
 
 // checkBlocking checks the response status-code or request body using
 // a regular expression to determine if the request has been blocked.
-func (s *Scanner) checkBlocking(body []byte, statusCode int) (bool, error) {
+func (s *Scanner) checkBlocking(body string, statusCode int) (bool, error) {
 	if s.cfg.BlockRegex != "" {
-		m, _ := regexp.MatchString(s.cfg.BlockRegex, string(body))
+		m, _ := regexp.MatchString(s.cfg.BlockRegex, body)
 		return m, nil
 	}
 	return statusCode == s.cfg.BlockStatusCode, nil
@@ -284,9 +296,9 @@ func (s *Scanner) checkBlocking(body []byte, statusCode int) (bool, error) {
 
 // checkPass checks the response status-code or request body using
 // a regular expression to determine if the request has been passed.
-func (s *Scanner) checkPass(body []byte, statusCode int) (bool, error) {
+func (s *Scanner) checkPass(body string, statusCode int) (bool, error) {
 	if s.cfg.PassRegex != "" {
-		m, _ := regexp.MatchString(s.cfg.PassRegex, string(body))
+		m, _ := regexp.MatchString(s.cfg.PassRegex, body)
 		return m, nil
 	}
 	return statusCode == s.cfg.PassStatusCode, nil
@@ -341,9 +353,10 @@ func (s *Scanner) produceTests(ctx context.Context, n int) <-chan *testWork {
 // placeholder.
 func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 	var (
-		body       []byte
-		statusCode int
-		err        error
+		respHeaders http.Header
+		body        string
+		statusCode  int
+		err         error
 	)
 
 	if w.encoder == encoder.DefaultGRPCEncoder.GetName() {
@@ -357,44 +370,47 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 		}
 
 		body, statusCode, err = s.grpcConn.Send(newCtx, w.encoder, w.payload)
-		err = s.updateDB(w, body, statusCode, err)
+		err = s.updateDB(ctx, w, nil, statusCode, nil, body, err, true)
 		return err
 	}
 
-	if s.requestTemplates != nil {
-		templates := s.requestTemplates[w.placeholder]
-
-		encodedPayload, err := encoder.Apply(w.encoder, w.payload)
-		if err != nil {
-			return errors.Wrap(err, "encoding payload")
-		}
-
-		for _, template := range templates {
-			req, err := template.CreateRequest(ctx, w.placeholder, encodedPayload)
-			if err != nil {
-				return errors.Wrap(err, "create request from template")
-			}
-
-			body, statusCode, err = s.httpClient.SendRequest(req, w.testHeaderValue)
-			err = s.updateDB(w, body, statusCode, err)
-			return err
-		}
-
-		return nil
+	if s.requestTemplates == nil {
+		body, statusCode, err = s.httpClient.SendPayload(ctx, s.cfg.URL, w.placeholder, w.encoder, w.payload, w.testHeaderValue)
+		err = s.updateDB(ctx, w, nil, statusCode, nil, body, err, false)
+		return err
 	}
 
-	body, statusCode, err = s.httpClient.SendPayload(ctx, s.cfg.URL, w.placeholder, w.encoder, w.payload, w.testHeaderValue)
-	err = s.updateDB(w, body, statusCode, err)
+	templates := s.requestTemplates[w.placeholder]
 
-	return err
+	encodedPayload, err := encoder.Apply(w.encoder, w.payload)
+	if err != nil {
+		return errors.Wrap(err, "encoding payload")
+	}
+
+	for _, template := range templates {
+		req, err := template.CreateRequest(ctx, w.placeholder, encodedPayload)
+		if err != nil {
+			return errors.Wrap(err, "create request from template")
+		}
+
+		respHeaders, body, statusCode, err = s.httpClient.SendRequest(req, w.testHeaderValue)
+		err = s.updateDB(ctx, w, req, statusCode, respHeaders, body, err, false)
+		return err
+	}
+
+	return nil
 }
 
 // updateDB updates the success of a query in the database.
 func (s *Scanner) updateDB(
+	ctx context.Context,
 	w *testWork,
-	body []byte,
-	statusCode int,
+	req *http.Request,
+	respStatusCode int,
+	respHeaders http.Header,
+	respBody string,
 	err error,
+	isGRPC bool,
 ) error {
 	info := &db.Info{
 		Set:                w.setName,
@@ -402,7 +418,7 @@ func (s *Scanner) updateDB(
 		Payload:            w.payload,
 		Encoder:            w.encoder,
 		Placeholder:        w.placeholder,
-		ResponseStatusCode: statusCode,
+		ResponseStatusCode: respStatusCode,
 		Type:               w.testType,
 	}
 
@@ -423,16 +439,42 @@ func (s *Scanner) updateDB(
 		}
 	}
 
+	if s.requestTemplates != nil && !isGRPC {
+		route, pathParams, err := s.router.FindRoute(req)
+		if err != nil {
+			return errors.Wrap(err, "couldn't find request route")
+		}
+
+		inputReuqestValidation := &openapi3filter.RequestValidationInput{
+			Request:     req,
+			PathParams:  pathParams,
+			QueryParams: req.URL.Query(),
+			Route:       route,
+		}
+
+		responseValidationInput := &openapi3filter.ResponseValidationInput{
+			RequestValidationInput: inputReuqestValidation,
+			Status:                 respStatusCode,
+			Header:                 respHeaders,
+			Body:                   ioutil.NopCloser(strings.NewReader(respBody)),
+		}
+
+		if err := openapi3filter.ValidateResponse(ctx, responseValidationInput); err == nil {
+			s.db.UpdatePassedTests(info)
+			return nil
+		}
+	}
+
 	var blocked, passed bool
 	if blockedByReset {
 		blocked = true
 	} else {
-		blocked, err = s.checkBlocking(body, statusCode)
+		blocked, err = s.checkBlocking(respBody, respStatusCode)
 		if err != nil {
 			return errors.Wrap(err, "failed to check blocking:")
 		}
 
-		passed, err = s.checkPass(body, statusCode)
+		passed, err = s.checkPass(respBody, respStatusCode)
 		if err != nil {
 			return errors.Wrap(err, "failed to check passed or not:")
 		}
