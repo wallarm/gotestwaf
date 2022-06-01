@@ -100,6 +100,14 @@ The steps below walk through downloading and starting GoTestWAF with minimal con
     If required, you can replace `${PWD}/reports` with the path to another folder used to place the evaluation report.
 
     If the evaluated security tool is available externally, you can skip the option `--network="host"`. This option enables interaction of Docker containers running on 127.0.0.1.
+    
+    To perform the gRPC tests you must have a working endpoint and use the --grpcPort <port> cli option.
+       
+     ```
+     docker run -v ${PWD}/reports:/app/reports \
+        wallarm/gotestwaf --grpcPort 9000 --url=http://my.grpc.endpoint
+     ```
+    
 3. Find the report file `waf-evaluation-report-<date>.pdf` in the `reports` folder that you mapped to `/app/reports`
 inside the container.
 
