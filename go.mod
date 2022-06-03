@@ -3,6 +3,7 @@ module github.com/wallarm/gotestwaf
 go 1.17
 
 require (
+	github.com/clbanning/mxj v1.8.4
 	github.com/getkin/kin-openapi v0.94.0
 	github.com/go-echarts/go-echarts/v2 v2.2.4
 	github.com/gorilla/websocket v1.4.2
