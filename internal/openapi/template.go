@@ -3,10 +3,7 @@ package openapi
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"net/http"
-	"net/url"
-	goPath "path"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -147,14 +144,7 @@ func operationTemplates(openapiDoc *openapi3.T, basePath string, path string, op
 	template.PathParameters = params.pathParameters
 	template.QueryParameters = params.queryParameters
 	template.Headers = params.headers
-
-	templateURL, err := url.Parse(basePath)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't parse base URL: %s", err.Error())
-	}
-	templateURL.Path = goPath.Join(templateURL.Path, path)
-
-	template.URL = templateURL.String()
+	template.URL = strings.TrimSuffix(basePath, "/") + path
 
 	placeholders := params.supportedPlaceholders
 
@@ -163,13 +153,9 @@ func operationTemplates(openapiDoc *openapi3.T, basePath string, path string, op
 
 	if operationInfo.RequestBody != nil {
 		for contentType, mediaType := range operationInfo.RequestBody.Value.Content {
-			rawBodyStruct, strAvailable, paramSpec, err := schemaToMap(mediaType.Schema.Value)
+			rawBodyStruct, strAvailable, paramSpec, err := schemaToMap("", mediaType.Schema.Value, false)
 			if err != nil {
 				return nil, errors.Wrap(err, "couldn't parse request body schema")
-			}
-
-			for k, v := range paramSpec {
-				requestBodyParameters[k] = v
 			}
 
 			switch contentType {
@@ -187,6 +173,11 @@ func operationTemplates(openapiDoc *openapi3.T, basePath string, path string, op
 				requestBody[contentType] = body
 
 			case xmlContentType:
+				rawBodyStruct, strAvailable, paramSpec, err = schemaToMap("", mediaType.Schema.Value, true)
+				if err != nil {
+					return nil, errors.Wrap(err, "couldn't parse request body schema")
+				}
+
 				if strAvailable {
 					placeholders[xmlBodyPlaceholder] = nil
 				}
@@ -210,16 +201,18 @@ func operationTemplates(openapiDoc *openapi3.T, basePath string, path string, op
 
 				requestBody[contentType] = body
 
-			case plainTextContentType:
-				fallthrough
-			case anyContentType:
+			default:
 				if strAvailable {
 					placeholders[requestBodyPlaceholder] = nil
 				}
-				requestBody[contentType] = bodyStringPlaceholder
+				for k := range paramSpec {
+					requestBody[plainTextContentType] = k
+					break
+				}
+			}
 
-			default:
-				return nil, fmt.Errorf("unsupported Content-Type %s", contentType)
+			for k, v := range paramSpec {
+				requestBodyParameters[k] = v
 			}
 		}
 	}
@@ -344,6 +337,12 @@ func (t *Template) CreateRequest(ctx context.Context, placeholder string, payloa
 
 	default:
 		return nil, nil
+	}
+
+	if placeholder != urlPathPlaceholder {
+		for k, v := range t.PathParameters {
+			path = strings.ReplaceAll(path, k, v.value)
+		}
 	}
 
 	req, err := http.NewRequestWithContext(ctx, t.Method, path, bytes.NewReader([]byte(body)))

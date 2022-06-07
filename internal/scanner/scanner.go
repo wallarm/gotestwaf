@@ -395,10 +395,9 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 
 		respHeaders, body, statusCode, err = s.httpClient.SendRequest(req, w.testHeaderValue)
 		err = s.updateDB(ctx, w, req, statusCode, respHeaders, body, err, false)
-		return err
 	}
 
-	return nil
+	return err
 }
 
 // updateDB updates the success of a query in the database.
