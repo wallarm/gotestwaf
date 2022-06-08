@@ -304,11 +304,15 @@ func ExportToPDF(
 	data.PositiveTests.UnresolvedRequestsNumber = s.PositiveTests.UnresolvedRequestsNumber
 	data.PositiveTests.FailedRequestsNumber = s.PositiveTests.FailedRequestsNumber
 
-	templ := template.Must(template.New("report").Funcs(template.FuncMap{
-		"script": func(b []byte) template.HTML {
-			return template.HTML(b)
-		},
-	}).Parse(htmlTemplate))
+	templ := template.Must(
+		template.New("report").
+			Funcs(template.FuncMap{
+				"script": func(b []byte) template.HTML {
+					return template.HTML(b)
+				},
+			}).
+			Funcs(template.FuncMap{"StringsJoin": strings.Join}).
+			Parse(htmlTemplate))
 
 	var buffer bytes.Buffer
 

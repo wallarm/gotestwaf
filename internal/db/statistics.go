@@ -60,13 +60,14 @@ type SummaryTableRow struct {
 }
 
 type TestDetails struct {
-	Payload     string
-	TestCase    string
-	TestSet     string
-	Encoder     string
-	Placeholder string
-	Status      int
-	Type        string
+	Payload            string
+	TestCase           string
+	TestSet            string
+	Encoder            string
+	Placeholder        string
+	ResponseStatusCode int
+	AdditionalInfo     []string
+	Type               string
 }
 
 type FailedDetails struct {
@@ -74,7 +75,7 @@ type FailedDetails struct {
 	TestCase    string
 	Encoder     string
 	Placeholder string
-	Reason      string
+	Reason      []string
 	Type        string
 }
 
@@ -229,13 +230,13 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 
 	for _, blockedTest := range db.blockedTests {
 		testDetails := TestDetails{
-			Payload:     blockedTest.Payload,
-			TestCase:    blockedTest.Case,
-			TestSet:     blockedTest.Set,
-			Encoder:     blockedTest.Encoder,
-			Placeholder: blockedTest.Placeholder,
-			Status:      blockedTest.ResponseStatusCode,
-			Type:        blockedTest.Type,
+			Payload:            blockedTest.Payload,
+			TestCase:           blockedTest.Case,
+			TestSet:            blockedTest.Set,
+			Encoder:            blockedTest.Encoder,
+			Placeholder:        blockedTest.Placeholder,
+			ResponseStatusCode: blockedTest.ResponseStatusCode,
+			Type:               blockedTest.Type,
 		}
 
 		if isPositiveTest(blockedTest.Set) {
@@ -247,13 +248,14 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 
 	for _, passedTest := range db.passedTests {
 		testDetails := TestDetails{
-			Payload:     passedTest.Payload,
-			TestCase:    passedTest.Case,
-			TestSet:     passedTest.Set,
-			Encoder:     passedTest.Encoder,
-			Placeholder: passedTest.Placeholder,
-			Status:      passedTest.ResponseStatusCode,
-			Type:        passedTest.Type,
+			Payload:            passedTest.Payload,
+			TestCase:           passedTest.Case,
+			TestSet:            passedTest.Set,
+			Encoder:            passedTest.Encoder,
+			Placeholder:        passedTest.Placeholder,
+			ResponseStatusCode: passedTest.ResponseStatusCode,
+			AdditionalInfo:     passedTest.AdditionalInfo,
+			Type:               passedTest.Type,
 		}
 
 		if isPositiveTest(passedTest.Set) {
@@ -265,13 +267,14 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 
 	for _, unresolvedTest := range db.naTests {
 		testDetails := TestDetails{
-			Payload:     unresolvedTest.Payload,
-			TestCase:    unresolvedTest.Case,
-			TestSet:     unresolvedTest.Set,
-			Encoder:     unresolvedTest.Encoder,
-			Placeholder: unresolvedTest.Placeholder,
-			Status:      unresolvedTest.ResponseStatusCode,
-			Type:        unresolvedTest.Type,
+			Payload:            unresolvedTest.Payload,
+			TestCase:           unresolvedTest.Case,
+			TestSet:            unresolvedTest.Set,
+			Encoder:            unresolvedTest.Encoder,
+			Placeholder:        unresolvedTest.Placeholder,
+			ResponseStatusCode: unresolvedTest.ResponseStatusCode,
+			AdditionalInfo:     unresolvedTest.AdditionalInfo,
+			Type:               unresolvedTest.Type,
 		}
 
 		if ignoreUnresolved || nonBlockedAsPassed {
@@ -295,7 +298,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 			TestCase:    failedTest.Case,
 			Encoder:     failedTest.Encoder,
 			Placeholder: failedTest.Placeholder,
-			Reason:      failedTest.Reason,
+			Reason:      failedTest.AdditionalInfo,
 			Type:        failedTest.Type,
 		}
 

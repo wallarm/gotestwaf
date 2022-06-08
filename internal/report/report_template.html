@@ -296,7 +296,7 @@
             grid-template-columns: 390px repeat(3, minmax(45px, 125px));
             gap: 4px;
         }
-        .positive__grid--failed--reason--row {
+        .positive__grid--additional--information--row {
             display: grid;
             grid-template-columns: 1fr;
             gap: 4px;
@@ -497,7 +497,7 @@
                     <div class="positive__grid--row-item">{{$row.TestCase}}</div>
                     <div class="positive__grid--row-item">{{$row.Encoder}}</div>
                     <div class="positive__grid--row-item">{{$row.Placeholder}}</div>
-                    <div class="positive__grid--row-item">{{$row.Status}}</div>
+                    <div class="positive__grid--row-item">{{$row.ResponseStatusCode}}</div>
                 </div>
                 {{end}}
             </div>
@@ -518,8 +518,13 @@
                     <div class="positive__grid--row-item">{{$row.TestCase}}</div>
                     <div class="positive__grid--row-item">{{$row.Encoder}}</div>
                     <div class="positive__grid--row-item">{{$row.Placeholder}}</div>
-                    <div class="positive__grid--row-item">{{$row.Status}}</div>
+                    <div class="positive__grid--row-item">{{$row.ResponseStatusCode}}</div>
                 </div>
+                {{$length := len $row.AdditionalInfo}}{{if ne $length 0}}
+                <div class="positive__grid--additional--information--row">
+                    <div class="positive__grid--row-item">{{StringsJoin $row.AdditionalInfo "<br>\n"}}</div>
+                </div>
+                {{end}}
                 {{end}}
             </div>
             {{end}}
@@ -539,8 +544,13 @@
                     <div class="positive__grid--row-item">{{$row.TestCase}}</div>
                     <div class="positive__grid--row-item">{{$row.Encoder}}</div>
                     <div class="positive__grid--row-item">{{$row.Placeholder}}</div>
-                    <div class="positive__grid--row-item">{{$row.Status}}</div>
+                    <div class="positive__grid--row-item">{{$row.ResponseStatusCode}}</div>
                 </div>
+                {{$length := len $row.AdditionalInfo}}{{if ne $length 0}}
+                <div class="positive__grid--additional--information--row">
+                    <div class="positive__grid--row-item">{{StringsJoin $row.AdditionalInfo "<br>\n"}}</div>
+                </div>
+                {{end}}
                 {{end}}
             </div>
             {{end}}
@@ -561,8 +571,8 @@
                     <div class="positive__grid--row-item">{{$row.Placeholder}}</div>
                 </div>
                 {{$length := len $row.Reason}}{{if ne $length 0}}
-                <div class="positive__grid--failed--reason--row">
-                    <div class="positive__grid--row-item">Reason: {{$row.Reason}}</div>
+                <div class="positive__grid--additional--information--row">
+                    <div class="positive__grid--row-item">Reason: {{StringsJoin $row.Reason "<br>\n"}}</div>
                 </div>
                 {{end}}
                 {{end}}
@@ -585,8 +595,13 @@
                     <div class="positive__grid--row-item">{{$row.TestCase}}</div>
                     <div class="positive__grid--row-item">{{$row.Encoder}}</div>
                     <div class="positive__grid--row-item">{{$row.Placeholder}}</div>
-                    <div class="positive__grid--row-item">{{$row.Status}}</div>
+                    <div class="positive__grid--row-item">{{$row.ResponseStatusCode}}</div>
                 </div>
+                {{$length := len $row.AdditionalInfo}}{{if ne $length 0}}
+                <div class="positive__grid--additional--information--row">
+                    <div class="positive__grid--row-item">{{StringsJoin $row.AdditionalInfo "<br>\n"}}</div>
+                </div>
+                {{end}}
                 {{end}}
             </div>
             {{end}}
@@ -607,8 +622,13 @@
                     <div class="positive__grid--row-item">{{$row.TestCase}}</div>
                     <div class="positive__grid--row-item">{{$row.Encoder}}</div>
                     <div class="positive__grid--row-item">{{$row.Placeholder}}</div>
-                    <div class="positive__grid--row-item">{{$row.Status}}</div>
+                    <div class="positive__grid--row-item">{{$row.ResponseStatusCode}}</div>
                 </div>
+                {{$length := len $row.AdditionalInfo}}{{if ne $length 0}}
+                <div class="positive__grid--additional--information--row">
+                    <div class="positive__grid--row-item">{{StringsJoin $row.AdditionalInfo "<br>\n"}}</div>
+                </div>
+                {{end}}
                 {{end}}
             </div>
             {{end}}
@@ -630,8 +650,8 @@
                     <div class="positive__grid--row-item">{{$row.Placeholder}}</div>
                 </div>
                 {{$length := len $row.Reason}}{{if ne $length 0}}
-                <div class="positive__grid--failed--reason--row">
-                    <div class="positive__grid--row-item">Reason: {{$row.Reason}}</div>
+                <div class="positive__grid--additional--information--row">
+                    <div class="positive__grid--row-item">Reason: {{StringsJoin $row.Reason "<br>\n"}}</div>
                 </div>
                 {{end}}
                 {{end}}

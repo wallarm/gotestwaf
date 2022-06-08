@@ -370,13 +370,19 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 		}
 
 		body, statusCode, err = s.grpcConn.Send(newCtx, w.encoder, w.payload)
-		err = s.updateDB(ctx, w, nil, statusCode, nil, body, err, true)
+
+		_, _, _, _, err = s.updateDB(ctx, w, nil, nil, nil, nil, nil,
+			statusCode, nil, body, err, "", true)
+
 		return err
 	}
 
 	if s.requestTemplates == nil {
 		body, statusCode, err = s.httpClient.SendPayload(ctx, s.cfg.URL, w.placeholder, w.encoder, w.payload, w.testHeaderValue)
-		err = s.updateDB(ctx, w, nil, statusCode, nil, body, err, false)
+
+		_, _, _, _, err = s.updateDB(ctx, w, nil, nil, nil, nil, nil,
+			statusCode, nil, body, err, "", false)
+
 		return err
 	}
 
@@ -387,6 +393,12 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 		return errors.Wrap(err, "encoding payload")
 	}
 
+	var passedTest *db.Info
+	var blockedTest *db.Info
+	var unresolvedTest *db.Info
+	var failedTest *db.Info
+	var additionalInfo string
+
 	for _, template := range templates {
 		req, err := template.CreateRequest(ctx, w.placeholder, encodedPayload)
 		if err != nil {
@@ -394,54 +406,86 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 		}
 
 		respHeaders, body, statusCode, err = s.httpClient.SendRequest(req, w.testHeaderValue)
-		err = s.updateDB(ctx, w, req, statusCode, respHeaders, body, err, false)
+
+		additionalInfo = fmt.Sprintf("%s %s", template.Method, template.Path)
+
+		passedTest, blockedTest, unresolvedTest, failedTest, err =
+			s.updateDB(ctx, w, passedTest, blockedTest, unresolvedTest, failedTest,
+				req, statusCode, respHeaders, body, err, additionalInfo, false)
+
+		if err != nil {
+			return err
+		}
 	}
 
-	return err
+	return nil
 }
 
 // updateDB updates the success of a query in the database.
 func (s *Scanner) updateDB(
 	ctx context.Context,
 	w *testWork,
+	passedTest *db.Info,
+	blockedTest *db.Info,
+	unresolvedTest *db.Info,
+	failedTest *db.Info,
 	req *http.Request,
 	respStatusCode int,
 	respHeaders http.Header,
 	respBody string,
-	err error,
+	sendErr error,
+	additionalInfo string,
 	isGRPC bool,
-) error {
-	info := &db.Info{
-		Set:                w.setName,
-		Case:               w.caseName,
-		Payload:            w.payload,
-		Encoder:            w.encoder,
-		Placeholder:        w.placeholder,
-		ResponseStatusCode: respStatusCode,
-		Type:               w.testType,
-	}
+) (
+	updPassedTest *db.Info,
+	updBlockedTest *db.Info,
+	updUnresolvedTest *db.Info,
+	updFailedTest *db.Info,
+	err error,
+) {
+	updPassedTest = passedTest
+	updBlockedTest = blockedTest
+	updUnresolvedTest = unresolvedTest
+	updFailedTest = failedTest
+
+	info := w.toInfo(respStatusCode)
 
 	var blockedByReset bool
-	if err != nil {
-		if errors.Is(err, io.EOF) || errors.Is(err, syscall.ECONNRESET) {
+	if sendErr != nil {
+		if errors.Is(sendErr, io.EOF) || errors.Is(sendErr, syscall.ECONNRESET) {
 			if s.cfg.BlockConnReset {
 				blockedByReset = true
 			} else {
-				s.db.UpdateNaTests(info, s.cfg.IgnoreUnresolved, s.cfg.NonBlockedAsPassed, w.isTruePositive)
-				return nil
+				if updUnresolvedTest == nil {
+					updUnresolvedTest = info
+					updUnresolvedTest.AdditionalInfo = []string{additionalInfo}
+					s.db.UpdateNaTests(updUnresolvedTest, s.cfg.IgnoreUnresolved, s.cfg.NonBlockedAsPassed, w.isTruePositive)
+				} else {
+					unresolvedTest.AdditionalInfo = append(unresolvedTest.AdditionalInfo, additionalInfo)
+				}
+
+				return
 			}
 		} else {
-			info.Reason = err.Error()
-			s.db.UpdateFailedTests(info)
-			s.logger.Printf("http sending: %s\n", err.Error())
-			return nil
+			if updFailedTest == nil {
+				updFailedTest = info
+				updFailedTest.AdditionalInfo = []string{sendErr.Error()}
+				s.db.UpdateFailedTests(updFailedTest)
+			} else {
+				updFailedTest.AdditionalInfo = append(updFailedTest.AdditionalInfo, sendErr.Error())
+			}
+
+			s.logger.Printf("http sending: %s\n", sendErr.Error())
+
+			return
 		}
 	}
 
 	if s.requestTemplates != nil && !isGRPC {
-		route, pathParams, err := s.router.FindRoute(req)
-		if err != nil {
-			return errors.Wrap(err, "couldn't find request route")
+		route, pathParams, routeErr := s.router.FindRoute(req)
+		if routeErr != nil {
+			return nil, nil, nil, nil,
+				errors.Wrap(routeErr, "couldn't find request route")
 		}
 
 		inputReuqestValidation := &openapi3filter.RequestValidationInput{
@@ -458,9 +502,16 @@ func (s *Scanner) updateDB(
 			Body:                   ioutil.NopCloser(strings.NewReader(respBody)),
 		}
 
-		if err := openapi3filter.ValidateResponse(ctx, responseValidationInput); err == nil {
-			s.db.UpdatePassedTests(info)
-			return nil
+		if validationErr := openapi3filter.ValidateResponse(ctx, responseValidationInput); validationErr == nil {
+			if updPassedTest == nil {
+				updPassedTest = info
+				updPassedTest.AdditionalInfo = []string{additionalInfo}
+				s.db.UpdatePassedTests(updPassedTest)
+			} else {
+				updPassedTest.AdditionalInfo = append(updPassedTest.AdditionalInfo, additionalInfo)
+			}
+
+			return
 		}
 	}
 
@@ -470,24 +521,56 @@ func (s *Scanner) updateDB(
 	} else {
 		blocked, err = s.checkBlocking(respBody, respStatusCode)
 		if err != nil {
-			return errors.Wrap(err, "failed to check blocking:")
+			return nil, nil, nil, nil,
+				errors.Wrap(err, "failed to check blocking")
 		}
 
 		passed, err = s.checkPass(respBody, respStatusCode)
 		if err != nil {
-			return errors.Wrap(err, "failed to check passed or not:")
+			return nil, nil, nil, nil,
+				errors.Wrap(err, "failed to check passed or not")
 		}
 	}
 
 	if (blocked && passed) || (!blocked && !passed) {
-		s.db.UpdateNaTests(info, s.cfg.IgnoreUnresolved, s.cfg.NonBlockedAsPassed, w.isTruePositive)
+		if updUnresolvedTest == nil {
+			updUnresolvedTest = info
+			updUnresolvedTest.AdditionalInfo = []string{additionalInfo}
+			s.db.UpdateNaTests(updUnresolvedTest, s.cfg.IgnoreUnresolved, s.cfg.NonBlockedAsPassed, w.isTruePositive)
+		} else {
+			unresolvedTest.AdditionalInfo = append(unresolvedTest.AdditionalInfo, additionalInfo)
+		}
 	} else {
 		if blocked {
-			s.db.UpdateBlockedTests(info)
+			if updBlockedTest == nil {
+				updBlockedTest = info
+				updBlockedTest.AdditionalInfo = []string{additionalInfo}
+				s.db.UpdatePassedTests(updBlockedTest)
+			} else {
+				updBlockedTest.AdditionalInfo = append(updBlockedTest.AdditionalInfo, additionalInfo)
+			}
 		} else {
-			s.db.UpdatePassedTests(info)
+			if updPassedTest == nil {
+				updPassedTest = info
+				updPassedTest.AdditionalInfo = []string{additionalInfo}
+				s.db.UpdatePassedTests(updPassedTest)
+			} else {
+				updPassedTest.AdditionalInfo = append(updPassedTest.AdditionalInfo, additionalInfo)
+			}
 		}
 	}
 
-	return nil
+	return
+}
+
+func (w *testWork) toInfo(respStatusCode int) *db.Info {
+	return &db.Info{
+		Set:                w.setName,
+		Case:               w.caseName,
+		Payload:            w.payload,
+		Encoder:            w.encoder,
+		Placeholder:        w.placeholder,
+		ResponseStatusCode: respStatusCode,
+		Type:               w.testType,
+	}
 }
