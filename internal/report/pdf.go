@@ -307,8 +307,8 @@ func ExportToPDF(
 	templ := template.Must(
 		template.New("report").
 			Funcs(template.FuncMap{
-				"script": func(b []byte) template.HTML {
-					return template.HTML(b)
+				"script": func(s string) template.HTML {
+					return template.HTML(s)
 				},
 			}).
 			Funcs(template.FuncMap{"StringsJoin": strings.Join}).

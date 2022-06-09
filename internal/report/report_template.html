@@ -522,7 +522,7 @@
                 </div>
                 {{$length := len $row.AdditionalInfo}}{{if ne $length 0}}
                 <div class="positive__grid--additional--information--row">
-                    <div class="positive__grid--row-item">{{StringsJoin $row.AdditionalInfo "<br>\n"}}</div>
+                    <div class="positive__grid--row-item">{{$info := StringsJoin $row.AdditionalInfo "<br>"}}{{script $info}}</div>
                 </div>
                 {{end}}
                 {{end}}
@@ -548,7 +548,7 @@
                 </div>
                 {{$length := len $row.AdditionalInfo}}{{if ne $length 0}}
                 <div class="positive__grid--additional--information--row">
-                    <div class="positive__grid--row-item">{{StringsJoin $row.AdditionalInfo "<br>\n"}}</div>
+                    <div class="positive__grid--row-item">{{$info := StringsJoin $row.AdditionalInfo "<br>"}}{{script $info}}</div>
                 </div>
                 {{end}}
                 {{end}}
@@ -572,7 +572,7 @@
                 </div>
                 {{$length := len $row.Reason}}{{if ne $length 0}}
                 <div class="positive__grid--additional--information--row">
-                    <div class="positive__grid--row-item">Reason: {{StringsJoin $row.Reason "<br>\n"}}</div>
+                    <div class="positive__grid--row-item">Reason: {{$reason := StringsJoin $row.Reason "<br>"}}{{script $reason}}</div>
                 </div>
                 {{end}}
                 {{end}}
@@ -599,7 +599,7 @@
                 </div>
                 {{$length := len $row.AdditionalInfo}}{{if ne $length 0}}
                 <div class="positive__grid--additional--information--row">
-                    <div class="positive__grid--row-item">{{StringsJoin $row.AdditionalInfo "<br>\n"}}</div>
+                    <div class="positive__grid--row-item">{{$info := StringsJoin $row.AdditionalInfo "<br>"}}{{script $info}}</div>
                 </div>
                 {{end}}
                 {{end}}
@@ -626,7 +626,7 @@
                 </div>
                 {{$length := len $row.AdditionalInfo}}{{if ne $length 0}}
                 <div class="positive__grid--additional--information--row">
-                    <div class="positive__grid--row-item">{{StringsJoin $row.AdditionalInfo "<br>\n"}}</div>
+                    <div class="positive__grid--row-item">{{$info := StringsJoin $row.AdditionalInfo "<br>"}}{{script $info}}</div>
                 </div>
                 {{end}}
                 {{end}}
@@ -651,7 +651,7 @@
                 </div>
                 {{$length := len $row.Reason}}{{if ne $length 0}}
                 <div class="positive__grid--additional--information--row">
-                    <div class="positive__grid--row-item">Reason: {{StringsJoin $row.Reason "<br>\n"}}</div>
+                    <div class="positive__grid--row-item">Reason: {{$reason := StringsJoin $row.Reason "<br>"}}{{script $reason}}</div>
                 </div>
                 {{end}}
                 {{end}}
