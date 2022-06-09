@@ -481,40 +481,6 @@ func (s *Scanner) updateDB(
 		}
 	}
 
-	if s.requestTemplates != nil && !isGRPC {
-		route, pathParams, routeErr := s.router.FindRoute(req)
-		if routeErr != nil {
-			return nil, nil, nil, nil,
-				errors.Wrap(routeErr, "couldn't find request route")
-		}
-
-		inputReuqestValidation := &openapi3filter.RequestValidationInput{
-			Request:     req,
-			PathParams:  pathParams,
-			QueryParams: req.URL.Query(),
-			Route:       route,
-		}
-
-		responseValidationInput := &openapi3filter.ResponseValidationInput{
-			RequestValidationInput: inputReuqestValidation,
-			Status:                 respStatusCode,
-			Header:                 respHeaders,
-			Body:                   ioutil.NopCloser(strings.NewReader(respBody)),
-		}
-
-		if validationErr := openapi3filter.ValidateResponse(ctx, responseValidationInput); validationErr == nil {
-			if updPassedTest == nil {
-				updPassedTest = info
-				updPassedTest.AdditionalInfo = []string{additionalInfo}
-				s.db.UpdatePassedTests(updPassedTest)
-			} else {
-				updPassedTest.AdditionalInfo = append(updPassedTest.AdditionalInfo, additionalInfo)
-			}
-
-			return
-		}
-	}
-
 	var blocked, passed bool
 	if blockedByReset {
 		blocked = true
@@ -532,6 +498,62 @@ func (s *Scanner) updateDB(
 		}
 	}
 
+	if s.requestTemplates != nil && !isGRPC {
+		route, pathParams, routeErr := s.router.FindRoute(req)
+		if routeErr != nil {
+			// split Method and url template
+			additionalInfoParts := strings.Split(additionalInfo, " ")
+			if len(additionalInfoParts) < 2 {
+				return nil, nil, nil, nil,
+					errors.Wrap(routeErr, "couldn't find request route")
+			}
+
+			req.URL.Path = additionalInfoParts[1]
+			route, pathParams, routeErr = s.router.FindRoute(req)
+			if routeErr != nil {
+				return nil, nil, nil, nil,
+					errors.Wrap(routeErr, "couldn't find request route")
+			}
+		}
+
+		inputReuqestValidation := &openapi3filter.RequestValidationInput{
+			Request:     req,
+			PathParams:  pathParams,
+			QueryParams: req.URL.Query(),
+			Route:       route,
+		}
+
+		responseValidationInput := &openapi3filter.ResponseValidationInput{
+			RequestValidationInput: inputReuqestValidation,
+			Status:                 respStatusCode,
+			Header:                 respHeaders,
+			Body:                   ioutil.NopCloser(strings.NewReader(respBody)),
+			Options: &openapi3filter.Options{
+				IncludeResponseStatus: true,
+			},
+		}
+
+		if validationErr := openapi3filter.ValidateResponse(ctx, responseValidationInput); validationErr == nil && !blocked {
+			if updPassedTest == nil {
+				updPassedTest = info
+				updPassedTest.AdditionalInfo = []string{additionalInfo}
+				s.db.UpdatePassedTests(updPassedTest)
+			} else {
+				updPassedTest.AdditionalInfo = append(updPassedTest.AdditionalInfo, additionalInfo)
+			}
+		} else {
+			if updBlockedTest == nil {
+				updBlockedTest = info
+				updBlockedTest.AdditionalInfo = []string{additionalInfo}
+				s.db.UpdateBlockedTests(updBlockedTest)
+			} else {
+				updBlockedTest.AdditionalInfo = append(updBlockedTest.AdditionalInfo, additionalInfo)
+			}
+		}
+
+		return
+	}
+
 	if (blocked && passed) || (!blocked && !passed) {
 		if updUnresolvedTest == nil {
 			updUnresolvedTest = info
@@ -545,7 +567,7 @@ func (s *Scanner) updateDB(
 			if updBlockedTest == nil {
 				updBlockedTest = info
 				updBlockedTest.AdditionalInfo = []string{additionalInfo}
-				s.db.UpdatePassedTests(updBlockedTest)
+				s.db.UpdateBlockedTests(updBlockedTest)
 			} else {
 				updBlockedTest.AdditionalInfo = append(updBlockedTest.AdditionalInfo, additionalInfo)
 			}
