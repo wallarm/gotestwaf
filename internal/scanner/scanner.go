@@ -458,9 +458,9 @@ func (s *Scanner) updateDB(
 			} else {
 				if updUnresolvedTest == nil {
 					updUnresolvedTest = info
-					updUnresolvedTest.AdditionalInfo = []string{additionalInfo}
 					s.db.UpdateNaTests(updUnresolvedTest, s.cfg.IgnoreUnresolved, s.cfg.NonBlockedAsPassed, w.isTruePositive)
-				} else {
+				}
+				if len(additionalInfo) != 0 {
 					unresolvedTest.AdditionalInfo = append(unresolvedTest.AdditionalInfo, additionalInfo)
 				}
 
@@ -469,9 +469,9 @@ func (s *Scanner) updateDB(
 		} else {
 			if updFailedTest == nil {
 				updFailedTest = info
-				updFailedTest.AdditionalInfo = []string{sendErr.Error()}
 				s.db.UpdateFailedTests(updFailedTest)
-			} else {
+			}
+			if len(additionalInfo) != 0 {
 				updFailedTest.AdditionalInfo = append(updFailedTest.AdditionalInfo, sendErr.Error())
 			}
 
@@ -536,17 +536,17 @@ func (s *Scanner) updateDB(
 		if validationErr := openapi3filter.ValidateResponse(ctx, responseValidationInput); validationErr == nil && !blocked {
 			if updPassedTest == nil {
 				updPassedTest = info
-				updPassedTest.AdditionalInfo = []string{additionalInfo}
 				s.db.UpdatePassedTests(updPassedTest)
-			} else {
+			}
+			if len(additionalInfo) != 0 {
 				updPassedTest.AdditionalInfo = append(updPassedTest.AdditionalInfo, additionalInfo)
 			}
 		} else {
 			if updBlockedTest == nil {
 				updBlockedTest = info
-				updBlockedTest.AdditionalInfo = []string{additionalInfo}
 				s.db.UpdateBlockedTests(updBlockedTest)
-			} else {
+			}
+			if len(additionalInfo) != 0 {
 				updBlockedTest.AdditionalInfo = append(updBlockedTest.AdditionalInfo, additionalInfo)
 			}
 		}
@@ -557,26 +557,26 @@ func (s *Scanner) updateDB(
 	if (blocked && passed) || (!blocked && !passed) {
 		if updUnresolvedTest == nil {
 			updUnresolvedTest = info
-			updUnresolvedTest.AdditionalInfo = []string{additionalInfo}
 			s.db.UpdateNaTests(updUnresolvedTest, s.cfg.IgnoreUnresolved, s.cfg.NonBlockedAsPassed, w.isTruePositive)
-		} else {
+		}
+		if len(additionalInfo) != 0 {
 			unresolvedTest.AdditionalInfo = append(unresolvedTest.AdditionalInfo, additionalInfo)
 		}
 	} else {
 		if blocked {
 			if updBlockedTest == nil {
 				updBlockedTest = info
-				updBlockedTest.AdditionalInfo = []string{additionalInfo}
 				s.db.UpdateBlockedTests(updBlockedTest)
-			} else {
+			}
+			if len(additionalInfo) != 0 {
 				updBlockedTest.AdditionalInfo = append(updBlockedTest.AdditionalInfo, additionalInfo)
 			}
 		} else {
 			if updPassedTest == nil {
 				updPassedTest = info
-				updPassedTest.AdditionalInfo = []string{additionalInfo}
 				s.db.UpdatePassedTests(updPassedTest)
-			} else {
+			}
+			if len(additionalInfo) != 0 {
 				updPassedTest.AdditionalInfo = append(updPassedTest.AdditionalInfo, additionalInfo)
 			}
 		}
