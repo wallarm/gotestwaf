@@ -413,6 +413,8 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 			s.updateDB(ctx, w, passedTest, blockedTest, unresolvedTest, failedTest,
 				req, statusCode, respHeaders, body, err, additionalInfo, false)
 
+		s.db.AddToScannedPaths(template.Method, template.Path)
+
 		if err != nil {
 			return err
 		}

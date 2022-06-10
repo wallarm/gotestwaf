@@ -125,7 +125,7 @@ func run(ctx context.Context, logger *log.Logger) error {
 
 	stat := db.GetStatistics(cfg.IgnoreUnresolved, cfg.NonBlockedAsPassed)
 	report.RenderConsoleTable(stat, reportTime, wafName, cfg.IgnoreUnresolved)
-	err = report.ExportToPDF(stat, reportFile, reportTime, cfg.WAFName, cfg.URL, cfg.IgnoreUnresolved, cfg.RenderToHTML)
+	err = report.ExportToPDF(stat, reportFile, reportTime, cfg.WAFName, cfg.URL, cfg.OpenAPIFile, cfg.IgnoreUnresolved, cfg.RenderToHTML)
 	if err != nil {
 		return errors.Wrap(err, "PDF exporting")
 	}

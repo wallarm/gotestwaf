@@ -38,6 +38,7 @@ type reportInfo struct {
 	Url            string
 	WafTestingDate string
 	GtwVersion     string
+	OpenApiFile    string
 
 	ApiChartScript *template.HTML
 	AppChartScript *template.HTML
@@ -54,15 +55,16 @@ type reportInfo struct {
 		Grade        grade
 	}
 
-	ComparisonTable []comparisonTableRow
+	ComparisonTable []*comparisonTableRow
 
-	SummaryTable []db.SummaryTableRow
+	SummaryTable []*db.SummaryTableRow
+	ScannedPaths db.ScannedPaths
 
 	NegativeTests struct {
-		Blocked    []db.TestDetails
-		Bypassed   []db.TestDetails
-		Unresolved []db.TestDetails
-		Failed     []db.FailedDetails
+		Blocked    []*db.TestDetails
+		Bypassed   []*db.TestDetails
+		Unresolved []*db.TestDetails
+		Failed     []*db.FailedDetails
 
 		BlockedRequestsNumber    int
 		BypassedRequestsNumber   int
@@ -71,10 +73,10 @@ type reportInfo struct {
 	}
 
 	PositiveTests struct {
-		Blocked    []db.TestDetails
-		Bypassed   []db.TestDetails
-		Unresolved []db.TestDetails
-		Failed     []db.FailedDetails
+		Blocked    []*db.TestDetails
+		Bypassed   []*db.TestDetails
+		Unresolved []*db.TestDetails
+		Failed     []*db.FailedDetails
 
 		BlockedRequestsNumber    int
 		BypassedRequestsNumber   int
@@ -150,7 +152,7 @@ func computeGrade(value float32, all int) grade {
 
 func ExportToPDF(
 	s *db.Statistics, reportFile string, reportTime time.Time,
-	wafName string, url string, ignoreUnresolved bool, toHTML bool,
+	wafName string, url string, openApiFile string, ignoreUnresolved bool, toHTML bool,
 ) error {
 	data := reportInfo{
 		IgnoreUnresolved: ignoreUnresolved,
@@ -158,8 +160,9 @@ func ExportToPDF(
 		Url:              url,
 		WafTestingDate:   reportTime.Format("02 January 2006"),
 		GtwVersion:       version.Version,
+		OpenApiFile:      openApiFile,
 		SummaryTable:     append(s.SummaryTable, s.PositiveTests.SummaryTable...),
-		ComparisonTable: []comparisonTableRow{
+		ComparisonTable: []*comparisonTableRow{
 			{
 				Name:         "ModSecurity PARANOIA=1",
 				ApiSec:       computeGrade(42.9, 1),
@@ -285,6 +288,8 @@ func ExportToPDF(
 		v := template.HTML(*appChart)
 		data.AppChartScript = &v
 	}
+
+	data.ScannedPaths = s.Paths
 
 	data.NegativeTests.Blocked = s.Blocked
 	data.NegativeTests.Bypassed = s.Bypasses

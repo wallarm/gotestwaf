@@ -6,18 +6,20 @@ import (
 )
 
 type Statistics struct {
-	SummaryTable []SummaryTableRow
-	Blocked      []TestDetails
-	Bypasses     []TestDetails
-	Unresolved   []TestDetails
-	Failed       []FailedDetails
+	Paths ScannedPaths
+
+	SummaryTable []*SummaryTableRow
+	Blocked      []*TestDetails
+	Bypasses     []*TestDetails
+	Unresolved   []*TestDetails
+	Failed       []*FailedDetails
 
 	PositiveTests struct {
-		SummaryTable  []SummaryTableRow
-		FalsePositive []TestDetails
-		TruePositive  []TestDetails
-		Unresolved    []TestDetails
-		Failed        []FailedDetails
+		SummaryTable  []*SummaryTableRow
+		FalsePositive []*TestDetails
+		TruePositive  []*TestDetails
+		Unresolved    []*TestDetails
+		Failed        []*FailedDetails
 
 		AllRequestsNumber        int
 		BlockedRequestsNumber    int
@@ -77,6 +79,37 @@ type FailedDetails struct {
 	Placeholder string
 	Reason      []string
 	Type        string
+}
+
+type Path struct {
+	Method string
+	Path   string
+}
+
+type ScannedPaths []*Path
+
+var _ sort.Interface = (ScannedPaths)(nil)
+
+func (sp ScannedPaths) Len() int {
+	return len(sp)
+}
+
+func (sp ScannedPaths) Less(i, j int) bool {
+	if sp[i].Path > sp[j].Path {
+		return false
+	} else if sp[i].Path < sp[j].Path {
+		return true
+	}
+
+	return sp[i].Method < sp[j].Method
+}
+
+func (sp ScannedPaths) Swap(i, j int) {
+	sp[i], sp[j] = sp[j], sp[i]
+}
+
+func (sp ScannedPaths) Sort() {
+	sort.Sort(sp)
 }
 
 func calculatePercentage(first, second int) float32 {
@@ -151,7 +184,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 
 			s.OverallRequests += totalRequests
 
-			row := SummaryTableRow{
+			row := &SummaryTableRow{
 				TestSet:    testSet,
 				TestCase:   testCase,
 				Percentage: 0.0,
@@ -229,7 +262,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 	s.PositiveTests.FailedRequestsPercentage = calculatePercentage(s.PositiveTests.FailedRequestsNumber, s.PositiveTests.AllRequestsNumber)
 
 	for _, blockedTest := range db.blockedTests {
-		testDetails := TestDetails{
+		testDetails := &TestDetails{
 			Payload:            blockedTest.Payload,
 			TestCase:           blockedTest.Case,
 			TestSet:            blockedTest.Set,
@@ -247,7 +280,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 	}
 
 	for _, passedTest := range db.passedTests {
-		testDetails := TestDetails{
+		testDetails := &TestDetails{
 			Payload:            passedTest.Payload,
 			TestCase:           passedTest.Case,
 			TestSet:            passedTest.Set,
@@ -266,7 +299,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 	}
 
 	for _, unresolvedTest := range db.naTests {
-		testDetails := TestDetails{
+		testDetails := &TestDetails{
 			Payload:            unresolvedTest.Payload,
 			TestCase:           unresolvedTest.Case,
 			TestSet:            unresolvedTest.Set,
@@ -293,7 +326,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 	}
 
 	for _, failedTest := range db.failedTests {
-		testDetails := FailedDetails{
+		testDetails := &FailedDetails{
 			Payload:     failedTest.Payload,
 			TestCase:    failedTest.Case,
 			Encoder:     failedTest.Encoder,
@@ -307,6 +340,22 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 		} else {
 			s.Failed = append(s.Failed, testDetails)
 		}
+	}
+
+	if db.scannedPaths != nil {
+		var paths ScannedPaths
+		for path, methods := range db.scannedPaths {
+			for method := range methods {
+				paths = append(paths, &Path{
+					Method: method,
+					Path:   path,
+				})
+			}
+		}
+
+		paths.Sort()
+
+		s.Paths = paths
 	}
 
 	return s

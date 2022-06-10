@@ -347,6 +347,12 @@
                         <span class="row__name">GoTestWAF version</span>
                         :
                         <span class="row__content">{{.GtwVersion}}</span>
+                        {{$length := len $.OpenApiFile}}{{if ne $length 0}}
+                        <br>
+                        <span class="row__name">OpenAPI file</span>
+                        :
+                        <span class="row__content">{{.OpenApiFile}}</span>
+                        {{end}}
                     </div>
                 </div>
                 <!--<div class="desc__text">
@@ -480,6 +486,14 @@
                 </div>
                 {{end}}
             </div>
+            {{if $.ScannedPaths}}
+            <h3 class="detail__sub-title">Scanned paths</h3>
+            <p>{{$length := len $.ScannedPaths}}{{$length}} endpoints were scanned in total.</p>
+            <br>
+            {{range $row := $.ScannedPaths}}
+            <p class="mono">{{$row.Method}} {{$row.Path}}</p>
+            {{end}}
+            {{end}}
             <h3 class="detail__sub-title">False Positive Tests</h3>
             <p>{{.PositiveTests.BlockedRequestsNumber}} false positive requests identified as blocked (failed, bad behavior)</p>
             {{if .PositiveTests.BlockedRequestsNumber}}

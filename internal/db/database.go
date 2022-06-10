@@ -14,6 +14,8 @@ type DB struct {
 	naTests      []*Info
 	tests        []*Case
 
+	scannedPaths map[string]map[string]interface{}
+
 	numberOfTests uint
 }
 
@@ -67,6 +69,20 @@ func (db *DB) UpdateFailedTests(t *Info) {
 	defer db.Unlock()
 	db.counters[t.Set][t.Case]["failed"]++
 	db.failedTests = append(db.failedTests, t)
+}
+
+func (db *DB) AddToScannedPaths(method string, path string) {
+	db.Lock()
+	defer db.Unlock()
+
+	if db.scannedPaths == nil {
+		db.scannedPaths = make(map[string]map[string]interface{})
+	}
+
+	if _, ok := db.scannedPaths[path]; !ok {
+		db.scannedPaths[path] = make(map[string]interface{})
+	}
+	db.scannedPaths[path][method] = nil
 }
 
 func (db *DB) GetTestCases() []*Case {
