@@ -57,9 +57,11 @@ func NewHTTPClient(cfg *config.Config) (*HTTPClient, error) {
 	}
 
 	configuredHeaders := cfg.HTTPHeaders
-	customHeader := strings.Split(cfg.AddHeader, ":")
+	customHeader := strings.SplitN(cfg.AddHeader, ":", 2)
 	if len(customHeader) > 1 {
-		configuredHeaders[customHeader[0]] = strings.TrimPrefix(cfg.AddHeader, customHeader[0]+":")
+		header := strings.TrimSpace(customHeader[0])
+		value := strings.TrimSpace(customHeader[1])
+		configuredHeaders[header] = value
 	}
 
 	return &HTTPClient{
@@ -89,6 +91,9 @@ func (c *HTTPClient) Send(
 
 	for header, value := range c.headers {
 		req.Header.Set(header, value)
+	}
+	if _, ok := c.headers["Host"]; ok {
+		req.Host = c.headers["Host"]
 	}
 
 	if testHeaderValue != "" {
