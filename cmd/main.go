@@ -36,6 +36,7 @@ const (
 var (
 	configPath string
 	quiet      bool
+	logLevel   logrus.Level
 )
 
 func main() {
@@ -56,6 +57,7 @@ func run(logger *logrus.Logger) error {
 	if quiet {
 		logger.SetOutput(ioutil.Discard)
 	}
+	logger.SetLevel(logLevel)
 
 	logger.Infof("GoTestWAF %s", version.Version)
 
@@ -224,6 +226,7 @@ Options:
 
 	flag.StringVar(&configPath, "configPath", defaultConfigPath, "Path to the config file")
 	flag.BoolVar(&quiet, "quiet", false, "If true, disable verbose logging")
+	LogLvl := flag.String("logLevel", "info", "Logging level: panic, fatal, error, warn, info, debug, trace")
 
 	urlParam := flag.String("url", "", "URL to check")
 	flag.String("wsURL", "", "WebSocket URL to check")
@@ -267,6 +270,12 @@ Options:
 	if *urlParam == "" {
 		return errors.New("url flag not set")
 	}
+
+	logrusLogLvl, err := logrus.ParseLevel(*LogLvl)
+	if err != nil {
+		return err
+	}
+	logLevel = logrusLogLvl
 
 	validURL, err := url.Parse(*urlParam)
 	if err != nil || validURL.Scheme == "" || validURL.Host == "" {
