@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/url"
 	"os"
 	"os/signal"
@@ -14,6 +13,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
@@ -39,15 +39,16 @@ var (
 )
 
 func main() {
-	logger := log.New(os.Stdout, "GOTESTWAF : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
+	// logger := log.New(os.Stdout, "GOTESTWAF : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
+	logger := logrus.New()
 
 	if err := run(logger); err != nil {
-		logger.Println("main error:", err)
+		logger.WithError(err).Error("caught error in main function")
 		os.Exit(1)
 	}
 }
 
-func run(logger *log.Logger) error {
+func run(logger *logrus.Logger) error {
 	err := parseFlags()
 	if err != nil {
 		return err
@@ -57,7 +58,7 @@ func run(logger *log.Logger) error {
 		logger.SetOutput(ioutil.Discard)
 	}
 
-	logger.Printf("GoTestWAF %s\n", version.Version)
+	logger.Infof("GoTestWAF %s", version.Version)
 
 	cfg, err := loadConfig(configPath)
 	if err != nil {
@@ -67,14 +68,14 @@ func run(logger *log.Logger) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	logger.Println("Test cases loading started")
+	logger.Info("Test cases loading started")
 
 	testCases, err := db.LoadTestCases(cfg)
 	if err != nil {
 		return errors.Wrap(err, "loading test case")
 	}
 
-	logger.Println("Test cases loading finished")
+	logger.Info("Test cases loading finished")
 
 	db := db.NewDB(testCases)
 	httpClient, err := scanner.NewHTTPClient(cfg)
@@ -87,30 +88,30 @@ func run(logger *log.Logger) error {
 		return errors.Wrap(err, "gRPC client")
 	}
 
-	logger.Printf("gRPC pre-check: in progress")
+	logger.Info("gRPC pre-check: in progress")
 
 	available, err := grpcConn.CheckAvailability()
 	if err != nil {
-		logger.Printf("gRPC pre-check: connection is not available, "+
-			"reason: %s\n", err)
+		logger.Infof("gRPC pre-check: connection is not available, "+
+			"reason: %s", err.Error())
 	}
 	if available {
-		logger.Printf("gRPC pre-check: gRPC is available")
+		logger.Info("gRPC pre-check: gRPC is available")
 	} else {
-		logger.Printf("gRPC pre-check: gRPC is not available")
+		logger.Info("gRPC pre-check: gRPC is not available")
 	}
 
 	s := scanner.New(db, logger, cfg, httpClient, grpcConn, false)
 
-	logger.Println("Scanned URL:", cfg.URL)
+	logger.Infof("Scanned URL: %s", cfg.URL)
 	if !cfg.SkipWAFBlockCheck {
 		ok, httpStatus, err := s.PreCheck(cfg.URL)
 		if err != nil {
 			if cfg.BlockConnReset && (errors.Is(err, io.EOF) || errors.Is(err, syscall.ECONNRESET)) {
-				logger.Println("Connection reset, trying benign request to make sure that service is available")
+				logger.Info("Connection reset, trying benign request to make sure that service is available")
 				blockedBenign, httpStatusBenign, errBenign := s.BenignPreCheck(cfg.URL)
 				if !blockedBenign {
-					logger.Printf("Service is available (HTTP status: %d), WAF resets connections. Consider this behavior as block", httpStatusBenign)
+					logger.Infof("Service is available (HTTP status: %d), WAF resets connections. Consider this behavior as block", httpStatusBenign)
 					ok = true
 				}
 				if errBenign != nil {
@@ -123,38 +124,35 @@ func run(logger *log.Logger) error {
 		if !ok {
 			return errors.Errorf("WAF was not detected. "+
 				"Please use the '--blockStatusCode' or '--blockRegex' flags. Use '--help' for additional info."+
-				"\nBaseline attack status code: %v\n", httpStatus)
+				"\nBaseline attack status code: %v", httpStatus)
 		}
 
-		logger.Printf("WAF pre-check: OK. Blocking status code: %v\n", httpStatus)
+		logger.Infof("WAF pre-check: OK. Blocking status code: %v", httpStatus)
 	} else {
-		logger.Println("WAF pre-check: SKIPPED")
+		logger.Info("WAF pre-check: SKIPPED")
 	}
 
 	// If WS URL is not available - try to build it from WAF URL
 	if cfg.WebSocketURL == "" {
 		wsURL, wsErr := wsFromURL(cfg.URL)
 		if wsErr != nil {
-			logger.Printf("Can not parse WAF URL, reason: %s\n", wsErr)
-			logger.Println("The provided WAF URL will be used for WebSocket testing")
+			logger.WithError(wsErr).Warnf("Can not parse WAF URL")
+			logger.Info("The provided WAF URL will be used for WebSocket testing")
 		}
 		cfg.WebSocketURL = wsURL
 	}
 
-	logger.Printf("WebSocket pre-check. URL to check: %s\n", cfg.WebSocketURL)
+	logger.Infof("WebSocket pre-check. URL to check: %s", cfg.WebSocketURL)
 
 	available, blocked, err := s.WSPreCheck(cfg.WebSocketURL)
 	if !available && err != nil {
-		logger.Printf("WebSocket pre-check: connection is not available, "+
-			"reason: %s\n", err)
+		logger.WithError(err).Infof("WebSocket pre-check: connection is not available")
 	}
 	if available && blocked {
-		logger.Printf("WebSocket is available and payloads are "+
-			"blocked by the WAF, reason: %s\n", err)
+		logger.Info("WebSocket is available and payloads are blocked by the WAF")
 	}
 	if available && !blocked {
-		logger.Println("WebSocket is available and payloads are " +
-			"not blocked by the WAF")
+		logger.Info("WebSocket is available and payloads are not blocked by the WAF")
 	}
 
 	_, err = os.Stat(cfg.ReportPath)
@@ -169,11 +167,11 @@ func run(logger *log.Logger) error {
 
 	go func() {
 		sig := <-shutdown
-		logger.Printf("main: %v : scan canceled", sig)
+		logger.Infof("got signal %v: scan canceled", sig)
 		cancel()
 	}()
 
-	logger.Printf("Scanning %s\n", cfg.URL)
+	logger.Infof("Scanning %s", cfg.URL)
 	err = s.Run(ctx)
 	if err != nil {
 		return errors.Wrap(err, "run scanning")

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"math/rand"
 	"regexp"
 	"sync"
@@ -14,6 +13,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 	"github.com/schollz/progressbar/v3"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/wallarm/gotestwaf/internal/config"
@@ -38,7 +38,7 @@ type testWork struct {
 }
 
 type Scanner struct {
-	logger     *log.Logger
+	logger     *logrus.Logger
 	cfg        *config.Config
 	db         *db.DB
 	httpClient *HTTPClient
@@ -47,7 +47,7 @@ type Scanner struct {
 	isTestEnv  bool
 }
 
-func New(db *db.DB, logger *log.Logger, cfg *config.Config, httpClient *HTTPClient, grpcConn *GRPCConn, isTestEnv bool) *Scanner {
+func New(db *db.DB, logger *logrus.Logger, cfg *config.Config, httpClient *HTTPClient, grpcConn *GRPCConn, isTestEnv bool) *Scanner {
 	return &Scanner{
 		db:         db,
 		logger:     logger,
@@ -151,11 +151,11 @@ func (s *Scanner) Run(ctx context.Context) error {
 
 	rand.Seed(time.Now().UnixNano())
 
-	s.logger.Println("Scanning started")
-	defer s.logger.Println("Scanning finished")
+	s.logger.Info("Scanning started")
+	defer s.logger.Info("Scanning finished")
 
 	start := time.Now()
-	defer s.logger.Println("Scanning Time: ", time.Since(start))
+	defer s.logger.Info("Scanning Time: ", time.Since(start))
 
 	testChan := s.produceTests(ctx, gn)
 
@@ -187,7 +187,7 @@ func (s *Scanner) Run(ctx context.Context) error {
 					time.Sleep(time.Duration(s.cfg.SendDelay+rand.Intn(s.cfg.RandomDelay)) * time.Millisecond)
 
 					if err := s.scanURL(ctx, s.cfg.URL, s.cfg.BlockConnReset, w); err != nil {
-						s.logger.Println(err)
+						s.logger.Error(err)
 					}
 					bar.Add(1)
 				case <-ctx.Done():
@@ -294,7 +294,7 @@ func (s *Scanner) scanURL(ctx context.Context, url string, blockConn bool, w *te
 		} else {
 			info.Reason = err.Error()
 			s.db.UpdateFailedTests(info)
-			s.logger.Printf("http sending: %s\n", err.Error())
+			s.logger.WithError(err).Error("send request failed")
 			return nil
 		}
 	}
