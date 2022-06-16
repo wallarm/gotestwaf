@@ -31,12 +31,16 @@ const (
 	defaultConfigPath    = "config.yaml"
 
 	wafName = "generic"
+
+	textLogFormat = "text"
+	jsonLogFormat = "json"
 )
 
 var (
 	configPath string
 	quiet      bool
 	logLevel   logrus.Level
+	logFormat  string
 )
 
 func main() {
@@ -58,6 +62,10 @@ func run(logger *logrus.Logger) error {
 		logger.SetOutput(ioutil.Discard)
 	}
 	logger.SetLevel(logLevel)
+
+	if logFormat == jsonLogFormat {
+		logger.SetFormatter(&logrus.JSONFormatter{})
+	}
 
 	logger.Infof("GoTestWAF %s", version.Version)
 
@@ -226,7 +234,8 @@ Options:
 
 	flag.StringVar(&configPath, "configPath", defaultConfigPath, "Path to the config file")
 	flag.BoolVar(&quiet, "quiet", false, "If true, disable verbose logging")
-	LogLvl := flag.String("logLevel", "info", "Logging level: panic, fatal, error, warn, info, debug, trace")
+	logLvl := flag.String("logLevel", "info", "Logging level: panic, fatal, error, warn, info, debug, trace")
+	flag.StringVar(&logFormat, "logFormat", textLogFormat, "Set logging format: text, json")
 
 	urlParam := flag.String("url", "", "URL to check")
 	flag.String("wsURL", "", "WebSocket URL to check")
@@ -271,11 +280,15 @@ Options:
 		return errors.New("url flag not set")
 	}
 
-	logrusLogLvl, err := logrus.ParseLevel(*LogLvl)
+	logrusLogLvl, err := logrus.ParseLevel(*logLvl)
 	if err != nil {
 		return err
 	}
 	logLevel = logrusLogLvl
+
+	if logFormat != textLogFormat && logFormat != jsonLogFormat {
+		return fmt.Errorf("unknown logging format: %s", logFormat)
+	}
 
 	validURL, err := url.Parse(*urlParam)
 	if err != nil || validURL.Scheme == "" || validURL.Host == "" {
