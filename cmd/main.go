@@ -39,7 +39,6 @@ var (
 )
 
 func main() {
-	// logger := log.New(os.Stdout, "GOTESTWAF : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 	logger := logrus.New()
 
 	if err := run(logger); err != nil {
