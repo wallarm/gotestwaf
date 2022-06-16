@@ -35,7 +35,7 @@ const (
 
 var (
 	configPath string
-	verbose    bool
+	quiet      bool
 )
 
 func main() {
@@ -53,7 +53,7 @@ func run(logger *logrus.Logger) error {
 		return err
 	}
 
-	if !verbose {
+	if quiet {
 		logger.SetOutput(ioutil.Discard)
 	}
 
@@ -223,7 +223,7 @@ Options:
 	}
 
 	flag.StringVar(&configPath, "configPath", defaultConfigPath, "Path to the config file")
-	flag.BoolVar(&verbose, "verbose", false, "If true, enable verbose logging")
+	flag.BoolVar(&quiet, "quiet", false, "If true, disable verbose logging")
 
 	urlParam := flag.String("url", "", "URL to check")
 	flag.String("wsURL", "", "WebSocket URL to check")
