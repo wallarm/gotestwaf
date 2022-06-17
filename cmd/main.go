@@ -197,11 +197,17 @@ func run(logger *logrus.Logger) error {
 	}
 
 	stat := db.GetStatistics(cfg.IgnoreUnresolved, cfg.NonBlockedAsPassed)
-	report.RenderConsoleTable(stat, reportTime, wafName, cfg.IgnoreUnresolved)
+
+	err = report.RenderConsoleReport(stat, reportTime, cfg.WAFName, cfg.URL, cfg.IgnoreUnresolved, logFormat)
+	if err != nil {
+		return err
+	}
+
 	err = report.ExportToPDF(stat, reportFile, reportTime, cfg.WAFName, cfg.URL, cfg.IgnoreUnresolved, cfg.RenderToHTML)
 	if err != nil {
 		return errors.Wrap(err, "PDF exporting")
 	}
+
 	fmt.Printf("\nreport is ready: %s\n", reportFile)
 
 	payloadFiles := filepath.Join(cfg.ReportPath, reportName+".csv")
