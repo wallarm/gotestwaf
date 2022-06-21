@@ -101,8 +101,7 @@ func run(logger *logrus.Logger) error {
 
 	available, err := grpcConn.CheckAvailability()
 	if err != nil {
-		logger.Infof("gRPC pre-check: connection is not available, "+
-			"reason: %s", err.Error())
+		logger.WithError(err).Infof("gRPC pre-check: connection is not available")
 	}
 	if available {
 		logger.Info("gRPC pre-check: gRPC is available")
