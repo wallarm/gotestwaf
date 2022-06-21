@@ -5,9 +5,12 @@ import (
 	_ "embed"
 	"html/template"
 	"io"
+	"io/ioutil"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/wallarm/gotestwaf/internal/db"
 	"github.com/wallarm/gotestwaf/internal/version"
@@ -31,7 +34,7 @@ type comparisonTableRow struct {
 	OverallScore grade
 }
 
-type reportInfo struct {
+type htmlReport struct {
 	IgnoreUnresolved bool
 
 	WafName        string
@@ -148,11 +151,11 @@ func computeGrade(value float32, all int) grade {
 	return g
 }
 
-func ExportToPDF(
-	s *db.Statistics, reportFile string, reportTime time.Time,
-	wafName string, url string, ignoreUnresolved bool, toHTML bool,
-) error {
-	data := reportInfo{
+func exportFullReportToHtml(
+	s *db.Statistics, reportTime time.Time, wafName string,
+	url string, ignoreUnresolved bool,
+) (fileName string, err error) {
+	data := htmlReport{
 		IgnoreUnresolved: ignoreUnresolved,
 		WafName:          wafName,
 		Url:              url,
@@ -274,7 +277,7 @@ func ExportToPDF(
 
 	apiChart, appChart, err := generateCharts(s)
 	if err != nil {
-		return err
+		return "", errors.Wrap(err, "couldn't generate chart scripts")
 	}
 
 	if apiChart != nil {
@@ -314,28 +317,20 @@ func ExportToPDF(
 
 	err = templ.Execute(io.MultiWriter(&buffer), data)
 	if err != nil {
-		return err
+		return "", errors.Wrap(err, "couldn't execute template")
 	}
 
-	if toHTML {
-		report, err := os.Create(reportFile)
-		if err != nil {
-			return err
-		}
-		defer report.Close()
-
-		_, err = report.Write(buffer.Bytes())
-		if err != nil {
-			return err
-		}
-	} else {
-		err = renderToPDF(buffer.Bytes(), reportFile)
-		if err != nil {
-			return err
-		}
+	file, err := ioutil.TempFile("", "gotestwaf_report_*.html")
+	if err != nil {
+		return "", errors.Wrap(err, "couldn't create a temporary file")
 	}
+	defer file.Close()
 
-	err = os.Chmod(reportFile, 0644)
+	fileName = file.Name()
 
-	return err
+	file.Write(buffer.Bytes())
+
+	err = os.Chmod(fileName, 0644)
+
+	return fileName, err
 }

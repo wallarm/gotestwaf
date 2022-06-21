@@ -72,6 +72,7 @@ type TestDetails struct {
 type FailedDetails struct {
 	Payload     string
 	TestCase    string
+	TestSet     string
 	Encoder     string
 	Placeholder string
 	Reason      string
@@ -293,6 +294,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 		testDetails := FailedDetails{
 			Payload:     failedTest.Payload,
 			TestCase:    failedTest.Case,
+			TestSet:     failedTest.Set,
 			Encoder:     failedTest.Encoder,
 			Placeholder: failedTest.Placeholder,
 			Reason:      failedTest.Reason,

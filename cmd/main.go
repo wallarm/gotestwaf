@@ -190,11 +190,6 @@ func run(logger *logrus.Logger) error {
 	reportName := reportTime.Format(cfg.ReportName)
 
 	reportFile := filepath.Join(cfg.ReportPath, reportName)
-	if cfg.RenderToHTML {
-		reportFile += ".html"
-	} else {
-		reportFile += ".pdf"
-	}
 
 	stat := db.GetStatistics(cfg.IgnoreUnresolved, cfg.NonBlockedAsPassed)
 
@@ -203,12 +198,14 @@ func run(logger *logrus.Logger) error {
 		return err
 	}
 
-	err = report.ExportToPDF(stat, reportFile, reportTime, cfg.WAFName, cfg.URL, cfg.IgnoreUnresolved, cfg.RenderToHTML)
+	reportFile, err = report.ExportFullReport(stat, reportFile, reportTime, cfg.WAFName, cfg.URL, cfg.IgnoreUnresolved, cfg.ReportFormat)
 	if err != nil {
-		return errors.Wrap(err, "PDF exporting")
+		return errors.Wrap(err, "couldn't export full report")
 	}
 
-	fmt.Printf("\nreport is ready: %s\n", reportFile)
+	if cfg.ReportFormat != report.ReportNoneFormat {
+		logger.Infof("Export full report to %s", reportFile)
+	}
 
 	payloadFiles := filepath.Join(cfg.ReportPath, reportName+".csv")
 	err = db.ExportPayloads(payloadFiles)
@@ -267,7 +264,7 @@ Options:
 	flag.String("testSet", "", "If set then only this test set's cases will be run")
 	flag.String("reportPath", reportPath, "A directory to store reports")
 	flag.String("reportName", defaultReportName, "Report file name. Supports `time' package template format")
-	flag.Bool("renderToHTML", false, "If true, renders the report as HTML file instead of PDF")
+	flag.String("reportFormat", "pdf", "Export report to one of the following formats: none, pdf, html, json")
 	flag.String("testCasesPath", testCasesPath, "Path to a folder with test cases")
 	flag.String("wafName", wafName, "Name of the WAF product")
 	flag.Bool("ignoreUnresolved", false, "If true, unresolved test cases will be considered as bypassed (affect score and results)")

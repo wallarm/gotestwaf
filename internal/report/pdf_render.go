@@ -1,12 +1,12 @@
 package report
 
 import (
-	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"runtime"
+
+	"github.com/pkg/errors"
 )
 
 // chromium-browser
@@ -46,20 +46,11 @@ func findChrome() (string, error) {
 	return chromePath, nil
 }
 
-func renderToPDF(html []byte, pathToResultPDF string) error {
+func renderToPDF(fileToRender string, pathToResultPDF string) error {
 	chromePath, err := findChrome()
 	if err != nil {
-		return err
+		return errors.Wrap(err, "couldn't find Chrome/Chromium to render HTML file to PDF")
 	}
-
-	file, err := ioutil.TempFile("", "gotestwaf_report_*.html")
-	if err != nil {
-		return err
-	}
-	defer os.Remove(file.Name())
-
-	file.Write(html)
-	file.Close()
 
 	cmd := exec.Command(chromePath,
 		"--headless",
@@ -68,7 +59,7 @@ func renderToPDF(html []byte, pathToResultPDF string) error {
 		"--no-sandbox",
 		"--print-to-pdf-no-header",
 		fmt.Sprintf("--print-to-pdf=%s", pathToResultPDF),
-		file.Name(),
+		fileToRender,
 	)
 
 	err = cmd.Run()

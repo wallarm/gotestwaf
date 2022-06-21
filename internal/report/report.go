@@ -16,19 +16,32 @@ import (
 const (
 	colMinWidth = 21
 
-	reportTextFormat = "text"
-	reportJsonFormat = "json"
+	consoleReportTextFormat = "text"
+	consoleReportJsonFormat = "json"
+
+	ReportJsonFormat = "json"
+	ReportHtmlFormat = "html"
+	ReportPdfFormat  = "pdf"
+	ReportNoneFormat = "none"
 )
 
-type JsonReport struct {
-	Date          string     `json:"date"`
-	ProjectName   string     `json:"project_name"`
-	URL           string     `json:"url"`
-	NegativeTests *TestsInfo `json:"negative,omitempty"`
-	PositiveTests *TestsInfo `json:"positive,omitempty"`
+type jsonReport struct {
+	Date        string `json:"date"`
+	ProjectName string `json:"project_name"`
+	URL         string `json:"url"`
+
+	// fields for console report in JSON format
+	NegativeTests *testsInfo `json:"negative,omitempty"`
+	PositiveTests *testsInfo `json:"positive,omitempty"`
+
+	// fields for full report in JSON format
+	Score                 string        `json:"score,omitempty"`
+	Summary               *summary      `json:"summary,omitempty"`
+	NegativeTestsPayloads *testPayloads `json:"negative_payloads,omitempty"`
+	PositiveTestsPayloads *testPayloads `json:"positive_payloads,omitempty"`
 }
 
-type TestsInfo struct {
+type testsInfo struct {
 	Score           string   `json:"score"`
 	TotalSent       int      `json:"total_sent"`
 	ResolvedTests   int      `json:"resolved_tests"`
@@ -36,14 +49,14 @@ type TestsInfo struct {
 	BypassedTests   int      `json:"bypassed_tests"`
 	UnresolvedTests int      `json:"unresolved_tests"`
 	FailedTests     int      `json:"failed_tests"`
-	TestSets        TestSets `json:"test_sets"`
+	TestSets        testSets `json:"test_sets"`
 }
 
-type TestSets map[string]TestCases
+type testSets map[string]testCases
 
-type TestCases map[string]*TestCaseInfo
+type testCases map[string]*testCaseInfo
 
-type TestCaseInfo struct {
+type testCaseInfo struct {
 	Percentage float32 `json:"percentage"`
 	Sent       int     `json:"sent"`
 	Blocked    int     `json:"blocked"`
@@ -52,12 +65,266 @@ type TestCaseInfo struct {
 	Failed     int     `json:"failed"`
 }
 
+type summary struct {
+	NegativeTests *testsInfo `json:"negative,omitempty"`
+	PositiveTests *testsInfo `json:"positive,omitempty"`
+}
+
+type testPayloads struct {
+	Blocked    []*payloadDetails `json:"blocked,omitempty"`
+	Bypassed   []*payloadDetails `json:"bypassed,omitempty"`
+	Unresolved []*payloadDetails `json:"unresolved,omitempty"`
+	Failed     []*payloadDetails `json:"failed,omitempty"`
+}
+
+type payloadDetails struct {
+	Payload     string `json:"payload"`
+	TestSet     string `json:"test_set"`
+	TestCase    string `json:"test_case"`
+	Encoder     string `json:"encoder"`
+	Placeholder string `json:"placeholder"`
+	Status      int    `json:"status,omitempty"`
+	Reason      string `json:"reason,omitempty"`
+}
+
+func ExportFullReport(
+	s *db.Statistics, reportFile string, reportTime time.Time,
+	wafName string, url string, ignoreUnresolved bool, format string,
+) (fullName string, err error) {
+	switch format {
+	case ReportHtmlFormat:
+		fullName = reportFile + ".html"
+		err = printFullReportToHtml(s, fullName, reportTime, wafName, url, ignoreUnresolved)
+		if err != nil {
+			return "", err
+		}
+
+	case ReportPdfFormat:
+		fullName = reportFile + ".pdf"
+		err = printFullReportToPdf(s, fullName, reportTime, wafName, url, ignoreUnresolved)
+		if err != nil {
+			return "", err
+		}
+
+	case ReportJsonFormat:
+		fullName = reportFile + ".json"
+		err = printFullReportToJson(s, fullName, reportTime, wafName, url, ignoreUnresolved)
+		if err != nil {
+			return "", err
+		}
+
+	case ReportNoneFormat:
+		return "", nil
+
+	default:
+		return "", fmt.Errorf("unknown report format: %s", format)
+	}
+
+	return fullName, nil
+}
+
+func printFullReportToHtml(
+	s *db.Statistics, reportFile string, reportTime time.Time,
+	wafName string, url string, ignoreUnresolved bool,
+) error {
+	tempFileName, err := exportFullReportToHtml(s, reportTime, wafName, url, ignoreUnresolved)
+	if err != nil {
+		return errors.Wrap(err, "couldn't export report to HTML")
+	}
+
+	err = os.Rename(tempFileName, reportFile)
+	if err != nil {
+		return errors.Wrap(err, "couldn't export report to HTML")
+	}
+
+	return nil
+}
+
+func printFullReportToPdf(
+	s *db.Statistics, reportFile string, reportTime time.Time,
+	wafName string, url string, ignoreUnresolved bool,
+) error {
+	tempFileName, err := exportFullReportToHtml(s, reportTime, wafName, url, ignoreUnresolved)
+	if err != nil {
+		return errors.Wrap(err, "couldn't export report to HTML")
+	}
+
+	err = renderToPDF(tempFileName, reportFile)
+	if err != nil {
+		return errors.Wrap(err, "couldn't render HTML report to PDF")
+	}
+
+	return nil
+}
+
+func printFullReportToJson(
+	s *db.Statistics, reportFile string, reportTime time.Time,
+	wafName string, url string, ignoreUnresolved bool,
+) error {
+	report := jsonReport{
+		Date:        reportTime.Format(time.ANSIC),
+		ProjectName: wafName,
+		URL:         url,
+		Score:       fmt.Sprintf("%.2f%%", s.WafScore),
+	}
+
+	report.Summary = &summary{}
+
+	if len(s.SummaryTable) != 0 {
+		report.Summary.NegativeTests = &testsInfo{
+			Score:           fmt.Sprintf("%.2f%%", s.WafScore),
+			TotalSent:       s.AllRequestsNumber,
+			ResolvedTests:   s.ResolvedRequestsNumber,
+			BlockedTests:    s.BlockedRequestsNumber,
+			BypassedTests:   s.BypassedRequestsNumber,
+			UnresolvedTests: s.UnresolvedRequestsNumber,
+			FailedTests:     s.FailedRequestsNumber,
+			TestSets:        make(testSets),
+		}
+		for _, row := range s.SummaryTable {
+			if report.Summary.NegativeTests.TestSets[row.TestSet] == nil {
+				report.Summary.NegativeTests.TestSets[row.TestSet] = make(testCases)
+			}
+			report.Summary.NegativeTests.TestSets[row.TestSet][row.TestCase] = &testCaseInfo{
+				Percentage: row.Percentage,
+				Sent:       row.Sent,
+				Blocked:    row.Blocked,
+				Bypassed:   row.Bypassed,
+				Unresolved: row.Unresolved,
+				Failed:     row.Failed,
+			}
+		}
+	}
+
+	if len(s.PositiveTests.SummaryTable) != 0 {
+		report.Summary.PositiveTests = &testsInfo{
+			Score:           fmt.Sprintf("%.2f%%", s.PositiveTests.ResolvedTrueRequestsPercentage),
+			TotalSent:       s.PositiveTests.AllRequestsNumber,
+			ResolvedTests:   s.PositiveTests.ResolvedRequestsNumber,
+			BlockedTests:    s.PositiveTests.BlockedRequestsNumber,
+			BypassedTests:   s.PositiveTests.BypassedRequestsNumber,
+			UnresolvedTests: s.PositiveTests.UnresolvedRequestsNumber,
+			FailedTests:     s.PositiveTests.FailedRequestsNumber,
+			TestSets:        make(testSets),
+		}
+		for _, row := range s.PositiveTests.SummaryTable {
+			if report.Summary.PositiveTests.TestSets[row.TestSet] == nil {
+				report.Summary.PositiveTests.TestSets[row.TestSet] = make(testCases)
+			}
+			report.Summary.PositiveTests.TestSets[row.TestSet][row.TestCase] = &testCaseInfo{
+				Percentage: row.Percentage,
+				Sent:       row.Sent,
+				Blocked:    row.Blocked,
+				Bypassed:   row.Bypassed,
+				Unresolved: row.Unresolved,
+				Failed:     row.Failed,
+			}
+		}
+	}
+
+	report.NegativeTestsPayloads = &testPayloads{}
+
+	for _, bypass := range s.Bypasses {
+		bypassDetail := &payloadDetails{
+			Payload:     bypass.Payload,
+			TestSet:     bypass.TestSet,
+			TestCase:    bypass.TestCase,
+			Encoder:     bypass.Encoder,
+			Placeholder: bypass.Encoder,
+			Status:      bypass.Status,
+		}
+
+		report.NegativeTestsPayloads.Bypassed = append(report.NegativeTestsPayloads.Bypassed, bypassDetail)
+	}
+	for _, unresolved := range s.Unresolved {
+		unresolvedDetail := &payloadDetails{
+			Payload:     unresolved.Payload,
+			TestSet:     unresolved.TestSet,
+			TestCase:    unresolved.TestCase,
+			Encoder:     unresolved.Encoder,
+			Placeholder: unresolved.Encoder,
+			Status:      unresolved.Status,
+		}
+
+		report.NegativeTestsPayloads.Unresolved = append(report.NegativeTestsPayloads.Unresolved, unresolvedDetail)
+	}
+	for _, failed := range s.Failed {
+		failedDetail := &payloadDetails{
+			Payload:     failed.Payload,
+			TestSet:     failed.TestSet,
+			TestCase:    failed.TestCase,
+			Encoder:     failed.Encoder,
+			Placeholder: failed.Encoder,
+			Reason:      failed.Reason,
+		}
+
+		report.NegativeTestsPayloads.Failed = append(report.NegativeTestsPayloads.Failed, failedDetail)
+	}
+
+	report.PositiveTestsPayloads = &testPayloads{}
+
+	for _, blocked := range s.PositiveTests.FalsePositive {
+		blockedDetails := &payloadDetails{
+			Payload:     blocked.Payload,
+			TestSet:     blocked.TestSet,
+			TestCase:    blocked.TestCase,
+			Encoder:     blocked.Encoder,
+			Placeholder: blocked.Encoder,
+			Status:      blocked.Status,
+		}
+
+		report.PositiveTestsPayloads.Blocked = append(report.PositiveTestsPayloads.Blocked, blockedDetails)
+	}
+	for _, unresolved := range s.PositiveTests.Unresolved {
+		unresolvedDetail := &payloadDetails{
+			Payload:     unresolved.Payload,
+			TestSet:     unresolved.TestSet,
+			TestCase:    unresolved.TestCase,
+			Encoder:     unresolved.Encoder,
+			Placeholder: unresolved.Encoder,
+			Status:      unresolved.Status,
+		}
+
+		report.PositiveTestsPayloads.Unresolved = append(report.PositiveTestsPayloads.Unresolved, unresolvedDetail)
+	}
+	for _, failed := range s.PositiveTests.Failed {
+		failedDetail := &payloadDetails{
+			Payload:     failed.Payload,
+			TestSet:     failed.TestSet,
+			TestCase:    failed.TestCase,
+			Encoder:     failed.Encoder,
+			Placeholder: failed.Encoder,
+			Reason:      failed.Reason,
+		}
+
+		report.PositiveTestsPayloads.Failed = append(report.PositiveTestsPayloads.Failed, failedDetail)
+	}
+
+	jsonBytes, err := json.MarshalIndent(report, "", "    ")
+	if err != nil {
+		return errors.Wrap(err, "couldn't dump report to JSON")
+	}
+
+	file, err := os.Create(reportFile)
+	if err != nil {
+		return errors.Wrap(err, "couldn't create file")
+	}
+	defer file.Close()
+
+	_, err = file.Write(jsonBytes)
+	if err != nil {
+		return errors.Wrap(err, "couldn't write report to file")
+	}
+
+	return nil
+}
+
 func RenderConsoleReport(s *db.Statistics, reportTime time.Time, wafName string, url string, ignoreUnresolved bool, format string) error {
 	switch format {
-	case reportTextFormat:
-		renderTable(s, reportTime, wafName, ignoreUnresolved)
-	case reportJsonFormat:
-		err := renderJson(s, reportTime, wafName, url)
+	case consoleReportTextFormat:
+		printConsoleReportTable(s, reportTime, wafName, ignoreUnresolved)
+	case consoleReportJsonFormat:
+		err := printConsoleReportJson(s, reportTime, wafName, url)
 		if err != nil {
 			return err
 		}
@@ -68,7 +335,7 @@ func RenderConsoleReport(s *db.Statistics, reportTime time.Time, wafName string,
 	return nil
 }
 
-func renderTable(s *db.Statistics, reportTime time.Time, wafName string, ignoreUnresolved bool) {
+func printConsoleReportTable(s *db.Statistics, reportTime time.Time, wafName string, ignoreUnresolved bool) {
 	baseHeader := []string{"Test set", "Test case", "Percentage, %", "Blocked", "Bypassed"}
 	if !ignoreUnresolved {
 		baseHeader = append(baseHeader, "Unresolved")
@@ -206,15 +473,15 @@ func renderTable(s *db.Statistics, reportTime time.Time, wafName string, ignoreU
 	fmt.Println(buffer.String())
 }
 
-func renderJson(s *db.Statistics, reportTime time.Time, wafName string, url string) error {
-	report := JsonReport{
+func printConsoleReportJson(s *db.Statistics, reportTime time.Time, wafName string, url string) error {
+	report := jsonReport{
 		Date:        reportTime.Format(time.ANSIC),
 		ProjectName: wafName,
 		URL:         url,
 	}
 
 	if len(s.SummaryTable) != 0 {
-		report.NegativeTests = &TestsInfo{
+		report.NegativeTests = &testsInfo{
 			Score:           fmt.Sprintf("%.2f%%", s.WafScore),
 			TotalSent:       s.AllRequestsNumber,
 			ResolvedTests:   s.ResolvedRequestsNumber,
@@ -222,13 +489,13 @@ func renderJson(s *db.Statistics, reportTime time.Time, wafName string, url stri
 			BypassedTests:   s.BypassedRequestsNumber,
 			UnresolvedTests: s.UnresolvedRequestsNumber,
 			FailedTests:     s.FailedRequestsNumber,
-			TestSets:        make(TestSets),
+			TestSets:        make(testSets),
 		}
 		for _, row := range s.SummaryTable {
 			if report.NegativeTests.TestSets[row.TestSet] == nil {
-				report.NegativeTests.TestSets[row.TestSet] = make(TestCases)
+				report.NegativeTests.TestSets[row.TestSet] = make(testCases)
 			}
-			report.NegativeTests.TestSets[row.TestSet][row.TestCase] = &TestCaseInfo{
+			report.NegativeTests.TestSets[row.TestSet][row.TestCase] = &testCaseInfo{
 				Percentage: row.Percentage,
 				Sent:       row.Sent,
 				Blocked:    row.Blocked,
@@ -240,21 +507,21 @@ func renderJson(s *db.Statistics, reportTime time.Time, wafName string, url stri
 	}
 
 	if len(s.PositiveTests.SummaryTable) != 0 {
-		report.PositiveTests = &TestsInfo{
-			Score:           fmt.Sprintf("%.2f%%", s.WafScore),
+		report.PositiveTests = &testsInfo{
+			Score:           fmt.Sprintf("%.2f%%", s.PositiveTests.ResolvedTrueRequestsPercentage),
 			TotalSent:       s.PositiveTests.AllRequestsNumber,
 			ResolvedTests:   s.PositiveTests.ResolvedRequestsNumber,
 			BlockedTests:    s.PositiveTests.BlockedRequestsNumber,
 			BypassedTests:   s.PositiveTests.BypassedRequestsNumber,
 			UnresolvedTests: s.PositiveTests.UnresolvedRequestsNumber,
 			FailedTests:     s.PositiveTests.FailedRequestsNumber,
-			TestSets:        make(TestSets),
+			TestSets:        make(testSets),
 		}
 		for _, row := range s.PositiveTests.SummaryTable {
 			if report.PositiveTests.TestSets[row.TestSet] == nil {
-				report.PositiveTests.TestSets[row.TestSet] = make(TestCases)
+				report.PositiveTests.TestSets[row.TestSet] = make(testCases)
 			}
-			report.PositiveTests.TestSets[row.TestSet][row.TestCase] = &TestCaseInfo{
+			report.PositiveTests.TestSets[row.TestSet][row.TestCase] = &testCaseInfo{
 				Percentage: row.Percentage,
 				Sent:       row.Sent,
 				Blocked:    row.Blocked,
@@ -267,7 +534,7 @@ func renderJson(s *db.Statistics, reportTime time.Time, wafName string, url stri
 
 	jsonBytes, err := json.MarshalIndent(report, "", "    ")
 	if err != nil {
-		return errors.Wrap(err, "couldn't dump report to JSON")
+		return errors.Wrap(err, "couldn't export report to JSON")
 	}
 
 	fmt.Println(string(jsonBytes))
