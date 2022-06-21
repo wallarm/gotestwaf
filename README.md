@@ -64,6 +64,10 @@ Since the format of the YAML string is required for payloads, they must be [enco
     * XMLBody
     * URLParam
     * URLPath
+    * NonCrudUrlPath
+    * NonCrudUrlParam
+    * NonCRUDHeader
+    * NonCRUDRequestBody
 
 Request generation is a three-step process involving the multiplication of payload amount by encoder and placeholder amounts.
 Let's say you defined 2 **payloads**, 3 **encoders** (Base64, JSUnicode, and URL) and 1 **placeholder** (URLParameter - HTTP GET parameter).
