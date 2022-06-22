@@ -79,6 +79,15 @@
             font-size: 20px;
             font-weight: 700;
         }
+        .header {
+            display: flex;
+            align-items: center;
+        }
+        .header svg {
+            float: left;
+            width: 100px;
+            margin-right: 20px;
+        }
         .about {
             display: flex;
             min-height: 130px;
@@ -315,7 +324,15 @@
 
 <body>
     <main class="container">
-        <h1 class="title">GoTestWAF API / Application Security Testing Results</h1>
+        <div class="header">
+            <a href="https://wallarm.com/?utm_campaign=gtw_tool&utm_medium=pdf&utm_source=github">
+                <svg width="100" height="57.521713" viewBox="0 0 100 57.521713" fill="none" version="1.1" id="svg23" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+                    <defs id="defs27" />
+                    <path d="M 0,17.564286 41.378571,0 V 24.986286 L 79.596286,8.764 V 28.810571 L 100,20.149714 v 14.226 L 79.596286,43.036571 V 35.437714 L 41.339143,51.676857 V 39.974286 L 0,57.521714 Z" fill="#fc7303" id="path21" style="stroke-width:2.85714" />
+                </svg>
+            </a>
+            <h1 class="title">GoTestWAF<br>API / Application Security Testing Results</h1>
+        </div>
         <div class="about about__grade-{{.Overall.ClassSuffix}}">
             <div class="grade">
                 <h4 class="grade__title">Overall grade:</h4>
