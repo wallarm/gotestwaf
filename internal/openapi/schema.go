@@ -29,6 +29,73 @@ func schemaToMap(name string, schema *openapi3.Schema, isXML bool) (
 	paramSpec map[string]*parameterSpec,
 	err error,
 ) {
+	var allOf openapi3.SchemaRefs
+	if schema.AnyOf != nil {
+		allOf = schema.AnyOf
+	}
+	if schema.AllOf != nil {
+		allOf = schema.AllOf
+	}
+	if allOf != nil {
+		allOfValue := make(map[string]interface{})
+		allOfParamSpec := make(map[string]*parameterSpec)
+		allOfStrAvailable := false
+
+		for _, schemaRef := range allOf {
+			if schemaRef != nil && schemaRef.Value != nil {
+				innerSchema := schemaRef.Value
+
+				innerValue, innerStrAvailable, innerParamSpec, innerErr := schemaToMap(name, innerSchema, isXML)
+				if innerErr != nil {
+					return nil, false, nil, errors.Wrap(innerErr, "couldn't parse allOf/anyOf")
+				}
+
+				innerMap, ok := innerValue.(map[string]interface{})
+				if !ok {
+					return nil, false, nil, errors.New("unsupported object in allOf/anyOf")
+				}
+
+				for k, v := range innerMap {
+					allOfValue[k] = v
+				}
+
+				for k, v := range innerParamSpec {
+					allOfParamSpec[k] = v
+				}
+
+				allOfStrAvailable = allOfStrAvailable || innerStrAvailable
+			}
+		}
+
+		return allOfValue, allOfStrAvailable, allOfParamSpec, nil
+	}
+
+	if schema.OneOf != nil {
+		for _, schemaRef := range schema.OneOf {
+			if schemaRef != nil && schemaRef.Value != nil {
+				innerSchema := schemaRef.Value
+
+				innerValue, innerStrAvailable, innerParamSpec, innerErr := schemaToMap(name, innerSchema, isXML)
+				if innerErr != nil {
+					return nil, false, nil, errors.Wrap(innerErr, "couldn't parse oneOf")
+				}
+
+				innerMap, ok := innerValue.(map[string]interface{})
+				if !ok {
+					return nil, false, nil, errors.New("unsupported object in oneOf")
+				}
+
+				if innerStrAvailable && len(innerParamSpec) > len(paramSpec) {
+					value = innerMap
+					paramSpec = innerParamSpec
+					strAvailable = innerStrAvailable
+				}
+			}
+		}
+
+		return
+	}
+
 	var wrappedValue map[string]interface{}
 
 	strAvailable = false
@@ -94,7 +161,7 @@ func schemaToMap(name string, schema *openapi3.Schema, isXML bool) (
 	case openapi3.TypeArray:
 		inner, innerStrAvailable, innerParamSpec, err := schemaToMap(name, schema.Items.Value, isXML)
 		if err != nil {
-			return nil, false, nil, err
+			return nil, false, nil, errors.Wrap(err, "couldn't parse array")
 		}
 
 		minArrayLength := int(schema.MinLength)
@@ -118,7 +185,7 @@ func schemaToMap(name string, schema *openapi3.Schema, isXML bool) (
 		for name, obj := range schema.Properties {
 			inner, innerStrAvailable, innerParamSpec, err := schemaToMap(name, obj.Value, isXML)
 			if err != nil {
-				return nil, false, nil, err
+				return nil, false, nil, errors.Wrap(err, "couldn't parse object")
 			}
 
 			strAvailable = strAvailable || innerStrAvailable
