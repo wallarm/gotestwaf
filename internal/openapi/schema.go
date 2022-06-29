@@ -96,8 +96,6 @@ func schemaToMap(name string, schema *openapi3.Schema, isXML bool) (
 		return
 	}
 
-	var wrappedValue map[string]interface{}
-
 	strAvailable = false
 
 	if isXML && schema.XML != nil {
@@ -111,20 +109,6 @@ func schemaToMap(name string, schema *openapi3.Schema, isXML bool) (
 			} else if schema.XML.Prefix != "" {
 				name = schema.XML.Prefix + ":" + name
 			}
-
-			wrappedValue = make(map[string]interface{})
-
-			// TODO: fix XML namespace support
-			// if schema.XML.Namespace != "" {
-			// 	xmlns := "xmlns"
-			// 	if schema.XML.Prefix != "" {
-			// 		xmlns = xmlns + ":" + schema.XML.Prefix
-			// 	}
-			//
-			// 	wrappedValue["#attr"] = map[string]interface{}{
-			// 		xmlns: schema.XML.Namespace,
-			// 	}
-			// }
 		}
 	}
 
@@ -210,9 +194,38 @@ func schemaToMap(name string, schema *openapi3.Schema, isXML bool) (
 		return nil, false, nil, fmt.Errorf("unknown schema type: %s", schema.Type)
 	}
 
-	if isXML && wrappedValue != nil {
-		wrappedValue[name] = value
+	if isXML {
+		var wrappedValue map[string]interface{}
+
+		if mapValue, ok := value.(map[string]interface{}); ok {
+			wrappedValue = mapValue
+		} else {
+			wrappedValue = make(map[string]interface{})
+			wrappedValue["#text"] = value
+			wrappedValue["#seq"] = 0
+		}
+
+		if schema.XML != nil && schema.XML.Namespace != "" {
+			xmlns := "xmlns"
+			if schema.XML.Prefix != "" {
+				xmlns = xmlns + ":" + schema.XML.Prefix
+			}
+
+			wrappedValue["#attr"] = map[string]interface{}{
+				xmlns: map[string]interface{}{
+					"#text": schema.XML.Namespace,
+					"#seq":  0,
+				},
+			}
+		}
+
 		value = wrappedValue
+
+		if name != "" {
+			value = map[string]interface{}{
+				name: value,
+			}
+		}
 	}
 
 	return value, strAvailable, paramSpec, nil
@@ -237,7 +250,7 @@ func xmlMarshal(schemaStructure interface{}) (string, error) {
 
 	m := mxj.Map(object)
 
-	byteString, err := m.Xml()
+	byteString, err := m.XmlSeq()
 	if err != nil {
 		return "", errors.Wrap(err, "couldn't marshall object to XML")
 	}
