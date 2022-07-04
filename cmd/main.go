@@ -237,7 +237,7 @@ Options:
 	flag.Int("maxRedirects", 50, "The maximum number of handling redirects")
 	flag.Int("idleConnTimeout", 2, "The maximum amount of time a keep-alive connection will live")
 	flag.Bool("followCookies", false, "If true, use cookies sent by the server. May work only with --maxIdleConns=1")
-	flag.Bool("renewSession", false, "Update session cookies before each test")
+	flag.Bool("renewSession", false, "Renew cookies before each test")
 	flag.Int("blockStatusCode", 403, "HTTP status code that WAF uses while blocking requests")
 	flag.Int("passStatusCode", 200, "HTTP response status code that WAF uses while passing requests")
 	flag.String("blockRegex", "",
@@ -245,7 +245,7 @@ Options:
 	flag.String("passRegex", "",
 		"Regex to a detect normal (not blocked) web page with the same HTTP status code as a blocked request")
 	flag.Bool("nonBlockedAsPassed", false,
-		"If true, count requests that weren't blocked as passed. If false, requests that don't satisfy to PassStatuscode/PassRegExp as blocked")
+		"If true, count requests that weren't blocked as passed. If false, requests that don't satisfy to PassStatusCode/PassRegExp as blocked")
 	flag.Int("workers", 5, "The number of workers to scan")
 	flag.Int("sendDelay", 400, "Delay in ms between requests")
 	flag.Int("randomDelay", 400, "Random delay in ms in addition to the delay between requests")
