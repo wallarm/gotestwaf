@@ -1,9 +1,6 @@
 package config
 
-import "net/http"
-
 type Config struct {
-	Cookies            []*http.Cookie
 	URL                string            `mapstructure:"url"`
 	WebSocketURL       string            `mapstructure:"wsURL"`
 	GRPCPort           uint16            `mapstructure:"grpcPort"`
@@ -14,6 +11,7 @@ type Config struct {
 	MaxRedirects       int               `mapstructure:"maxRedirects"`
 	IdleConnTimeout    int               `mapstructure:"idleConnTimeout"`
 	FollowCookies      bool              `mapstructure:"followCookies"`
+	RenewSession       bool              `mapstructure:"renewSession"`
 	BlockStatusCode    int               `mapstructure:"blockStatusCode"`
 	PassStatusCode     int               `mapstructure:"passStatusCode"`
 	BlockRegex         string            `mapstructure:"blockRegex"`

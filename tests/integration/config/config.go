@@ -89,7 +89,6 @@ func PickUpTestPorts() error {
 
 func GetConfig() *config.Config {
 	return &config.Config{
-		Cookies:            nil,
 		URL:                fmt.Sprintf("http://localhost:%d", HTTPPort),
 		GRPCPort:           uint16(GRPCPort),
 		WebSocketURL:       fmt.Sprintf("ws://localhost:%d", HTTPPort),
@@ -100,6 +99,7 @@ func GetConfig() *config.Config {
 		MaxRedirects:       50,
 		IdleConnTimeout:    2,
 		FollowCookies:      false,
+		RenewSession:       false,
 		BlockStatusCode:    403,
 		PassStatusCode:     200,
 		BlockRegex:         "",

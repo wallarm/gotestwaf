@@ -17,11 +17,17 @@ import (
 	"github.com/wallarm/gotestwaf/internal/payload/placeholder"
 )
 
+const getCookiesRepeatAttempts = 3
+
+var redirectFunc func(req *http.Request, via []*http.Request) error
+
 type HTTPClient struct {
-	client        *http.Client
-	cookies       []*http.Cookie
-	headers       map[string]string
+	client     *http.Client
+	headers    map[string]string
+	hostHeader string
+
 	followCookies bool
+	renewSession  bool
 }
 
 func NewHTTPClient(cfg *config.Config) (*HTTPClient, error) {
@@ -36,24 +42,25 @@ func NewHTTPClient(cfg *config.Config) (*HTTPClient, error) {
 		tr.Proxy = http.ProxyURL(proxyURL)
 	}
 
-	jar, err := cookiejar.New(nil)
-	if err != nil {
-		return nil, err
+	redirectFunc = func(req *http.Request, via []*http.Request) error {
+		if len(via) > cfg.MaxRedirects {
+			return errors.New("max redirect number exceeded")
+		}
+		return nil
 	}
 
-	cl := &http.Client{
-		Transport: tr,
-		CheckRedirect: func() func(req *http.Request, via []*http.Request) error {
-			redirects := 0
-			return func(req *http.Request, via []*http.Request) error {
-				if redirects > cfg.MaxRedirects {
-					return errors.New("max redirect number exceeded")
-				}
-				redirects++
-				return nil
-			}
-		}(),
-		Jar: jar,
+	client := &http.Client{
+		Transport:     tr,
+		CheckRedirect: redirectFunc,
+	}
+
+	if cfg.FollowCookies && !cfg.RenewSession {
+		jar, err := cookiejar.New(nil)
+		if err != nil {
+			return nil, err
+		}
+
+		client.Jar = jar
 	}
 
 	configuredHeaders := cfg.HTTPHeaders
@@ -65,10 +72,11 @@ func NewHTTPClient(cfg *config.Config) (*HTTPClient, error) {
 	}
 
 	return &HTTPClient{
-		client:        cl,
-		cookies:       cfg.Cookies,
+		client:        client,
 		headers:       configuredHeaders,
+		hostHeader:    configuredHeaders["Host"],
 		followCookies: cfg.FollowCookies,
+		renewSession:  cfg.RenewSession,
 	}, nil
 }
 
@@ -92,16 +100,21 @@ func (c *HTTPClient) Send(
 	for header, value := range c.headers {
 		req.Header.Set(header, value)
 	}
-	if _, ok := c.headers["Host"]; ok {
-		req.Host = c.headers["Host"]
-	}
+	req.Host = c.hostHeader
 
 	if testHeaderValue != "" {
 		req.Header.Set("X-GoTestWAF-Test", testHeaderValue)
 	}
 
-	if len(c.cookies) > 0 && c.followCookies {
-		c.client.Jar.SetCookies(req.URL, c.cookies)
+	if c.followCookies && c.renewSession {
+		cookies, err := c.getCookies(ctx, targetURL)
+		if err != nil {
+			return nil, 0, errors.Wrap(err, "couldn't get cookies for malicious request")
+		}
+
+		for _, cookie := range cookies {
+			req.AddCookie(cookie)
+		}
 	}
 
 	resp, err := c.client.Do(req)
@@ -116,9 +129,58 @@ func (c *HTTPClient) Send(
 	}
 	statusCode = resp.StatusCode
 
-	if len(resp.Cookies()) > 0 {
-		c.cookies = append(c.cookies, resp.Cookies()...)
+	if c.followCookies && !c.renewSession && c.client.Jar != nil {
+		c.client.Jar.SetCookies(req.URL, resp.Cookies())
 	}
 
 	return body, statusCode, nil
+}
+
+func (c *HTTPClient) getCookies(ctx context.Context, targetURL string) ([]*http.Cookie, error) {
+	tr, ok := c.client.Transport.(*http.Transport)
+	if !ok {
+		return nil, errors.New("couldn't copy transport settings of the main HTTP to get cookies")
+	}
+
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't create cookie jar for session renewal client")
+	}
+
+	sessionClient := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: tr.TLSClientConfig.InsecureSkipVerify},
+			IdleConnTimeout: tr.IdleConnTimeout,
+			MaxIdleConns:    tr.MaxIdleConns,
+			Proxy:           tr.Proxy,
+		},
+		CheckRedirect: redirectFunc,
+		Jar:           jar,
+	}
+
+	var returnErr error
+
+	for i := 0; i < getCookiesRepeatAttempts; i++ {
+		cookiesReq, err := http.NewRequestWithContext(ctx, "GET", targetURL, nil)
+		if err != nil {
+			returnErr = err
+			continue
+		}
+
+		for header, value := range c.headers {
+			cookiesReq.Header.Set(header, value)
+		}
+		cookiesReq.Host = c.hostHeader
+
+		cookieResp, err := sessionClient.Do(cookiesReq)
+		if err != nil {
+			returnErr = err
+			continue
+		}
+		cookieResp.Body.Close()
+
+		return sessionClient.Jar.Cookies(cookiesReq.URL), nil
+	}
+
+	return nil, returnErr
 }

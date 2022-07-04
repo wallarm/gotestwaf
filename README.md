@@ -286,12 +286,13 @@ Options:
       --ignoreUnresolved       If true, unresolved test cases will be considered as bypassed (affect score and results)
       --maxIdleConns int       The maximum number of keep-alive connections (default 2)
       --maxRedirects int       The maximum number of handling redirects (default 50)
-      --nonBlockedAsPassed     If true, count requests that weren't blocked as passed. If false, requests that don't satisfy to PassStatuscode/PassRegExp as blocked
+      --nonBlockedAsPassed     If true, count requests that weren't blocked as passed. If false, requests that don't satisfy to PassStatusCode/PassRegExp as blocked
       --passRegex string       Regex to a detect normal (not blocked) web page with the same HTTP status code as a blocked request
       --passStatusCode int     HTTP response status code that WAF uses while passing requests (default 200)
       --proxy string           Proxy URL to use
       --randomDelay int        Random delay in ms in addition to the delay between requests (default 400)
       --renderToHTML           If true, renders the report as HTML file instead of PDF
+      --renewSession           Renew cookies before each test. Should be used with --followCookies flag
       --reportName string      Report file name. Supports `time' package template format (default "waf-evaluation-report-2006-January-02-15-04-05")
       --reportPath string      A directory to store reports (default "reports")
       --sendDelay int          Delay in ms between requests (default 400)
