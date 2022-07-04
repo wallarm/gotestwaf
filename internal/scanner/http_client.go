@@ -144,7 +144,7 @@ func (c *HTTPClient) getCookies(ctx context.Context, targetURL string) ([]*http.
 
 	jar, err := cookiejar.New(nil)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "couldn't create cookie jar for session renewal client")
 	}
 
 	sessionClient := &http.Client{
