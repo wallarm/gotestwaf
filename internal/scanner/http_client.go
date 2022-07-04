@@ -19,7 +19,7 @@ import (
 
 const getCookiesRepeatAttempts = 3
 
-var redirecFunc func(req *http.Request, via []*http.Request) error
+var redirectFunc func(req *http.Request, via []*http.Request) error
 
 type HTTPClient struct {
 	client     *http.Client
@@ -42,21 +42,16 @@ func NewHTTPClient(cfg *config.Config) (*HTTPClient, error) {
 		tr.Proxy = http.ProxyURL(proxyURL)
 	}
 
-	redirecFunc = func(req *http.Request, via []*http.Request) error {
-		redirectLen := len(via)
-		// fmt.Println("Redirect len", redirectLen)
-		if redirectLen > cfg.MaxRedirects {
+	redirectFunc = func(req *http.Request, via []*http.Request) error {
+		if len(via) > cfg.MaxRedirects {
 			return errors.New("max redirect number exceeded")
-		}
-		if redirectLen == 0 {
-			return nil
 		}
 		return nil
 	}
 
 	client := &http.Client{
 		Transport:     tr,
-		CheckRedirect: redirecFunc,
+		CheckRedirect: redirectFunc,
 	}
 
 	if cfg.FollowCookies && !cfg.RenewSession {
@@ -159,7 +154,7 @@ func (c *HTTPClient) getCookies(ctx context.Context, targetURL string) ([]*http.
 			MaxIdleConns:    tr.MaxIdleConns,
 			Proxy:           tr.Proxy,
 		},
-		CheckRedirect: redirecFunc,
+		CheckRedirect: redirectFunc,
 		Jar:           jar,
 	}
 
