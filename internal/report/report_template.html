@@ -79,6 +79,16 @@
             font-size: 20px;
             font-weight: 700;
         }
+        .header {
+            display: flex;
+            align-items: center;
+        }
+        .header img {
+            float: left;
+            width: 100px;
+            margin-left: 10px;
+            margin-right: 20px;
+        }
         .about {
             display: flex;
             min-height: 130px;
@@ -315,7 +325,12 @@
 
 <body>
     <main class="container">
-        <h1 class="title">GoTestWAF API / Application Security Testing Results</h1>
+        <div class="header">
+            <a href="https://wallarm.com/?utm_campaign=gtw_tool&utm_medium=pdf&utm_source=github">
+                <img src="https://troll.wallarm.tools/assets/wallarm.logo.svg" alt="Wallarm Logo">
+            </a>
+            <h1 class="title">GoTestWAF<br>API / Application Security Testing Results</h1>
+        </div>
         <div class="about about__grade-{{.Overall.ClassSuffix}}">
             <div class="grade">
                 <h4 class="grade__title">Overall grade:</h4>
