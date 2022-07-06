@@ -159,8 +159,7 @@ func (s *Scanner) Run(ctx context.Context) error {
 
 	testChan := s.produceTests(ctx, gn)
 
-	bar := progressbar.NewOptions64(
-		int64(s.db.GetNumberOfAllTestCases()),
+	progressbarOptions := []progressbar.Option{
 		progressbar.OptionShowCount(),
 		progressbar.OptionSetPredictTime(false),
 		progressbar.OptionFullWidth(),
@@ -173,6 +172,16 @@ func (s *Scanner) Run(ctx context.Context) error {
 			BarStart:      "[",
 			BarEnd:        "]",
 		}),
+	}
+
+	// disable progress bar output if logging in JSONFormat
+	if _, ok := s.logger.Formatter.(*logrus.JSONFormatter); ok {
+		progressbarOptions = append(progressbarOptions, progressbar.OptionSetWriter(io.Discard))
+	}
+
+	bar := progressbar.NewOptions64(
+		int64(s.db.GetNumberOfAllTestCases()),
+		progressbarOptions...,
 	)
 
 	for e := 0; e < gn; e++ {
