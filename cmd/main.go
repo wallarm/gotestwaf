@@ -239,7 +239,7 @@ Options:
 	flag.Bool("followCookies", false, "If true, use cookies sent by the server. May work only with --maxIdleConns=1")
 	flag.Bool("renewSession", false, "Renew cookies before each test. Should be used with --followCookies flag")
 	flag.Int("blockStatusCode", 403, "HTTP status code that WAF uses while blocking requests")
-	flag.Int("passStatusCode", 200, "HTTP response status code that WAF uses while passing requests")
+	flag.IntSlice("passStatusCode", []int{200, 404}, "HTTP response status code that WAF uses while passing requests")
 	flag.String("blockRegex", "",
 		"Regex to detect a blocking page with the same HTTP response status code as a not blocked request")
 	flag.String("passRegex", "",
