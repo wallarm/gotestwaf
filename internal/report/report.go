@@ -35,14 +35,14 @@ type jsonReport struct {
 	PositiveTests *testsInfo `json:"positive,omitempty"`
 
 	// fields for full report in JSON format
-	Score                 string        `json:"score,omitempty"`
+	Score                 float64       `json:"score,omitempty"`
 	Summary               *summary      `json:"summary,omitempty"`
 	NegativeTestsPayloads *testPayloads `json:"negative_payloads,omitempty"`
 	PositiveTestsPayloads *testPayloads `json:"positive_payloads,omitempty"`
 }
 
 type testsInfo struct {
-	Score           string   `json:"score"`
+	Score           float64  `json:"score"`
 	TotalSent       int      `json:"total_sent"`
 	ResolvedTests   int      `json:"resolved_tests"`
 	BlockedTests    int      `json:"blocked_tests"`
@@ -57,7 +57,7 @@ type testSets map[string]testCases
 type testCases map[string]*testCaseInfo
 
 type testCaseInfo struct {
-	Percentage float32 `json:"percentage"`
+	Percentage float64 `json:"percentage"`
 	Sent       int     `json:"sent"`
 	Blocked    int     `json:"blocked"`
 	Bypassed   int     `json:"bypassed"`
@@ -165,14 +165,14 @@ func printFullReportToJson(
 		Date:        reportTime.Format(time.ANSIC),
 		ProjectName: wafName,
 		URL:         url,
-		Score:       fmt.Sprintf("%.2f%%", s.WafScore),
+		Score:       s.WafScore,
 	}
 
 	report.Summary = &summary{}
 
 	if len(s.SummaryTable) != 0 {
 		report.Summary.NegativeTests = &testsInfo{
-			Score:           fmt.Sprintf("%.2f%%", s.WafScore),
+			Score:           s.WafScore,
 			TotalSent:       s.AllRequestsNumber,
 			ResolvedTests:   s.ResolvedRequestsNumber,
 			BlockedTests:    s.BlockedRequestsNumber,
@@ -198,7 +198,7 @@ func printFullReportToJson(
 
 	if len(s.PositiveTests.SummaryTable) != 0 {
 		report.Summary.PositiveTests = &testsInfo{
-			Score:           fmt.Sprintf("%.2f%%", s.PositiveTests.ResolvedTrueRequestsPercentage),
+			Score:           s.PositiveTests.ResolvedTrueRequestsPercentage,
 			TotalSent:       s.PositiveTests.AllRequestsNumber,
 			ResolvedTests:   s.PositiveTests.ResolvedRequestsNumber,
 			BlockedTests:    s.PositiveTests.BlockedRequestsNumber,
@@ -482,7 +482,7 @@ func printConsoleReportJson(s *db.Statistics, reportTime time.Time, wafName stri
 
 	if len(s.SummaryTable) != 0 {
 		report.NegativeTests = &testsInfo{
-			Score:           fmt.Sprintf("%.2f%%", s.WafScore),
+			Score:           s.WafScore,
 			TotalSent:       s.AllRequestsNumber,
 			ResolvedTests:   s.ResolvedRequestsNumber,
 			BlockedTests:    s.BlockedRequestsNumber,
@@ -508,7 +508,7 @@ func printConsoleReportJson(s *db.Statistics, reportTime time.Time, wafName stri
 
 	if len(s.PositiveTests.SummaryTable) != 0 {
 		report.PositiveTests = &testsInfo{
-			Score:           fmt.Sprintf("%.2f%%", s.PositiveTests.ResolvedTrueRequestsPercentage),
+			Score:           s.PositiveTests.ResolvedTrueRequestsPercentage,
 			TotalSent:       s.PositiveTests.AllRequestsNumber,
 			ResolvedTests:   s.PositiveTests.ResolvedRequestsNumber,
 			BlockedTests:    s.PositiveTests.BlockedRequestsNumber,

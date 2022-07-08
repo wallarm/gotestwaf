@@ -1,6 +1,7 @@
 package db
 
 import (
+	"math"
 	"sort"
 	"strings"
 )
@@ -26,10 +27,10 @@ type Statistics struct {
 		FailedRequestsNumber     int
 		ResolvedRequestsNumber   int
 
-		UnresolvedRequestsPercentage    float32
-		ResolvedFalseRequestsPercentage float32
-		ResolvedTrueRequestsPercentage  float32
-		FailedRequestsPercentage        float32
+		UnresolvedRequestsPercentage    float64
+		ResolvedFalseRequestsPercentage float64
+		ResolvedTrueRequestsPercentage  float64
+		FailedRequestsPercentage        float64
 	}
 
 	AllRequestsNumber        int
@@ -39,19 +40,19 @@ type Statistics struct {
 	FailedRequestsNumber     int
 	ResolvedRequestsNumber   int
 
-	UnresolvedRequestsPercentage       float32
-	ResolvedBlockedRequestsPercentage  float32
-	ResolvedBypassedRequestsPercentage float32
-	FailedRequestsPercentage           float32
+	UnresolvedRequestsPercentage       float64
+	ResolvedBlockedRequestsPercentage  float64
+	ResolvedBypassedRequestsPercentage float64
+	FailedRequestsPercentage           float64
 
 	OverallRequests int
-	WafScore        float32
+	WafScore        float64
 }
 
 type SummaryTableRow struct {
 	TestSet    string
 	TestCase   string
-	Percentage float32
+	Percentage float64
 	Sent       int
 	Blocked    int
 	Bypassed   int
@@ -79,11 +80,16 @@ type FailedDetails struct {
 	Type        string
 }
 
-func calculatePercentage(first, second int) float32 {
+func round(n float64) float64 {
+	return math.Round(n*100) / 100
+}
+
+func calculatePercentage(first, second int) float64 {
 	if second == 0 {
 		return 0.0
 	}
-	return float32(first) / float32(second) * 100
+	result := float64(first) / float64(second) * 100
+	return round(result)
 }
 
 func isPositiveTest(setName string) bool {
@@ -113,7 +119,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 	}
 
 	var overallCompletedTestCases int
-	var overallPassedRequestsPercentage float32
+	var overallPassedRequestsPercentage float64
 
 	// Sort all test sets by name
 	var sortedTestSets []string
@@ -195,7 +201,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 	}
 
 	if overallCompletedTestCases != 0 {
-		s.WafScore = overallPassedRequestsPercentage / float32(overallCompletedTestCases)
+		s.WafScore = round(overallPassedRequestsPercentage / float64(overallCompletedTestCases))
 	}
 
 	// Number of all negative requests
