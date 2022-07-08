@@ -155,7 +155,9 @@ func (s *Scanner) Run(ctx context.Context) error {
 	defer s.logger.Info("Scanning finished")
 
 	start := time.Now()
-	defer s.logger.Info("Scanning Time: ", time.Since(start))
+	defer func() {
+		s.logger.Info("Scanning Time: ", time.Since(start))
+	}()
 
 	testChan := s.produceTests(ctx, gn)
 
