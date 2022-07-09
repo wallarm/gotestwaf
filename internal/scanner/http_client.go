@@ -32,9 +32,10 @@ type HTTPClient struct {
 
 func NewHTTPClient(cfg *config.Config) (*HTTPClient, error) {
 	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: !cfg.TLSVerify},
-		IdleConnTimeout: time.Duration(cfg.IdleConnTimeout) * time.Second,
-		MaxIdleConns:    cfg.MaxIdleConns,
+		TLSClientConfig:     &tls.Config{InsecureSkipVerify: !cfg.TLSVerify},
+		IdleConnTimeout:     time.Duration(cfg.IdleConnTimeout) * time.Second,
+		MaxIdleConns:        cfg.MaxIdleConns,
+		MaxIdleConnsPerHost: cfg.MaxIdleConns, // net.http hardcodes DefaultMaxIdleConnsPerHost to 2!
 	}
 
 	if cfg.Proxy != "" {
@@ -149,10 +150,11 @@ func (c *HTTPClient) getCookies(ctx context.Context, targetURL string) ([]*http.
 
 	sessionClient := &http.Client{
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: tr.TLSClientConfig.InsecureSkipVerify},
-			IdleConnTimeout: tr.IdleConnTimeout,
-			MaxIdleConns:    tr.MaxIdleConns,
-			Proxy:           tr.Proxy,
+			TLSClientConfig:     &tls.Config{InsecureSkipVerify: tr.TLSClientConfig.InsecureSkipVerify},
+			IdleConnTimeout:     tr.IdleConnTimeout,
+			MaxIdleConns:        tr.MaxIdleConns,
+			MaxIdleConnsPerHost: tr.MaxIdleConnsPerHost,
+			Proxy:               tr.Proxy,
 		},
 		CheckRedirect: redirectFunc,
 		Jar:           jar,
