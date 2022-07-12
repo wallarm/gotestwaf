@@ -72,7 +72,14 @@ func (s *Scanner) CheckPass(body []byte, statusCode int) (bool, error) {
 		m, _ := regexp.MatchString(s.cfg.PassRegex, string(body))
 		return m, nil
 	}
-	return statusCode == s.cfg.PassStatusCode, nil
+
+	for _, code := range s.cfg.PassStatusCode {
+		if statusCode == code {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func (s *Scanner) BenignPreCheck(url string) (blocked bool, statusCode int, err error) {

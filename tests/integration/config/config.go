@@ -101,7 +101,7 @@ func GetConfig() *config.Config {
 		FollowCookies:      false,
 		RenewSession:       false,
 		BlockStatusCode:    403,
-		PassStatusCode:     200,
+		PassStatusCode:     []int{200, 404},
 		BlockRegex:         "",
 		PassRegex:          "",
 		NonBlockedAsPassed: false,
