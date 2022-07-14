@@ -291,6 +291,7 @@ Options:
       --maxIdleConns int       The maximum number of keep-alive connections (default 2)
       --maxRedirects int       The maximum number of handling redirects (default 50)
       --nonBlockedAsPassed     If true, count requests that weren't blocked as passed. If false, requests that don't satisfy to PassStatusCode/PassRegExp as blocked
+      --openapiFile string     Path to openAPI file
       --passRegex string       Regex to a detect normal (not blocked) web page with the same HTTP status code as a blocked request
       --passStatusCode ints    HTTP response status code that WAF uses while passing requests (default [200,404])
       --proxy string           Proxy URL to use
@@ -349,3 +350,39 @@ With the `reportName` option you can set your own filename for GoTestWAF reports
 * Numeric zones: `Z0700` = Z or ±hhmm, `Z07:00` = Z or ±hh:mm, `Z07` = Z or ±hh
 
 For example, default `reportName` is `waf-evaluation-report-2006-January-02-15-04-05`, where `2006` will be replaced with actual year, `January` - month, `02` - day, `15` - hour, `04` - minute and `05` - second.
+
+
+### Scan based on OpenAPI file
+
+For better scanning, GTW supports sending malicious vectors through valid application requests. Instead of constructing requests that are simple in structure and send them to the URL specified at startup, GoTestWAF creates valid requests based on the application's API description in the OpenAPI 3.0 format.
+
+How it works:
+
+1. GoTestWAF loads an OpenAPI file and constructs request templates. All templates are then divided into groups based on what placeholders they support (e.g., if there is a string parameter in the request path, then such a request will be assigned to a group of requests that support URLPath placeholder)
+
+2. The next malicious vector is selected from the queue for sending. Based on the placeholder specified for it, all query templates are selected into which this vector can be substituted. Next, the vector is substituted into template and the request is sent.
+
+3. Based on the possible responses specified in the OpenAPI file, it is determined whether the request was blocked by WAF or passed to the application. If the status of the response code and its scheme match those described in the OpenAPI file, the request is marked as bypassed. Otherwise, it will be marked as blocked. It is possible that the application only responds with a status code, and this status code matches the response from the WAF. In this case, the request will be marked as unresolved.
+
+Some supported OpenAPI features:
+
+* numeric and string parameters in headers, paths, query parameters and body of requests;
+
+* the following content-types are supported for the request body: `application/json`, `application/xml`, `application/x-www-form-urlencoded`, `text/plain`;
+
+* the following modifiers are supported for XML: `name`, `wrapped`, `attribute`, `prefix`, `namespace`;
+
+* length limits for strings are supported through the `minLength` and `maxLength` parameters;
+
+* value restrictions for numbers are supported through `minimum`, `maximum`, `exclusiveMinimum` and `exclusiveMaximum`;
+
+* restrictions on the length of arrays through `minItems` and `maxItems` are supported;
+
+* combination of schemes via `oneOf`, `anyOf`, `allOf` is supported.
+
+Based on the described principle of operation, it is extremely important that the OpenAPI file correctly represents the implemented application API. Therefore, for example, you cannot use `default` to describe possible responses to queries.
+
+Example:
+```bash
+./gotestwaf --verbose --url https://example.com/v1 --openapiFile api.yaml
+```
