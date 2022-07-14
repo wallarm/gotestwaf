@@ -175,14 +175,14 @@ func (g *GRPCConn) CheckAvailability() (bool, error) {
 	return ok, nil
 }
 
-func (g *GRPCConn) Send(ctx context.Context, encoderName, payload string) (body []byte, statusCode int, err error) {
+func (g *GRPCConn) Send(ctx context.Context, encoderName, payload string) (body string, statusCode int, err error) {
 	if !g.isAvailable {
-		return nil, 0, nil
+		return "", 0, nil
 	}
 
 	encodedPayload, err := encoder.Apply(encoderName, payload)
 	if err != nil {
-		return nil, 0, errors.Wrap(err, "encoding payload")
+		return "", 0, errors.Wrap(err, "encoding payload")
 	}
 
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, grpcServerDetectionTimeout)
@@ -199,7 +199,7 @@ func (g *GRPCConn) Send(ctx context.Context, encoderName, payload string) (body 
 			conn, err = grpc.DialContext(ctxWithTimeout, g.host, grpc.WithTransportCredentials(g.transportCreds), grpc.WithBlock())
 		}
 		if err != nil {
-			return nil, 0, errors.Wrap(err, "sending gRPC request")
+			return "", 0, errors.Wrap(err, "sending gRPC request")
 		}
 
 		g.conn = conn
@@ -251,10 +251,10 @@ func (g *GRPCConn) Send(ctx context.Context, encoderName, payload string) (body 
 			statusCode = 500
 		}
 
-		return nil, statusCode, nil
+		return "", statusCode, nil
 	}
 
-	return []byte(resp.GetValue()), 200, nil
+	return resp.GetValue(), 200, nil
 }
 
 func (g *GRPCConn) IsAvailable() bool {

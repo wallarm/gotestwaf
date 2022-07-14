@@ -14,9 +14,9 @@ import (
 
 const testCaseExt = ".yml"
 
-func LoadTestCases(cfg *config.Config) ([]Case, error) {
+func LoadTestCases(cfg *config.Config) ([]*Case, error) {
 	var files []string
-	var testCases []Case
+	var testCases []*Case
 
 	if cfg.TestCasesPath == "" {
 		return nil, errors.New("empty test cases path")
@@ -69,7 +69,7 @@ func LoadTestCases(cfg *config.Config) ([]Case, error) {
 			t.IsTruePositive = true // test case is true positive
 		}
 
-		testCases = append(testCases, t)
+		testCases = append(testCases, &t)
 	}
 
 	if testCases == nil {

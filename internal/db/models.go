@@ -7,7 +7,7 @@ type Info struct {
 	Set                string
 	Case               string
 	ResponseStatusCode int
-	Reason             string
+	AdditionalInfo     []string
 	Type               string
 }
 

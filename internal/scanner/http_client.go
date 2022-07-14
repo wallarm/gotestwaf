@@ -81,19 +81,19 @@ func NewHTTPClient(cfg *config.Config) (*HTTPClient, error) {
 	}, nil
 }
 
-func (c *HTTPClient) Send(
+func (c *HTTPClient) SendPayload(
 	ctx context.Context,
 	targetURL, placeholderName, encoderName, payload string,
 	testHeaderValue string,
-) (body []byte, statusCode int, err error) {
+) (body string, statusCode int, err error) {
 	encodedPayload, err := encoder.Apply(encoderName, payload)
 	if err != nil {
-		return nil, 0, errors.Wrap(err, "encoding payload")
+		return "", 0, errors.Wrap(err, "encoding payload")
 	}
 
 	req, err := placeholder.Apply(targetURL, placeholderName, encodedPayload)
 	if err != nil {
-		return nil, 0, errors.Wrap(err, "apply placeholder")
+		return "", 0, errors.Wrap(err, "apply placeholder")
 	}
 
 	req = req.WithContext(ctx)
@@ -110,7 +110,7 @@ func (c *HTTPClient) Send(
 	if c.followCookies && c.renewSession {
 		cookies, err := c.getCookies(ctx, targetURL)
 		if err != nil {
-			return nil, 0, errors.Wrap(err, "couldn't get cookies for malicious request")
+			return "", 0, errors.Wrap(err, "couldn't get cookies for malicious request")
 		}
 
 		for _, cookie := range cookies {
@@ -120,13 +120,13 @@ func (c *HTTPClient) Send(
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return nil, 0, errors.Wrap(err, "sending http request")
+		return "", 0, errors.Wrap(err, "sending http request")
 	}
 	defer resp.Body.Close()
 
-	body, err = ioutil.ReadAll(resp.Body)
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, 0, errors.Wrap(err, "reading response body")
+		return "", 0, errors.Wrap(err, "reading response body")
 	}
 	statusCode = resp.StatusCode
 
@@ -134,7 +134,52 @@ func (c *HTTPClient) Send(
 		c.client.Jar.SetCookies(req.URL, resp.Cookies())
 	}
 
-	return body, statusCode, nil
+	return string(bodyBytes), statusCode, nil
+}
+
+func (c *HTTPClient) SendRequest(req *http.Request, testHeaderValue string) (
+	respHeaders http.Header,
+	body string,
+	statusCode int,
+	err error,
+) {
+	for header, value := range c.headers {
+		req.Header.Set(header, value)
+	}
+	req.Host = c.hostHeader
+
+	if testHeaderValue != "" {
+		req.Header.Set("X-GoTestWAF-Test", testHeaderValue)
+	}
+
+	if c.followCookies && c.renewSession {
+		cookies, err := c.getCookies(req.Context(), targetUrlFromRequest(req.URL))
+		if err != nil {
+			return nil, "", 0, errors.Wrap(err, "couldn't get cookies for malicious request")
+		}
+
+		for _, cookie := range cookies {
+			req.AddCookie(cookie)
+		}
+	}
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return nil, "", 0, errors.Wrap(err, "sending http request")
+	}
+	defer resp.Body.Close()
+
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, "", 0, errors.Wrap(err, "reading response body")
+	}
+	statusCode = resp.StatusCode
+
+	if c.followCookies && !c.renewSession && c.client.Jar != nil {
+		c.client.Jar.SetCookies(req.URL, resp.Cookies())
+	}
+
+	return resp.Header, string(bodyBytes), statusCode, nil
 }
 
 func (c *HTTPClient) getCookies(ctx context.Context, targetURL string) ([]*http.Cookie, error) {
@@ -185,4 +230,17 @@ func (c *HTTPClient) getCookies(ctx context.Context, targetURL string) ([]*http.
 	}
 
 	return nil, returnErr
+}
+
+func targetUrlFromRequest(reqURL *url.URL) string {
+	targetURL := *reqURL
+
+	targetURL.Path = ""
+	targetURL.RawPath = ""
+	targetURL.ForceQuery = false
+	targetURL.RawQuery = ""
+	targetURL.Fragment = ""
+	targetURL.RawFragment = ""
+
+	return targetURL.String()
 }

@@ -30,5 +30,6 @@ type Config struct {
 	BlockConnReset     bool              `mapstructure:"blockConnReset"`
 	SkipWAFBlockCheck  bool              `mapstructure:"skipWAFBlockCheck"`
 	AddHeader          string            `mapstructure:"addHeader"`
+	OpenAPIFile        string            `mapstructure:"openapiFile"`
 	RenderToHTML       bool              `mapstructure:"renderToHTML"`
 }
