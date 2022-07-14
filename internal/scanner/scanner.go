@@ -301,7 +301,14 @@ func (s *Scanner) checkPass(body string, statusCode int) (bool, error) {
 		m, _ := regexp.MatchString(s.cfg.PassRegex, body)
 		return m, nil
 	}
-	return statusCode == s.cfg.PassStatusCode, nil
+
+	for _, code := range s.cfg.PassStatusCode {
+		if statusCode == code {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 // produceTests generates all combinations of payload, encoder, and placeholder

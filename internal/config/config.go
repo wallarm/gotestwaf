@@ -1,9 +1,5 @@
 package config
 
-import (
-	"net/http"
-)
-
 type Config struct {
 	URL                string            `mapstructure:"url"`
 	WebSocketURL       string            `mapstructure:"wsURL"`
@@ -15,8 +11,9 @@ type Config struct {
 	MaxRedirects       int               `mapstructure:"maxRedirects"`
 	IdleConnTimeout    int               `mapstructure:"idleConnTimeout"`
 	FollowCookies      bool              `mapstructure:"followCookies"`
+	RenewSession       bool              `mapstructure:"renewSession"`
 	BlockStatusCode    int               `mapstructure:"blockStatusCode"`
-	PassStatusCode     int               `mapstructure:"passStatusCode"`
+	PassStatusCode     []int             `mapstructure:"passStatusCode"`
 	BlockRegex         string            `mapstructure:"blockRegex"`
 	PassRegex          string            `mapstructure:"passRegex"`
 	NonBlockedAsPassed bool              `mapstructure:"nonBlockedAsPassed"`
@@ -35,6 +32,4 @@ type Config struct {
 	AddHeader          string            `mapstructure:"addHeader"`
 	OpenAPIFile        string            `mapstructure:"openapiFile"`
 	RenderToHTML       bool              `mapstructure:"renderToHTML"`
-
-	Cookies []*http.Cookie
 }
