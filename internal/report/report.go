@@ -84,24 +84,29 @@ type payloadDetails struct {
 	Encoder     string `json:"encoder"`
 	Placeholder string `json:"placeholder"`
 	Status      int    `json:"status,omitempty"`
-	Reason      string `json:"reason,omitempty"`
+
+	// Used for non-failed payloads
+	AdditionalInformation []string `json:"additional_info,omitempty"`
+
+	// Used for failed payloads
+	Reason []string `json:"reason,omitempty"`
 }
 
 func ExportFullReport(
 	s *db.Statistics, reportFile string, reportTime time.Time,
-	wafName string, url string, ignoreUnresolved bool, format string,
+	wafName string, url string, openApiFile string, ignoreUnresolved bool, format string,
 ) (fullName string, err error) {
 	switch format {
 	case ReportHtmlFormat:
 		fullName = reportFile + ".html"
-		err = printFullReportToHtml(s, fullName, reportTime, wafName, url, ignoreUnresolved)
+		err = printFullReportToHtml(s, fullName, reportTime, wafName, url, openApiFile, ignoreUnresolved)
 		if err != nil {
 			return "", err
 		}
 
 	case ReportPdfFormat:
 		fullName = reportFile + ".pdf"
-		err = printFullReportToPdf(s, fullName, reportTime, wafName, url, ignoreUnresolved)
+		err = printFullReportToPdf(s, fullName, reportTime, wafName, url, openApiFile, ignoreUnresolved)
 		if err != nil {
 			return "", err
 		}
@@ -125,9 +130,9 @@ func ExportFullReport(
 
 func printFullReportToHtml(
 	s *db.Statistics, reportFile string, reportTime time.Time,
-	wafName string, url string, ignoreUnresolved bool,
+	wafName string, url string, openApiFile string, ignoreUnresolved bool,
 ) error {
-	tempFileName, err := exportFullReportToHtml(s, reportTime, wafName, url, ignoreUnresolved)
+	tempFileName, err := exportFullReportToHtml(s, reportTime, wafName, url, openApiFile, ignoreUnresolved)
 	if err != nil {
 		return errors.Wrap(err, "couldn't export report to HTML")
 	}
@@ -142,9 +147,9 @@ func printFullReportToHtml(
 
 func printFullReportToPdf(
 	s *db.Statistics, reportFile string, reportTime time.Time,
-	wafName string, url string, ignoreUnresolved bool,
+	wafName string, url string, openApiFile string, ignoreUnresolved bool,
 ) error {
-	tempFileName, err := exportFullReportToHtml(s, reportTime, wafName, url, ignoreUnresolved)
+	tempFileName, err := exportFullReportToHtml(s, reportTime, wafName, url, openApiFile, ignoreUnresolved)
 	if err != nil {
 		return errors.Wrap(err, "couldn't export report to HTML")
 	}
@@ -226,27 +231,31 @@ func printFullReportToJson(
 
 	for _, bypass := range s.Bypasses {
 		bypassDetail := &payloadDetails{
-			Payload:     bypass.Payload,
-			TestSet:     bypass.TestSet,
-			TestCase:    bypass.TestCase,
-			Encoder:     bypass.Encoder,
-			Placeholder: bypass.Encoder,
-			Status:      bypass.Status,
+			Payload:               bypass.Payload,
+			TestSet:               bypass.TestSet,
+			TestCase:              bypass.TestCase,
+			Encoder:               bypass.Encoder,
+			Placeholder:           bypass.Encoder,
+			Status:                bypass.ResponseStatusCode,
+			AdditionalInformation: bypass.AdditionalInfo,
 		}
 
 		report.NegativeTestsPayloads.Bypassed = append(report.NegativeTestsPayloads.Bypassed, bypassDetail)
 	}
-	for _, unresolved := range s.Unresolved {
-		unresolvedDetail := &payloadDetails{
-			Payload:     unresolved.Payload,
-			TestSet:     unresolved.TestSet,
-			TestCase:    unresolved.TestCase,
-			Encoder:     unresolved.Encoder,
-			Placeholder: unresolved.Encoder,
-			Status:      unresolved.Status,
-		}
+	if !ignoreUnresolved {
+		for _, unresolved := range s.Unresolved {
+			unresolvedDetail := &payloadDetails{
+				Payload:               unresolved.Payload,
+				TestSet:               unresolved.TestSet,
+				TestCase:              unresolved.TestCase,
+				Encoder:               unresolved.Encoder,
+				Placeholder:           unresolved.Encoder,
+				Status:                unresolved.ResponseStatusCode,
+				AdditionalInformation: unresolved.AdditionalInfo,
+			}
 
-		report.NegativeTestsPayloads.Unresolved = append(report.NegativeTestsPayloads.Unresolved, unresolvedDetail)
+			report.NegativeTestsPayloads.Unresolved = append(report.NegativeTestsPayloads.Unresolved, unresolvedDetail)
+		}
 	}
 	for _, failed := range s.Failed {
 		failedDetail := &payloadDetails{
@@ -265,27 +274,31 @@ func printFullReportToJson(
 
 	for _, blocked := range s.PositiveTests.FalsePositive {
 		blockedDetails := &payloadDetails{
-			Payload:     blocked.Payload,
-			TestSet:     blocked.TestSet,
-			TestCase:    blocked.TestCase,
-			Encoder:     blocked.Encoder,
-			Placeholder: blocked.Encoder,
-			Status:      blocked.Status,
+			Payload:               blocked.Payload,
+			TestSet:               blocked.TestSet,
+			TestCase:              blocked.TestCase,
+			Encoder:               blocked.Encoder,
+			Placeholder:           blocked.Encoder,
+			Status:                blocked.ResponseStatusCode,
+			AdditionalInformation: blocked.AdditionalInfo,
 		}
 
 		report.PositiveTestsPayloads.Blocked = append(report.PositiveTestsPayloads.Blocked, blockedDetails)
 	}
-	for _, unresolved := range s.PositiveTests.Unresolved {
-		unresolvedDetail := &payloadDetails{
-			Payload:     unresolved.Payload,
-			TestSet:     unresolved.TestSet,
-			TestCase:    unresolved.TestCase,
-			Encoder:     unresolved.Encoder,
-			Placeholder: unresolved.Encoder,
-			Status:      unresolved.Status,
-		}
+	if !ignoreUnresolved {
+		for _, unresolved := range s.PositiveTests.Unresolved {
+			unresolvedDetail := &payloadDetails{
+				Payload:               unresolved.Payload,
+				TestSet:               unresolved.TestSet,
+				TestCase:              unresolved.TestCase,
+				Encoder:               unresolved.Encoder,
+				Placeholder:           unresolved.Encoder,
+				Status:                unresolved.ResponseStatusCode,
+				AdditionalInformation: unresolved.AdditionalInfo,
+			}
 
-		report.PositiveTestsPayloads.Unresolved = append(report.PositiveTestsPayloads.Unresolved, unresolvedDetail)
+			report.PositiveTestsPayloads.Unresolved = append(report.PositiveTestsPayloads.Unresolved, unresolvedDetail)
+		}
 	}
 	for _, failed := range s.PositiveTests.Failed {
 		failedDetail := &payloadDetails{

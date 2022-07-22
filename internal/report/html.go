@@ -41,6 +41,7 @@ type htmlReport struct {
 	Url            string
 	WafTestingDate string
 	GtwVersion     string
+	OpenApiFile    string
 
 	ApiChartScript *template.HTML
 	AppChartScript *template.HTML
@@ -57,15 +58,16 @@ type htmlReport struct {
 		Grade        grade
 	}
 
-	ComparisonTable []comparisonTableRow
+	ComparisonTable []*comparisonTableRow
 
-	SummaryTable []db.SummaryTableRow
+	SummaryTable []*db.SummaryTableRow
+	ScannedPaths db.ScannedPaths
 
 	NegativeTests struct {
-		Blocked    []db.TestDetails
-		Bypassed   []db.TestDetails
-		Unresolved []db.TestDetails
-		Failed     []db.FailedDetails
+		Blocked    []*db.TestDetails
+		Bypassed   []*db.TestDetails
+		Unresolved []*db.TestDetails
+		Failed     []*db.FailedDetails
 
 		BlockedRequestsNumber    int
 		BypassedRequestsNumber   int
@@ -74,10 +76,10 @@ type htmlReport struct {
 	}
 
 	PositiveTests struct {
-		Blocked    []db.TestDetails
-		Bypassed   []db.TestDetails
-		Unresolved []db.TestDetails
-		Failed     []db.FailedDetails
+		Blocked    []*db.TestDetails
+		Bypassed   []*db.TestDetails
+		Unresolved []*db.TestDetails
+		Failed     []*db.FailedDetails
 
 		BlockedRequestsNumber    int
 		BypassedRequestsNumber   int
@@ -153,7 +155,7 @@ func computeGrade(value float32, all int) grade {
 
 func exportFullReportToHtml(
 	s *db.Statistics, reportTime time.Time, wafName string,
-	url string, ignoreUnresolved bool,
+	url string, openApiFile string, ignoreUnresolved bool,
 ) (fileName string, err error) {
 	data := htmlReport{
 		IgnoreUnresolved: ignoreUnresolved,
@@ -161,8 +163,9 @@ func exportFullReportToHtml(
 		Url:              url,
 		WafTestingDate:   reportTime.Format("02 January 2006"),
 		GtwVersion:       version.Version,
+		OpenApiFile:      openApiFile,
 		SummaryTable:     append(s.SummaryTable, s.PositiveTests.SummaryTable...),
-		ComparisonTable: []comparisonTableRow{
+		ComparisonTable: []*comparisonTableRow{
 			{
 				Name:         "ModSecurity PARANOIA=1",
 				ApiSec:       computeGrade(42.9, 1),
@@ -289,6 +292,8 @@ func exportFullReportToHtml(
 		data.AppChartScript = &v
 	}
 
+	data.ScannedPaths = s.Paths
+
 	data.NegativeTests.Blocked = s.Blocked
 	data.NegativeTests.Bypassed = s.Bypasses
 	data.NegativeTests.Unresolved = s.Unresolved
@@ -307,11 +312,15 @@ func exportFullReportToHtml(
 	data.PositiveTests.UnresolvedRequestsNumber = s.PositiveTests.UnresolvedRequestsNumber
 	data.PositiveTests.FailedRequestsNumber = s.PositiveTests.FailedRequestsNumber
 
-	templ := template.Must(template.New("report").Funcs(template.FuncMap{
-		"script": func(b []byte) template.HTML {
-			return template.HTML(b)
-		},
-	}).Parse(htmlTemplate))
+	templ := template.Must(
+		template.New("report").
+			Funcs(template.FuncMap{
+				"script": func(s string) template.HTML {
+					return template.HTML(s)
+				},
+			}).
+			Funcs(template.FuncMap{"StringsJoin": strings.Join}).
+			Parse(htmlTemplate))
 
 	var buffer bytes.Buffer
 

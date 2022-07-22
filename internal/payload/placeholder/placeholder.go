@@ -25,6 +25,10 @@ func init() {
 	Placeholders[DefaultURLParam.GetName()] = DefaultURLParam
 	Placeholders[DefaultURLPath.GetName()] = DefaultURLPath
 	Placeholders[DefaultXMLBody.GetName()] = DefaultXMLBody
+	Placeholders[DefaultNonCrudUrlPath.GetName()] = DefaultNonCrudUrlPath
+	Placeholders[DefaultNonCrudUrlParam.GetName()] = DefaultNonCrudUrlParam
+	Placeholders[DefaultNonCRUDHeader.GetName()] = DefaultNonCRUDHeader
+	Placeholders[DefaultNonCRUDRequestBody.GetName()] = DefaultNonCRUDRequestBody
 }
 
 func Apply(host, placeholder, data string) (*http.Request, error) {

@@ -27,7 +27,7 @@ func calculatePercentage(first, second int) float32 {
 	return float32(first) / float32(second) * 100
 }
 
-func updateCounters(t db.TestDetails, counters map[string]map[string]pair, isBlocked bool) {
+func updateCounters(t *db.TestDetails, counters map[string]map[string]pair, isBlocked bool) {
 	var category string
 	var typ string
 
