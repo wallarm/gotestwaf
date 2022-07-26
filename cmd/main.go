@@ -62,7 +62,7 @@ func run(ctx context.Context, logger *logrus.Logger) error {
 		return errors.Wrap(err, "couldn't load config")
 	}
 
-	logger.Infof("GoTestWAF %s", version.Version)
+	logger.WithField("version", version.Version).Info("GoTestWAF started")
 
 	var openapiDoc *openapi3.T
 	var router routers.Router
