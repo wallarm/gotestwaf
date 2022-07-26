@@ -2,13 +2,13 @@ package report
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"regexp"
 	"strings"
 
 	"github.com/go-echarts/go-echarts/v2/charts"
 	"github.com/go-echarts/go-echarts/v2/opts"
+	"github.com/pkg/errors"
 
 	"github.com/wallarm/gotestwaf/internal/db"
 )
@@ -125,7 +125,7 @@ func generateCharts(s *db.Statistics) (apiChart *string, appChart *string, err e
 
 		err = chart.Render(&buffer)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, errors.Wrap(err, "couldn't render chart")
 		}
 
 		scriptParts := re.FindAllString(buffer.String(), -1)
@@ -160,7 +160,7 @@ func generateCharts(s *db.Statistics) (apiChart *string, appChart *string, err e
 
 		err = chart.Render(&buffer)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, errors.Wrap(err, "couldn't render chart")
 		}
 
 		scriptParts := re.FindAllString(buffer.String(), -1)

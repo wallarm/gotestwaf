@@ -288,6 +288,8 @@ Options:
       --grpcPort uint16        gRPC port to check
       --idleConnTimeout int    The maximum amount of time a keep-alive connection will live (default 2)
       --ignoreUnresolved       If true, unresolved test cases will be considered as bypassed (affect score and results)
+      --logFormat string       Set logging format: text, json (default "text")
+      --logLevel string        Logging level: panic, fatal, error, warn, info, debug, trace (default "info")
       --maxIdleConns int       The maximum number of keep-alive connections (default 2)
       --maxRedirects int       The maximum number of handling redirects (default 50)
       --nonBlockedAsPassed     If true, count requests that weren't blocked as passed. If false, requests that don't satisfy to PassStatusCode/PassRegExp as blocked
@@ -295,9 +297,10 @@ Options:
       --passRegex string       Regex to a detect normal (not blocked) web page with the same HTTP status code as a blocked request
       --passStatusCode ints    HTTP response status code that WAF uses while passing requests (default [200,404])
       --proxy string           Proxy URL to use
+      --quiet                  If true, disable verbose logging
       --randomDelay int        Random delay in ms in addition to the delay between requests (default 400)
-      --renderToHTML           If true, renders the report as HTML file instead of PDF
       --renewSession           Renew cookies before each test. Should be used with --followCookies flag
+      --reportFormat string    Export report to one of the following formats: none, pdf, html, json (default "pdf")
       --reportName string      Report file name. Supports `time' package template format (default "waf-evaluation-report-2006-January-02-15-04-05")
       --reportPath string      A directory to store reports (default "reports")
       --sendDelay int          Delay in ms between requests (default 400)
@@ -307,7 +310,6 @@ Options:
       --testSet string         If set then only this test set's cases will be run
       --tlsVerify              If true, the received TLS certificate will be verified
       --url string             URL to check
-      --verbose                If true, enable verbose logging
       --version                Show GoTestWAF version and exit
       --wafName string         Name of the WAF product (default "generic")
       --workers int            The number of workers to scan (default 5)

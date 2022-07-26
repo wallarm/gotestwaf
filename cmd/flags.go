@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
@@ -22,6 +23,9 @@ const (
 
 	wafName = "generic"
 
+	textLogFormat = "text"
+	jsonLogFormat = "json"
+
 	cliDescription = `GoTestWAF is a tool for API and OWASP attack simulation that supports a
 wide range of API protocols including REST, GraphQL, gRPC, WebSockets,
 SOAP, XMLRPC, and others.
@@ -35,7 +39,9 @@ Options:
 
 var (
 	configPath string
-	verbose    bool
+	quiet      bool
+	logLevel   logrus.Level
+	logFormat  string
 )
 
 // parseFlags parses all GoTestWAF CLI flags
@@ -51,7 +57,9 @@ func parseFlags() error {
 	}
 
 	flag.StringVar(&configPath, "configPath", defaultConfigPath, "Path to the config file")
-	flag.BoolVar(&verbose, "verbose", false, "If true, enable verbose logging")
+	flag.BoolVar(&quiet, "quiet", false, "If true, disable verbose logging")
+	logLvl := flag.String("logLevel", "info", "Logging level: panic, fatal, error, warn, info, debug, trace")
+	flag.StringVar(&logFormat, "logFormat", textLogFormat, "Set logging format: text, json")
 
 	urlParam := flag.String("url", "", "URL to check")
 	wsURL := flag.String("wsURL", "", "WebSocket URL to check")
@@ -78,7 +86,7 @@ func parseFlags() error {
 	flag.String("testSet", "", "If set then only this test set's cases will be run")
 	flag.String("reportPath", reportPath, "A directory to store reports")
 	flag.String("reportName", defaultReportName, "Report file name. Supports `time' package template format")
-	flag.Bool("renderToHTML", false, "If true, renders the report as HTML file instead of PDF")
+	flag.String("reportFormat", "pdf", "Export report to one of the following formats: none, pdf, html, json")
 	flag.String("testCasesPath", testCasesPath, "Path to a folder with test cases")
 	flag.String("wafName", wafName, "Name of the WAF product")
 	flag.Bool("ignoreUnresolved", false, "If true, unresolved test cases will be considered as bypassed (affect score and results)")
@@ -98,6 +106,16 @@ func parseFlags() error {
 	// url flag must be set
 	if *urlParam == "" {
 		return errors.New("--url flag is not set")
+	}
+
+	logrusLogLvl, err := logrus.ParseLevel(*logLvl)
+	if err != nil {
+		return err
+	}
+	logLevel = logrusLogLvl
+
+	if logFormat != textLogFormat && logFormat != jsonLogFormat {
+		return fmt.Errorf("unknown logging format: %s", logFormat)
 	}
 
 	validURL, err := url.Parse(*urlParam)

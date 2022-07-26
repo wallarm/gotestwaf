@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"math/rand"
 	"net/http"
 	"regexp"
@@ -19,6 +18,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 	"github.com/schollz/progressbar/v3"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/wallarm/gotestwaf/internal/config"
@@ -45,10 +45,9 @@ type testWork struct {
 
 // Scanner allows you to test WAF in various ways with given payloads.
 type Scanner struct {
-	logger *log.Logger
-
-	cfg *config.Config
-	db  *db.DB
+	logger *logrus.Logger
+	cfg    *config.Config
+	db     *db.DB
 
 	httpClient *HTTPClient
 	grpcConn   *GRPCConn
@@ -62,7 +61,7 @@ type Scanner struct {
 
 // New creates a new Scanner.
 func New(
-	logger *log.Logger,
+	logger *logrus.Logger,
 	cfg *config.Config,
 	db *db.DB,
 	requestTemplates openapi.Templates,
@@ -94,49 +93,63 @@ func New(
 
 // CheckGRPCAvailability checks if the gRPC server is available at the given URL.
 func (s *Scanner) CheckGRPCAvailability() {
-	s.logger.Printf("gRPC pre-check: in progress")
+	s.logger.WithField("status", "started").Info("gRPC pre-check")
+
 	available, err := s.grpcConn.CheckAvailability()
 	if err != nil {
-		s.logger.Printf("gRPC pre-check: connection is not available, reason: %s\n", err)
+		s.logger.WithFields(logrus.Fields{
+			"status":     "done",
+			"connection": "not available",
+		}).WithError(err).Infof("gRPC pre-check")
 	}
 	if available {
-		s.logger.Printf("gRPC pre-check: gRPC is available")
+		s.logger.WithFields(logrus.Fields{
+			"status":     "done",
+			"connection": "available",
+		}).Info("gRPC pre-check")
 	} else {
-		s.logger.Printf("gRPC pre-check: gRPC is not available")
+		s.logger.WithFields(logrus.Fields{
+			"status":     "done",
+			"connection": "not available",
+		}).Info("gRPC pre-check")
 	}
 }
 
 // WAFBlockCheck checks if WAF exists and blocks malicious requests.
 func (s *Scanner) WAFBlockCheck() error {
-	s.logger.Println("WAF pre-check. URL to check:", s.cfg.URL)
-
 	if !s.cfg.SkipWAFBlockCheck {
+		s.logger.WithField("url", s.cfg.URL).Info("WAF pre-check")
+
 		ok, httpStatus, err := s.preCheck(preCheckVector)
 		if err != nil {
 			if s.cfg.BlockConnReset && (errors.Is(err, io.EOF) || errors.Is(err, syscall.ECONNRESET)) {
-				s.logger.Println("Connection reset, trying benign request to make sure that service is available")
+				s.logger.Info("Connection reset, trying benign request to make sure that service is available")
 				blockedBenign, httpStatusBenign, errBenign := s.preCheck("")
 				if !blockedBenign {
-					s.logger.Printf("Service is available (HTTP status: %d), WAF resets connections. Consider this behavior as block", httpStatusBenign)
+					s.logger.Infof("Service is available (HTTP status: %d), WAF resets connections. Consider this behavior as block", httpStatusBenign)
 					ok = true
 				}
 				if errBenign != nil {
 					return errors.Wrap(errBenign, "running benign request pre-check")
 				}
 			} else {
-				return errors.Wrap(err, "running pre-check")
+				return errors.Wrap(err, "running WAF pre-check")
 			}
 		}
 
 		if !ok {
 			return errors.Errorf("WAF was not detected. "+
-				"Please use the '--blockStatusCode' or '--blockRegex' flags. Use '--help' for additional info."+
-				"\nBaseline attack status code: %v\n", httpStatus)
+				"Please use the '--blockStatusCode' or '--blockRegex' flags. Use '--help' for additional info. "+
+				"Baseline attack status code: %v", httpStatus)
 		}
 
-		s.logger.Printf("WAF pre-check: OK. Blocking status code: %v\n", httpStatus)
+		s.logger.WithFields(logrus.Fields{
+			"status":  "done",
+			"blocked": true,
+			"code":    httpStatus,
+		}).Info("WAF pre-check")
 	} else {
-		s.logger.Println("WAF pre-check: SKIPPED")
+		s.logger.WithField("status", "skipped").Info("WAF pre-check")
 	}
 
 	return nil
@@ -157,21 +170,32 @@ func (s *Scanner) preCheck(payload string) (blocked bool, statusCode int, err er
 
 // WAFwsBlockCheck checks if WebSocket exists and is protected by WAF.
 func (s *Scanner) WAFwsBlockCheck() {
-	s.logger.Println("WebSocket pre-check. URL to check:", s.cfg.WebSocketURL)
-
 	if !s.cfg.SkipWAFBlockCheck {
+		s.logger.WithField("url", s.cfg.WebSocketURL).Info("WebSocket pre-check: started")
+
 		available, blocked, err := s.wsPreCheck()
 		if !available && err != nil {
-			s.logger.Printf("WebSocket pre-check: connection is not available, reason: %s\n", err)
+			s.logger.WithFields(logrus.Fields{
+				"status":     "done",
+				"connection": "not available",
+			}).WithError(err).Info("WebSocket pre-check")
 		}
 		if available && blocked {
-			s.logger.Printf("WebSocket is available and payloads are blocked by the WAF, reason: %s\n", err)
+			s.logger.WithFields(logrus.Fields{
+				"status":     "done",
+				"connection": "available",
+				"blocked":    true,
+			}).Info("WebSocket pre-check")
 		}
 		if available && !blocked {
-			s.logger.Println("WebSocket is available and payloads are not blocked by the WAF")
+			s.logger.WithFields(logrus.Fields{
+				"status":     "done",
+				"connection": "available",
+				"blocked":    false,
+			}).Info("WebSocket pre-check")
 		}
 	} else {
-		s.logger.Println("WebSocket pre-check: SKIPPED")
+		s.logger.WithField("status", "skipped").Info("WebSocket pre-check")
 	}
 }
 
@@ -229,17 +253,16 @@ func (s *Scanner) Run(ctx context.Context) error {
 
 	rand.Seed(time.Now().UnixNano())
 
-	s.logger.Printf("Scanning %s\n", s.cfg.URL)
-	s.logger.Println("Scanning started")
-	defer s.logger.Println("Scanning finished")
+	s.logger.WithField("url", s.cfg.URL).Info("Scanning started")
 
 	start := time.Now()
-	defer s.logger.Println("Scanning Time: ", time.Since(start))
+	defer func() {
+		s.logger.WithField("duration", time.Since(start).String()).Info("Scanning finished")
+	}()
 
 	testChan := s.produceTests(ctx, gn)
 
-	bar := progressbar.NewOptions64(
-		int64(s.db.GetNumberOfAllTestCases()),
+	progressbarOptions := []progressbar.Option{
 		progressbar.OptionShowCount(),
 		progressbar.OptionSetPredictTime(false),
 		progressbar.OptionFullWidth(),
@@ -252,6 +275,16 @@ func (s *Scanner) Run(ctx context.Context) error {
 			BarStart:      "[",
 			BarEnd:        "]",
 		}),
+	}
+
+	// disable progress bar output if logging in JSONFormat
+	if _, ok := s.logger.Formatter.(*logrus.JSONFormatter); ok {
+		progressbarOptions = append(progressbarOptions, progressbar.OptionSetWriter(io.Discard))
+	}
+
+	bar := progressbar.NewOptions64(
+		int64(s.db.GetNumberOfAllTestCases()),
+		progressbarOptions...,
 	)
 
 	for e := 0; e < gn; e++ {
@@ -266,9 +299,11 @@ func (s *Scanner) Run(ctx context.Context) error {
 					time.Sleep(time.Duration(s.cfg.SendDelay+rand.Intn(s.cfg.RandomDelay)) * time.Millisecond)
 
 					if err := s.scanURL(ctx, w); err != nil {
-						s.logger.Println(err)
+						s.logger.WithError(err).Error("Got an error while scanning")
 					}
+
 					bar.Add(1)
+
 				case <-ctx.Done():
 					return
 				}
@@ -484,7 +519,7 @@ func (s *Scanner) updateDB(
 				updFailedTest.AdditionalInfo = append(updFailedTest.AdditionalInfo, sendErr.Error())
 			}
 
-			s.logger.Printf("http sending: %s\n", sendErr.Error())
+			s.logger.WithError(sendErr).Error("send request failed")
 
 			return
 		}

@@ -11,6 +11,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/pkg/errors v0.9.1
 	github.com/schollz/progressbar/v3 v3.8.3
+	github.com/sirupsen/logrus v1.2.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.1
 	golang.org/x/text v0.3.7
@@ -44,6 +45,7 @@ require (
 	github.com/go-openapi/swag v0.19.5 // indirect
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/google/go-cmp v0.5.3 // indirect
+	github.com/konsorten/go-windows-terminal-sequences v1.0.1 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/mailru/easyjson v0.0.0-20190626092158-b2ccc519800e // indirect
 	github.com/rogpeppe/go-internal v1.8.0 // indirect

@@ -2,12 +2,12 @@ package integration
 
 import (
 	"context"
-	"log"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/wallarm/gotestwaf/internal/db"
 	"github.com/wallarm/gotestwaf/internal/report"
@@ -65,38 +65,31 @@ func TestGoTestWAF(t *testing.T) {
 	}
 }
 
-func runGoTestWAF(ctx context.Context, testCases []db.Case) error {
-	logger := log.New(os.Stdout, "GOTESTWAF : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
+func runGoTestWAF(ctx context.Context, testCases []*db.Case) error {
+	logger := logrus.New()
+	logger.SetLevel(logrus.InfoLevel)
 
 	cfg := test_config.GetConfig()
 
 	db := db.NewDB(testCases)
-	httpClient, err := scanner.NewHTTPClient(cfg)
+
+	s, err := scanner.New(logger, cfg, db, nil, nil, false)
 	if err != nil {
-		return errors.Wrap(err, "HTTP client")
+		return errors.Wrap(err, "couldn't create scanner")
 	}
 
-	grpcConn, err := scanner.NewGRPCConn(cfg)
+	err = s.WAFBlockCheck()
 	if err != nil {
-		return errors.Wrap(err, "gRPC client")
+		return err
 	}
 
-	logger.Printf("gRPC pre-check: in progress")
+	s.WAFwsBlockCheck()
+	s.CheckGRPCAvailability()
 
-	available, err := grpcConn.CheckAvailability()
+	err = s.Run(ctx)
 	if err != nil {
-		logger.Printf("gRPC pre-check: connection is not available, "+
-			"reason: %s\n", err)
+		return errors.Wrap(err, "error occurred while scanning")
 	}
-	if available {
-		logger.Printf("gRPC pre-check: gRPC is available")
-	} else {
-		logger.Printf("gRPC pre-check: gRPC is not available")
-	}
-
-	s := scanner.New(db, logger, cfg, httpClient, grpcConn, true)
-
-	logger.Println("Scanned URL:", cfg.URL)
 
 	_, err = os.Stat(cfg.ReportPath)
 	if os.IsNotExist(err) {
@@ -105,34 +98,13 @@ func runGoTestWAF(ctx context.Context, testCases []db.Case) error {
 		}
 	}
 
-	logger.Printf("WebSocket pre-check. URL to check: %s\n", cfg.WebSocketURL)
-
-	available, blocked, err := s.WSPreCheck(cfg.WebSocketURL)
-	if !available && err != nil {
-		logger.Printf("WebSocket pre-check: connection is not available, "+
-			"reason: %s\n", err)
-	}
-	if available && blocked {
-		logger.Printf("WebSocket is available and payloads are "+
-			"blocked by the WAF, reason: %s\n", err)
-	}
-	if available && !blocked {
-		logger.Println("WebSocket is available and payloads are " +
-			"not blocked by the WAF")
-	}
-
-	logger.Printf("Scanning %s\n", cfg.URL)
-	err = s.Run(ctx)
-	if err != nil {
-		return errors.Wrap(err, "run scanning")
-	}
-
 	reportTime := time.Now()
 
 	stat := db.GetStatistics(cfg.IgnoreUnresolved, cfg.NonBlockedAsPassed)
-	report.RenderConsoleTable(stat, reportTime, "Test", cfg.IgnoreUnresolved)
+
+	err = report.RenderConsoleReport(stat, reportTime, cfg.WAFName, cfg.URL, cfg.IgnoreUnresolved, "text")
 	if err != nil {
-		return errors.Wrap(err, "table rendering")
+		return err
 	}
 
 	return nil

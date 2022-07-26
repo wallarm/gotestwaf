@@ -18,7 +18,7 @@ func (db *DB) ExportPayloads(payloadsExportFile string) error {
 	csvWriter := csv.NewWriter(csvFile)
 	defer csvWriter.Flush()
 
-	if err := csvWriter.Write([]string{"Payload", "Check ResponseStatusCode", "Response Code", "Placeholder", "Encoder", "Case"}); err != nil {
+	if err := csvWriter.Write([]string{"Payload", "Check Status", "Response Code", "Placeholder", "Encoder", "Case"}); err != nil {
 		return err
 	}
 

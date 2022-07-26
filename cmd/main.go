@@ -2,9 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -14,6 +12,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/routers"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/wallarm/gotestwaf/internal/db"
 	"github.com/wallarm/gotestwaf/internal/openapi"
@@ -23,7 +22,7 @@ import (
 )
 
 func main() {
-	logger := log.New(os.Stdout, "GOTESTWAF : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
+	logger := logrus.New()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -33,24 +32,29 @@ func main() {
 
 	go func() {
 		sig := <-shutdown
-		logger.Printf("main: %v : scan canceled", sig)
+		logger.WithField("signal", sig).Info("scan canceled")
 		cancel()
 	}()
 
 	if err := run(ctx, logger); err != nil {
-		logger.Println("main error:", err)
+		logger.WithError(err).Error("caught error in main function")
 		os.Exit(1)
 	}
 }
 
-func run(ctx context.Context, logger *log.Logger) error {
+func run(ctx context.Context, logger *logrus.Logger) error {
 	err := parseFlags()
 	if err != nil {
 		return err
 	}
 
-	if !verbose {
+	if quiet {
 		logger.SetOutput(ioutil.Discard)
+	}
+	logger.SetLevel(logLevel)
+
+	if logFormat == jsonLogFormat {
+		logger.SetFormatter(&logrus.JSONFormatter{})
 	}
 
 	cfg, err := loadConfig()
@@ -58,7 +62,7 @@ func run(ctx context.Context, logger *log.Logger) error {
 		return errors.Wrap(err, "couldn't load config")
 	}
 
-	logger.Printf("GoTestWAF %s\n", version.Version)
+	logger.WithField("version", version.Version).Info("GoTestWAF started")
 
 	var openapiDoc *openapi3.T
 	var router routers.Router
@@ -79,12 +83,14 @@ func run(ctx context.Context, logger *log.Logger) error {
 		}
 	}
 
-	logger.Println("Test cases loading started")
+	logger.Info("Test cases loading started")
+
 	testCases, err := db.LoadTestCases(cfg)
 	if err != nil {
-		return errors.Wrap(err, "couldn't load test case")
+		return errors.Wrap(err, "loading test case")
 	}
-	logger.Println("Test cases loading finished")
+
+	logger.Info("Test cases loading finished")
 
 	db := db.NewDB(testCases)
 
@@ -117,19 +123,22 @@ func run(ctx context.Context, logger *log.Logger) error {
 	reportName := reportTime.Format(cfg.ReportName)
 
 	reportFile := filepath.Join(cfg.ReportPath, reportName)
-	if cfg.RenderToHTML {
-		reportFile += ".html"
-	} else {
-		reportFile += ".pdf"
-	}
 
 	stat := db.GetStatistics(cfg.IgnoreUnresolved, cfg.NonBlockedAsPassed)
-	report.RenderConsoleTable(stat, reportTime, wafName, cfg.IgnoreUnresolved)
-	err = report.ExportToPDF(stat, reportFile, reportTime, cfg.WAFName, cfg.URL, cfg.OpenAPIFile, cfg.IgnoreUnresolved, cfg.RenderToHTML)
+
+	err = report.RenderConsoleReport(stat, reportTime, cfg.WAFName, cfg.URL, cfg.IgnoreUnresolved, logFormat)
 	if err != nil {
-		return errors.Wrap(err, "PDF exporting")
+		return err
 	}
-	fmt.Printf("\nreport is ready: %s\n", reportFile)
+
+	reportFile, err = report.ExportFullReport(stat, reportFile, reportTime, cfg.WAFName, cfg.URL, cfg.OpenAPIFile, cfg.IgnoreUnresolved, cfg.ReportFormat)
+	if err != nil {
+		return errors.Wrap(err, "couldn't export full report")
+	}
+
+	if cfg.ReportFormat != report.ReportNoneFormat {
+		logger.WithField("filename", reportFile).Infof("Export full report")
+	}
 
 	payloadFiles := filepath.Join(cfg.ReportPath, reportName+".csv")
 	err = db.ExportPayloads(payloadFiles)

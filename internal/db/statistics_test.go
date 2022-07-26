@@ -175,7 +175,6 @@ func testPropertyOnlyPositiveNumberValues(db *DB, ignoreUnresolved, nonBlockedAs
 		stat.ResolvedBlockedRequestsPercentage < 0 ||
 		stat.ResolvedBypassedRequestsPercentage < 0 ||
 		stat.FailedRequestsPercentage < 0 ||
-
 		stat.PositiveTests.AllRequestsNumber < 0 ||
 		stat.PositiveTests.BlockedRequestsNumber < 0 ||
 		stat.PositiveTests.BypassedRequestsNumber < 0 ||
@@ -186,7 +185,6 @@ func testPropertyOnlyPositiveNumberValues(db *DB, ignoreUnresolved, nonBlockedAs
 		stat.PositiveTests.ResolvedFalseRequestsPercentage < 0 ||
 		stat.PositiveTests.ResolvedTrueRequestsPercentage < 0 ||
 		stat.PositiveTests.FailedRequestsPercentage < 0 ||
-
 		stat.OverallRequests < 0 ||
 		stat.WafScore < 0 {
 		return false
@@ -214,9 +212,9 @@ func testPropertyCorrectStatValues(db *DB, ignoreUnresolved, nonBlockedAsPassed 
 	counters["negative"] = make(map[string]int)
 	counters["positive"] = make(map[string]int)
 
-	var wafScore float32
+	var wafScore float64
 	var overallCompletedTestCases int
-	var overallPassedRequestsPercentage float32
+	var overallPassedRequestsPercentage float64
 
 	for _, row := range stat.SummaryTable {
 		counters["negative"]["sent"] += row.Sent
@@ -233,7 +231,7 @@ func testPropertyCorrectStatValues(db *DB, ignoreUnresolved, nonBlockedAsPassed 
 	}
 
 	if overallCompletedTestCases != 0 {
-		wafScore = overallPassedRequestsPercentage / float32(overallCompletedTestCases)
+		wafScore = overallPassedRequestsPercentage / float64(overallCompletedTestCases)
 	}
 
 	if wafScore != stat.WafScore {
@@ -293,7 +291,7 @@ func testPropertyCorrectStatValues(db *DB, ignoreUnresolved, nonBlockedAsPassed 
 
 func NewDBAllPassedGenerator() gopter.Gen {
 	return gopter.DeriveGen(
-		func(passedTests []Info) *DB {
+		func(passedTests []*Info) *DB {
 			db := &DB{
 				counters:      make(map[string]map[string]map[string]int),
 				passedTests:   passedTests,
@@ -312,7 +310,7 @@ func NewDBAllPassedGenerator() gopter.Gen {
 			}
 			return db
 		},
-		func(db *DB) []Info {
+		func(db *DB) []*Info {
 			return db.passedTests
 		},
 		GenInfoSlice(),
@@ -321,7 +319,7 @@ func NewDBAllPassedGenerator() gopter.Gen {
 
 func NewDBAllBlockedGenerator() gopter.Gen {
 	return gopter.DeriveGen(
-		func(blockedTests []Info) *DB {
+		func(blockedTests []*Info) *DB {
 			db := &DB{
 				counters:      make(map[string]map[string]map[string]int),
 				blockedTests:  blockedTests,
@@ -340,7 +338,7 @@ func NewDBAllBlockedGenerator() gopter.Gen {
 			}
 			return db
 		},
-		func(db *DB) []Info {
+		func(db *DB) []*Info {
 			return db.blockedTests
 		},
 		GenInfoSlice(),
@@ -349,7 +347,7 @@ func NewDBAllBlockedGenerator() gopter.Gen {
 
 func NewDBAllUnresolvedGenerator(ignoreUnresolved, nonBlockedAsPassed bool) gopter.Gen {
 	return gopter.DeriveGen(
-		func(unresolvedTests []Info) *DB {
+		func(unresolvedTests []*Info) *DB {
 			db := &DB{
 				counters:      make(map[string]map[string]map[string]int),
 				naTests:       unresolvedTests,
@@ -372,7 +370,7 @@ func NewDBAllUnresolvedGenerator(ignoreUnresolved, nonBlockedAsPassed bool) gopt
 			}
 			return db
 		},
-		func(db *DB) []Info {
+		func(db *DB) []*Info {
 			return db.naTests
 		},
 		GenInfoSlice(),
@@ -381,7 +379,7 @@ func NewDBAllUnresolvedGenerator(ignoreUnresolved, nonBlockedAsPassed bool) gopt
 
 func NewDBAllFailedGenerator() gopter.Gen {
 	return gopter.DeriveGen(
-		func(failedTests []Info) *DB {
+		func(failedTests []*Info) *DB {
 			db := &DB{
 				counters:      make(map[string]map[string]map[string]int),
 				failedTests:   failedTests,
@@ -400,7 +398,7 @@ func NewDBAllFailedGenerator() gopter.Gen {
 			}
 			return db
 		},
-		func(db *DB) []Info {
+		func(db *DB) []*Info {
 			return db.failedTests
 		},
 		GenInfoSlice(),
@@ -409,7 +407,7 @@ func NewDBAllFailedGenerator() gopter.Gen {
 
 func NewDBGenerator(ignoreUnresolved, nonBlockedAsPassed bool) gopter.Gen {
 	return gopter.DeriveGen(
-		func(passedTests, blockedTests, failedTests, unresolvedTests []Info) *DB {
+		func(passedTests, blockedTests, failedTests, unresolvedTests []*Info) *DB {
 			db := &DB{
 				counters:      make(map[string]map[string]map[string]int),
 				passedTests:   passedTests,
@@ -465,7 +463,7 @@ func NewDBGenerator(ignoreUnresolved, nonBlockedAsPassed bool) gopter.Gen {
 			}
 			return db
 		},
-		func(db *DB) ([]Info, []Info, []Info, []Info) {
+		func(db *DB) ([]*Info, []*Info, []*Info, []*Info) {
 			return db.passedTests, db.blockedTests, db.failedTests, db.naTests
 		},
 		GenInfoSlice(),
@@ -494,13 +492,13 @@ func GenCaseName() gopter.Gen {
 
 func GenTestInfo() gopter.Gen {
 	return gopter.DeriveGen(
-		func(setName, caseName string) Info {
-			return Info{
+		func(setName, caseName string) *Info {
+			return &Info{
 				Set:  setName,
 				Case: caseName,
 			}
 		},
-		func(i Info) (string, string) {
+		func(i *Info) (string, string) {
 			return i.Set, i.Case
 		},
 		GenSetName(),

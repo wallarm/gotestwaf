@@ -22,6 +22,7 @@ type Config struct {
 	SendDelay          int               `mapstructure:"sendDelay"`
 	ReportPath         string            `mapstructure:"reportPath"`
 	ReportName         string            `mapstructure:"reportName"`
+	ReportFormat       string            `mapstructure:"reportFormat"`
 	TestCase           string            `mapstructure:"testCase"`
 	TestCasesPath      string            `mapstructure:"testCasesPath"`
 	TestSet            string            `mapstructure:"testSet"`
@@ -31,5 +32,4 @@ type Config struct {
 	SkipWAFBlockCheck  bool              `mapstructure:"skipWAFBlockCheck"`
 	AddHeader          string            `mapstructure:"addHeader"`
 	OpenAPIFile        string            `mapstructure:"openapiFile"`
-	RenderToHTML       bool              `mapstructure:"renderToHTML"`
 }
