@@ -32,7 +32,7 @@ func main() {
 
 	go func() {
 		sig := <-shutdown
-		logger.Infof("got signal %v: scan canceled", sig)
+		logger.WithField("signal", sig).Info("scan canceled")
 		cancel()
 	}()
 
