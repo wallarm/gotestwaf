@@ -131,7 +131,6 @@ func run(ctx context.Context, logger *logrus.Logger) error {
 		return err
 	}
 
-	// err = report.ExportToPDF(stat, reportFile, reportTime, cfg.WAFName, cfg.URL, cfg.OpenAPIFile, cfg.IgnoreUnresolved, cfg.RenderToHTML)
 	reportFile, err = report.ExportFullReport(stat, reportFile, reportTime, cfg.WAFName, cfg.URL, cfg.OpenAPIFile, cfg.IgnoreUnresolved, cfg.ReportFormat)
 	if err != nil {
 		return errors.Wrap(err, "couldn't export full report")
