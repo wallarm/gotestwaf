@@ -65,38 +65,31 @@ func TestGoTestWAF(t *testing.T) {
 	}
 }
 
-func runGoTestWAF(ctx context.Context, testCases []db.Case) error {
+func runGoTestWAF(ctx context.Context, testCases []*db.Case) error {
 	logger := logrus.New()
 	logger.SetLevel(logrus.InfoLevel)
 
 	cfg := test_config.GetConfig()
 
 	db := db.NewDB(testCases)
-	httpClient, err := scanner.NewHTTPClient(cfg)
+
+	s, err := scanner.New(logger, cfg, db, nil, nil, false)
 	if err != nil {
-		return errors.Wrap(err, "HTTP client")
+		return errors.Wrap(err, "couldn't create scanner")
 	}
 
-	grpcConn, err := scanner.NewGRPCConn(cfg)
+	err = s.WAFBlockCheck()
 	if err != nil {
-		return errors.Wrap(err, "gRPC client")
+		return err
 	}
 
-	logger.Info("gRPC pre-check: in progress")
+	s.WAFwsBlockCheck()
+	s.CheckGRPCAvailability()
 
-	available, err := grpcConn.CheckAvailability()
+	err = s.Run(ctx)
 	if err != nil {
-		logger.WithError(err).Infof("gRPC pre-check: connection is not available")
+		return errors.Wrap(err, "error occurred while scanning")
 	}
-	if available {
-		logger.Info("gRPC pre-check: gRPC is available")
-	} else {
-		logger.Info("gRPC pre-check: gRPC is not available")
-	}
-
-	s := scanner.New(db, logger, cfg, httpClient, grpcConn, true)
-
-	logger.Infof("Scanned URL: %s", cfg.URL)
 
 	_, err = os.Stat(cfg.ReportPath)
 	if os.IsNotExist(err) {
@@ -105,28 +98,10 @@ func runGoTestWAF(ctx context.Context, testCases []db.Case) error {
 		}
 	}
 
-	logger.Infof("WebSocket pre-check. URL to check: %s", cfg.WebSocketURL)
-
-	available, blocked, err := s.WSPreCheck(cfg.WebSocketURL)
-	if !available && err != nil {
-		logger.WithError(err).Infof("WebSocket pre-check: connection is not available")
-	}
-	if available && blocked {
-		logger.Info("WebSocket is available and payloads are blocked by the WAF")
-	}
-	if available && !blocked {
-		logger.Info("WebSocket is available and payloads are not blocked by the WAF")
-	}
-
-	logger.Infof("Scanning %s", cfg.URL)
-	err = s.Run(ctx)
-	if err != nil {
-		return errors.Wrap(err, "run scanning")
-	}
-
 	reportTime := time.Now()
 
 	stat := db.GetStatistics(cfg.IgnoreUnresolved, cfg.NonBlockedAsPassed)
+
 	err = report.RenderConsoleReport(stat, reportTime, cfg.WAFName, cfg.URL, cfg.IgnoreUnresolved, "text")
 	if err != nil {
 		return err

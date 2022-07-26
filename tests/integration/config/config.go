@@ -120,7 +120,7 @@ func GetConfig() *config.Config {
 	}
 }
 
-func GenerateTestCases() (testCases []db.Case, testCasesMap *TestCasesMap) {
+func GenerateTestCases() (testCases []*db.Case, testCasesMap *TestCasesMap) {
 	grpcEncoder := encoder.DefaultGRPCEncoder.GetName()
 	requestBodyPlaceholder := placeholder.DefaultRequestBody.GetName()
 
@@ -148,7 +148,7 @@ func GenerateTestCases() (testCases []db.Case, testCasesMap *TestCasesMap) {
 				}
 
 				name := fmt.Sprintf("%s-%s", ph, enc)
-				testCases = append(testCases, db.Case{
+				testCases = append(testCases, &db.Case{
 					Payloads:       payloads,
 					Encoders:       []string{enc},
 					Placeholders:   []string{ph},
