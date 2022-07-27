@@ -39,7 +39,11 @@ func NewHTTPClient(cfg *config.Config) (*HTTPClient, error) {
 	}
 
 	if cfg.Proxy != "" {
-		proxyURL, _ := url.Parse(cfg.Proxy)
+		proxyURL, err := url.Parse(cfg.Proxy)
+		if err != nil {
+			return nil, errors.Wrap(err, "couldn't parse proxy URL")
+		}
+
 		tr.Proxy = http.ProxyURL(proxyURL)
 	}
 
@@ -153,7 +157,7 @@ func (c *HTTPClient) SendRequest(req *http.Request, testHeaderValue string) (
 	}
 
 	if c.followCookies && c.renewSession {
-		cookies, err := c.getCookies(req.Context(), targetUrlFromRequest(req.URL))
+		cookies, err := c.getCookies(req.Context(), GetTargetURL(req.URL))
 		if err != nil {
 			return nil, "", 0, errors.Wrap(err, "couldn't get cookies for malicious request")
 		}
@@ -232,7 +236,7 @@ func (c *HTTPClient) getCookies(ctx context.Context, targetURL string) ([]*http.
 	return nil, returnErr
 }
 
-func targetUrlFromRequest(reqURL *url.URL) string {
+func GetTargetURL(reqURL *url.URL) string {
 	targetURL := *reqURL
 
 	targetURL.Path = ""

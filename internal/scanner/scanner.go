@@ -171,7 +171,10 @@ func (s *Scanner) preCheck(payload string) (blocked bool, statusCode int, err er
 // WAFwsBlockCheck checks if WebSocket exists and is protected by WAF.
 func (s *Scanner) WAFwsBlockCheck() {
 	if !s.cfg.SkipWAFBlockCheck {
-		s.logger.WithField("url", s.cfg.WebSocketURL).Info("WebSocket pre-check: started")
+		s.logger.WithFields(logrus.Fields{
+			"status": "started",
+			"url":    s.cfg.WebSocketURL,
+		}).Info("WebSocket pre-check")
 
 		available, blocked, err := s.wsPreCheck()
 		if !available && err != nil {

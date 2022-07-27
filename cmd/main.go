@@ -94,6 +94,32 @@ func run(ctx context.Context, logger *logrus.Logger) error {
 
 	db := db.NewDB(testCases)
 
+	if !cfg.DisableWafIdentification {
+		detector, err := scanner.NewDetector(cfg)
+		if err != nil {
+			return errors.Wrap(err, "couldn't create WAF detector")
+		}
+
+		logger.Info("Try to identify WAF solution")
+
+		name, vendor, err := detector.DetectWAF(ctx)
+		if err != nil {
+			return errors.Wrap(err, "couldn't detect")
+		}
+
+		if name != "" && vendor != "" {
+			logger.WithFields(logrus.Fields{
+				"solution": name,
+				"vendor":   vendor,
+			}).Info("WAF was identified. Force enabling `--followCookies' and `--renewSession' options")
+
+			cfg.FollowCookies = true
+			cfg.RenewSession = true
+		} else {
+			logger.Info("WAF was not identified")
+		}
+	}
+
 	s, err := scanner.New(logger, cfg, db, templates, router, false)
 	if err != nil {
 		return errors.Wrap(err, "couldn't create scanner")
