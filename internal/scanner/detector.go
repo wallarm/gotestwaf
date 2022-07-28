@@ -73,7 +73,7 @@ func (w *WAFDetector) doRequest(ctx context.Context) (*http.Response, error) {
 	queryParams.Add("b", sqliPayload)
 	queryParams.Add("c", lfiPayload)
 	queryParams.Add("d", rcePayload)
-	queryParams.Add("d", xxePayload)
+	queryParams.Add("e", xxePayload)
 
 	req.URL.RawQuery = queryParams.Encode()
 
