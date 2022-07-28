@@ -279,41 +279,42 @@ Supported GoTestWAF configuration options are described below.
 Usage: ./gotestwaf [OPTIONS] --url <url>
 
 Options:
-      --addHeader string       An HTTP header to add to requests
-      --blockConnReset         If true, connection resets will be considered as block
-      --blockRegex string      Regex to detect a blocking page with the same HTTP response status code as a not blocked request
-      --blockStatusCode int    HTTP status code that WAF uses while blocking requests (default 403)
-      --configPath string      Path to the config file (default "config.yaml")
-      --followCookies          If true, use cookies sent by the server. May work only with --maxIdleConns=1
-      --grpcPort uint16        gRPC port to check
-      --idleConnTimeout int    The maximum amount of time a keep-alive connection will live (default 2)
-      --ignoreUnresolved       If true, unresolved test cases will be considered as bypassed (affect score and results)
-      --logFormat string       Set logging format: text, json (default "text")
-      --logLevel string        Logging level: panic, fatal, error, warn, info, debug, trace (default "info")
-      --maxIdleConns int       The maximum number of keep-alive connections (default 2)
-      --maxRedirects int       The maximum number of handling redirects (default 50)
-      --nonBlockedAsPassed     If true, count requests that weren't blocked as passed. If false, requests that don't satisfy to PassStatusCode/PassRegExp as blocked
-      --openapiFile string     Path to openAPI file
-      --passRegex string       Regex to a detect normal (not blocked) web page with the same HTTP status code as a blocked request
-      --passStatusCode ints    HTTP response status code that WAF uses while passing requests (default [200,404])
-      --proxy string           Proxy URL to use
-      --quiet                  If true, disable verbose logging
-      --randomDelay int        Random delay in ms in addition to the delay between requests (default 400)
-      --renewSession           Renew cookies before each test. Should be used with --followCookies flag
-      --reportFormat string    Export report to one of the following formats: none, pdf, html, json (default "pdf")
-      --reportName string      Report file name. Supports `time' package template format (default "waf-evaluation-report-2006-January-02-15-04-05")
-      --reportPath string      A directory to store reports (default "reports")
-      --sendDelay int          Delay in ms between requests (default 400)
-      --skipWAFBlockCheck      If true, WAF detection tests will be skipped
-      --testCase string        If set then only this test case will be run
-      --testCasesPath string   Path to a folder with test cases (default "testcases")
-      --testSet string         If set then only this test set's cases will be run
-      --tlsVerify              If true, the received TLS certificate will be verified
-      --url string             URL to check
-      --version                Show GoTestWAF version and exit
-      --wafName string         Name of the WAF product (default "generic")
-      --workers int            The number of workers to scan (default 5)
-      --wsURL string           WebSocket URL to check
+      --addHeader string        An HTTP header to add to requests
+      --blockConnReset          If true, connection resets will be considered as block
+      --blockRegex string       Regex to detect a blocking page with the same HTTP response status code as a not blocked request
+      --blockStatusCode int     HTTP status code that WAF uses while blocking requests (default 403)
+      --configPath string       Path to the config file (default "config.yaml")
+      --followCookies           If true, use cookies sent by the server. May work only with --maxIdleConns=1
+      --grpcPort uint16         gRPC port to check
+      --idleConnTimeout int     The maximum amount of time a keep-alive connection will live (default 2)
+      --ignoreUnresolved        If true, unresolved test cases will be considered as bypassed (affect score and results)
+      --logFormat string        Set logging format: text, json (default "text")
+      --logLevel string         Logging level: panic, fatal, error, warn, info, debug, trace (default "info")
+      --maxIdleConns int        The maximum number of keep-alive connections (default 2)
+      --maxRedirects int        The maximum number of handling redirects (default 50)
+      --nonBlockedAsPassed      If true, count requests that weren't blocked as passed. If false, requests that don't satisfy to PassStatusCode/PassRegExp as blocked
+      --openapiFile string      Path to openAPI file
+      --passRegex string        Regex to a detect normal (not blocked) web page with the same HTTP status code as a blocked request
+      --passStatusCode ints     HTTP response status code that WAF uses while passing requests (default [200,404])
+      --proxy string            Proxy URL to use
+      --quiet                   If true, disable verbose logging
+      --randomDelay int         Random delay in ms in addition to the delay between requests (default 400)
+      --renewSession            Renew cookies before each test. Should be used with --followCookies flag
+      --reportFormat string     Export report to one of the following formats: none, pdf, html, json (default "pdf")
+      --reportName string       Report file name. Supports `time' package template format (default "waf-evaluation-report-2006-January-02-15-04-05")
+      --reportPath string       A directory to store reports (default "reports")
+      --sendDelay int           Delay in ms between requests (default 400)
+      --skipWAFBlockCheck       If true, WAF detection tests will be skipped
+      --skipWafIdentification   Skip WAF identification
+      --testCase string         If set then only this test case will be run
+      --testCasesPath string    Path to a folder with test cases (default "testcases")
+      --testSet string          If set then only this test set's cases will be run
+      --tlsVerify               If true, the received TLS certificate will be verified
+      --url string              URL to check
+      --version                 Show GoTestWAF version and exit
+      --wafName string          Name of the WAF product (default "generic")
+      --workers int             The number of workers to scan (default 5)
+      --wsURL string            WebSocket URL to check
 ```
 
 The listed options can be passed to GoTestWAF as follows:
