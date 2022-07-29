@@ -305,7 +305,7 @@ Options:
       --reportPath string       A directory to store reports (default "reports")
       --sendDelay int           Delay in ms between requests (default 400)
       --skipWAFBlockCheck       If true, WAF detection tests will be skipped
-      --skipWafIdentification   Skip WAF identification
+      --skipWAFIdentification   Skip WAF identification
       --testCase string         If set then only this test case will be run
       --testCasesPath string    Path to a folder with test cases (default "testcases")
       --testSet string          If set then only this test set's cases will be run

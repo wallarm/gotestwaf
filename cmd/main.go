@@ -95,7 +95,7 @@ func run(ctx context.Context, logger *logrus.Logger) error {
 
 	db := db.NewDB(testCases)
 
-	if !cfg.SkipWafIdentification {
+	if !cfg.SkipWAFIdentification {
 		detector, err := scanner.NewDetector(cfg)
 		if err != nil {
 			return errors.Wrap(err, "couldn't create WAF detector")

@@ -12,7 +12,7 @@ type Config struct {
 	IdleConnTimeout       int               `mapstructure:"idleConnTimeout"`
 	FollowCookies         bool              `mapstructure:"followCookies"`
 	RenewSession          bool              `mapstructure:"renewSession"`
-	SkipWafIdentification bool              `mapstructure:"skipWafIdentification"`
+	SkipWAFIdentification bool              `mapstructure:"skipWAFIdentification"`
 	BlockStatusCode       int               `mapstructure:"blockStatusCode"`
 	PassStatusCode        []int             `mapstructure:"passStatusCode"`
 	BlockRegex            string            `mapstructure:"blockRegex"`
