@@ -64,7 +64,7 @@ func NewGRPCConn(cfg *config.Config) (*GRPCConn, error) {
 	return g, nil
 }
 
-func (g *GRPCConn) httpTest() (bool, error) {
+func (g *GRPCConn) httpTest(ctx context.Context) (bool, error) {
 	var http2transport *http2.Transport
 	var scheme string
 
@@ -102,7 +102,7 @@ func (g *GRPCConn) httpTest() (bool, error) {
 	req.Header.Set("Content-Type", grpcContentType)
 	req.Header.Set("User-Agent", grpcUserAgent)
 
-	ctxWithTimeout, cancel := context.WithTimeout(context.Background(), grpcServerDetectionTimeout)
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, grpcServerDetectionTimeout)
 	defer cancel()
 
 	// Sends the request
@@ -119,8 +119,8 @@ func (g *GRPCConn) httpTest() (bool, error) {
 	return false, nil
 }
 
-func (g *GRPCConn) healthCheckTest() (bool, error) {
-	ctxWithTimeout, cancel := context.WithTimeout(context.Background(), grpcServerDetectionTimeout)
+func (g *GRPCConn) healthCheckTest(ctx context.Context) (bool, error) {
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, grpcServerDetectionTimeout)
 	defer cancel()
 
 	var (
@@ -151,19 +151,19 @@ func (g *GRPCConn) healthCheckTest() (bool, error) {
 	return false, nil
 }
 
-func (g *GRPCConn) CheckAvailability() (bool, error) {
+func (g *GRPCConn) CheckAvailability(ctx context.Context) (bool, error) {
 	if !g.isAvailable {
 		return false, nil
 	}
 
-	ok, err := g.httpTest()
+	ok, err := g.httpTest(ctx)
 	if err != nil {
 		g.isAvailable = false
 		return false, errors.Wrap(err, "checking gRPC availability via HTTP test")
 	}
 
 	if ok {
-		ok, err = g.healthCheckTest()
+		ok, err = g.healthCheckTest(ctx)
 		if err != nil {
 			g.isAvailable = false
 			return false, errors.Wrap(err, "checking gRPC availability via gRPC health check")

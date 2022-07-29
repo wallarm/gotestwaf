@@ -92,10 +92,10 @@ func New(
 }
 
 // CheckGRPCAvailability checks if the gRPC server is available at the given URL.
-func (s *Scanner) CheckGRPCAvailability() {
+func (s *Scanner) CheckGRPCAvailability(ctx context.Context) {
 	s.logger.WithField("status", "started").Info("gRPC pre-check")
 
-	available, err := s.grpcConn.CheckAvailability()
+	available, err := s.grpcConn.CheckAvailability(ctx)
 	if err != nil {
 		s.logger.WithFields(logrus.Fields{
 			"status":     "done",
@@ -116,15 +116,15 @@ func (s *Scanner) CheckGRPCAvailability() {
 }
 
 // WAFBlockCheck checks if WAF exists and blocks malicious requests.
-func (s *Scanner) WAFBlockCheck() error {
+func (s *Scanner) WAFBlockCheck(ctx context.Context) error {
 	if !s.cfg.SkipWAFBlockCheck {
 		s.logger.WithField("url", s.cfg.URL).Info("WAF pre-check")
 
-		ok, httpStatus, err := s.preCheck(preCheckVector)
+		ok, httpStatus, err := s.preCheck(ctx, preCheckVector)
 		if err != nil {
 			if s.cfg.BlockConnReset && (errors.Is(err, io.EOF) || errors.Is(err, syscall.ECONNRESET)) {
 				s.logger.Info("Connection reset, trying benign request to make sure that service is available")
-				blockedBenign, httpStatusBenign, errBenign := s.preCheck("")
+				blockedBenign, httpStatusBenign, errBenign := s.preCheck(ctx, "")
 				if !blockedBenign {
 					s.logger.Infof("Service is available (HTTP status: %d), WAF resets connections. Consider this behavior as block", httpStatusBenign)
 					ok = true
@@ -156,8 +156,8 @@ func (s *Scanner) WAFBlockCheck() error {
 }
 
 // preCheck sends given payload during the pre-check stage.
-func (s *Scanner) preCheck(payload string) (blocked bool, statusCode int, err error) {
-	body, code, err := s.httpClient.SendPayload(context.Background(), s.cfg.URL, "URLParam", "URL", payload, "")
+func (s *Scanner) preCheck(ctx context.Context, payload string) (blocked bool, statusCode int, err error) {
+	body, code, err := s.httpClient.SendPayload(ctx, s.cfg.URL, "URLParam", "URL", payload, "")
 	if err != nil {
 		return false, 0, err
 	}
@@ -169,11 +169,14 @@ func (s *Scanner) preCheck(payload string) (blocked bool, statusCode int, err er
 }
 
 // WAFwsBlockCheck checks if WebSocket exists and is protected by WAF.
-func (s *Scanner) WAFwsBlockCheck() {
+func (s *Scanner) WAFwsBlockCheck(ctx context.Context) {
 	if !s.cfg.SkipWAFBlockCheck {
-		s.logger.WithField("url", s.cfg.WebSocketURL).Info("WebSocket pre-check: started")
+		s.logger.WithFields(logrus.Fields{
+			"status": "started",
+			"url":    s.cfg.WebSocketURL,
+		}).Info("WebSocket pre-check")
 
-		available, blocked, err := s.wsPreCheck()
+		available, blocked, err := s.wsPreCheck(ctx)
 		if !available && err != nil {
 			s.logger.WithFields(logrus.Fields{
 				"status":     "done",
@@ -200,8 +203,8 @@ func (s *Scanner) WAFwsBlockCheck() {
 }
 
 // wsPreCheck sends the payload and analyzes response.
-func (s *Scanner) wsPreCheck() (available, blocked bool, err error) {
-	wsClient, _, err := s.wsClient.Dial(s.cfg.WebSocketURL, nil)
+func (s *Scanner) wsPreCheck(ctx context.Context) (available, blocked bool, err error) {
+	wsClient, _, err := s.wsClient.DialContext(ctx, s.cfg.WebSocketURL, nil)
 	if err != nil {
 		return false, false, err
 	}

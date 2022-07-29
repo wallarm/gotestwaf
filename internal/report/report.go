@@ -423,7 +423,7 @@ func printConsoleReportTable(s *db.Statistics, reportTime time.Time, wafName str
 	fmt.Fprintf(&buffer, "\nPositive Tests:\n")
 
 	// Positive cases summary table
-	posTable := tablewriter.NewWriter(os.Stdout)
+	posTable := tablewriter.NewWriter(&buffer)
 	posTable.SetHeader(baseHeader)
 	for index := range baseHeader {
 		posTable.SetColMinWidth(index, colMinWidth)

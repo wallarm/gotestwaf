@@ -71,6 +71,7 @@ func parseFlags() error {
 	flag.Int("idleConnTimeout", 2, "The maximum amount of time a keep-alive connection will live")
 	flag.Bool("followCookies", false, "If true, use cookies sent by the server. May work only with --maxIdleConns=1")
 	flag.Bool("renewSession", false, "Renew cookies before each test. Should be used with --followCookies flag")
+	flag.Bool("skipWAFIdentification", false, "Skip WAF identification")
 	flag.Int("blockStatusCode", 403, "HTTP status code that WAF uses while blocking requests")
 	flag.IntSlice("passStatusCode", []int{200, 404}, "HTTP response status code that WAF uses while passing requests")
 	flag.String("blockRegex", "",
