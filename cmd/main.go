@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/signal"
@@ -115,6 +116,7 @@ func run(ctx context.Context, logger *logrus.Logger) error {
 
 			cfg.FollowCookies = true
 			cfg.RenewSession = true
+			cfg.WAFName = fmt.Sprintf("%s (%s)", name, vendor)
 		} else {
 			logger.Info("WAF was not identified")
 		}
