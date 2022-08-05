@@ -1,7 +1,13 @@
 package db
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/gob"
+	"encoding/hex"
 	"sync"
+
+	"github.com/pkg/errors"
 )
 
 type DB struct {
@@ -17,26 +23,42 @@ type DB struct {
 	scannedPaths map[string]map[string]interface{}
 
 	numberOfTests uint
+	hash          string
 }
 
-func NewDB(tests []*Case) *DB {
-	r := DB{
+func NewDB(tests []*Case) (*DB, error) {
+	db := &DB{
 		counters: make(map[string]map[string]map[string]int),
 		tests:    tests,
 	}
 
+	var encodedCase bytes.Buffer
+
+	enc := gob.NewEncoder(&encodedCase)
+	sha256hash := sha256.New()
+
 	for _, test := range tests {
-		if _, ok := r.counters[test.Set]; !ok {
-			r.counters[test.Set] = map[string]map[string]int{}
+		if _, ok := db.counters[test.Set]; !ok {
+			db.counters[test.Set] = map[string]map[string]int{}
 		}
-		if _, ok := r.counters[test.Set][test.Name]; !ok {
-			r.counters[test.Set][test.Name] = map[string]int{}
+		if _, ok := db.counters[test.Set][test.Name]; !ok {
+			db.counters[test.Set][test.Name] = map[string]int{}
 		}
 
-		r.numberOfTests += uint(len(test.Payloads) * len(test.Encoders) * len(test.Placeholders))
+		db.numberOfTests += uint(len(test.Payloads) * len(test.Encoders) * len(test.Placeholders))
+
+		err := enc.Encode(*test)
+		if err != nil {
+			return nil, errors.Wrap(err, "couldn't encode test case")
+		}
+
+		sha256hash.Write(encodedCase.Bytes())
+		encodedCase.Reset()
 	}
 
-	return &r
+	db.hash = hex.EncodeToString(sha256hash.Sum(nil))
+
+	return db, nil
 }
 
 func (db *DB) UpdatePassedTests(t *Info) {
@@ -91,4 +113,8 @@ func (db *DB) GetTestCases() []*Case {
 
 func (db *DB) GetNumberOfAllTestCases() uint {
 	return db.numberOfTests
+}
+
+func (db *DB) GetHash() string {
+	return db.hash
 }
