@@ -56,7 +56,7 @@ func NewDB(tests []*Case) (*DB, error) {
 		encodedCase.Reset()
 	}
 
-	db.hash = hex.EncodeToString(sha256hash.Sum(nil))
+	db.hash = hex.EncodeToString(sha256hash.Sum(nil)[:16])
 
 	return db, nil
 }
