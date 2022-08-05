@@ -41,6 +41,7 @@ type htmlReport struct {
 	Url            string
 	WafTestingDate string
 	GtwVersion     string
+	TestCasesFP    string
 	OpenApiFile    string
 
 	ApiChartScript *template.HTML
@@ -163,6 +164,7 @@ func exportFullReportToHtml(
 		Url:              url,
 		WafTestingDate:   reportTime.Format("02 January 2006"),
 		GtwVersion:       version.Version,
+		TestCasesFP:      s.TestCasesFingerprint,
 		OpenApiFile:      openApiFile,
 		SummaryTable:     append(s.SummaryTable, s.PositiveTests.SummaryTable...),
 		ComparisonTable: []*comparisonTableRow{

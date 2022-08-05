@@ -9,6 +9,8 @@ import (
 type Statistics struct {
 	Paths ScannedPaths
 
+	TestCasesFingerprint string
+
 	SummaryTable []*SummaryTableRow
 	Blocked      []*TestDetails
 	Bypasses     []*TestDetails
@@ -134,7 +136,9 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 	db.Lock()
 	defer db.Unlock()
 
-	s := &Statistics{}
+	s := &Statistics{
+		TestCasesFingerprint: db.hash,
+	}
 
 	unresolvedRequestsNumber := make(map[string]map[string]int)
 

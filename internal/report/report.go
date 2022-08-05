@@ -29,6 +29,7 @@ type jsonReport struct {
 	Date        string `json:"date"`
 	ProjectName string `json:"project_name"`
 	URL         string `json:"url"`
+	TestCasesFP string `json:"fp"`
 
 	// fields for console report in JSON format
 	NegativeTests *testsInfo `json:"negative,omitempty"`
@@ -171,6 +172,7 @@ func printFullReportToJson(
 		ProjectName: wafName,
 		URL:         url,
 		Score:       s.WafScore,
+		TestCasesFP: s.TestCasesFingerprint,
 	}
 
 	report.Summary = &summary{}
