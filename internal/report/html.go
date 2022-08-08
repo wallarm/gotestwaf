@@ -43,6 +43,7 @@ type htmlReport struct {
 	GtwVersion     string
 	TestCasesFP    string
 	OpenApiFile    string
+	Args           string
 
 	ApiChartScript *template.HTML
 	AppChartScript *template.HTML
@@ -156,7 +157,7 @@ func computeGrade(value float32, all int) grade {
 
 func exportFullReportToHtml(
 	s *db.Statistics, reportTime time.Time, wafName string,
-	url string, openApiFile string, ignoreUnresolved bool,
+	url string, openApiFile string, args string, ignoreUnresolved bool,
 ) (fileName string, err error) {
 	data := htmlReport{
 		IgnoreUnresolved: ignoreUnresolved,
@@ -166,6 +167,7 @@ func exportFullReportToHtml(
 		GtwVersion:       version.Version,
 		TestCasesFP:      s.TestCasesFingerprint,
 		OpenApiFile:      openApiFile,
+		Args:             args,
 		SummaryTable:     append(s.SummaryTable, s.PositiveTests.SummaryTable...),
 		ComparisonTable: []*comparisonTableRow{
 			{

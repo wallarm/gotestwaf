@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -45,7 +46,7 @@ var (
 )
 
 // parseFlags parses all GoTestWAF CLI flags
-func parseFlags() error {
+func parseFlags() (args string, err error) {
 	reportPath := filepath.Join(".", defaultReportPath)
 	testCasesPath := filepath.Join(".", defaultTestCasesPath)
 
@@ -106,24 +107,24 @@ func parseFlags() error {
 
 	// url flag must be set
 	if *urlParam == "" {
-		return errors.New("--url flag is not set")
+		return "", errors.New("--url flag is not set")
 	}
 
 	logrusLogLvl, err := logrus.ParseLevel(*logLvl)
 	if err != nil {
-		return err
+		return "", err
 	}
 	logLevel = logrusLogLvl
 
 	if logFormat != textLogFormat && logFormat != jsonLogFormat {
-		return fmt.Errorf("unknown logging format: %s", logFormat)
+		return "", fmt.Errorf("unknown logging format: %s", logFormat)
 	}
 
 	validURL, err := url.Parse(*urlParam)
 	if err != nil ||
 		(validURL.Scheme != "http" && validURL.Scheme != "https") ||
 		validURL.Host == "" {
-		return errors.New("URL is not valid")
+		return "", errors.New("URL is not valid")
 	}
 
 	*urlParam = validURL.String()
@@ -140,7 +141,9 @@ func parseFlags() error {
 		*wsURL = validURL.String()
 	}
 
-	return nil
+	args = strings.Join(os.Args[1:], " ")
+
+	return args, nil
 }
 
 // loadConfig loads the specified config file and merges it with the parameters passed via CLI

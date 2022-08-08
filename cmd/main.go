@@ -44,7 +44,7 @@ func main() {
 }
 
 func run(ctx context.Context, logger *logrus.Logger) error {
-	err := parseFlags()
+	args, err := parseFlags()
 	if err != nil {
 		return err
 	}
@@ -164,7 +164,11 @@ func run(ctx context.Context, logger *logrus.Logger) error {
 		return err
 	}
 
-	reportFile, err = report.ExportFullReport(stat, reportFile, reportTime, cfg.WAFName, cfg.URL, cfg.OpenAPIFile, cfg.IgnoreUnresolved, cfg.ReportFormat)
+	reportFile, err = report.ExportFullReport(
+		stat, reportFile,
+		reportTime, cfg.WAFName, cfg.URL, cfg.OpenAPIFile, args,
+		cfg.IgnoreUnresolved, cfg.ReportFormat,
+	)
 	if err != nil {
 		return errors.Wrap(err, "couldn't export full report")
 	}
