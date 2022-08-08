@@ -45,17 +45,19 @@ var (
 	logFormat  string
 )
 
+var usage = func() {
+	flag.CommandLine.SetOutput(os.Stdout)
+	usage := cliDescription
+	fmt.Fprintf(os.Stdout, usage, os.Args[0])
+	flag.PrintDefaults()
+}
+
 // parseFlags parses all GoTestWAF CLI flags
 func parseFlags() (args string, err error) {
 	reportPath := filepath.Join(".", defaultReportPath)
 	testCasesPath := filepath.Join(".", defaultTestCasesPath)
 
-	flag.Usage = func() {
-		flag.CommandLine.SetOutput(os.Stdout)
-		usage := cliDescription
-		fmt.Fprintf(os.Stdout, usage, os.Args[0])
-		flag.PrintDefaults()
-	}
+	flag.Usage = usage
 
 	flag.StringVar(&configPath, "configPath", defaultConfigPath, "Path to the config file")
 	flag.BoolVar(&quiet, "quiet", false, "If true, disable verbose logging")
@@ -98,6 +100,11 @@ func parseFlags() (args string, err error) {
 	flag.String("openapiFile", "", "Path to openAPI file")
 	showVersion := flag.Bool("version", false, "Show GoTestWAF version and exit")
 	flag.Parse()
+
+	if len(os.Args) == 1 {
+		usage()
+		os.Exit(0)
+	}
 
 	// show version and exit
 	if *showVersion == true {
