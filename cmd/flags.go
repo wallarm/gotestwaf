@@ -17,6 +17,8 @@ import (
 )
 
 const (
+	maxReportFilenameLength = 249 // 255 (max length) - 5 (".html") - 1 (to be sure)
+
 	defaultReportPath    = "reports"
 	defaultReportName    = "waf-evaluation-report-2006-January-02-15-04-05"
 	defaultTestCasesPath = "testcases"
@@ -89,7 +91,7 @@ func parseFlags() (args string, err error) {
 	flag.String("testCase", "", "If set then only this test case will be run")
 	flag.String("testSet", "", "If set then only this test set's cases will be run")
 	flag.String("reportPath", reportPath, "A directory to store reports")
-	flag.String("reportName", defaultReportName, "Report file name. Supports `time' package template format")
+	reportName := flag.String("reportName", defaultReportName, "Report file name. Supports `time' package template format")
 	flag.String("reportFormat", "pdf", "Export report to one of the following formats: none, pdf, html, json")
 	flag.String("testCasesPath", testCasesPath, "Path to a folder with test cases")
 	flag.String("wafName", wafName, "Name of the WAF product")
@@ -146,6 +148,11 @@ func parseFlags() (args string, err error) {
 		validURL.Path = ""
 
 		*wsURL = validURL.String()
+	}
+
+	_, reportFileName := filepath.Split(*reportName)
+	if len(reportFileName) > maxReportFilenameLength {
+		return "", errors.New("report filename too long")
 	}
 
 	args = strings.Join(os.Args[1:], " ")
