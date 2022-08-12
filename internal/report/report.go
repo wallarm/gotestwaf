@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -15,6 +16,8 @@ import (
 
 const (
 	colMinWidth = 21
+
+	maxReportFilenameLength = 249 // 255 (max length) - 5 (".html") - 1 (to be sure)
 
 	consoleReportTextFormat = "text"
 	consoleReportJsonFormat = "json"
@@ -29,6 +32,8 @@ type jsonReport struct {
 	Date        string `json:"date"`
 	ProjectName string `json:"project_name"`
 	URL         string `json:"url"`
+	TestCasesFP string `json:"fp"`
+	Args        string `json:"args"`
 
 	// fields for console report in JSON format
 	NegativeTests *testsInfo `json:"negative,omitempty"`
@@ -94,26 +99,31 @@ type payloadDetails struct {
 
 func ExportFullReport(
 	s *db.Statistics, reportFile string, reportTime time.Time,
-	wafName string, url string, openApiFile string, ignoreUnresolved bool, format string,
+	wafName string, url string, openApiFile string, args string, ignoreUnresolved bool, format string,
 ) (fullName string, err error) {
+	_, reportFileName := filepath.Split(reportFile)
+	if len(reportFileName) > maxReportFilenameLength {
+		return "", errors.New("report filename too long")
+	}
+
 	switch format {
 	case ReportHtmlFormat:
 		fullName = reportFile + ".html"
-		err = printFullReportToHtml(s, fullName, reportTime, wafName, url, openApiFile, ignoreUnresolved)
+		err = printFullReportToHtml(s, fullName, reportTime, wafName, url, openApiFile, args, ignoreUnresolved)
 		if err != nil {
 			return "", err
 		}
 
 	case ReportPdfFormat:
 		fullName = reportFile + ".pdf"
-		err = printFullReportToPdf(s, fullName, reportTime, wafName, url, openApiFile, ignoreUnresolved)
+		err = printFullReportToPdf(s, fullName, reportTime, wafName, url, openApiFile, args, ignoreUnresolved)
 		if err != nil {
 			return "", err
 		}
 
 	case ReportJsonFormat:
 		fullName = reportFile + ".json"
-		err = printFullReportToJson(s, fullName, reportTime, wafName, url, ignoreUnresolved)
+		err = printFullReportToJson(s, fullName, reportTime, wafName, url, args, ignoreUnresolved)
 		if err != nil {
 			return "", err
 		}
@@ -130,9 +140,9 @@ func ExportFullReport(
 
 func printFullReportToHtml(
 	s *db.Statistics, reportFile string, reportTime time.Time,
-	wafName string, url string, openApiFile string, ignoreUnresolved bool,
+	wafName string, url string, openApiFile string, args string, ignoreUnresolved bool,
 ) error {
-	tempFileName, err := exportFullReportToHtml(s, reportTime, wafName, url, openApiFile, ignoreUnresolved)
+	tempFileName, err := exportFullReportToHtml(s, reportTime, wafName, url, openApiFile, args, ignoreUnresolved)
 	if err != nil {
 		return errors.Wrap(err, "couldn't export report to HTML")
 	}
@@ -147,9 +157,9 @@ func printFullReportToHtml(
 
 func printFullReportToPdf(
 	s *db.Statistics, reportFile string, reportTime time.Time,
-	wafName string, url string, openApiFile string, ignoreUnresolved bool,
+	wafName string, url string, openApiFile string, args string, ignoreUnresolved bool,
 ) error {
-	tempFileName, err := exportFullReportToHtml(s, reportTime, wafName, url, openApiFile, ignoreUnresolved)
+	tempFileName, err := exportFullReportToHtml(s, reportTime, wafName, url, openApiFile, args, ignoreUnresolved)
 	if err != nil {
 		return errors.Wrap(err, "couldn't export report to HTML")
 	}
@@ -164,13 +174,15 @@ func printFullReportToPdf(
 
 func printFullReportToJson(
 	s *db.Statistics, reportFile string, reportTime time.Time,
-	wafName string, url string, ignoreUnresolved bool,
+	wafName string, url string, args string, ignoreUnresolved bool,
 ) error {
 	report := jsonReport{
 		Date:        reportTime.Format(time.ANSIC),
 		ProjectName: wafName,
 		URL:         url,
 		Score:       s.WafScore,
+		TestCasesFP: s.TestCasesFingerprint,
+		Args:        args,
 	}
 
 	report.Summary = &summary{}

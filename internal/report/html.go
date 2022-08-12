@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"html/template"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 	"time"
@@ -41,7 +40,9 @@ type htmlReport struct {
 	Url            string
 	WafTestingDate string
 	GtwVersion     string
+	TestCasesFP    string
 	OpenApiFile    string
+	Args           string
 
 	ApiChartScript *template.HTML
 	AppChartScript *template.HTML
@@ -155,7 +156,7 @@ func computeGrade(value float32, all int) grade {
 
 func exportFullReportToHtml(
 	s *db.Statistics, reportTime time.Time, wafName string,
-	url string, openApiFile string, ignoreUnresolved bool,
+	url string, openApiFile string, args string, ignoreUnresolved bool,
 ) (fileName string, err error) {
 	data := htmlReport{
 		IgnoreUnresolved: ignoreUnresolved,
@@ -163,7 +164,9 @@ func exportFullReportToHtml(
 		Url:              url,
 		WafTestingDate:   reportTime.Format("02 January 2006"),
 		GtwVersion:       version.Version,
+		TestCasesFP:      s.TestCasesFingerprint,
 		OpenApiFile:      openApiFile,
+		Args:             args,
 		SummaryTable:     append(s.SummaryTable, s.PositiveTests.SummaryTable...),
 		ComparisonTable: []*comparisonTableRow{
 			{
@@ -329,7 +332,7 @@ func exportFullReportToHtml(
 		return "", errors.Wrap(err, "couldn't execute template")
 	}
 
-	file, err := ioutil.TempFile("", "gotestwaf_report_*.html")
+	file, err := os.CreateTemp("", "gotestwaf_report_*.html")
 	if err != nil {
 		return "", errors.Wrap(err, "couldn't create a temporary file")
 	}

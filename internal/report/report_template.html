@@ -113,7 +113,7 @@
         }
         .grade {
             flex: 0 0 160px;
-            height: 100%;
+            min-height: 100%;
             padding: 12px 16px;
         }
         .about__grade-a .grade {
@@ -168,6 +168,11 @@
         }
         .row__content {
             font-weight: 400;
+        }
+        .row__args {
+            font-weight: 400;
+            word-break: break-all;
+            word-wrap: break-word;
         }
         .grid {
             display: grid;
@@ -362,12 +367,21 @@
                         <span class="row__name">GoTestWAF version</span>
                         :
                         <span class="row__content">{{.GtwVersion}}</span>
-                        {{$length := len $.OpenApiFile}}{{if ne $length 0}}
                         <br>
+                        <span class="row__name">Test cases fingerprint</span>
+                        :
+                        <span class="row__content">{{.TestCasesFP}}</span>
+                        <br>
+                        {{$length := len $.OpenApiFile}}{{if ne $length 0}}
                         <span class="row__name">OpenAPI file</span>
                         :
                         <span class="row__content">{{.OpenApiFile}}</span>
+                        <br>
                         {{end}}
+                        <span class="row__name">Used arguments</span>
+                        :
+                        <span class="row__args mono">{{.Args}}</span>
+                        <br>
                     </div>
                 </div>
                 <!--<div class="desc__text">

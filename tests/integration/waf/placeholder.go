@@ -3,7 +3,7 @@ package waf
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"regexp"
 
@@ -28,7 +28,7 @@ func getPayloadFromHeader(r *http.Request) (string, error) {
 }
 
 func getPayloadFromHTMLForm(r *http.Request) (string, error) {
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		return "", fmt.Errorf("couldn't get payload from form body: %v", err)
 	}
@@ -59,7 +59,7 @@ func getPayloadFromHTMLMultipartForm(r *http.Request) (string, error) {
 }
 
 func getPayloadFromJSONBody(r *http.Request) (string, error) {
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		return "", fmt.Errorf("couldn't get payload from JSON body: %v", err)
 	}
@@ -67,7 +67,7 @@ func getPayloadFromJSONBody(r *http.Request) (string, error) {
 }
 
 func getPayloadFromJSONRequest(r *http.Request) (string, error) {
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		return "", fmt.Errorf("couldn't read request body: %v", err)
 	}
@@ -81,7 +81,7 @@ func getPayloadFromJSONRequest(r *http.Request) (string, error) {
 }
 
 func getPayloadFromRequestBody(r *http.Request) (string, error) {
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		return "", fmt.Errorf("couldn't get payload from request body: %v", err)
 	}
@@ -89,7 +89,7 @@ func getPayloadFromRequestBody(r *http.Request) (string, error) {
 }
 
 func getPayloadFromSOAPBody(r *http.Request) (string, error) {
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		return "", fmt.Errorf("couldn't read request body: %v", err)
 	}
@@ -122,7 +122,7 @@ func getPayloadFromURLPath(r *http.Request) (string, error) {
 }
 
 func getPayloadFromXMLBody(r *http.Request) (string, error) {
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		return "", fmt.Errorf("couldn't get payload from XML body: %v", err)
 	}

@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -44,13 +44,13 @@ func main() {
 }
 
 func run(ctx context.Context, logger *logrus.Logger) error {
-	err := parseFlags()
+	args, err := parseFlags()
 	if err != nil {
 		return err
 	}
 
 	if quiet {
-		logger.SetOutput(ioutil.Discard)
+		logger.SetOutput(io.Discard)
 	}
 	logger.SetLevel(logLevel)
 
@@ -93,7 +93,12 @@ func run(ctx context.Context, logger *logrus.Logger) error {
 
 	logger.Info("Test cases loading finished")
 
-	db := db.NewDB(testCases)
+	db, err := db.NewDB(testCases)
+	if err != nil {
+		return errors.Wrap(err, "couldn't create test cases DB")
+	}
+
+	logger.WithField("fp", db.GetHash()).Info("Test cases fingerprint")
 
 	if !cfg.SkipWAFIdentification {
 		detector, err := scanner.NewDetector(cfg)
@@ -159,7 +164,11 @@ func run(ctx context.Context, logger *logrus.Logger) error {
 		return err
 	}
 
-	reportFile, err = report.ExportFullReport(stat, reportFile, reportTime, cfg.WAFName, cfg.URL, cfg.OpenAPIFile, cfg.IgnoreUnresolved, cfg.ReportFormat)
+	reportFile, err = report.ExportFullReport(
+		stat, reportFile,
+		reportTime, cfg.WAFName, cfg.URL, cfg.OpenAPIFile, args,
+		cfg.IgnoreUnresolved, cfg.ReportFormat,
+	)
 	if err != nil {
 		return errors.Wrap(err, "couldn't export full report")
 	}

@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -16,6 +17,8 @@ import (
 )
 
 const (
+	maxReportFilenameLength = 249 // 255 (max length) - 5 (".html") - 1 (to be sure)
+
 	defaultReportPath    = "reports"
 	defaultReportName    = "waf-evaluation-report-2006-January-02-15-04-05"
 	defaultTestCasesPath = "testcases"
@@ -44,17 +47,19 @@ var (
 	logFormat  string
 )
 
+var usage = func() {
+	flag.CommandLine.SetOutput(os.Stdout)
+	usage := cliDescription
+	fmt.Fprintf(os.Stdout, usage, os.Args[0])
+	flag.PrintDefaults()
+}
+
 // parseFlags parses all GoTestWAF CLI flags
-func parseFlags() error {
+func parseFlags() (args string, err error) {
 	reportPath := filepath.Join(".", defaultReportPath)
 	testCasesPath := filepath.Join(".", defaultTestCasesPath)
 
-	flag.Usage = func() {
-		flag.CommandLine.SetOutput(os.Stdout)
-		usage := cliDescription
-		fmt.Fprintf(os.Stdout, usage, os.Args[0])
-		flag.PrintDefaults()
-	}
+	flag.Usage = usage
 
 	flag.StringVar(&configPath, "configPath", defaultConfigPath, "Path to the config file")
 	flag.BoolVar(&quiet, "quiet", false, "If true, disable verbose logging")
@@ -86,7 +91,7 @@ func parseFlags() error {
 	flag.String("testCase", "", "If set then only this test case will be run")
 	flag.String("testSet", "", "If set then only this test set's cases will be run")
 	flag.String("reportPath", reportPath, "A directory to store reports")
-	flag.String("reportName", defaultReportName, "Report file name. Supports `time' package template format")
+	reportName := flag.String("reportName", defaultReportName, "Report file name. Supports `time' package template format")
 	flag.String("reportFormat", "pdf", "Export report to one of the following formats: none, pdf, html, json")
 	flag.String("testCasesPath", testCasesPath, "Path to a folder with test cases")
 	flag.String("wafName", wafName, "Name of the WAF product")
@@ -98,6 +103,11 @@ func parseFlags() error {
 	showVersion := flag.Bool("version", false, "Show GoTestWAF version and exit")
 	flag.Parse()
 
+	if len(os.Args) == 1 {
+		usage()
+		os.Exit(0)
+	}
+
 	// show version and exit
 	if *showVersion == true {
 		fmt.Fprintf(os.Stderr, "GoTestWAF %s\n", version.Version)
@@ -106,24 +116,24 @@ func parseFlags() error {
 
 	// url flag must be set
 	if *urlParam == "" {
-		return errors.New("--url flag is not set")
+		return "", errors.New("--url flag is not set")
 	}
 
 	logrusLogLvl, err := logrus.ParseLevel(*logLvl)
 	if err != nil {
-		return err
+		return "", err
 	}
 	logLevel = logrusLogLvl
 
 	if logFormat != textLogFormat && logFormat != jsonLogFormat {
-		return fmt.Errorf("unknown logging format: %s", logFormat)
+		return "", fmt.Errorf("unknown logging format: %s", logFormat)
 	}
 
 	validURL, err := url.Parse(*urlParam)
 	if err != nil ||
 		(validURL.Scheme != "http" && validURL.Scheme != "https") ||
 		validURL.Host == "" {
-		return errors.New("URL is not valid")
+		return "", errors.New("URL is not valid")
 	}
 
 	*urlParam = validURL.String()
@@ -140,7 +150,14 @@ func parseFlags() error {
 		*wsURL = validURL.String()
 	}
 
-	return nil
+	_, reportFileName := filepath.Split(*reportName)
+	if len(reportFileName) > maxReportFilenameLength {
+		return "", errors.New("report filename too long")
+	}
+
+	args = strings.Join(os.Args[1:], " ")
+
+	return args, nil
 }
 
 // loadConfig loads the specified config file and merges it with the parameters passed via CLI

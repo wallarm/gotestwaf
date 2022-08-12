@@ -1,7 +1,6 @@
 package db
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,17 +11,14 @@ import (
 	"github.com/wallarm/gotestwaf/internal/config"
 )
 
-const testCaseExt = ".yml"
-
-func LoadTestCases(cfg *config.Config) ([]*Case, error) {
+func LoadTestCases(cfg *config.Config) (testCases []*Case, err error) {
 	var files []string
-	var testCases []*Case
 
 	if cfg.TestCasesPath == "" {
 		return nil, errors.New("empty test cases path")
 	}
 
-	if err := filepath.Walk(cfg.TestCasesPath, func(path string, info os.FileInfo, err error) error {
+	if err = filepath.Walk(cfg.TestCasesPath, func(path string, info os.FileInfo, err error) error {
 		files = append(files, path)
 		return nil
 	}); err != nil {
@@ -30,7 +26,8 @@ func LoadTestCases(cfg *config.Config) ([]*Case, error) {
 	}
 
 	for _, testCaseFile := range files {
-		if filepath.Ext(testCaseFile) != testCaseExt {
+		fileExt := filepath.Ext(testCaseFile)
+		if fileExt != ".yml" && fileExt != ".yaml" {
 			continue
 		}
 
@@ -39,7 +36,7 @@ func LoadTestCases(cfg *config.Config) ([]*Case, error) {
 		parts = parts[len(parts)-3:]
 
 		testSetName := parts[1]
-		testCaseName := strings.TrimSuffix(parts[2], testCaseExt)
+		testCaseName := strings.TrimSuffix(parts[2], fileExt)
 
 		if cfg.TestSet != "" && testSetName != cfg.TestSet {
 			continue
@@ -49,7 +46,7 @@ func LoadTestCases(cfg *config.Config) ([]*Case, error) {
 			continue
 		}
 
-		yamlFile, err := ioutil.ReadFile(testCaseFile)
+		yamlFile, err := os.ReadFile(testCaseFile)
 		if err != nil {
 			return nil, err
 		}
