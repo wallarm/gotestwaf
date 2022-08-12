@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"regexp"
@@ -574,7 +573,7 @@ func (s *Scanner) updateDB(
 			RequestValidationInput: inputReuqestValidation,
 			Status:                 respStatusCode,
 			Header:                 respHeaders,
-			Body:                   ioutil.NopCloser(strings.NewReader(respBody)),
+			Body:                   io.NopCloser(strings.NewReader(respBody)),
 			Options: &openapi3filter.Options{
 				IncludeResponseStatus: true,
 			},

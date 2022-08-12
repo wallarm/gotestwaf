@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -50,7 +50,7 @@ func run(ctx context.Context, logger *logrus.Logger) error {
 	}
 
 	if quiet {
-		logger.SetOutput(ioutil.Discard)
+		logger.SetOutput(io.Discard)
 	}
 	logger.SetLevel(logLevel)
 

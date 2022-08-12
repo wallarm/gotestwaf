@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"html/template"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 	"time"
@@ -333,7 +332,7 @@ func exportFullReportToHtml(
 		return "", errors.Wrap(err, "couldn't execute template")
 	}
 
-	file, err := ioutil.TempFile("", "gotestwaf_report_*.html")
+	file, err := os.CreateTemp("", "gotestwaf_report_*.html")
 	if err != nil {
 		return "", errors.Wrap(err, "couldn't create a temporary file")
 	}

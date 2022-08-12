@@ -3,7 +3,7 @@ package scanner
 import (
 	"context"
 	"crypto/tls"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
@@ -128,7 +128,7 @@ func (c *HTTPClient) SendPayload(
 	}
 	defer resp.Body.Close()
 
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", 0, errors.Wrap(err, "reading response body")
 	}
@@ -173,7 +173,7 @@ func (c *HTTPClient) SendRequest(req *http.Request, testHeaderValue string) (
 	}
 	defer resp.Body.Close()
 
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, "", 0, errors.Wrap(err, "reading response body")
 	}
