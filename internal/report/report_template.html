@@ -113,7 +113,7 @@
         }
         .grade {
             flex: 0 0 160px;
-            height: 100%;
+            min-height: 100%;
             padding: 12px 16px;
         }
         .about__grade-a .grade {
@@ -168,6 +168,11 @@
         }
         .row__content {
             font-weight: 400;
+        }
+        .row__args {
+            font-weight: 400;
+            word-break: break-all;
+            word-wrap: break-word;
         }
         .grid {
             display: grid;
@@ -375,7 +380,7 @@
                         {{end}}
                         <span class="row__name">Used arguments</span>
                         :
-                        <span class="row__content">{{.Args}}</span>
+                        <span class="row__args mono">{{.Args}}</span>
                         <br>
                     </div>
                 </div>
