@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -15,6 +16,8 @@ import (
 
 const (
 	colMinWidth = 21
+
+	maxReportFilenameLength = 249 // 255 (max length) - 5 (".html") - 1 (to be sure)
 
 	consoleReportTextFormat = "text"
 	consoleReportJsonFormat = "json"
@@ -98,6 +101,11 @@ func ExportFullReport(
 	s *db.Statistics, reportFile string, reportTime time.Time,
 	wafName string, url string, openApiFile string, args string, ignoreUnresolved bool, format string,
 ) (fullName string, err error) {
+	_, reportFileName := filepath.Split(reportFile)
+	if len(reportFileName) > maxReportFilenameLength {
+		return "", errors.New("report filename too long")
+	}
+
 	switch format {
 	case ReportHtmlFormat:
 		fullName = reportFile + ".html"
