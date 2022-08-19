@@ -226,7 +226,7 @@ func testPropertyCorrectStatValues(db *DB, ignoreUnresolved, nonBlockedAsPassed 
 		totalResolvedRequests := row.Blocked + row.Bypassed
 		if totalResolvedRequests != 0 {
 			overallCompletedTestCases += 1
-			overallPassedRequestsPercentage += calculatePercentage(row.Blocked, totalResolvedRequests)
+			overallPassedRequestsPercentage += CalculatePercentage(row.Blocked, totalResolvedRequests)
 		}
 	}
 

@@ -116,16 +116,16 @@ func (sp ScannedPaths) Sort() {
 	sort.Sort(sp)
 }
 
-func round(n float64) float64 {
+func Round(n float64) float64 {
 	return math.Round(n*100) / 100
 }
 
-func calculatePercentage(first, second int) float64 {
+func CalculatePercentage(first, second int) float64 {
 	if second == 0 {
 		return 0.0
 	}
 	result := float64(first) / float64(second) * 100
-	return round(result)
+	return Round(result)
 }
 
 func isPositiveTest(setName string) bool {
@@ -215,7 +215,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 				s.PositiveTests.UnresolvedRequestsNumber += unresolvedRequests
 				s.PositiveTests.FailedRequestsNumber += failedRequests
 
-				passedRequestsPercentage := calculatePercentage(passedRequests, totalResolvedRequests)
+				passedRequestsPercentage := CalculatePercentage(passedRequests, totalResolvedRequests)
 				row.Percentage = passedRequestsPercentage
 
 				s.PositiveTests.SummaryTable = append(s.PositiveTests.SummaryTable, row)
@@ -225,7 +225,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 				s.UnresolvedRequestsNumber += unresolvedRequests
 				s.FailedRequestsNumber += failedRequests
 
-				blockedRequestsPercentage := calculatePercentage(blockedRequests, totalResolvedRequests)
+				blockedRequestsPercentage := CalculatePercentage(blockedRequests, totalResolvedRequests)
 				row.Percentage = blockedRequestsPercentage
 
 				s.SummaryTable = append(s.SummaryTable, row)
@@ -239,7 +239,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 	}
 
 	if overallCompletedTestCases != 0 {
-		s.WafScore = round(overallPassedRequestsPercentage / float64(overallCompletedTestCases))
+		s.WafScore = Round(overallPassedRequestsPercentage / float64(overallCompletedTestCases))
 	}
 
 	// Number of all negative requests
@@ -262,17 +262,19 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 	s.PositiveTests.ResolvedRequestsNumber = s.PositiveTests.BlockedRequestsNumber +
 		s.PositiveTests.BypassedRequestsNumber
 
-	s.UnresolvedRequestsPercentage = calculatePercentage(s.UnresolvedRequestsNumber, s.AllRequestsNumber)
-	s.ResolvedBlockedRequestsPercentage = calculatePercentage(s.BlockedRequestsNumber, s.ResolvedRequestsNumber)
-	s.ResolvedBypassedRequestsPercentage = calculatePercentage(s.BypassedRequestsNumber, s.ResolvedRequestsNumber)
-	s.FailedRequestsPercentage = calculatePercentage(s.FailedRequestsNumber, s.AllRequestsNumber)
+	s.UnresolvedRequestsPercentage = CalculatePercentage(s.UnresolvedRequestsNumber, s.AllRequestsNumber)
+	s.ResolvedBlockedRequestsPercentage = CalculatePercentage(s.BlockedRequestsNumber, s.ResolvedRequestsNumber)
+	s.ResolvedBypassedRequestsPercentage = CalculatePercentage(s.BypassedRequestsNumber, s.ResolvedRequestsNumber)
+	s.FailedRequestsPercentage = CalculatePercentage(s.FailedRequestsNumber, s.AllRequestsNumber)
 
-	s.PositiveTests.UnresolvedRequestsPercentage = calculatePercentage(s.PositiveTests.UnresolvedRequestsNumber, s.PositiveTests.AllRequestsNumber)
-	s.PositiveTests.ResolvedFalseRequestsPercentage = calculatePercentage(s.PositiveTests.BlockedRequestsNumber, s.PositiveTests.ResolvedRequestsNumber)
-	s.PositiveTests.ResolvedTrueRequestsPercentage = calculatePercentage(s.PositiveTests.BypassedRequestsNumber, s.PositiveTests.ResolvedRequestsNumber)
-	s.PositiveTests.FailedRequestsPercentage = calculatePercentage(s.PositiveTests.FailedRequestsNumber, s.PositiveTests.AllRequestsNumber)
+	s.PositiveTests.UnresolvedRequestsPercentage = CalculatePercentage(s.PositiveTests.UnresolvedRequestsNumber, s.PositiveTests.AllRequestsNumber)
+	s.PositiveTests.ResolvedFalseRequestsPercentage = CalculatePercentage(s.PositiveTests.BlockedRequestsNumber, s.PositiveTests.ResolvedRequestsNumber)
+	s.PositiveTests.ResolvedTrueRequestsPercentage = CalculatePercentage(s.PositiveTests.BypassedRequestsNumber, s.PositiveTests.ResolvedRequestsNumber)
+	s.PositiveTests.FailedRequestsPercentage = CalculatePercentage(s.PositiveTests.FailedRequestsNumber, s.PositiveTests.AllRequestsNumber)
 
 	for _, blockedTest := range db.blockedTests {
+		sort.Strings(blockedTest.AdditionalInfo)
+
 		testDetails := &TestDetails{
 			Payload:            blockedTest.Payload,
 			TestCase:           blockedTest.Case,
@@ -280,6 +282,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 			Encoder:            blockedTest.Encoder,
 			Placeholder:        blockedTest.Placeholder,
 			ResponseStatusCode: blockedTest.ResponseStatusCode,
+			AdditionalInfo:     blockedTest.AdditionalInfo,
 			Type:               blockedTest.Type,
 		}
 
@@ -291,6 +294,8 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 	}
 
 	for _, passedTest := range db.passedTests {
+		sort.Strings(passedTest.AdditionalInfo)
+
 		testDetails := &TestDetails{
 			Payload:            passedTest.Payload,
 			TestCase:           passedTest.Case,
@@ -310,6 +315,8 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 	}
 
 	for _, unresolvedTest := range db.naTests {
+		sort.Strings(unresolvedTest.AdditionalInfo)
+
 		testDetails := &TestDetails{
 			Payload:            unresolvedTest.Payload,
 			TestCase:           unresolvedTest.Case,

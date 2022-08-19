@@ -33,6 +33,25 @@ type comparisonTableRow struct {
 	OverallScore grade
 }
 
+type testDetails struct {
+	TestCase     string
+	Encoders     map[string]any
+	Placeholders map[string]any
+}
+
+type testSetSummary struct {
+	TestCases []*db.SummaryTableRow
+
+	Percentage float64
+	Sent       int
+	Blocked    int
+	Bypassed   int
+	Unresolved int
+	Failed     int
+
+	resolvedTestCasesNumber int
+}
+
 type htmlReport struct {
 	IgnoreUnresolved bool
 
@@ -61,15 +80,25 @@ type htmlReport struct {
 
 	ComparisonTable []*comparisonTableRow
 
-	SummaryTable []*db.SummaryTableRow
+	TotalSent                int
+	BlockedRequestsNumber    int
+	BypassedRequestsNumber   int
+	UnresolvedRequestsNumber int
+	FailedRequestsNumber     int
+
 	ScannedPaths db.ScannedPaths
 
 	NegativeTests struct {
-		Blocked    []*db.TestDetails
-		Bypassed   []*db.TestDetails
-		Unresolved []*db.TestDetails
+		SummaryTable map[string]*testSetSummary
+
+		// map[paths]map[payload]map[statusCode]*testDetails
+		Bypassed map[string]map[string]map[int]*testDetails
+		// map[payload]map[statusCode]*testDetails
+		Unresolved map[string]map[int]*testDetails
 		Failed     []*db.FailedDetails
 
+		Percentage               float64
+		TotalSent                int
 		BlockedRequestsNumber    int
 		BypassedRequestsNumber   int
 		UnresolvedRequestsNumber int
@@ -77,11 +106,18 @@ type htmlReport struct {
 	}
 
 	PositiveTests struct {
-		Blocked    []*db.TestDetails
-		Bypassed   []*db.TestDetails
-		Unresolved []*db.TestDetails
+		SummaryTable map[string]*testSetSummary
+
+		// map[payload]map[statusCode]*testDetails
+		Blocked map[string]map[int]*testDetails
+		// map[payload]map[statusCode]*testDetails
+		Bypassed map[string]map[int]*testDetails
+		// map[payload]map[statusCode]*testDetails
+		Unresolved map[string]map[int]*testDetails
 		Failed     []*db.FailedDetails
 
+		Percentage               float64
+		TotalSent                int
 		BlockedRequestsNumber    int
 		BypassedRequestsNumber   int
 		UnresolvedRequestsNumber int
@@ -154,6 +190,16 @@ func computeGrade(value float32, all int) grade {
 	return g
 }
 
+func MapKeysToString(m map[string]interface{}, sep string) string {
+	var keysList []string
+
+	for k := range m {
+		keysList = append(keysList, k)
+	}
+
+	return strings.Join(keysList, sep)
+}
+
 func exportFullReportToHtml(
 	s *db.Statistics, reportTime time.Time, wafName string,
 	url string, openApiFile string, args string, ignoreUnresolved bool,
@@ -167,25 +213,24 @@ func exportFullReportToHtml(
 		TestCasesFP:      s.TestCasesFingerprint,
 		OpenApiFile:      openApiFile,
 		Args:             args,
-		SummaryTable:     append(s.SummaryTable, s.PositiveTests.SummaryTable...),
 		ComparisonTable: []*comparisonTableRow{
 			{
 				Name:         "ModSecurity PARANOIA=1",
 				ApiSec:       computeGrade(42.9, 1),
-				AppSec:       computeGrade(30.3, 1),
-				OverallScore: computeGrade(36.6, 1),
+				AppSec:       computeGrade(30.5, 1),
+				OverallScore: computeGrade(36.7, 1),
 			},
 			{
 				Name:         "ModSecurity PARANOIA=2",
 				ApiSec:       computeGrade(78.6, 1),
-				AppSec:       computeGrade(34.7, 1),
-				OverallScore: computeGrade(56.6, 1),
+				AppSec:       computeGrade(34.8, 1),
+				OverallScore: computeGrade(56.7, 1),
 			},
 			{
 				Name:         "ModSecurity PARANOIA=3",
 				ApiSec:       computeGrade(92.9, 1),
-				AppSec:       computeGrade(39.4, 1),
-				OverallScore: computeGrade(66.2, 1),
+				AppSec:       computeGrade(38.3, 1),
+				OverallScore: computeGrade(65.6, 1),
 			},
 			{
 				Name:         "ModSecurity PARANOIA=4",
@@ -295,25 +340,191 @@ func exportFullReportToHtml(
 		data.AppChartScript = &v
 	}
 
+	data.NegativeTests.SummaryTable = make(map[string]*testSetSummary)
+	for _, row := range s.SummaryTable {
+		if _, ok := data.NegativeTests.SummaryTable[row.TestSet]; !ok {
+			data.NegativeTests.SummaryTable[row.TestSet] = &testSetSummary{}
+		}
+
+		testSetSum := data.NegativeTests.SummaryTable[row.TestSet]
+
+		testSetSum.TestCases = append(testSetSum.TestCases, row)
+
+		testSetSum.Sent += row.Sent
+		testSetSum.Blocked += row.Blocked
+		testSetSum.Bypassed += row.Bypassed
+		testSetSum.Unresolved += row.Unresolved
+		testSetSum.Failed += row.Failed
+
+		if row.Blocked+row.Bypassed != 0 {
+			testSetSum.resolvedTestCasesNumber += 1
+			testSetSum.Percentage += row.Percentage
+		}
+	}
+	for _, testSetSum := range data.NegativeTests.SummaryTable {
+		testSetSum.Percentage = db.Round(testSetSum.Percentage / float64(testSetSum.resolvedTestCasesNumber))
+	}
+
+	data.PositiveTests.SummaryTable = make(map[string]*testSetSummary)
+	for _, row := range s.PositiveTests.SummaryTable {
+		if _, ok := data.PositiveTests.SummaryTable[row.TestSet]; !ok {
+			data.PositiveTests.SummaryTable[row.TestSet] = &testSetSummary{}
+		}
+
+		testSetSum := data.PositiveTests.SummaryTable[row.TestSet]
+
+		testSetSum.TestCases = append(testSetSum.TestCases, row)
+
+		testSetSum.Sent += row.Sent
+		testSetSum.Blocked += row.Blocked
+		testSetSum.Bypassed += row.Bypassed
+		testSetSum.Unresolved += row.Unresolved
+		testSetSum.Failed += row.Failed
+
+		if row.Blocked+row.Bypassed != 0 {
+			testSetSum.resolvedTestCasesNumber += 1
+			testSetSum.Percentage += row.Percentage
+		}
+	}
+	for _, testSetSum := range data.PositiveTests.SummaryTable {
+		testSetSum.Percentage = db.Round(testSetSum.Percentage / float64(testSetSum.resolvedTestCasesNumber))
+	}
+
+	// map[paths]map[payload]map[statusCode]*testDetails
+	negBypassed := make(map[string]map[string]map[int]*testDetails)
+	for _, d := range s.Bypasses {
+		paths := strings.Join(d.AdditionalInfo, "\n")
+
+		if _, ok := negBypassed[paths]; !ok {
+			// map[payload]map[statusCode]*testDetails
+			negBypassed[paths] = make(map[string]map[int]*testDetails)
+		}
+
+		if _, ok := negBypassed[paths][d.Payload]; !ok {
+			// map[statusCode]*testDetails
+			negBypassed[paths][d.Payload] = make(map[int]*testDetails)
+		}
+
+		if _, ok := negBypassed[paths][d.Payload][d.ResponseStatusCode]; !ok {
+			negBypassed[paths][d.Payload][d.ResponseStatusCode] = &testDetails{
+				Encoders:     make(map[string]any),
+				Placeholders: make(map[string]any),
+			}
+		}
+
+		negBypassed[paths][d.Payload][d.ResponseStatusCode].TestCase = d.TestCase
+		negBypassed[paths][d.Payload][d.ResponseStatusCode].Encoders[d.Encoder] = nil
+		negBypassed[paths][d.Payload][d.ResponseStatusCode].Placeholders[d.Placeholder] = nil
+	}
+
+	// map[payload]map[statusCode]*testDetails
+	negUnresolved := make(map[string]map[int]*testDetails)
+	for _, d := range s.Unresolved {
+		if _, ok := negUnresolved[d.Payload]; !ok {
+			// map[statusCode]*testDetails
+			negUnresolved[d.Payload] = make(map[int]*testDetails)
+		}
+
+		if _, ok := negUnresolved[d.Payload][d.ResponseStatusCode]; !ok {
+			negUnresolved[d.Payload][d.ResponseStatusCode] = &testDetails{
+				Encoders:     make(map[string]any),
+				Placeholders: make(map[string]any),
+			}
+		}
+
+		negUnresolved[d.Payload][d.ResponseStatusCode].TestCase = d.TestCase
+		negUnresolved[d.Payload][d.ResponseStatusCode].Encoders[d.Encoder] = nil
+		negUnresolved[d.Payload][d.ResponseStatusCode].Placeholders[d.Placeholder] = nil
+	}
+
+	// map[payload]map[statusCode]*testDetails
+	posBlocked := make(map[string]map[int]*testDetails)
+	for _, d := range s.PositiveTests.FalsePositive {
+		if _, ok := posBlocked[d.Payload]; !ok {
+			// map[statusCode]*testDetails
+			posBlocked[d.Payload] = make(map[int]*testDetails)
+		}
+
+		if _, ok := posBlocked[d.Payload][d.ResponseStatusCode]; !ok {
+			posBlocked[d.Payload][d.ResponseStatusCode] = &testDetails{
+				Encoders:     make(map[string]any),
+				Placeholders: make(map[string]any),
+			}
+		}
+
+		posBlocked[d.Payload][d.ResponseStatusCode].TestCase = d.TestCase
+		posBlocked[d.Payload][d.ResponseStatusCode].Encoders[d.Encoder] = nil
+		posBlocked[d.Payload][d.ResponseStatusCode].Placeholders[d.Placeholder] = nil
+	}
+
+	// map[payload]map[statusCode]*testDetails
+	posBypassed := make(map[string]map[int]*testDetails)
+	for _, d := range s.PositiveTests.TruePositive {
+		if _, ok := posBypassed[d.Payload]; !ok {
+			// map[statusCode]*testDetails
+			posBypassed[d.Payload] = make(map[int]*testDetails)
+		}
+
+		if _, ok := posBypassed[d.Payload][d.ResponseStatusCode]; !ok {
+			posBypassed[d.Payload][d.ResponseStatusCode] = &testDetails{
+				Encoders:     make(map[string]any),
+				Placeholders: make(map[string]any),
+			}
+		}
+
+		posBypassed[d.Payload][d.ResponseStatusCode].TestCase = d.TestCase
+		posBypassed[d.Payload][d.ResponseStatusCode].Encoders[d.Encoder] = nil
+		posBypassed[d.Payload][d.ResponseStatusCode].Placeholders[d.Placeholder] = nil
+	}
+
+	// map[payload]map[statusCode]*testDetails
+	posUnresolved := make(map[string]map[int]*testDetails)
+	for _, d := range s.PositiveTests.Unresolved {
+		if _, ok := posUnresolved[d.Payload]; !ok {
+			// map[statusCode]*testDetails
+			posUnresolved[d.Payload] = make(map[int]*testDetails)
+		}
+
+		if _, ok := posUnresolved[d.Payload][d.ResponseStatusCode]; !ok {
+			posUnresolved[d.Payload][d.ResponseStatusCode] = &testDetails{
+				Encoders:     make(map[string]any),
+				Placeholders: make(map[string]any),
+			}
+		}
+
+		posUnresolved[d.Payload][d.ResponseStatusCode].TestCase = d.TestCase
+		posUnresolved[d.Payload][d.ResponseStatusCode].Encoders[d.Encoder] = nil
+		posUnresolved[d.Payload][d.ResponseStatusCode].Placeholders[d.Placeholder] = nil
+	}
+
 	data.ScannedPaths = s.Paths
 
-	data.NegativeTests.Blocked = s.Blocked
-	data.NegativeTests.Bypassed = s.Bypasses
-	data.NegativeTests.Unresolved = s.Unresolved
+	data.NegativeTests.Bypassed = negBypassed
+	data.NegativeTests.Unresolved = negUnresolved
 	data.NegativeTests.Failed = s.Failed
+	data.NegativeTests.Percentage = s.WafScore
+	data.NegativeTests.TotalSent = s.AllRequestsNumber
 	data.NegativeTests.BlockedRequestsNumber = s.BlockedRequestsNumber
 	data.NegativeTests.BypassedRequestsNumber = s.BypassedRequestsNumber
 	data.NegativeTests.UnresolvedRequestsNumber = s.UnresolvedRequestsNumber
 	data.NegativeTests.FailedRequestsNumber = s.FailedRequestsNumber
 
-	data.PositiveTests.Blocked = s.PositiveTests.FalsePositive
-	data.PositiveTests.Bypassed = s.PositiveTests.TruePositive
-	data.PositiveTests.Unresolved = s.PositiveTests.Unresolved
+	data.PositiveTests.Blocked = posBlocked
+	data.PositiveTests.Bypassed = posBypassed
+	data.PositiveTests.Unresolved = posUnresolved
 	data.PositiveTests.Failed = s.PositiveTests.Failed
+	data.PositiveTests.Percentage = s.PositiveTests.ResolvedTrueRequestsPercentage
+	data.PositiveTests.TotalSent = s.PositiveTests.AllRequestsNumber
 	data.PositiveTests.BlockedRequestsNumber = s.PositiveTests.BlockedRequestsNumber
 	data.PositiveTests.BypassedRequestsNumber = s.PositiveTests.BypassedRequestsNumber
 	data.PositiveTests.UnresolvedRequestsNumber = s.PositiveTests.UnresolvedRequestsNumber
 	data.PositiveTests.FailedRequestsNumber = s.PositiveTests.FailedRequestsNumber
+
+	data.TotalSent = data.NegativeTests.TotalSent + data.PositiveTests.TotalSent
+	data.BlockedRequestsNumber = data.NegativeTests.BlockedRequestsNumber + data.PositiveTests.BlockedRequestsNumber
+	data.BypassedRequestsNumber = data.NegativeTests.BypassedRequestsNumber + data.PositiveTests.BypassedRequestsNumber
+	data.UnresolvedRequestsNumber = data.NegativeTests.UnresolvedRequestsNumber + data.PositiveTests.UnresolvedRequestsNumber
+	data.FailedRequestsNumber = data.NegativeTests.FailedRequestsNumber + data.PositiveTests.FailedRequestsNumber
 
 	templ := template.Must(
 		template.New("report").
@@ -322,8 +533,11 @@ func exportFullReportToHtml(
 					return template.HTML(s)
 				},
 			}).
-			Funcs(template.FuncMap{"StringsJoin": strings.Join}).
-			Parse(htmlTemplate))
+			Funcs(template.FuncMap{
+				"StringsJoin":     strings.Join,
+				"StringsSplit":    strings.Split,
+				"MapKeysToString": MapKeysToString,
+			}).Parse(htmlTemplate))
 
 	var buffer bytes.Buffer
 

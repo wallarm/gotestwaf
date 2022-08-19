@@ -1,6 +1,7 @@
 package report
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -98,7 +99,7 @@ type payloadDetails struct {
 }
 
 func ExportFullReport(
-	s *db.Statistics, reportFile string, reportTime time.Time,
+	ctx context.Context, s *db.Statistics, reportFile string, reportTime time.Time,
 	wafName string, url string, openApiFile string, args string, ignoreUnresolved bool, format string,
 ) (fullName string, err error) {
 	_, reportFileName := filepath.Split(reportFile)
@@ -116,7 +117,7 @@ func ExportFullReport(
 
 	case ReportPdfFormat:
 		fullName = reportFile + ".pdf"
-		err = printFullReportToPdf(s, fullName, reportTime, wafName, url, openApiFile, args, ignoreUnresolved)
+		err = printFullReportToPdf(ctx, s, fullName, reportTime, wafName, url, openApiFile, args, ignoreUnresolved)
 		if err != nil {
 			return "", err
 		}
@@ -156,7 +157,7 @@ func printFullReportToHtml(
 }
 
 func printFullReportToPdf(
-	s *db.Statistics, reportFile string, reportTime time.Time,
+	ctx context.Context, s *db.Statistics, reportFile string, reportTime time.Time,
 	wafName string, url string, openApiFile string, args string, ignoreUnresolved bool,
 ) error {
 	tempFileName, err := exportFullReportToHtml(s, reportTime, wafName, url, openApiFile, args, ignoreUnresolved)
@@ -164,7 +165,7 @@ func printFullReportToPdf(
 		return errors.Wrap(err, "couldn't export report to HTML")
 	}
 
-	err = renderToPDF(tempFileName, reportFile)
+	err = renderToPDF(ctx, tempFileName, reportFile)
 	if err != nil {
 		return errors.Wrap(err, "couldn't render HTML report to PDF")
 	}

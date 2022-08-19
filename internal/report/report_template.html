@@ -61,7 +61,7 @@
 
         /*styles*/
         .container {
-            width: 720px;
+            width: 800px;
             padding: 40px;
             min-height: 100%;
             margin: 0 auto;
@@ -182,7 +182,7 @@
         }
         .grid__head, .grid__row, .grid__footer {
             display: grid;
-            grid-template-columns: 220px repeat(3, 136px) ;
+            grid-template-columns: 228px repeat(3, 160px);
             grid-template-rows: 1fr;
             gap: 4px;
         }
@@ -279,6 +279,11 @@
             font-size: 14px;
             font-weight: 700;
         }
+        .detail__sub-sub-title {
+            margin: 12px 0;
+            font-size: 12px;
+            font-weight: 700;
+        }
         .summary__grid{
             display: grid;
             grid-template-columns: 1fr;
@@ -286,9 +291,15 @@
         }
         .summary__grid--head, .summary__grid--row {
             display: grid;
-            grid-template-columns: repeat(8, minmax(45px, 90px));
+            grid-template-columns: 90px 120px repeat(6, minmax(45px, 100px));
             gap: 4px;
-
+        }
+        .summary__grid--row-sum {
+            display: grid;
+            grid-template-columns: 214px repeat(6, minmax(45px, 100px));
+            gap: 4px;
+            font-weight: 700;
+            margin-bottom: 10px;
         }
         .summary__grid--head-item, .positive__grid--head-item {
             font-weight: 700;
@@ -317,6 +328,14 @@
             gap: 4px;
         }
         .summary__grid--head-item, .summary__grid--row-item, .positive__grid--head-item, .positive__grid--row-item {
+            display: flex;
+            align-items: center;
+            padding: 4px;
+            word-wrap: break-word;
+            border-radius: var(--br-small);
+            background: var(--grey);
+        }
+        .positive__grid--row-item-payload {
             display: flex;
             align-items: center;
             padding: 4px;
@@ -429,13 +448,13 @@
         </div>
         {{if or ($.ApiChartScript) ($.AppChartScript)}}
         <div class="chart">
-            {{if $.AppChartScript}}
-            <div id="app_chart" style="width:1fr; height:450px; break-inside: avoid;"></div>
-            {{$.AppChartScript}}
-            {{end}}
             {{if $.ApiChartScript}}
             <div id="api_chart" style="width:1fr; height:450px; break-inside: avoid;"></div>
             {{$.ApiChartScript}}
+            {{end}}
+            {{if $.AppChartScript}}
+            <div id="app_chart" style="width:1fr; height:450px; break-inside: avoid;"></div>
+            {{$.AppChartScript}}
             {{end}}
         </div>
         {{end}}
@@ -487,6 +506,15 @@
         <div class="detail">
             <h2 class="detail__title">Details</h2>
             <h3 class="detail__sub-title">Summary</h3>
+            <p>Total requests sent: {{.TotalSent}}</p>
+            <p>Number of blocked requests: {{.BlockedRequestsNumber}}</p>
+            <p>Number of passed requests: {{.BypassedRequestsNumber}}</p>
+            {{if not .IgnoreUnresolved}}
+            <p>Number of unresolved requests: {{.UnresolvedRequestsNumber}}</p>
+            {{end}}
+            <p>Number of failed requests: {{.FailedRequestsNumber}}</p>
+            {{$length := len .NegativeTests.SummaryTable}}{{if ne $length 0}}
+            <h4 class="detail__sub-sub-title">True-negative tests</h4>
             <div class="summary__grid">
                 <div class="summary__grid--head">
                     <div class="summary__grid--head-item">Test set</div>
@@ -500,7 +528,8 @@
                     <div class="summary__grid--head-item">Sent</div>
                     <div class="summary__grid--head-item">Failed</div>
                 </div>
-                {{range $row := .SummaryTable}}
+                {{range $testSetName, $testSetSum := .NegativeTests.SummaryTable}}
+                    {{range $row := $testSetSum.TestCases}}
                 <div class="summary__grid--row">
                     <div class="summary__grid--row-item">{{$row.TestSet}}</div>
                     <div class="summary__grid--row-item">{{$row.TestCase}}</div>
@@ -513,8 +542,95 @@
                     <div class="summary__grid--row-item">{{$row.Sent}}</div>
                     <div class="summary__grid--row-item">{{$row.Failed}}</div>
                 </div>
+                    {{end}}
+                    {{$length := len $.NegativeTests.SummaryTable}}{{if gt $length 1}}
+                <div class="summary__grid--row-sum">
+                    <div class="summary__grid--row-item">Summary for {{$testSetName}}</div>
+                    <div class="summary__grid--row-item">{{printf "%.2f%%" $testSetSum.Percentage}}</div>
+                    <div class="summary__grid--row-item">{{$testSetSum.Blocked}}</div>
+                    <div class="summary__grid--row-item">{{$testSetSum.Bypassed}}</div>
+                    {{if not $.IgnoreUnresolved}}
+                    <div class="summary__grid--row-item">{{$testSetSum.Unresolved}}</div>
+                    {{end}}
+                    <div class="summary__grid--row-item">{{$testSetSum.Sent}}</div>
+                    <div class="summary__grid--row-item">{{$testSetSum.Failed}}</div>
+                </div>
+                    {{end}}
+                {{end}}
+                {{$length := len .NegativeTests.SummaryTable}}{{if gt $length 1}}
+                <div class="summary__grid--row-sum">
+                    <div class="summary__grid--row-item">Summary for true-negative tests</div>
+                    <div class="summary__grid--row-item">{{printf "%.2f%%" .NegativeTests.Percentage}}</div>
+                    <div class="summary__grid--row-item">{{.NegativeTests.BlockedRequestsNumber}}</div>
+                    <div class="summary__grid--row-item">{{.NegativeTests.BypassedRequestsNumber}}</div>
+                    {{if not .IgnoreUnresolved}}
+                    <div class="summary__grid--row-item">{{.NegativeTests.UnresolvedRequestsNumber}}</div>
+                    {{end}}
+                    <div class="summary__grid--row-item">{{.NegativeTests.TotalSent}}</div>
+                    <div class="summary__grid--row-item">{{.NegativeTests.FailedRequestsNumber}}</div>
+                </div>
                 {{end}}
             </div>
+            {{end}}
+            {{$length := len .PositiveTests.SummaryTable}}{{if ne $length 0}}
+            <h4 class="detail__sub-sub-title">False-positive tests</h4>
+            <div class="summary__grid">
+                <div class="summary__grid--head">
+                    <div class="summary__grid--head-item">Test set</div>
+                    <div class="summary__grid--head-item">Test case</div>
+                    <div class="summary__grid--head-item">Percentage</div>
+                    <div class="summary__grid--head-item">Blocked</div>
+                    <div class="summary__grid--head-item">Bypassed</div>
+                    {{if not .IgnoreUnresolved}}
+                    <div class="summary__grid--head-item">Unresolved</div>
+                    {{end}}
+                    <div class="summary__grid--head-item">Sent</div>
+                    <div class="summary__grid--head-item">Failed</div>
+                </div>
+                {{range $testSetName, $testSetSum := .PositiveTests.SummaryTable}}
+                    {{range $row := $testSetSum.TestCases}}
+                <div class="summary__grid--row">
+                    <div class="summary__grid--row-item">{{$row.TestSet}}</div>
+                    <div class="summary__grid--row-item">{{$row.TestCase}}</div>
+                    <div class="summary__grid--row-item">{{printf "%.2f%%" $row.Percentage}}</div>
+                    <div class="summary__grid--row-item">{{$row.Blocked}}</div>
+                    <div class="summary__grid--row-item">{{$row.Bypassed}}</div>
+                    {{if not $.IgnoreUnresolved}}
+                    <div class="summary__grid--row-item">{{$row.Unresolved}}</div>
+                    {{end}}
+                    <div class="summary__grid--row-item">{{$row.Sent}}</div>
+                    <div class="summary__grid--row-item">{{$row.Failed}}</div>
+                </div>
+                    {{end}}
+                    {{$length := len $.PositiveTests.SummaryTable}}{{if gt $length 1}}
+                <div class="summary__grid--row-sum">
+                    <div class="summary__grid--row-item">Summary for {{$testSetName}}</div>
+                    <div class="summary__grid--row-item">{{printf "%.2f%%" $testSetSum.Percentage}}</div>
+                    <div class="summary__grid--row-item">{{$testSetSum.Blocked}}</div>
+                    <div class="summary__grid--row-item">{{$testSetSum.Bypassed}}</div>
+                    {{if not $.IgnoreUnresolved}}
+                    <div class="summary__grid--row-item">{{$testSetSum.Unresolved}}</div>
+                    {{end}}
+                    <div class="summary__grid--row-item">{{$testSetSum.Sent}}</div>
+                    <div class="summary__grid--row-item">{{$testSetSum.Failed}}</div>
+                </div>
+                    {{end}}
+                {{end}}
+                {{$length := len .PositiveTests.SummaryTable}}{{if gt $length 1}}
+                <div class="summary__grid--row-sum">
+                    <div class="summary__grid--row-item">Summary for false-positive tests</div>
+                    <div class="summary__grid--row-item">{{printf "%.2f%%" .PositiveTests.Percentage}}</div>
+                    <div class="summary__grid--row-item">{{.PositiveTests.BlockedRequestsNumber}}</div>
+                    <div class="summary__grid--row-item">{{.PositiveTests.BypassedRequestsNumber}}</div>
+                    {{if not .IgnoreUnresolved}}
+                    <div class="summary__grid--row-item">{{.PositiveTests.UnresolvedRequestsNumber}}</div>
+                    {{end}}
+                    <div class="summary__grid--row-item">{{.PositiveTests.TotalSent}}</div>
+                    <div class="summary__grid--row-item">{{.PositiveTests.FailedRequestsNumber}}</div>
+                </div>
+                {{end}}
+            </div>
+            {{end}}
             {{if $.ScannedPaths}}
             <h3 class="detail__sub-title">Scanned paths</h3>
             <p>{{$length := len $.ScannedPaths}}{{$length}} endpoints were scanned in total.</p>
@@ -534,14 +650,18 @@
                     <div class="positive__grid--head-item">Placeholder</div>
                     <div class="positive__grid--head-item">Status</div>
                 </div>
-                {{range $row := .PositiveTests.Blocked}}
+                {{range $payload, $codeMap := .PositiveTests.Blocked}}
+                    {{range $code, $testDetails := $codeMap}}
+                        {{$encoders := MapKeysToString $testDetails.Encoders ", "}}
+                        {{$placeholders := MapKeysToString $testDetails.Placeholders ", "}}
                 <div class="positive__grid--row">
-                    <div class="positive__grid--row-item mono">{{$row.Payload}}</div>
-                    <div class="positive__grid--row-item">{{$row.TestCase}}</div>
-                    <div class="positive__grid--row-item">{{$row.Encoder}}</div>
-                    <div class="positive__grid--row-item">{{$row.Placeholder}}</div>
-                    <div class="positive__grid--row-item">{{$row.ResponseStatusCode}}</div>
+                    <div class="positive__grid--row-item-payload mono">{{$payload}}</div>
+                    <div class="positive__grid--row-item">{{$testDetails.TestCase}}</div>
+                    <div class="positive__grid--row-item">{{$encoders}}</div>
+                    <div class="positive__grid--row-item">{{$placeholders}}</div>
+                    <div class="positive__grid--row-item">{{$code}}</div>
                 </div>
+                    {{end}}
                 {{end}}
             </div>
             {{end}}
@@ -555,19 +675,18 @@
                     <div class="positive__grid--head-item">Placeholder</div>
                     <div class="positive__grid--head-item">Status</div>
                 </div>
-                {{range $row := .PositiveTests.Bypassed}}
+                {{range $payload, $codeMap := .PositiveTests.Bypassed}}
+                    {{range $code, $testDetails := $codeMap}}
+                        {{$encoders := MapKeysToString $testDetails.Encoders ", "}}
+                        {{$placeholders := MapKeysToString $testDetails.Placeholders ", "}}
                 <div class="positive__grid--row">
-                    <div class="positive__grid--row-item mono">{{$row.Payload}}</div>
-                    <div class="positive__grid--row-item">{{$row.TestCase}}</div>
-                    <div class="positive__grid--row-item">{{$row.Encoder}}</div>
-                    <div class="positive__grid--row-item">{{$row.Placeholder}}</div>
-                    <div class="positive__grid--row-item">{{$row.ResponseStatusCode}}</div>
+                    <div class="positive__grid--row-item-payload mono">{{$payload}}</div>
+                    <div class="positive__grid--row-item">{{$testDetails.TestCase}}</div>
+                    <div class="positive__grid--row-item">{{$encoders}}</div>
+                    <div class="positive__grid--row-item">{{$placeholders}}</div>
+                    <div class="positive__grid--row-item">{{$code}}</div>
                 </div>
-                {{$length := len $row.AdditionalInfo}}{{if ne $length 0}}
-                <div class="positive__grid--additional--information--row">
-                    <div class="positive__grid--row-item">{{$info := StringsJoin $row.AdditionalInfo "<br>"}}{{script $info}}</div>
-                </div>
-                {{end}}
+                    {{end}}
                 {{end}}
             </div>
             {{end}}
@@ -581,19 +700,18 @@
                     <div class="positive__grid--head-item">Placeholder</div>
                     <div class="positive__grid--head-item">Status</div>
                 </div>
-                {{range $row := .PositiveTests.Unresolved}}
+                {{range $payload, $codeMap := .PositiveTests.Unresolved}}
+                    {{range $code, $testDetails := $codeMap}}
+                        {{$encoders := MapKeysToString $testDetails.Encoders ", "}}
+                        {{$placeholders := MapKeysToString $testDetails.Placeholders ", "}}
                 <div class="positive__grid--row">
-                    <div class="positive__grid--row-item mono">{{$row.Payload}}</div>
-                    <div class="positive__grid--row-item">{{$row.TestCase}}</div>
-                    <div class="positive__grid--row-item">{{$row.Encoder}}</div>
-                    <div class="positive__grid--row-item">{{$row.Placeholder}}</div>
-                    <div class="positive__grid--row-item">{{$row.ResponseStatusCode}}</div>
+                    <div class="positive__grid--row-item-payload mono">{{$payload}}</div>
+                    <div class="positive__grid--row-item">{{$testDetails.TestCase}}</div>
+                    <div class="positive__grid--row-item">{{$encoders}}</div>
+                    <div class="positive__grid--row-item">{{$placeholders}}</div>
+                    <div class="positive__grid--row-item">{{$code}}</div>
                 </div>
-                {{$length := len $row.AdditionalInfo}}{{if ne $length 0}}
-                <div class="positive__grid--additional--information--row">
-                    <div class="positive__grid--row-item">{{$info := StringsJoin $row.AdditionalInfo "<br>"}}{{script $info}}</div>
-                </div>
-                {{end}}
+                    {{end}}
                 {{end}}
             </div>
             {{end}}
@@ -608,7 +726,7 @@
                 </div>
                 {{range $row := .PositiveTests.Failed}}
                 <div class="positive__grid--failed--row">
-                    <div class="positive__grid--row-item mono">{{$row.Payload}}</div>
+                    <div class="positive__grid--row-item-payload mono">{{$row.Payload}}</div>
                     <div class="positive__grid--row-item">{{$row.TestCase}}</div>
                     <div class="positive__grid--row-item">{{$row.Encoder}}</div>
                     <div class="positive__grid--row-item">{{$row.Placeholder}}</div>
@@ -632,19 +750,27 @@
                     <div class="positive__grid--head-item">Placeholder</div>
                     <div class="positive__grid--head-item">Status</div>
                 </div>
-                {{range $row := .NegativeTests.Bypassed}}
-                <div class="positive__grid--row">
-                    <div class="positive__grid--row-item mono">{{$row.Payload}}</div>
-                    <div class="positive__grid--row-item">{{$row.TestCase}}</div>
-                    <div class="positive__grid--row-item">{{$row.Encoder}}</div>
-                    <div class="positive__grid--row-item">{{$row.Placeholder}}</div>
-                    <div class="positive__grid--row-item">{{$row.ResponseStatusCode}}</div>
-                </div>
-                {{$length := len $row.AdditionalInfo}}{{if ne $length 0}}
+                {{range $paths, $pathMap := .NegativeTests.Bypassed}}
+                    {{$length := len $paths}}
+                    {{if ne $length 0}}
+                        {{$splitPaths := StringsSplit $paths}}
                 <div class="positive__grid--additional--information--row">
-                    <div class="positive__grid--row-item">{{$info := StringsJoin $row.AdditionalInfo "<br>"}}{{script $info}}</div>
+                    <div class="positive__grid--row-item">{{$path := StringsJoin $splitPaths "<br>"}}{{script $path}}</div>
                 </div>
-                {{end}}
+                    {{end}}
+                    {{range $payload, $codeMap := $pathMap}}
+                        {{range $code, $testDetails := $codeMap}}
+                            {{$encoders := MapKeysToString $testDetails.Encoders ", "}}
+                            {{$placeholders := MapKeysToString $testDetails.Placeholders ", "}}
+                <div class="positive__grid--row">
+                    <div class="positive__grid--row-item-payload mono">{{$payload}}</div>
+                    <div class="positive__grid--row-item">{{$testDetails.TestCase}}</div>
+                    <div class="positive__grid--row-item">{{$encoders}}</div>
+                    <div class="positive__grid--row-item">{{$placeholders}}</div>
+                    <div class="positive__grid--row-item">{{$code}}</div>
+                </div>
+                        {{end}}
+                    {{end}}
                 {{end}}
             </div>
             {{end}}
@@ -659,19 +785,18 @@
                     <div class="positive__grid--head-item">Placeholder</div>
                     <div class="positive__grid--head-item">Status</div>
                 </div>
-                {{range $row := .NegativeTests.Unresolved}}
+                {{range $payload, $codeMap := .NegativeTests.Unresolved}}
+                    {{range $code, $testDetails := $codeMap}}
+                        {{$encoders := MapKeysToString $testDetails.Encoders ", "}}
+                        {{$placeholders := MapKeysToString $testDetails.Placeholders ", "}}
                 <div class="positive__grid--row">
-                    <div class="positive__grid--row-item mono">{{$row.Payload}}</div>
-                    <div class="positive__grid--row-item">{{$row.TestCase}}</div>
-                    <div class="positive__grid--row-item">{{$row.Encoder}}</div>
-                    <div class="positive__grid--row-item">{{$row.Placeholder}}</div>
-                    <div class="positive__grid--row-item">{{$row.ResponseStatusCode}}</div>
+                    <div class="positive__grid--row-item-payload mono">{{$payload}}</div>
+                    <div class="positive__grid--row-item">{{$testDetails.TestCase}}</div>
+                    <div class="positive__grid--row-item">{{$encoders}}</div>
+                    <div class="positive__grid--row-item">{{$placeholders}}</div>
+                    <div class="positive__grid--row-item">{{$code}}</div>
                 </div>
-                {{$length := len $row.AdditionalInfo}}{{if ne $length 0}}
-                <div class="positive__grid--additional--information--row">
-                    <div class="positive__grid--row-item">{{$info := StringsJoin $row.AdditionalInfo "<br>"}}{{script $info}}</div>
-                </div>
-                {{end}}
+                    {{end}}
                 {{end}}
             </div>
             {{end}}
@@ -687,7 +812,7 @@
                 </div>
                 {{range $row := .NegativeTests.Failed}}
                 <div class="positive__grid--failed--row">
-                    <div class="positive__grid--row-item mono">{{$row.Payload}}</div>
+                    <div class="positive__grid--row-item-payload mono">{{$row.Payload}}</div>
                     <div class="positive__grid--row-item">{{$row.TestCase}}</div>
                     <div class="positive__grid--row-item">{{$row.Encoder}}</div>
                     <div class="positive__grid--row-item">{{$row.Placeholder}}</div>
