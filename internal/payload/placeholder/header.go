@@ -11,6 +11,8 @@ type Header struct {
 
 var DefaultHeader = Header{name: "Header"}
 
+var _ Placeholder = (*Header)(nil)
+
 func (p Header) GetName() string {
 	return p.name
 }

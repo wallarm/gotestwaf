@@ -15,6 +15,8 @@ type JSONRequest struct {
 
 var DefaultJSONRequest = JSONRequest{name: "JSONRequest"}
 
+var _ Placeholder = (*JSONRequest)(nil)
+
 func (p JSONRequest) GetName() string {
 	return p.name
 }

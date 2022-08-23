@@ -22,7 +22,7 @@ import (
 
 	"github.com/wallarm/gotestwaf/internal/config"
 	"github.com/wallarm/gotestwaf/internal/payload/encoder"
-	grpcSrv "github.com/wallarm/gotestwaf/internal/payload/encoder/grpc"
+	grpcPlaceholder "github.com/wallarm/gotestwaf/internal/payload/placeholder/grpc"
 )
 
 const (
@@ -205,9 +205,9 @@ func (g *GRPCConn) Send(ctx context.Context, encoderName, payload string) (body 
 		g.conn = conn
 	}
 
-	client := grpcSrv.NewServiceFooBarClient(g.conn)
+	client := grpcPlaceholder.NewServiceFooBarClient(g.conn)
 
-	resp, err := client.Foo(ctx, &grpcSrv.Request{Value: encodedPayload})
+	resp, err := client.Foo(ctx, &grpcPlaceholder.Request{Value: encodedPayload})
 	if err != nil {
 		st := status.Convert(err)
 

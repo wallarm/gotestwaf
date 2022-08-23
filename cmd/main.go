@@ -98,7 +98,7 @@ func run(ctx context.Context, logger *logrus.Logger) error {
 		return errors.Wrap(err, "couldn't create test cases DB")
 	}
 
-	logger.WithField("fp", db.GetHash()).Info("Test cases fingerprint")
+	logger.WithField("fp", db.Hash).Info("Test cases fingerprint")
 
 	if !cfg.SkipWAFIdentification {
 		detector, err := scanner.NewDetector(cfg)

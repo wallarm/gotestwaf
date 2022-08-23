@@ -1,6 +1,5 @@
 package encoder
 
-/* Better to use byte types, they're faster, but here I'll use strings */
 type Encoder interface {
 	GetName() string
 	Encode(data string) (string, error)
@@ -16,7 +15,6 @@ func init() {
 	Encoders[DefaultURLEncoder.GetName()] = DefaultURLEncoder
 	Encoders[DefaultPlainEncoder.GetName()] = DefaultPlainEncoder
 	Encoders[DefaultXMLEntityEncoder.GetName()] = DefaultXMLEntityEncoder
-	Encoders[DefaultGRPCEncoder.GetName()] = DefaultGRPCEncoder
 }
 
 func Apply(encoderName, data string) (string, error) {

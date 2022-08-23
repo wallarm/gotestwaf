@@ -7,6 +7,8 @@ import (
 )
 
 type Statistics struct {
+	IsGrpcAvailable bool
+
 	Paths ScannedPaths
 
 	TestCasesFingerprint string
@@ -137,7 +139,8 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 	defer db.Unlock()
 
 	s := &Statistics{
-		TestCasesFingerprint: db.hash,
+		IsGrpcAvailable:      db.IsGrpcAvailable,
+		TestCasesFingerprint: db.Hash,
 	}
 
 	unresolvedRequestsNumber := make(map[string]map[string]int)

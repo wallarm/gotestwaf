@@ -10,6 +10,8 @@ type URLEncoder struct {
 
 var DefaultURLEncoder = URLEncoder{name: "URL"}
 
+var _ Encoder = (*URLEncoder)(nil)
+
 func (enc URLEncoder) GetName() string {
 	return enc.name
 }

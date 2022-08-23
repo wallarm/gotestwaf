@@ -19,6 +19,8 @@ const (
 var DefaultBase64Encoder = Base64Encoder{name: "Base64", mode: Base64EncoderNormalMode}
 var DefaultBase64FlatEncoder = Base64Encoder{name: "Base64Flat", mode: Base64EncoderFlatMode}
 
+var _ Encoder = (*Base64Encoder)(nil)
+
 func (enc Base64Encoder) GetName() string {
 	return enc.name
 }

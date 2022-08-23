@@ -13,7 +13,7 @@ import (
 	"github.com/gorilla/websocket"
 	"google.golang.org/grpc"
 
-	pb "github.com/wallarm/gotestwaf/internal/payload/encoder/grpc"
+	pb "github.com/wallarm/gotestwaf/internal/payload/placeholder/grpc"
 	"github.com/wallarm/gotestwaf/tests/integration/config"
 )
 

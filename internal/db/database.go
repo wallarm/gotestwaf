@@ -22,8 +22,10 @@ type DB struct {
 
 	scannedPaths map[string]map[string]interface{}
 
-	numberOfTests uint
-	hash          string
+	NumberOfTests uint
+	Hash          string
+
+	IsGrpcAvailable bool
 }
 
 func NewDB(tests []*Case) (*DB, error) {
@@ -45,7 +47,7 @@ func NewDB(tests []*Case) (*DB, error) {
 			db.counters[test.Set][test.Name] = map[string]int{}
 		}
 
-		db.numberOfTests += uint(len(test.Payloads) * len(test.Encoders) * len(test.Placeholders))
+		db.NumberOfTests += uint(len(test.Payloads) * len(test.Encoders) * len(test.Placeholders))
 
 		err := enc.Encode(*test)
 		if err != nil {
@@ -56,7 +58,7 @@ func NewDB(tests []*Case) (*DB, error) {
 		encodedCase.Reset()
 	}
 
-	db.hash = hex.EncodeToString(sha256hash.Sum(nil)[:16])
+	db.Hash = hex.EncodeToString(sha256hash.Sum(nil)[:16])
 
 	return db, nil
 }
@@ -109,12 +111,4 @@ func (db *DB) AddToScannedPaths(method string, path string) {
 
 func (db *DB) GetTestCases() []*Case {
 	return db.tests
-}
-
-func (db *DB) GetNumberOfAllTestCases() uint {
-	return db.numberOfTests
-}
-
-func (db *DB) GetHash() string {
-	return db.hash
 }

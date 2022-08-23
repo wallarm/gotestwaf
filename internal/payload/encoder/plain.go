@@ -6,6 +6,8 @@ type PlainEncoder struct {
 
 var DefaultPlainEncoder = PlainEncoder{name: "Plain"}
 
+var _ Encoder = (*PlainEncoder)(nil)
+
 func (enc PlainEncoder) GetName() string {
 	return enc.name
 }

@@ -15,6 +15,8 @@ type SOAPBody struct {
 
 var DefaultSOAPBody = SOAPBody{name: "SOAPBody"}
 
+var _ Placeholder = (*SOAPBody)(nil)
+
 func (p SOAPBody) GetName() string {
 	return p.name
 }

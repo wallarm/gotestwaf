@@ -24,6 +24,7 @@ import (
 	"github.com/wallarm/gotestwaf/internal/db"
 	"github.com/wallarm/gotestwaf/internal/openapi"
 	"github.com/wallarm/gotestwaf/internal/payload/encoder"
+	"github.com/wallarm/gotestwaf/internal/payload/placeholder"
 )
 
 const (
@@ -112,6 +113,8 @@ func (s *Scanner) CheckGRPCAvailability(ctx context.Context) {
 			"connection": "not available",
 		}).Info("gRPC pre-check")
 	}
+
+	s.db.IsGrpcAvailable = available
 }
 
 // WAFBlockCheck checks if WAF exists and blocks malicious requests.
@@ -285,7 +288,7 @@ func (s *Scanner) Run(ctx context.Context) error {
 	}
 
 	bar := progressbar.NewOptions64(
-		int64(s.db.GetNumberOfAllTestCases()),
+		int64(s.db.NumberOfTests),
 		progressbarOptions...,
 	)
 
@@ -403,7 +406,7 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 		err         error
 	)
 
-	if w.encoder == encoder.DefaultGRPCEncoder.GetName() {
+	if w.placeholder == placeholder.DefaultGRPC.GetName() {
 		if !s.grpcConn.IsAvailable() {
 			return nil
 		}
