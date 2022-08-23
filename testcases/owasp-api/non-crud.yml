@@ -6,5 +6,5 @@ encoder:
   - Plain
 placeholder:
   - NonCRUDRequestBody
-type: "REST nonCRUD"
+type: "REST non-CRUD"
 ...
