@@ -11,6 +11,8 @@ type URLPath struct {
 
 var DefaultURLPath = URLPath{name: "URLPath"}
 
+var _ Placeholder = (*URLPath)(nil)
+
 func (p URLPath) GetName() string {
 	return p.name
 }

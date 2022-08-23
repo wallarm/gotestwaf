@@ -121,7 +121,7 @@ func GetConfig() *config.Config {
 }
 
 func GenerateTestCases() (testCases []*db.Case, testCasesMap *TestCasesMap) {
-	grpcEncoder := encoder.DefaultGRPCEncoder.GetName()
+	grpcEncoder := placeholder.DefaultGRPC.GetName()
 	requestBodyPlaceholder := placeholder.DefaultRequestBody.GetName()
 
 	var encoders []string

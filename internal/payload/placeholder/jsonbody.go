@@ -12,6 +12,8 @@ type JSONBody struct {
 
 var DefaultJSONBody = JSONBody{name: "JSONBody"}
 
+var _ Placeholder = (*JSONBody)(nil)
+
 func (p JSONBody) GetName() string {
 	return p.name
 }

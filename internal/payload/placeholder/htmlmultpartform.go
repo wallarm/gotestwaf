@@ -13,6 +13,8 @@ type HTMLMultipartForm struct {
 
 var DefaultHTMLMultipartForm = HTMLMultipartForm{name: "HTMLMultipartForm"}
 
+var _ Placeholder = (*HTMLMultipartForm)(nil)
+
 func (p HTMLMultipartForm) GetName() string {
 	return p.name
 }

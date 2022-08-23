@@ -15,6 +15,7 @@ var Placeholders map[string]Placeholder
 
 func init() {
 	Placeholders = make(map[string]Placeholder)
+	Placeholders[DefaultGRPC.GetName()] = DefaultGRPC
 	Placeholders[DefaultHeader.GetName()] = DefaultHeader
 	Placeholders[DefaultHTMLForm.GetName()] = DefaultHTMLForm
 	Placeholders[DefaultHTMLMultipartForm.GetName()] = DefaultHTMLMultipartForm

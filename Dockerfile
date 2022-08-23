@@ -1,4 +1,4 @@
-FROM golang:1.17-alpine AS build
+FROM golang:1.19-alpine AS build
 ARG GOTESTWAF_VERSION="unknown"
 WORKDIR /app/
 COPY . .

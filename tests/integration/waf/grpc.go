@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	pb "github.com/wallarm/gotestwaf/internal/payload/encoder/grpc"
+	encoder "github.com/wallarm/gotestwaf/internal/payload/placeholder/grpc"
 	"github.com/wallarm/gotestwaf/tests/integration/config"
 )
 
@@ -19,10 +19,10 @@ type grpcServer struct {
 	errChan  chan<- error
 	casesMap *config.TestCasesMap
 
-	pb.UnimplementedServiceFooBarServer
+	encoder.UnimplementedServiceFooBarServer
 }
 
-func (s *grpcServer) Foo(ctx context.Context, in *pb.Request) (*pb.Response, error) {
+func (s *grpcServer) Foo(ctx context.Context, in *encoder.Request) (*encoder.Response, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		s.errChan <- errors.New("metadata not found")
@@ -90,7 +90,7 @@ func (s *grpcServer) Foo(ctx context.Context, in *pb.Request) (*pb.Response, err
 	}
 
 	if matched, _ := regexp.MatchString("bypassed", value); matched {
-		return &pb.Response{Value: "OK"}, nil
+		return &encoder.Response{Value: "OK"}, nil
 	} else if matched, _ = regexp.MatchString("blocked", value); matched {
 		return nil, status.New(codes.PermissionDenied, "").Err()
 	}

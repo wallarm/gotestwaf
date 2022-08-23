@@ -226,7 +226,7 @@ func testPropertyCorrectStatValues(db *DB, ignoreUnresolved, nonBlockedAsPassed 
 		totalResolvedRequests := row.Blocked + row.Bypassed
 		if totalResolvedRequests != 0 {
 			overallCompletedTestCases += 1
-			overallPassedRequestsPercentage += calculatePercentage(row.Blocked, totalResolvedRequests)
+			overallPassedRequestsPercentage += CalculatePercentage(row.Blocked, totalResolvedRequests)
 		}
 	}
 
@@ -295,7 +295,7 @@ func NewDBAllPassedGenerator() gopter.Gen {
 			db := &DB{
 				counters:      make(map[string]map[string]map[string]int),
 				passedTests:   passedTests,
-				numberOfTests: 0,
+				NumberOfTests: 0,
 			}
 
 			for _, t := range passedTests {
@@ -306,7 +306,7 @@ func NewDBAllPassedGenerator() gopter.Gen {
 					db.counters[t.Set][t.Case] = make(map[string]int)
 				}
 				db.counters[t.Set][t.Case]["passed"] += 1
-				db.numberOfTests += 1
+				db.NumberOfTests += 1
 			}
 			return db
 		},
@@ -323,7 +323,7 @@ func NewDBAllBlockedGenerator() gopter.Gen {
 			db := &DB{
 				counters:      make(map[string]map[string]map[string]int),
 				blockedTests:  blockedTests,
-				numberOfTests: 0,
+				NumberOfTests: 0,
 			}
 
 			for _, t := range blockedTests {
@@ -334,7 +334,7 @@ func NewDBAllBlockedGenerator() gopter.Gen {
 					db.counters[t.Set][t.Case] = make(map[string]int)
 				}
 				db.counters[t.Set][t.Case]["blocked"] += 1
-				db.numberOfTests += 1
+				db.NumberOfTests += 1
 			}
 			return db
 		},
@@ -351,7 +351,7 @@ func NewDBAllUnresolvedGenerator(ignoreUnresolved, nonBlockedAsPassed bool) gopt
 			db := &DB{
 				counters:      make(map[string]map[string]map[string]int),
 				naTests:       unresolvedTests,
-				numberOfTests: 0,
+				NumberOfTests: 0,
 			}
 
 			for _, t := range unresolvedTests {
@@ -366,7 +366,7 @@ func NewDBAllUnresolvedGenerator(ignoreUnresolved, nonBlockedAsPassed bool) gopt
 				} else {
 					db.counters[t.Set][t.Case]["blocked"]++
 				}
-				db.numberOfTests += 1
+				db.NumberOfTests += 1
 			}
 			return db
 		},
@@ -383,7 +383,7 @@ func NewDBAllFailedGenerator() gopter.Gen {
 			db := &DB{
 				counters:      make(map[string]map[string]map[string]int),
 				failedTests:   failedTests,
-				numberOfTests: 0,
+				NumberOfTests: 0,
 			}
 
 			for _, t := range failedTests {
@@ -394,7 +394,7 @@ func NewDBAllFailedGenerator() gopter.Gen {
 					db.counters[t.Set][t.Case] = make(map[string]int)
 				}
 				db.counters[t.Set][t.Case]["failed"] += 1
-				db.numberOfTests += 1
+				db.NumberOfTests += 1
 			}
 			return db
 		},
@@ -414,7 +414,7 @@ func NewDBGenerator(ignoreUnresolved, nonBlockedAsPassed bool) gopter.Gen {
 				blockedTests:  blockedTests,
 				failedTests:   failedTests,
 				naTests:       unresolvedTests,
-				numberOfTests: 0,
+				NumberOfTests: 0,
 			}
 
 			for _, t := range passedTests {
@@ -425,7 +425,7 @@ func NewDBGenerator(ignoreUnresolved, nonBlockedAsPassed bool) gopter.Gen {
 					db.counters[t.Set][t.Case] = make(map[string]int)
 				}
 				db.counters[t.Set][t.Case]["passed"] += 1
-				db.numberOfTests += 1
+				db.NumberOfTests += 1
 			}
 			for _, t := range blockedTests {
 				if db.counters[t.Set] == nil {
@@ -435,7 +435,7 @@ func NewDBGenerator(ignoreUnresolved, nonBlockedAsPassed bool) gopter.Gen {
 					db.counters[t.Set][t.Case] = make(map[string]int)
 				}
 				db.counters[t.Set][t.Case]["blocked"] += 1
-				db.numberOfTests += 1
+				db.NumberOfTests += 1
 			}
 			for _, t := range failedTests {
 				if db.counters[t.Set] == nil {
@@ -445,7 +445,7 @@ func NewDBGenerator(ignoreUnresolved, nonBlockedAsPassed bool) gopter.Gen {
 					db.counters[t.Set][t.Case] = make(map[string]int)
 				}
 				db.counters[t.Set][t.Case]["failed"] += 1
-				db.numberOfTests += 1
+				db.NumberOfTests += 1
 			}
 			for _, t := range unresolvedTests {
 				if db.counters[t.Set] == nil {
@@ -459,7 +459,7 @@ func NewDBGenerator(ignoreUnresolved, nonBlockedAsPassed bool) gopter.Gen {
 				} else {
 					db.counters[t.Set][t.Case]["blocked"]++
 				}
-				db.numberOfTests += 1
+				db.NumberOfTests += 1
 			}
 			return db
 		},

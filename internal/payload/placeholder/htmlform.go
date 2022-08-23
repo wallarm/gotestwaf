@@ -12,6 +12,8 @@ type HTMLForm struct {
 
 var DefaultHTMLForm = HTMLForm{name: "HTMLForm"}
 
+var _ Placeholder = (*HTMLForm)(nil)
+
 func (p HTMLForm) GetName() string {
 	return p.name
 }

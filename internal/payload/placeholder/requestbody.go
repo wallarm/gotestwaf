@@ -12,6 +12,8 @@ type RequestBody struct {
 
 var DefaultRequestBody = RequestBody{name: "RequestBody"}
 
+var _ Placeholder = (*RequestBody)(nil)
+
 func (p RequestBody) GetName() string {
 	return p.name
 }

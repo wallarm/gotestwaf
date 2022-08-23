@@ -1,6 +1,7 @@
 package report
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -46,13 +47,13 @@ func findChrome() (string, error) {
 	return chromePath, nil
 }
 
-func renderToPDF(fileToRender string, pathToResultPDF string) error {
+func renderToPDF(ctx context.Context, fileToRender string, pathToResultPDF string) error {
 	chromePath, err := findChrome()
 	if err != nil {
 		return errors.Wrap(err, "couldn't find Chrome/Chromium to render HTML file to PDF")
 	}
 
-	cmd := exec.Command(chromePath,
+	cmd := exec.CommandContext(ctx, chromePath,
 		"--headless",
 		"--disable-gpu",
 		"--run-all-compositor-stages-before-draw",

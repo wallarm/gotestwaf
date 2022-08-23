@@ -11,6 +11,8 @@ type XMLEntityEncoder struct {
 
 var DefaultXMLEntityEncoder = XMLEntityEncoder{name: "XMLEntity"}
 
+var _ Encoder = (*XMLEntityEncoder)(nil)
+
 func (enc XMLEntityEncoder) GetName() string {
 	return enc.name
 }

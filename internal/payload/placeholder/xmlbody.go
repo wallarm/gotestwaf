@@ -12,6 +12,8 @@ type XMLBody struct {
 
 var DefaultXMLBody = XMLBody{name: "XMLBody"}
 
+var _ Placeholder = (*XMLBody)(nil)
+
 func (p XMLBody) GetName() string {
 	return p.name
 }

@@ -13,18 +13,23 @@ import (
 	"github.com/wallarm/gotestwaf/internal/db"
 )
 
-var emptyIndicator = opts.Indicator{Name: "", Max: 100}
+const (
+	titleColor = "#000000"
+	labelColor = "#333333"
+)
+
+var (
+	emptyIndicator = opts.Indicator{Name: "-",
+		Max:   100,
+		Color: labelColor,
+	}
+
+	emptyValue = float32(100)
+)
 
 type pair struct {
 	blocked  int
 	bypassed int
-}
-
-func calculatePercentage(first, second int) float32 {
-	if second == 0 {
-		return 0.0
-	}
-	return float32(first) / float32(second) * 100
 }
 
 func updateCounters(t *db.TestDetails, counters map[string]map[string]pair, isBlocked bool) {
@@ -62,20 +67,62 @@ func getIndicatorsAndItems(counters map[string]map[string]pair, category string)
 	var values []float32
 
 	for testType, val := range counters[category] {
-		percentage := calculatePercentage(val.blocked, val.blocked+val.bypassed)
+		percentage := float32(db.CalculatePercentage(val.blocked, val.blocked+val.bypassed))
 		indicators = append(indicators, &opts.Indicator{
-			Name: fmt.Sprintf("%s (%.1f%%)", testType, percentage),
-			Max:  100,
+			Name:  fmt.Sprintf("%s (%.1f%%)", testType, percentage),
+			Max:   100,
+			Color: labelColor,
 		})
 		values = append(values, percentage)
 	}
 
-	if len(indicators) == 1 {
-		indicators = append(indicators, &emptyIndicator, &emptyIndicator)
-		values = append(values, 100, 100)
-	} else if len(indicators) == 2 {
-		indicators = append([]*opts.Indicator{&emptyIndicator}, indicators...)
-		values = append([]float32{0}, values...)
+	switch len(indicators) {
+	case 0:
+		return nil, nil
+
+	case 1:
+		indicators = []*opts.Indicator{
+			indicators[0], &emptyIndicator, &emptyIndicator,
+			&emptyIndicator, &emptyIndicator, &emptyIndicator,
+		}
+		values = []float32{
+			values[0], emptyValue, emptyValue,
+			emptyValue, emptyValue, emptyValue,
+		}
+
+	case 2:
+		indicators = []*opts.Indicator{
+			&emptyIndicator, indicators[0], &emptyIndicator,
+			&emptyIndicator, indicators[1], &emptyIndicator,
+		}
+		values = []float32{
+			emptyValue, values[0], emptyValue,
+			emptyValue, values[1], emptyValue,
+		}
+
+	case 3:
+		indicators = []*opts.Indicator{
+			indicators[0], &emptyIndicator, indicators[1],
+			&emptyIndicator, indicators[2], &emptyIndicator,
+		}
+		values = []float32{
+			values[0], emptyValue, values[1],
+			emptyValue, values[2], emptyValue,
+		}
+
+	case 4:
+		indicators = []*opts.Indicator{
+			&emptyIndicator, indicators[0],
+			&emptyIndicator, indicators[1],
+			&emptyIndicator, indicators[2],
+			&emptyIndicator, indicators[3],
+		}
+		values = []float32{
+			emptyValue, values[0],
+			emptyValue, values[1],
+			emptyValue, values[2],
+			emptyValue, values[3],
+		}
 	}
 
 	if indicators != nil {
@@ -98,8 +145,24 @@ func generateCharts(s *db.Statistics) (apiChart *string, appChart *string, err e
 		updateCounters(t, counters, false)
 	}
 
+	// Add gRPC counter if gRPC is unavailable to display it on graphic
+	if !s.IsGrpcAvailable {
+		// gRPC is part of the API Security tests
+		counters["api"]["grpc"] = pair{}
+	}
+
 	apiIndicators, apiItems := getIndicatorsAndItems(counters, "api")
 	appIndicators, appItems := getIndicatorsAndItems(counters, "app")
+
+	// Fix label for gRPC if it is unavailable
+	if !s.IsGrpcAvailable {
+		for i := 0; i < len(apiIndicators); i++ {
+			if strings.HasPrefix(apiIndicators[i].Name, "grpc") {
+				apiIndicators[i].Name = "grpc (unavailable)"
+				apiItems[0].Value.([]float32)[i] = float32(0)
+			}
+		}
+	}
 
 	var buffer bytes.Buffer
 	re := regexp.MustCompile(`<script type="text/javascript">(\n|.)*</script>`)
@@ -111,6 +174,9 @@ func generateCharts(s *db.Statistics) (apiChart *string, appChart *string, err e
 			charts.WithTitleOpts(opts.Title{
 				Title: "API Security",
 				Right: "center",
+				TitleStyle: &opts.TextStyle{
+					Color: titleColor,
+				},
 			}),
 			charts.WithInitializationOpts(opts.Initialization{
 				ChartID: "api_chart",
@@ -146,6 +212,9 @@ func generateCharts(s *db.Statistics) (apiChart *string, appChart *string, err e
 			charts.WithTitleOpts(opts.Title{
 				Title: "Application Security",
 				Right: "center",
+				TitleStyle: &opts.TextStyle{
+					Color: titleColor,
+				},
 			}),
 			charts.WithInitializationOpts(opts.Initialization{
 				ChartID: "app_chart",

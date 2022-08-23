@@ -12,6 +12,8 @@ type URLParam struct {
 
 var DefaultURLParam = URLParam{name: "URLParam"}
 
+var _ Placeholder = (*URLParam)(nil)
+
 func (p URLParam) GetName() string {
 	return p.name
 }

@@ -29,6 +29,11 @@ var DefaultNonCrudUrlParam = NonCrudUrlParam{name: "NonCrudUrlParam"}
 var DefaultNonCRUDHeader = NonCRUDHeader{name: "NonCRUDHeader"}
 var DefaultNonCRUDRequestBody = NonCRUDRequestBody{name: "NonCRUDRequestBody"}
 
+var _ Placeholder = (*NonCrudUrlPath)(nil)
+var _ Placeholder = (*NonCrudUrlParam)(nil)
+var _ Placeholder = (*NonCRUDHeader)(nil)
+var _ Placeholder = (*NonCRUDRequestBody)(nil)
+
 func (p NonCrudUrlPath) GetName() string {
 	return p.name
 }
