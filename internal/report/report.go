@@ -345,12 +345,12 @@ func printFullReportToJson(
 	return nil
 }
 
-func RenderConsoleReport(s *db.Statistics, reportTime time.Time, wafName string, url string, ignoreUnresolved bool, format string) error {
+func RenderConsoleReport(s *db.Statistics, reportTime time.Time, wafName string, url string, args string, ignoreUnresolved bool, format string) error {
 	switch format {
 	case consoleReportTextFormat:
 		printConsoleReportTable(s, reportTime, wafName, ignoreUnresolved)
 	case consoleReportJsonFormat:
-		err := printConsoleReportJson(s, reportTime, wafName, url)
+		err := printConsoleReportJson(s, reportTime, wafName, url, args)
 		if err != nil {
 			return err
 		}
@@ -499,11 +499,13 @@ func printConsoleReportTable(s *db.Statistics, reportTime time.Time, wafName str
 	fmt.Println(buffer.String())
 }
 
-func printConsoleReportJson(s *db.Statistics, reportTime time.Time, wafName string, url string) error {
+func printConsoleReportJson(s *db.Statistics, reportTime time.Time, wafName string, url string, args string) error {
 	report := jsonReport{
 		Date:        reportTime.Format(time.ANSIC),
 		ProjectName: wafName,
 		URL:         url,
+		TestCasesFP: s.TestCasesFingerprint,
+		Args:        args,
 	}
 
 	if len(s.SummaryTable) != 0 {

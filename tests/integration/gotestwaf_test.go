@@ -105,7 +105,7 @@ func runGoTestWAF(ctx context.Context, testCases []*db.Case) error {
 
 	stat := db.GetStatistics(cfg.IgnoreUnresolved, cfg.NonBlockedAsPassed)
 
-	err = report.RenderConsoleReport(stat, reportTime, cfg.WAFName, cfg.URL, cfg.IgnoreUnresolved, "text")
+	err = report.RenderConsoleReport(stat, reportTime, cfg.WAFName, cfg.URL, "", cfg.IgnoreUnresolved, "text")
 	if err != nil {
 		return err
 	}

@@ -159,7 +159,7 @@ func run(ctx context.Context, logger *logrus.Logger) error {
 
 	stat := db.GetStatistics(cfg.IgnoreUnresolved, cfg.NonBlockedAsPassed)
 
-	err = report.RenderConsoleReport(stat, reportTime, cfg.WAFName, cfg.URL, cfg.IgnoreUnresolved, logFormat)
+	err = report.RenderConsoleReport(stat, reportTime, cfg.WAFName, cfg.URL, args, cfg.IgnoreUnresolved, logFormat)
 	if err != nil {
 		return err
 	}
