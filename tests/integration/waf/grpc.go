@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	encoder "github.com/wallarm/gotestwaf/internal/payload/placeholder/grpc"
+	gtw_grpc "github.com/wallarm/gotestwaf/internal/payload/placeholder/grpc"
 	"github.com/wallarm/gotestwaf/tests/integration/config"
 )
 
@@ -19,10 +19,10 @@ type grpcServer struct {
 	errChan  chan<- error
 	casesMap *config.TestCasesMap
 
-	encoder.UnimplementedServiceFooBarServer
+	gtw_grpc.UnimplementedServiceFooBarServer
 }
 
-func (s *grpcServer) Foo(ctx context.Context, in *encoder.Request) (*encoder.Response, error) {
+func (s *grpcServer) Foo(ctx context.Context, in *gtw_grpc.Request) (*gtw_grpc.Response, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		s.errChan <- errors.New("metadata not found")
@@ -48,11 +48,11 @@ func (s *grpcServer) Foo(ctx context.Context, in *encoder.Request) (*encoder.Res
 	for _, value = range headerValues {
 		kv := strings.Split(value, "=")
 
-		if len(kv) != 2 {
-			s.errChan <- errors.New("couldn't parse X-GoTestWAF-Test header value")
+		if len(kv) < 2 {
+			s.errChan <- errors.New("couldn't parse header value")
+		} else {
+			testCaseParameters[strings.TrimSpace(kv[0])] = strings.TrimSpace(kv[1])
 		}
-
-		testCaseParameters[strings.TrimSpace(kv[0])] = strings.TrimSpace(kv[1])
 	}
 
 	if set, ok = testCaseParameters["set"]; !ok {
@@ -74,8 +74,18 @@ func (s *grpcServer) Foo(ctx context.Context, in *encoder.Request) (*encoder.Res
 	placeholderValue = in.GetValue()
 
 	switch encoder {
-	case "gRPC":
-		value, err = decodeGRPC(placeholderValue)
+	case "Base64":
+		value, err = decodeBase64(placeholderValue)
+	case "Base64Flat":
+		value, err = decodeBase64(placeholderValue)
+	case "JSUnicode":
+		value, err = decodeJSUnicode(placeholderValue)
+	case "URL":
+		value, err = decodeURL(placeholderValue)
+	case "Plain":
+		value, err = decodePlain(placeholderValue)
+	case "XMLEntity":
+		value, err = decodeXMLEntity(placeholderValue)
 	default:
 		s.errChan <- fmt.Errorf("unknown encoder: %s", encoder)
 	}
@@ -90,7 +100,7 @@ func (s *grpcServer) Foo(ctx context.Context, in *encoder.Request) (*encoder.Res
 	}
 
 	if matched, _ := regexp.MatchString("bypassed", value); matched {
-		return &encoder.Response{Value: "OK"}, nil
+		return &gtw_grpc.Response{Value: "OK"}, nil
 	} else if matched, _ = regexp.MatchString("blocked", value); matched {
 		return nil, status.New(codes.PermissionDenied, "").Err()
 	}

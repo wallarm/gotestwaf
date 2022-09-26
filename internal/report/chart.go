@@ -137,11 +137,11 @@ func getIndicatorsAndItems(counters map[string]map[string]pair, category string)
 func generateCharts(s *db.Statistics) (apiChart *string, appChart *string, err error) {
 	counters := make(map[string]map[string]pair)
 
-	for _, t := range s.Blocked {
+	for _, t := range s.NegativeTests.Blocked {
 		updateCounters(t, counters, true)
 	}
 
-	for _, t := range s.Bypasses {
+	for _, t := range s.NegativeTests.Bypasses {
 		updateCounters(t, counters, false)
 	}
 

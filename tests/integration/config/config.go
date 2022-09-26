@@ -121,9 +121,6 @@ func GetConfig() *config.Config {
 }
 
 func GenerateTestCases() (testCases []*db.Case, testCasesMap *TestCasesMap) {
-	grpcEncoder := placeholder.DefaultGRPC.GetName()
-	requestBodyPlaceholder := placeholder.DefaultRequestBody.GetName()
-
 	var encoders []string
 	var placeholders []string
 	testCasesMap = new(TestCasesMap)
@@ -143,10 +140,6 @@ func GenerateTestCases() (testCases []*db.Case, testCasesMap *TestCasesMap) {
 	for _, ts := range testSets {
 		for _, ph := range placeholders {
 			for _, enc := range encoders {
-				if enc == grpcEncoder && ph != requestBodyPlaceholder {
-					continue
-				}
-
 				name := fmt.Sprintf("%s-%s", ph, enc)
 				testCases = append(testCases, &db.Case{
 					Payloads:       payloads,

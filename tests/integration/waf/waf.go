@@ -132,11 +132,11 @@ func (waf *WAF) httpRequestHandler(w http.ResponseWriter, r *http.Request) {
 	for _, value = range headerValues {
 		kv := strings.Split(value, "=")
 
-		if len(kv) != 2 {
-			waf.errChan <- errors.New("couldn't parse X-GoTestWAF-Test header value")
+		if len(kv) < 2 {
+			waf.errChan <- errors.New("couldn't parse header value")
+		} else {
+			testCaseParameters[strings.TrimSpace(kv[0])] = strings.TrimSpace(kv[1])
 		}
-
-		testCaseParameters[strings.TrimSpace(kv[0])] = strings.TrimSpace(kv[1])
 	}
 
 	if set, ok = testCaseParameters["set"]; !ok {
@@ -176,6 +176,14 @@ func (waf *WAF) httpRequestHandler(w http.ResponseWriter, r *http.Request) {
 		placeholderValue, err = getPayloadFromURLPath(r)
 	case "XMLBody":
 		placeholderValue, err = getPayloadFromXMLBody(r)
+	case "NonCrudUrlParam":
+		placeholderValue, err = getPayloadFromURLParam(r)
+	case "NonCrudUrlPath":
+		placeholderValue, err = getPayloadFromURLPath(r)
+	case "NonCRUDHeader":
+		placeholderValue, err = getPayloadFromHeader(r)
+	case "NonCRUDRequestBody":
+		placeholderValue, err = getPayloadFromRequestBody(r)
 	default:
 		waf.errChan <- fmt.Errorf("unknown placeholder: %s", placeholder)
 	}
@@ -197,8 +205,6 @@ func (waf *WAF) httpRequestHandler(w http.ResponseWriter, r *http.Request) {
 		value, err = decodePlain(placeholderValue)
 	case "XMLEntity":
 		value, err = decodeXMLEntity(placeholderValue)
-	case "gRPC":
-		value, err = decodeGRPC(placeholderValue)
 	default:
 		waf.errChan <- fmt.Errorf("unknown encoder: %s", encoder)
 	}

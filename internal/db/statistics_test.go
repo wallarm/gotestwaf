@@ -165,16 +165,16 @@ func testPropertyNotPanics(db *DB, ignoreUnresolved, nonBlockedAsPassed bool) bo
 func testPropertyOnlyPositiveNumberValues(db *DB, ignoreUnresolved, nonBlockedAsPassed bool) bool {
 	stat := db.GetStatistics(ignoreUnresolved, nonBlockedAsPassed)
 
-	if stat.AllRequestsNumber < 0 ||
-		stat.BlockedRequestsNumber < 0 ||
-		stat.BypassedRequestsNumber < 0 ||
-		stat.UnresolvedRequestsNumber < 0 ||
-		stat.FailedRequestsNumber < 0 ||
-		stat.ResolvedRequestsNumber < 0 ||
-		stat.UnresolvedRequestsPercentage < 0 ||
-		stat.ResolvedBlockedRequestsPercentage < 0 ||
-		stat.ResolvedBypassedRequestsPercentage < 0 ||
-		stat.FailedRequestsPercentage < 0 ||
+	if stat.NegativeTests.AllRequestsNumber < 0 ||
+		stat.NegativeTests.BlockedRequestsNumber < 0 ||
+		stat.NegativeTests.BypassedRequestsNumber < 0 ||
+		stat.NegativeTests.UnresolvedRequestsNumber < 0 ||
+		stat.NegativeTests.FailedRequestsNumber < 0 ||
+		stat.NegativeTests.ResolvedRequestsNumber < 0 ||
+		stat.NegativeTests.UnresolvedRequestsPercentage < 0 ||
+		stat.NegativeTests.ResolvedBlockedRequestsPercentage < 0 ||
+		stat.NegativeTests.ResolvedBypassedRequestsPercentage < 0 ||
+		stat.NegativeTests.FailedRequestsPercentage < 0 ||
 		stat.PositiveTests.AllRequestsNumber < 0 ||
 		stat.PositiveTests.BlockedRequestsNumber < 0 ||
 		stat.PositiveTests.BypassedRequestsNumber < 0 ||
@@ -190,7 +190,7 @@ func testPropertyOnlyPositiveNumberValues(db *DB, ignoreUnresolved, nonBlockedAs
 		return false
 	}
 
-	summaryTablesRows := append(stat.SummaryTable, stat.PositiveTests.SummaryTable...)
+	summaryTablesRows := append(stat.NegativeTests.SummaryTable, stat.PositiveTests.SummaryTable...)
 	for _, row := range summaryTablesRows {
 		if row.Percentage < 0 ||
 			row.Sent < 0 ||
@@ -212,30 +212,12 @@ func testPropertyCorrectStatValues(db *DB, ignoreUnresolved, nonBlockedAsPassed 
 	counters["negative"] = make(map[string]int)
 	counters["positive"] = make(map[string]int)
 
-	var wafScore float64
-	var overallCompletedTestCases int
-	var overallPassedRequestsPercentage float64
-
-	for _, row := range stat.SummaryTable {
+	for _, row := range stat.NegativeTests.SummaryTable {
 		counters["negative"]["sent"] += row.Sent
 		counters["negative"]["blocked"] += row.Blocked
 		counters["negative"]["bypassed"] += row.Bypassed
 		counters["negative"]["unresolved"] += row.Unresolved
 		counters["negative"]["failed"] += row.Failed
-
-		totalResolvedRequests := row.Blocked + row.Bypassed
-		if totalResolvedRequests != 0 {
-			overallCompletedTestCases += 1
-			overallPassedRequestsPercentage += CalculatePercentage(row.Blocked, totalResolvedRequests)
-		}
-	}
-
-	if overallCompletedTestCases != 0 {
-		wafScore = overallPassedRequestsPercentage / float64(overallCompletedTestCases)
-	}
-
-	if wafScore != stat.WafScore {
-		return false
 	}
 
 	counters["negative"]["all"] = counters["negative"]["blocked"] +
@@ -246,12 +228,12 @@ func testPropertyCorrectStatValues(db *DB, ignoreUnresolved, nonBlockedAsPassed 
 	counters["negative"]["resolved"] = counters["negative"]["blocked"] +
 		counters["negative"]["bypassed"]
 
-	if counters["negative"]["all"] != stat.AllRequestsNumber ||
-		counters["negative"]["blocked"] != stat.BlockedRequestsNumber ||
-		counters["negative"]["bypassed"] != stat.BypassedRequestsNumber ||
-		counters["negative"]["unresolved"] != stat.UnresolvedRequestsNumber ||
-		counters["negative"]["failed"] != stat.FailedRequestsNumber ||
-		counters["negative"]["resolved"] != stat.ResolvedRequestsNumber {
+	if counters["negative"]["all"] != stat.NegativeTests.AllRequestsNumber ||
+		counters["negative"]["blocked"] != stat.NegativeTests.BlockedRequestsNumber ||
+		counters["negative"]["bypassed"] != stat.NegativeTests.BypassedRequestsNumber ||
+		counters["negative"]["unresolved"] != stat.NegativeTests.UnresolvedRequestsNumber ||
+		counters["negative"]["failed"] != stat.NegativeTests.FailedRequestsNumber ||
+		counters["negative"]["resolved"] != stat.NegativeTests.ResolvedRequestsNumber {
 		return false
 	}
 

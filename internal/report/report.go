@@ -30,18 +30,18 @@ const (
 )
 
 type jsonReport struct {
-	Date        string `json:"date"`
-	ProjectName string `json:"project_name"`
-	URL         string `json:"url"`
-	TestCasesFP string `json:"fp"`
-	Args        string `json:"args"`
+	Date        string  `json:"date"`
+	ProjectName string  `json:"project_name"`
+	URL         string  `json:"url"`
+	Score       float64 `json:"score,omitempty"`
+	TestCasesFP string  `json:"fp"`
+	Args        string  `json:"args"`
 
 	// fields for console report in JSON format
 	NegativeTests *testsInfo `json:"negative,omitempty"`
 	PositiveTests *testsInfo `json:"positive,omitempty"`
 
 	// fields for full report in JSON format
-	Score                 float64       `json:"score,omitempty"`
 	Summary               *summary      `json:"summary,omitempty"`
 	NegativeTestsPayloads *testPayloads `json:"negative_payloads,omitempty"`
 	PositiveTestsPayloads *testPayloads `json:"positive_payloads,omitempty"`
@@ -181,25 +181,25 @@ func printFullReportToJson(
 		Date:        reportTime.Format(time.ANSIC),
 		ProjectName: wafName,
 		URL:         url,
-		Score:       s.WafScore,
+		Score:       s.Score.Average,
 		TestCasesFP: s.TestCasesFingerprint,
 		Args:        args,
 	}
 
 	report.Summary = &summary{}
 
-	if len(s.SummaryTable) != 0 {
+	if len(s.NegativeTests.SummaryTable) != 0 {
 		report.Summary.NegativeTests = &testsInfo{
-			Score:           s.WafScore,
-			TotalSent:       s.AllRequestsNumber,
-			ResolvedTests:   s.ResolvedRequestsNumber,
-			BlockedTests:    s.BlockedRequestsNumber,
-			BypassedTests:   s.BypassedRequestsNumber,
-			UnresolvedTests: s.UnresolvedRequestsNumber,
-			FailedTests:     s.FailedRequestsNumber,
+			Score:           s.NegativeTests.ResolvedBlockedRequestsPercentage,
+			TotalSent:       s.NegativeTests.AllRequestsNumber,
+			ResolvedTests:   s.NegativeTests.ResolvedRequestsNumber,
+			BlockedTests:    s.NegativeTests.BlockedRequestsNumber,
+			BypassedTests:   s.NegativeTests.BypassedRequestsNumber,
+			UnresolvedTests: s.NegativeTests.UnresolvedRequestsNumber,
+			FailedTests:     s.NegativeTests.FailedRequestsNumber,
 			TestSets:        make(testSets),
 		}
-		for _, row := range s.SummaryTable {
+		for _, row := range s.NegativeTests.SummaryTable {
 			if report.Summary.NegativeTests.TestSets[row.TestSet] == nil {
 				report.Summary.NegativeTests.TestSets[row.TestSet] = make(testCases)
 			}
@@ -242,7 +242,7 @@ func printFullReportToJson(
 
 	report.NegativeTestsPayloads = &testPayloads{}
 
-	for _, bypass := range s.Bypasses {
+	for _, bypass := range s.NegativeTests.Bypasses {
 		bypassDetail := &payloadDetails{
 			Payload:               bypass.Payload,
 			TestSet:               bypass.TestSet,
@@ -256,7 +256,7 @@ func printFullReportToJson(
 		report.NegativeTestsPayloads.Bypassed = append(report.NegativeTestsPayloads.Bypassed, bypassDetail)
 	}
 	if !ignoreUnresolved {
-		for _, unresolved := range s.Unresolved {
+		for _, unresolved := range s.NegativeTests.Unresolved {
 			unresolvedDetail := &payloadDetails{
 				Payload:               unresolved.Payload,
 				TestSet:               unresolved.TestSet,
@@ -270,7 +270,7 @@ func printFullReportToJson(
 			report.NegativeTestsPayloads.Unresolved = append(report.NegativeTestsPayloads.Unresolved, unresolvedDetail)
 		}
 	}
-	for _, failed := range s.Failed {
+	for _, failed := range s.NegativeTests.Failed {
 		failedDetail := &payloadDetails{
 			Payload:     failed.Payload,
 			TestSet:     failed.TestSet,
@@ -379,7 +379,7 @@ func printConsoleReportTable(s *db.Statistics, reportTime time.Time, wafName str
 		table.SetColMinWidth(index, colMinWidth)
 	}
 
-	for _, row := range s.SummaryTable {
+	for _, row := range s.NegativeTests.SummaryTable {
 		rowAppend := []string{
 			row.TestSet,
 			row.TestCase,
@@ -400,33 +400,33 @@ func printConsoleReportTable(s *db.Statistics, reportTime time.Time, wafName str
 	footerNegativeTests := []string{
 		fmt.Sprintf("Date:\n%s", reportTime.Format("2006-01-02")),
 		fmt.Sprintf("Project Name:\n%s", wafName),
-		fmt.Sprintf("Average Score:\n%.2f%%", s.WafScore),
+		fmt.Sprintf("True Negative Score:\n%.2f%%", s.NegativeTests.ResolvedBlockedRequestsPercentage),
 		fmt.Sprintf("Blocked (Resolved):\n%d/%d (%.2f%%)",
-			s.BlockedRequestsNumber,
-			s.ResolvedRequestsNumber,
-			s.ResolvedBlockedRequestsPercentage,
+			s.NegativeTests.BlockedRequestsNumber,
+			s.NegativeTests.ResolvedRequestsNumber,
+			s.NegativeTests.ResolvedBlockedRequestsPercentage,
 		),
 		fmt.Sprintf("Bypassed (Resolved):\n%d/%d (%.2f%%)",
-			s.BypassedRequestsNumber,
-			s.ResolvedRequestsNumber,
-			s.ResolvedBypassedRequestsPercentage,
+			s.NegativeTests.BypassedRequestsNumber,
+			s.NegativeTests.ResolvedRequestsNumber,
+			s.NegativeTests.ResolvedBypassedRequestsPercentage,
 		),
 	}
 	if !ignoreUnresolved {
 		footerNegativeTests = append(footerNegativeTests,
 			fmt.Sprintf("Unresolved (Sent):\n%d/%d (%.2f%%)",
-				s.UnresolvedRequestsNumber,
-				s.AllRequestsNumber,
-				s.UnresolvedRequestsPercentage,
+				s.NegativeTests.UnresolvedRequestsNumber,
+				s.NegativeTests.AllRequestsNumber,
+				s.NegativeTests.UnresolvedRequestsPercentage,
 			),
 		)
 	}
 	footerNegativeTests = append(footerNegativeTests,
-		fmt.Sprintf("Total Sent:\n%d", s.AllRequestsNumber),
+		fmt.Sprintf("Total Sent:\n%d", s.NegativeTests.AllRequestsNumber),
 		fmt.Sprintf("Failed (Total):\n%d/%d (%.2f%%)",
-			s.FailedRequestsNumber,
-			s.AllRequestsNumber,
-			s.FailedRequestsPercentage,
+			s.NegativeTests.FailedRequestsNumber,
+			s.NegativeTests.AllRequestsNumber,
+			s.NegativeTests.FailedRequestsPercentage,
 		),
 	)
 
@@ -496,6 +496,61 @@ func printConsoleReportTable(s *db.Statistics, reportTime time.Time, wafName str
 	posTable.SetFooter(footerPositiveTests)
 	posTable.Render()
 
+	fmt.Fprintf(&buffer, "\nSummary:\n")
+
+	// summary table
+	sumTable := tablewriter.NewWriter(&buffer)
+	baseHeader = []string{"Type", "True-negative tests blocked", "True-positive tests passed", "Average"}
+	sumTable.SetHeader(baseHeader)
+	for index := range baseHeader {
+		sumTable.SetColMinWidth(index, 27)
+	}
+
+	row := []string{"API Security"}
+	if s.Score.ApiSec.TrueNegative != -1.0 {
+		row = append(row, fmt.Sprintf("%.2f%%", s.Score.ApiSec.TrueNegative))
+	} else {
+		row = append(row, "n/a")
+	}
+	if s.Score.ApiSec.TruePositive != -1.0 {
+		row = append(row, fmt.Sprintf("%.2f%%", s.Score.ApiSec.TruePositive))
+	} else {
+		row = append(row, "n/a")
+	}
+	if s.Score.ApiSec.Average != -1.0 {
+		row = append(row, fmt.Sprintf("%.2f%%", s.Score.ApiSec.Average))
+	} else {
+		row = append(row, "n/a")
+	}
+	sumTable.Append(row)
+
+	row = []string{"Application Security"}
+	if s.Score.AppSec.TrueNegative != -1.0 {
+		row = append(row, fmt.Sprintf("%.2f%%", s.Score.AppSec.TrueNegative))
+	} else {
+		row = append(row, "n/a")
+	}
+	if s.Score.AppSec.TruePositive != -1.0 {
+		row = append(row, fmt.Sprintf("%.2f%%", s.Score.AppSec.TruePositive))
+	} else {
+		row = append(row, "n/a")
+	}
+	if s.Score.AppSec.Average != -1.0 {
+		row = append(row, fmt.Sprintf("%.2f%%", s.Score.AppSec.Average))
+	} else {
+		row = append(row, "n/a")
+	}
+	sumTable.Append(row)
+
+	footer := []string{"", "", "Score"}
+	if s.Score.Average != -1.0 {
+		footer = append(footer, fmt.Sprintf("%.2f%%", s.Score.Average))
+	} else {
+		footer = append(footer, "n/a")
+	}
+	sumTable.SetFooter(footer)
+	sumTable.Render()
+
 	fmt.Println(buffer.String())
 }
 
@@ -506,20 +561,21 @@ func printConsoleReportJson(s *db.Statistics, reportTime time.Time, wafName stri
 		URL:         url,
 		TestCasesFP: s.TestCasesFingerprint,
 		Args:        args,
+		Score:       s.Score.Average,
 	}
 
-	if len(s.SummaryTable) != 0 {
+	if len(s.NegativeTests.SummaryTable) != 0 {
 		report.NegativeTests = &testsInfo{
-			Score:           s.WafScore,
-			TotalSent:       s.AllRequestsNumber,
-			ResolvedTests:   s.ResolvedRequestsNumber,
-			BlockedTests:    s.BlockedRequestsNumber,
-			BypassedTests:   s.BypassedRequestsNumber,
-			UnresolvedTests: s.UnresolvedRequestsNumber,
-			FailedTests:     s.FailedRequestsNumber,
+			Score:           s.NegativeTests.ResolvedBlockedRequestsPercentage,
+			TotalSent:       s.NegativeTests.AllRequestsNumber,
+			ResolvedTests:   s.NegativeTests.ResolvedRequestsNumber,
+			BlockedTests:    s.NegativeTests.BlockedRequestsNumber,
+			BypassedTests:   s.NegativeTests.BypassedRequestsNumber,
+			UnresolvedTests: s.NegativeTests.UnresolvedRequestsNumber,
+			FailedTests:     s.NegativeTests.FailedRequestsNumber,
 			TestSets:        make(testSets),
 		}
-		for _, row := range s.SummaryTable {
+		for _, row := range s.NegativeTests.SummaryTable {
 			if report.NegativeTests.TestSets[row.TestSet] == nil {
 				report.NegativeTests.TestSets[row.TestSet] = make(testCases)
 			}
