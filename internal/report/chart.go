@@ -145,8 +145,10 @@ func generateCharts(s *db.Statistics) (apiChart *string, appChart *string, err e
 		updateCounters(t, counters, false)
 	}
 
+	_, containsApiCat := counters["api"]
+
 	// Add gRPC counter if gRPC is unavailable to display it on graphic
-	if !s.IsGrpcAvailable {
+	if !s.IsGrpcAvailable && containsApiCat {
 		// gRPC is part of the API Security tests
 		counters["api"]["grpc"] = pair{}
 	}
@@ -155,7 +157,7 @@ func generateCharts(s *db.Statistics) (apiChart *string, appChart *string, err e
 	appIndicators, appItems := getIndicatorsAndItems(counters, "app")
 
 	// Fix label for gRPC if it is unavailable
-	if !s.IsGrpcAvailable {
+	if !s.IsGrpcAvailable && containsApiCat {
 		for i := 0; i < len(apiIndicators); i++ {
 			if strings.HasPrefix(apiIndicators[i].Name, "grpc") {
 				apiIndicators[i].Name = "grpc (unavailable)"
