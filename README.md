@@ -39,11 +39,13 @@ placeholder:
   - UrlParam
   - JSUnicode
   - Header
+type: "SQL Injection"
 ...
 ```
 
 * `payload` is a malicious attack sample (e.g XSS payload like ```<script>alert(111)</script>``` or something more sophisticated).
 Since the format of the YAML string is required for payloads, they must be [encoded as binary data](https://yaml.org/type/binary.html).
+
 * `encoder` is an encoder to be applied to the payload before placing it to the HTTP request. Possible encoders are:
 
     * Base64
@@ -52,6 +54,7 @@ Since the format of the YAML string is required for payloads, they must be [enco
     * URL
     * Plain (to keep the payload string as-is)
     * XML Entity
+
 * `placeholder` is a place inside HTTP request where encoded payload should be. Possible placeholders are:
 
     * Header
@@ -69,6 +72,8 @@ Since the format of the YAML string is required for payloads, they must be [enco
     * NonCRUDHeader
     * NonCRUDRequestBody
 
+* `type` is a name of entire group of the payloads in file. It can be arbitrary, but should reflect the type of attacks in the file.
+
 Request generation is a three-step process involving the multiplication of payload amount by encoder and placeholder amounts.
 Let's say you defined 2 **payloads**, 3 **encoders** (Base64, JSUnicode, and URL) and 1 **placeholder** (URLParameter - HTTP GET parameter).
 In this case, GoTestWAF will send 2x3x1 = 6 requests in a test case.
@@ -79,7 +84,9 @@ or your own (by using the [configuration option](#configuration-options) `testCa
 ## Requirements
 
 * GoTestwaf supports all the popular operating systems (Linux, Windows, macOS), and can be built natively
-if [Go](https://golang.org/doc/install) is installed in the system.
+if [Go](https://golang.org/doc/install) is installed in the system. If you want to run GoTestWaf natively,
+make sure you have the Chrome web browser to be able to generate PDF reports. In case you don't have Chrome,
+you can create a report in HTML format.
 * If running GoTestWAF as the Docker container, please ensure you have [installed and configured Docker](https://docs.docker.com/get-docker/),
 and GoTestWAF and evaluated application security solution are connected to the same [Docker network](https://docs.docker.com/network/).
 * For GoTestWAF to be successfully started, please ensure the IP address of the machine running GoTestWAF is whitelisted
@@ -94,6 +101,7 @@ The steps below walk through downloading and starting GoTestWAF with minimal con
     ```
     docker pull wallarm/gotestwaf
     ```
+
 2. Start the GoTestWAF image:
 
     ```
@@ -104,14 +112,14 @@ The steps below walk through downloading and starting GoTestWAF with minimal con
     If required, you can replace `${PWD}/reports` with the path to another folder used to place the evaluation report.
 
     If the evaluated security tool is available externally, you can skip the option `--network="host"`. This option enables interaction of Docker containers running on 127.0.0.1.
-    
+
     To perform the gRPC tests you must have a working endpoint and use the --grpcPort <port> cli option.
-       
-     ```
-     docker run -v ${PWD}/reports:/app/reports \
-        wallarm/gotestwaf --grpcPort 9000 --url=http://my.grpc.endpoint
-     ```
-    
+
+    ```
+    docker run -v ${PWD}/reports:/app/reports --network="host" \
+       wallarm/gotestwaf --grpcPort 9000 --url=http://my.grpc.endpoint
+    ```
+
 3. Find the report file `waf-evaluation-report-<date>.pdf` in the `reports` folder that you mapped to `/app/reports`
 inside the container.
 
@@ -123,62 +131,89 @@ To learn advanced configuration options, please use this [link](#configuration-o
 Check the evaluation results logged using the `STDOUT` and `STDERR` services. For example:
 
 ```
-GOTESTWAF : 2021/10/07 16:06:38.401836 main.go:67: Test cases loading started
-GOTESTWAF : 2021/10/07 16:06:38.403985 main.go:74: Test cases loading finished
-GOTESTWAF : 2021/10/07 16:06:38.404007 main.go:87: gRPC pre-check: IN PROGRESS
-GOTESTWAF : 2021/10/07 16:06:41.404701 main.go:91: gRPC pre-check: connection is not available, reason: sending gRPC request: context deadline exceeded
-GOTESTWAF : 2021/10/07 16:06:41.404759 main.go:101: Scanned URL: http://172.17.0.1:8080/
-GOTESTWAF : 2021/10/07 16:06:41.415870 main.go:125: WAF pre-check: OK. Blocking status code: 403
-GOTESTWAF : 2021/10/07 16:06:41.415969 main.go:140: WebSocket pre-check. URL to check: ws://172.17.0.1:8080/
-GOTESTWAF : 2021/10/07 16:06:41.426661 main.go:144: WebSocket pre-check: connection is not available, reason: websocket: bad handshake
-GOTESTWAF : 2021/10/07 16:06:41.427029 main.go:172: Scanning http://172.17.0.1:8080/
-GOTESTWAF : 2021/10/07 16:06:41.427117 scanner.go:149: Scanning started
-GOTESTWAF : 2021/10/07 16:06:44.321301 scanner.go:154: Scanning Time:  2.89414802s
-GOTESTWAF : 2021/10/07 16:06:44.321342 scanner.go:185: Scanning finished
-
+INFO[0000] GoTestWAF started                             version=v0.3.1-184-gacbbd2d
+INFO[0000] Test cases loading started
+INFO[0000] Test cases loading finished
+INFO[0000] Test cases fingerprint                        fp=ba6e4eb2ac65ba17afa18b04d62af8b9
+INFO[0000] Try to identify WAF solution
+INFO[0000] WAF was not identified
+INFO[0000] WAF pre-check                                 url="http://localhost:8080"
+INFO[0000] WAF pre-check                                 blocked=true code=403 status=done
+INFO[0000] WebSocket pre-check                           status=started url="ws://localhost:8080"
+INFO[0000] WebSocket pre-check                           connection="not available" error="websocket: bad handshake" status=done
+INFO[0000] gRPC pre-check                                status=started
+INFO[0000] gRPC pre-check                                connection="not available" status=done
+INFO[0000] Scanning started                              url="http://localhost:8080"
+INFO[0009] Scanning finished                             duration=9.104334843s
 Negative Tests:
-+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
-|       TEST SET        |       TEST CASE       |     PERCENTAGE, %     |        BLOCKED        |       BYPASSED        |      UNRESOLVED       |
-+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
-| community             | community-lfi         |                 66.67 |                     4 |                     2 |                     0 |
-| community             | community-rce         |                 14.29 |                     6 |                    36 |                     0 |
-| community             | community-sqli        |                 70.83 |                    34 |                    14 |                     0 |
-| community             | community-xss         |                 91.78 |                   279 |                    25 |                     0 |
-| community             | community-xxe         |                  0.00 |                     0 |                     2 |                     0 |
-| owasp                 | crlf                  |                 87.50 |                     7 |                     1 |                     0 |
-| owasp                 | ldap-injection        |                 12.50 |                     1 |                     7 |                     0 |
-| owasp                 | mail-injection        |                 25.00 |                     3 |                     9 |                     0 |
-| owasp                 | nosql-injection       |                  0.00 |                     0 |                    18 |                     0 |
-| owasp                 | path-traversal        |                 25.00 |                    16 |                    48 |                     2 |
-| owasp                 | rce                   |                 22.22 |                     4 |                    14 |                     0 |
-| owasp                 | rce-urlparam          |                 33.33 |                     1 |                     2 |                     0 |
-| owasp                 | shell-injection       |                 25.00 |                     6 |                    18 |                     0 |
-| owasp                 | sql-injection         |                 25.00 |                    12 |                    36 |                     0 |
-| owasp                 | ss-include            |                 25.00 |                     5 |                    15 |                     0 |
-| owasp                 | sst-injection         |                 15.62 |                     5 |                    27 |                     0 |
-| owasp                 | xml-injection         |                  0.00 |                     0 |                    13 |                     0 |
-| owasp                 | xss-scripting         |                 25.00 |                    17 |                    51 |                     0 |
-| owasp-api             | graphql               |                  0.00 |                     0 |                     2 |                     0 |
-| owasp-api             | graphql-post          |                 33.33 |                     1 |                     2 |                     0 |
-| owasp-api             | grpc                  |                  0.00 |                     0 |                     0 |                     2 |
-| owasp-api             | rest                  |                100.00 |                     2 |                     0 |                     0 |
-| owasp-api             | soap                  |                100.00 |                     2 |                     0 |                     0 |
-+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
-|         DATE:         |       WAF NAME:       |  WAF AVERAGE SCORE:   |  BLOCKED (RESOLVED):  | BYPASSED (RESOLVED):  |      UNRESOLVED:      |
-|      2021-10-07       |        GENERIC        |        34.70%         |   405/747 (54.22%)    |   342/747 (45.78%)    |     4/751 (0.53%)     |
-+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
++-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
+|       TEST SET        |       TEST CASE       |     PERCENTAGE, %     |        BLOCKED        |       BYPASSED        |      UNRESOLVED       |         SENT          |        FAILED         |
++-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
+| community             | community-128kb-rce   |                  0.00 |                     0 |                     0 |                     1 |                     1 |                     0 |
+| community             | community-128kb-sqli  |                  0.00 |                     0 |                     0 |                     1 |                     1 |                     0 |
+| community             | community-128kb-xss   |                  0.00 |                     0 |                     0 |                     1 |                     1 |                     0 |
+| community             | community-16kb-rce    |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
+| community             | community-16kb-sqli   |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
+| community             | community-16kb-xss    |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
+| community             | community-32kb-rce    |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
+| community             | community-32kb-sqli   |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
+| community             | community-32kb-xss    |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
+| community             | community-64kb-rce    |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
+| community             | community-64kb-sqli   |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
+| community             | community-64kb-xss    |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
+| community             | community-8kb-rce     |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
+| community             | community-8kb-sqli    |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
+| community             | community-8kb-xss     |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
+| community             | community-lfi         |                100.00 |                     8 |                     0 |                     0 |                     8 |                     0 |
+| community             | community-rce         |                 83.33 |                    10 |                     2 |                     0 |                    12 |                     0 |
+| community             | community-sqli        |                100.00 |                    32 |                     0 |                     0 |                    32 |                     0 |
+| community             | community-xss         |                 95.80 |                   502 |                    22 |                     0 |                   524 |                     0 |
+| community             | community-xxe         |                  0.00 |                     0 |                     2 |                     0 |                     2 |                     0 |
+| owasp                 | crlf                  |                 87.50 |                     7 |                     1 |                     0 |                     8 |                     0 |
+| owasp                 | ldap-injection        |                 12.50 |                     2 |                    14 |                     0 |                    16 |                     0 |
+| owasp                 | mail-injection        |                 12.50 |                     3 |                    21 |                     0 |                    24 |                     0 |
+| owasp                 | nosql-injection       |                  0.00 |                     0 |                    30 |                     0 |                    30 |                     0 |
+| owasp                 | path-traversal        |                 25.45 |                    28 |                    82 |                     0 |                   110 |                     0 |
+| owasp                 | rce                   |                 22.22 |                     4 |                    14 |                     0 |                    18 |                     0 |
+| owasp                 | rce-urlparam          |                 33.33 |                     3 |                     6 |                     0 |                     9 |                     0 |
+| owasp                 | shell-injection       |                 27.08 |                    13 |                    35 |                     0 |                    48 |                     0 |
+| owasp                 | sql-injection         |                 33.33 |                    24 |                    48 |                     0 |                    72 |                     0 |
+| owasp                 | ss-include            |                 37.50 |                    15 |                    25 |                     0 |                    40 |                     0 |
+| owasp                 | sst-injection         |                 18.75 |                    12 |                    52 |                     0 |                    64 |                     0 |
+| owasp                 | xml-injection         |                  0.00 |                     0 |                    12 |                     1 |                    13 |                     0 |
+| owasp                 | xss-scripting         |                 34.56 |                    47 |                    89 |                     0 |                   136 |                     0 |
+| owasp-api             | graphql               |                  0.00 |                     0 |                     6 |                     0 |                     6 |                     0 |
+| owasp-api             | graphql-post          |                 50.00 |                     2 |                     2 |                     0 |                     4 |                     0 |
+| owasp-api             | grpc                  |                  0.00 |                     0 |                     0 |                     0 |                     0 |                     0 |
+| owasp-api             | non-crud              |                100.00 |                     2 |                     0 |                     0 |                     2 |                     0 |
+| owasp-api             | rest                  |                100.00 |                     2 |                     0 |                     0 |                     2 |                     0 |
+| owasp-api             | soap                  |                100.00 |                     2 |                     0 |                     0 |                     2 |                     0 |
++-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
+|         DATE:         |     PROJECT NAME:     | TRUE NEGATIVE SCORE:  |  BLOCKED (RESOLVED):  | BYPASSED (RESOLVED):  |  UNRESOLVED (SENT):   |      TOTAL SENT:      |    FAILED (TOTAL):    |
+|      2022-10-04       |        GENERIC        |        61.19%         |   730/1193 (61.19%)   |   463/1193 (38.81%)   |    4/1197 (0.33%)     |         1197          |    0/1197 (0.00%)     |
++-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
 
 Positive Tests:
-+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
-|       TEST SET        |       TEST CASE       |     PERCENTAGE, %     |        BLOCKED        |       BYPASSED        |      UNRESOLVED       |
-+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
-| false-pos             | texts                 |                 17.65 |                    14 |                     3 |                     0 |
-+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
-|         DATE:         |       WAF NAME:       |  WAF POSITIVE SCORE:  | FALSE POSITIVE (RES): | TRUE POSITIVE (RES):  |      UNRESOLVED:      |
-|      2021-10-07       |        GENERIC        |        17.65%         |    14/17 (82.35%)     |     3/17 (17.65%)     |     0/17 (0.00%)      |
-+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
++-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
+|       TEST SET        |       TEST CASE       |     PERCENTAGE, %     |        BLOCKED        |       BYPASSED        |      UNRESOLVED       |         SENT          |        FAILED         |
++-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
+| false-pos             | texts                 |                 85.65 |                    31 |                   185 |                     0 |                   216 |                     0 |
++-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
+|         DATE:         |     PROJECT NAME:     | FALSE POSITIVE SCORE: |  BLOCKED (RESOLVED):  | BYPASSED (RESOLVED):  |  UNRESOLVED (SENT):   |      TOTAL SENT:      |    FAILED (TOTAL):    |
+|      2022-10-04       |        GENERIC        |        85.65%         |    31/216 (14.35%)    |   185/216 (85.65%)    |     0/216 (0.00%)     |          216          |     0/216 (0.00%)     |
++-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
 
-PDF report is ready: reports/waf-evaluation-report-generic-2021-October-07-16-06-44.pdf
+Summary:
++-----------------------------+-----------------------------+-----------------------------+-----------------------------+
+|            TYPE             | TRUE-NEGATIVE TESTS BLOCKED | TRUE-POSITIVE TESTS PASSED  |           AVERAGE           |
++-----------------------------+-----------------------------+-----------------------------+-----------------------------+
+| API Security                | 50.00%                      | n/a                         | 50.00%                      |
+| Application Security        | 61.34%                      | 85.65%                      | 73.50%                      |
++-----------------------------+-----------------------------+-----------------------------+-----------------------------+
+|                                                                        SCORE            |           61.75%            |
++-----------------------------+-----------------------------+-----------------------------+-----------------------------+
+
+INFO[0015] Export full report                            filename=reports/waf-evaluation-report-2022-October-04-15-10-33.pdf
 ```
 
 The report file `waf-evaluation-report-<date>.pdf` is available in the `reports` folder of the user directory. You can also specify the directory to save the reports with the `reportPath` parameter and the name of the report file with the `reportName` parameter. To learn advanced configuration options, please use this [link](#configuration-options).
@@ -198,6 +233,7 @@ To run the demo environment:
     git clone https://github.com/wallarm/gotestwaf.git
     cd gotestwaf
     ```
+
 2. Start ModSecurity from the [Docker image](https://hub.docker.com/r/owasp/modsecurity-crs/) by using the following `make` command:
 
     ```
@@ -209,6 +245,7 @@ To run the demo environment:
     If required, you can change these settings by editing the rule `modsec` in the cloned Makefile. Available options for ModSecurity configuration are described on [Docker Hub](https://hub.docker.com/r/owasp/modsecurity-crs/).
 
     To stop ModSecurity containers use the following command:
+
     ```
     make modsec_down
     ```
@@ -237,6 +274,7 @@ To run the demo environment:
     ```
     make scan_local
     ```
+
 4. Find the [report](#checking-the-evaluation-results) file `waf-evaluation-report-<date>.pdf` in
 the `reports` folder that you mapped to `/app/reports` inside the container.
 
@@ -250,7 +288,7 @@ for example:
     ```
     git clone https://github.com/wallarm/gotestwaf.git
     cd gotestwaf
-    docker build . --force-rm -t gotestwaf
+    docker build --build-arg GOTESTWAF_VERSION="$(git describe)" --force-rm -t gotestwaf .
     docker run -v ${PWD}/reports:/app/reports --network="host" \
         gotestwaf --url=<EVALUATED_SECURITY_SOLUTION_URL>
     ```
@@ -261,14 +299,14 @@ for example:
     ```
     git clone https://github.com/wallarm/gotestwaf.git
     cd gotestwaf
-    go run ./cmd --url=<EVALUATED_SECURITY_SOLUTION_URL> --verbose
+    go run ./cmd --url=<EVALUATED_SECURITY_SOLUTION_URL>
     ```
 * Clone this repository and build GoTestWAF as the Go module:
 
     ```
     git clone https://github.com/wallarm/gotestwaf.git
     cd gotestwaf
-    go build -mod vendor -o gotestwaf ./cmd/main.go
+    go build -mod vendor -o gotestwaf ./cmd
     ```
 
 Supported GoTestWAF configuration options are described below.
@@ -321,20 +359,19 @@ The listed options can be passed to GoTestWAF as follows:
 
 * If running the GoTestWAF Docker container, pass the configuration options in the `docker run` command after the Docker image name.
 
-    For example, to run GoTestWAF with WebSocket check, you can specify the WebSocket URL via the `wsURL` option
-    and `verbose` flag to include more information about the checking process:
+    For example, to run GoTestWAF with WebSocket check, you can specify the WebSocket URL via the `wsURL` option:
 
     ```
     docker run -v ${PWD}/reports:/app/reports --network="host" wallarm/gotestwaf \
-        --url=http://127.0.0.1:8080/ --wsURL=ws://127.0.0.1:8080/api/ws --verbose
+        --url=http://127.0.0.1:8080/ --wsURL=ws://127.0.0.1:8080/api/ws
     ```
 
 * If running GoTestWAF with `go run`, pass the configuration options and its values as the parameters for the main script.
 
-    For example, to run GoTestWAF with WebSocket check, you can specify the WebSocket URL via the `wsURL` option and `verbose` flag to include more information about the checking process:
+    For example, to run GoTestWAF with WebSocket check, you can specify the WebSocket URL via the `wsURL` option:
 
     ```
-    go run ./cmd --url=http://127.0.0.1:8080/ --wsURL=ws://127.0.0.1:8080/api/ws --verbose
+    go run ./cmd --url=http://127.0.0.1:8080/ --wsURL=ws://127.0.0.1:8080/api/ws
     ```
 
 ### Report name
@@ -387,5 +424,5 @@ Based on the described principle of operation, it is extremely important that th
 
 Example:
 ```bash
-./gotestwaf --verbose --url https://example.com/v1 --openapiFile api.yaml
+./gotestwaf --url https://example.com/v1 --openapiFile api.yaml
 ```
