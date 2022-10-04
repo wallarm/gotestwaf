@@ -753,7 +753,7 @@
                 {{range $paths, $pathMap := .NegativeTests.Bypassed}}
                     {{$length := len $paths}}
                     {{if ne $length 0}}
-                        {{$splitPaths := StringsSplit $paths}}
+                        {{$splitPaths := StringsSplit $paths "\n"}}
                 <div class="positive__grid--additional--information--row">
                     <div class="positive__grid--row-item">{{$path := StringsJoin $splitPaths "<br>"}}{{script $path}}</div>
                 </div>
