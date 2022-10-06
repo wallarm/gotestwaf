@@ -374,7 +374,9 @@ func (s *Scanner) produceTests(ctx context.Context, n int) <-chan *testWork {
 						} else {
 							testHeaderValue = ""
 						}
-						wrk := &testWork{t.Set,
+
+						wrk := &testWork{
+							t.Set,
 							t.Name,
 							payload,
 							e,
@@ -383,6 +385,7 @@ func (s *Scanner) produceTests(ctx context.Context, n int) <-chan *testWork {
 							t.IsTruePositive,
 							testHeaderValue,
 						}
+
 						select {
 						case testChan <- wrk:
 						case <-ctx.Done():

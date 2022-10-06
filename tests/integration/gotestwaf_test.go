@@ -76,18 +76,10 @@ func runGoTestWAF(ctx context.Context, testCases []*db.Case) error {
 		return errors.Wrap(err, "couldn't create test cases DB")
 	}
 
-	s, err := scanner.New(logger, cfg, db, nil, nil, false)
+	s, err := scanner.New(logger, cfg, db, nil, nil, true)
 	if err != nil {
 		return errors.Wrap(err, "couldn't create scanner")
 	}
-
-	err = s.WAFBlockCheck(ctx)
-	if err != nil {
-		return err
-	}
-
-	s.WAFwsBlockCheck(ctx)
-	s.CheckGRPCAvailability(ctx)
 
 	err = s.Run(ctx)
 	if err != nil {

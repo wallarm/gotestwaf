@@ -246,7 +246,7 @@ func exportFullReportToHtml(
 	var appSecNegBlockedNum int
 	var appSecNegNum int
 
-	for _, test := range s.Blocked {
+	for _, test := range s.NegativeTests.Blocked {
 		if isApiTest(test.TestSet) {
 			apiSecNegNum++
 			apiSecNegBlockedNum++
@@ -255,7 +255,7 @@ func exportFullReportToHtml(
 			appSecNegBlockedNum++
 		}
 	}
-	for _, test := range s.Bypasses {
+	for _, test := range s.NegativeTests.Bypasses {
 		if isApiTest(test.TestSet) {
 			apiSecNegNum++
 		} else {
@@ -341,7 +341,7 @@ func exportFullReportToHtml(
 	}
 
 	data.NegativeTests.SummaryTable = make(map[string]*testSetSummary)
-	for _, row := range s.SummaryTable {
+	for _, row := range s.NegativeTests.SummaryTable {
 		if _, ok := data.NegativeTests.SummaryTable[row.TestSet]; !ok {
 			data.NegativeTests.SummaryTable[row.TestSet] = &testSetSummary{}
 		}
@@ -392,7 +392,7 @@ func exportFullReportToHtml(
 
 	// map[paths]map[payload]map[statusCode]*testDetails
 	negBypassed := make(map[string]map[string]map[int]*testDetails)
-	for _, d := range s.Bypasses {
+	for _, d := range s.NegativeTests.Bypasses {
 		paths := strings.Join(d.AdditionalInfo, "\n")
 
 		if _, ok := negBypassed[paths]; !ok {
@@ -419,7 +419,7 @@ func exportFullReportToHtml(
 
 	// map[payload]map[statusCode]*testDetails
 	negUnresolved := make(map[string]map[int]*testDetails)
-	for _, d := range s.Unresolved {
+	for _, d := range s.NegativeTests.Unresolved {
 		if _, ok := negUnresolved[d.Payload]; !ok {
 			// map[statusCode]*testDetails
 			negUnresolved[d.Payload] = make(map[int]*testDetails)
@@ -501,13 +501,13 @@ func exportFullReportToHtml(
 
 	data.NegativeTests.Bypassed = negBypassed
 	data.NegativeTests.Unresolved = negUnresolved
-	data.NegativeTests.Failed = s.Failed
+	data.NegativeTests.Failed = s.NegativeTests.Failed
 	data.NegativeTests.Percentage = s.WafScore
-	data.NegativeTests.TotalSent = s.AllRequestsNumber
-	data.NegativeTests.BlockedRequestsNumber = s.BlockedRequestsNumber
-	data.NegativeTests.BypassedRequestsNumber = s.BypassedRequestsNumber
-	data.NegativeTests.UnresolvedRequestsNumber = s.UnresolvedRequestsNumber
-	data.NegativeTests.FailedRequestsNumber = s.FailedRequestsNumber
+	data.NegativeTests.TotalSent = s.NegativeTests.AllRequestsNumber
+	data.NegativeTests.BlockedRequestsNumber = s.NegativeTests.BlockedRequestsNumber
+	data.NegativeTests.BypassedRequestsNumber = s.NegativeTests.BypassedRequestsNumber
+	data.NegativeTests.UnresolvedRequestsNumber = s.NegativeTests.UnresolvedRequestsNumber
+	data.NegativeTests.FailedRequestsNumber = s.NegativeTests.FailedRequestsNumber
 
 	data.PositiveTests.Blocked = posBlocked
 	data.PositiveTests.Bypassed = posBypassed
