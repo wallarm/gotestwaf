@@ -93,6 +93,7 @@ func parseFlags() (args string, err error) {
 	flag.String("reportPath", reportPath, "A directory to store reports")
 	reportName := flag.String("reportName", defaultReportName, "Report file name. Supports `time' package template format")
 	flag.String("reportFormat", "pdf", "Export report to one of the following formats: none, pdf, html, json")
+	flag.String("sendEmail", "", "Send PDF report by e-mail")
 	flag.String("testCasesPath", testCasesPath, "Path to a folder with test cases")
 	flag.String("wafName", wafName, "Name of the WAF product")
 	flag.Bool("ignoreUnresolved", false, "If true, unresolved test cases will be considered as bypassed (affect score and results)")

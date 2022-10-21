@@ -24,6 +24,7 @@ type Config struct {
 	ReportPath            string            `mapstructure:"reportPath"`
 	ReportName            string            `mapstructure:"reportName"`
 	ReportFormat          string            `mapstructure:"reportFormat"`
+	SendEmail             string            `mapstructure:"sendEmail"`
 	TestCase              string            `mapstructure:"testCase"`
 	TestCasesPath         string            `mapstructure:"testCasesPath"`
 	TestSet               string            `mapstructure:"testSet"`

@@ -1,30 +1,14 @@
 package report
 
 import (
-	"bytes"
 	"fmt"
-	"regexp"
 	"strings"
-
-	"github.com/go-echarts/go-echarts/v2/charts"
-	"github.com/go-echarts/go-echarts/v2/opts"
-	"github.com/pkg/errors"
 
 	"github.com/wallarm/gotestwaf/internal/db"
 )
 
 const (
-	titleColor = "#000000"
-	labelColor = "#333333"
-)
-
-var (
-	emptyIndicator = opts.Indicator{Name: "-",
-		Max:   100,
-		Color: labelColor,
-	}
-
-	emptyValue = float32(100)
+	emptyIndicator = "-"
 )
 
 type pair struct {
@@ -32,6 +16,7 @@ type pair struct {
 	bypassed int
 }
 
+// updateCounters counts tests by category.
 func updateCounters(t *db.TestDetails, counters map[string]map[string]pair, isBlocked bool) {
 	var category string
 	var typ string
@@ -61,19 +46,16 @@ func updateCounters(t *db.TestDetails, counters map[string]map[string]pair, isBl
 	counters[category][typ] = val
 }
 
-func getIndicatorsAndItems(counters map[string]map[string]pair, category string) (
-	indicators []*opts.Indicator, items []opts.RadarData,
-) {
-	var values []float32
-
+// getIndicatorsAndItems returns indicators and values for charts.
+func getIndicatorsAndItems(
+	counters map[string]map[string]pair,
+	category string,
+) (indicators []string, items []float32) {
 	for testType, val := range counters[category] {
 		percentage := float32(db.CalculatePercentage(val.blocked, val.blocked+val.bypassed))
-		indicators = append(indicators, &opts.Indicator{
-			Name:  fmt.Sprintf("%s (%.1f%%)", testType, percentage),
-			Max:   100,
-			Color: labelColor,
-		})
-		values = append(values, percentage)
+
+		indicators = append(indicators, fmt.Sprintf("%s (%.1f%%)", testType, percentage))
+		items = append(items, percentage)
 	}
 
 	switch len(indicators) {
@@ -81,60 +63,58 @@ func getIndicatorsAndItems(counters map[string]map[string]pair, category string)
 		return nil, nil
 
 	case 1:
-		indicators = []*opts.Indicator{
-			indicators[0], &emptyIndicator, &emptyIndicator,
-			&emptyIndicator, &emptyIndicator, &emptyIndicator,
+		indicators = []string{
+			indicators[0], emptyIndicator, emptyIndicator,
+			emptyIndicator, emptyIndicator, emptyIndicator,
 		}
-		values = []float32{
-			values[0], emptyValue, emptyValue,
-			emptyValue, emptyValue, emptyValue,
+		items = []float32{
+			items[0], 0.0, 0.0,
+			0.0, 0.0, 0.0,
 		}
 
 	case 2:
-		indicators = []*opts.Indicator{
-			&emptyIndicator, indicators[0], &emptyIndicator,
-			&emptyIndicator, indicators[1], &emptyIndicator,
+		indicators = []string{
+			emptyIndicator, indicators[0], emptyIndicator,
+			emptyIndicator, indicators[1], emptyIndicator,
 		}
-		values = []float32{
-			emptyValue, values[0], emptyValue,
-			emptyValue, values[1], emptyValue,
+		items = []float32{
+			0.0, items[0], 0.0,
+			0.0, items[1], 0.0,
 		}
 
 	case 3:
-		indicators = []*opts.Indicator{
-			indicators[0], &emptyIndicator, indicators[1],
-			&emptyIndicator, indicators[2], &emptyIndicator,
+		indicators = []string{
+			indicators[0], emptyIndicator, indicators[1],
+			emptyIndicator, indicators[2], emptyIndicator,
 		}
-		values = []float32{
-			values[0], emptyValue, values[1],
-			emptyValue, values[2], emptyValue,
+		items = []float32{
+			items[0], 0.0, items[1],
+			0.0, items[2], 0.0,
 		}
 
 	case 4:
-		indicators = []*opts.Indicator{
-			&emptyIndicator, indicators[0],
-			&emptyIndicator, indicators[1],
-			&emptyIndicator, indicators[2],
-			&emptyIndicator, indicators[3],
+		indicators = []string{
+			emptyIndicator, indicators[0],
+			emptyIndicator, indicators[1],
+			emptyIndicator, indicators[2],
+			emptyIndicator, indicators[3],
 		}
-		values = []float32{
-			emptyValue, values[0],
-			emptyValue, values[1],
-			emptyValue, values[2],
-			emptyValue, values[3],
-		}
-	}
-
-	if indicators != nil {
-		items = []opts.RadarData{
-			{Value: values},
+		items = []float32{
+			0.0, items[0],
+			0.0, items[1],
+			0.0, items[2],
+			0.0, items[3],
 		}
 	}
 
 	return
 }
 
-func generateCharts(s *db.Statistics) (apiChart *string, appChart *string, err error) {
+// generateChartData generates indicators and their values for JS charts.
+func generateChartData(s *db.Statistics) (
+	apiIndicators []string, apiItems []float32,
+	appIndicators []string, appItems []float32,
+) {
 	counters := make(map[string]map[string]pair)
 
 	for _, t := range s.NegativeTests.Blocked {
@@ -153,95 +133,17 @@ func generateCharts(s *db.Statistics) (apiChart *string, appChart *string, err e
 		counters["api"]["grpc"] = pair{}
 	}
 
-	apiIndicators, apiItems := getIndicatorsAndItems(counters, "api")
-	appIndicators, appItems := getIndicatorsAndItems(counters, "app")
+	apiIndicators, apiItems = getIndicatorsAndItems(counters, "api")
+	appIndicators, appItems = getIndicatorsAndItems(counters, "app")
 
 	// Fix label for gRPC if it is unavailable
 	if !s.IsGrpcAvailable && containsApiCat {
 		for i := 0; i < len(apiIndicators); i++ {
-			if strings.HasPrefix(apiIndicators[i].Name, "grpc") {
-				apiIndicators[i].Name = "grpc (unavailable)"
-				apiItems[0].Value.([]float32)[i] = float32(0)
+			if strings.HasPrefix(apiIndicators[i], "grpc") {
+				apiIndicators[i] = "grpc (unavailable)"
+				apiItems[i] = float32(0)
 			}
 		}
-	}
-
-	var buffer bytes.Buffer
-	re := regexp.MustCompile(`<script type="text/javascript">(\n|.)*</script>`)
-	reRenderer := regexp.MustCompile(`(echarts\.init\()(.*)(\))`)
-
-	if apiIndicators != nil {
-		chart := charts.NewRadar()
-		chart.SetGlobalOptions(
-			charts.WithTitleOpts(opts.Title{
-				Title: "API Security",
-				Right: "center",
-				TitleStyle: &opts.TextStyle{
-					Color: titleColor,
-				},
-			}),
-			charts.WithInitializationOpts(opts.Initialization{
-				ChartID: "api_chart",
-			}),
-			charts.WithRadarComponentOpts(opts.RadarComponent{
-				Indicator: apiIndicators,
-				SplitArea: &opts.SplitArea{Show: true},
-				SplitLine: &opts.SplitLine{Show: true},
-			}),
-		)
-		chart.AddSeries("", apiItems)
-
-		err = chart.Render(&buffer)
-		if err != nil {
-			return nil, nil, errors.Wrap(err, "couldn't render chart")
-		}
-
-		scriptParts := re.FindAllString(buffer.String(), -1)
-		if len(scriptParts) != 1 {
-			return nil, nil, errors.New("couldn't get chart script")
-		}
-
-		script := reRenderer.ReplaceAllString(scriptParts[0], "$1$2, {renderer: \"svg\"}$3")
-
-		apiChart = &script
-
-		buffer.Reset()
-	}
-
-	if appIndicators != nil {
-		chart := charts.NewRadar()
-		chart.SetGlobalOptions(
-			charts.WithTitleOpts(opts.Title{
-				Title: "Application Security",
-				Right: "center",
-				TitleStyle: &opts.TextStyle{
-					Color: titleColor,
-				},
-			}),
-			charts.WithInitializationOpts(opts.Initialization{
-				ChartID: "app_chart",
-			}),
-			charts.WithRadarComponentOpts(opts.RadarComponent{
-				Indicator: appIndicators,
-				SplitArea: &opts.SplitArea{Show: true},
-				SplitLine: &opts.SplitLine{Show: true},
-			}),
-		)
-		chart.AddSeries("", appItems)
-
-		err = chart.Render(&buffer)
-		if err != nil {
-			return nil, nil, errors.Wrap(err, "couldn't render chart")
-		}
-
-		scriptParts := re.FindAllString(buffer.String(), -1)
-		if len(scriptParts) != 1 {
-			return nil, nil, errors.New("couldn't get chart script")
-		}
-
-		script := reRenderer.ReplaceAllString(scriptParts[0], "$1$2, {renderer: \"svg\"}$3")
-
-		appChart = &script
 	}
 
 	return

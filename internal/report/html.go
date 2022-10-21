@@ -1,10 +1,6 @@
 package report
 
 import (
-	"bytes"
-	_ "embed"
-	"html/template"
-	"io"
 	"os"
 	"strings"
 	"time"
@@ -13,127 +9,43 @@ import (
 
 	"github.com/wallarm/gotestwaf/internal/db"
 	"github.com/wallarm/gotestwaf/internal/version"
+	"github.com/wallarm/gotestwaf/pkg/report"
 )
 
 const naMark = "N/A"
 
-//go:embed report_template.html
-var htmlTemplate string
-
-type grade struct {
-	Percentage  float32
-	Mark        string
-	ClassSuffix string
+var comparisonTable = []*report.ComparisonTableRow{
+	{
+		Name:         "ModSecurity PARANOIA=1",
+		ApiSec:       computeGrade(42.9, 1),
+		AppSec:       computeGrade(30.5, 1),
+		OverallScore: computeGrade(36.7, 1),
+	},
+	{
+		Name:         "ModSecurity PARANOIA=2",
+		ApiSec:       computeGrade(78.6, 1),
+		AppSec:       computeGrade(34.8, 1),
+		OverallScore: computeGrade(56.7, 1),
+	},
+	{
+		Name:         "ModSecurity PARANOIA=3",
+		ApiSec:       computeGrade(92.9, 1),
+		AppSec:       computeGrade(38.3, 1),
+		OverallScore: computeGrade(65.6, 1),
+	},
+	{
+		Name:         "ModSecurity PARANOIA=4",
+		ApiSec:       computeGrade(100, 1),
+		AppSec:       computeGrade(40.8, 1),
+		OverallScore: computeGrade(70.4, 1),
+	},
 }
 
-type comparisonTableRow struct {
-	Name         string
-	ApiSec       grade
-	AppSec       grade
-	OverallScore grade
-}
-
-type testDetails struct {
-	TestCase     string
-	Encoders     map[string]any
-	Placeholders map[string]any
-}
-
-type testSetSummary struct {
-	TestCases []*db.SummaryTableRow
-
-	Percentage float64
-	Sent       int
-	Blocked    int
-	Bypassed   int
-	Unresolved int
-	Failed     int
-
-	resolvedTestCasesNumber int
-}
-
-type htmlReport struct {
-	IgnoreUnresolved bool
-
-	WafName        string
-	Url            string
-	WafTestingDate string
-	GtwVersion     string
-	TestCasesFP    string
-	OpenApiFile    string
-	Args           string
-
-	ApiChartScript *template.HTML
-	AppChartScript *template.HTML
-
-	Overall grade
-	ApiSec  struct {
-		TrueNegative grade
-		TruePositive grade
-		Grade        grade
-	}
-	AppSec struct {
-		TrueNegative grade
-		TruePositive grade
-		Grade        grade
-	}
-
-	ComparisonTable []*comparisonTableRow
-
-	TotalSent                int
-	BlockedRequestsNumber    int
-	BypassedRequestsNumber   int
-	UnresolvedRequestsNumber int
-	FailedRequestsNumber     int
-
-	ScannedPaths db.ScannedPaths
-
-	NegativeTests struct {
-		SummaryTable map[string]*testSetSummary
-
-		// map[paths]map[payload]map[statusCode]*testDetails
-		Bypassed map[string]map[string]map[int]*testDetails
-		// map[payload]map[statusCode]*testDetails
-		Unresolved map[string]map[int]*testDetails
-		Failed     []*db.FailedDetails
-
-		Percentage               float64
-		TotalSent                int
-		BlockedRequestsNumber    int
-		BypassedRequestsNumber   int
-		UnresolvedRequestsNumber int
-		FailedRequestsNumber     int
-	}
-
-	PositiveTests struct {
-		SummaryTable map[string]*testSetSummary
-
-		// map[payload]map[statusCode]*testDetails
-		Blocked map[string]map[int]*testDetails
-		// map[payload]map[statusCode]*testDetails
-		Bypassed map[string]map[int]*testDetails
-		// map[payload]map[statusCode]*testDetails
-		Unresolved map[string]map[int]*testDetails
-		Failed     []*db.FailedDetails
-
-		Percentage               float64
-		TotalSent                int
-		BlockedRequestsNumber    int
-		BypassedRequestsNumber   int
-		UnresolvedRequestsNumber int
-		FailedRequestsNumber     int
-	}
-}
-
-func isApiTest(setName string) bool {
-	return strings.Contains(setName, "api")
-}
-
-func computeGrade(value float32, all int) grade {
-	g := grade{
-		Percentage:  0.0,
-		Mark:        naMark,
-		ClassSuffix: "na",
+func computeGrade(value float32, all int) *report.Grade {
+	g := &report.Grade{
+		Percentage:     0.0,
+		Mark:           naMark,
+		CSSClassSuffix: "na",
 	}
 
 	if all == 0 {
@@ -148,63 +60,54 @@ func computeGrade(value float32, all int) grade {
 	switch {
 	case g.Percentage >= 97.0:
 		g.Mark = "A+"
-		g.ClassSuffix = "a"
+		g.CSSClassSuffix = "a"
 	case g.Percentage >= 93.0:
 		g.Mark = "A"
-		g.ClassSuffix = "a"
+		g.CSSClassSuffix = "a"
 	case g.Percentage >= 90.0:
 		g.Mark = "A-"
-		g.ClassSuffix = "a"
+		g.CSSClassSuffix = "a"
 	case g.Percentage >= 87.0:
 		g.Mark = "B+"
-		g.ClassSuffix = "b"
+		g.CSSClassSuffix = "b"
 	case g.Percentage >= 83.0:
 		g.Mark = "B"
-		g.ClassSuffix = "b"
+		g.CSSClassSuffix = "b"
 	case g.Percentage >= 80.0:
 		g.Mark = "B-"
-		g.ClassSuffix = "b"
+		g.CSSClassSuffix = "b"
 	case g.Percentage >= 77.0:
 		g.Mark = "C+"
-		g.ClassSuffix = "c"
+		g.CSSClassSuffix = "c"
 	case g.Percentage >= 73.0:
 		g.Mark = "C"
-		g.ClassSuffix = "c"
+		g.CSSClassSuffix = "c"
 	case g.Percentage >= 70.0:
 		g.Mark = "C-"
-		g.ClassSuffix = "c"
+		g.CSSClassSuffix = "c"
 	case g.Percentage >= 67.0:
 		g.Mark = "D+"
-		g.ClassSuffix = "d"
+		g.CSSClassSuffix = "d"
 	case g.Percentage >= 63.0:
 		g.Mark = "D"
-		g.ClassSuffix = "d"
+		g.CSSClassSuffix = "d"
 	case g.Percentage >= 60.0:
 		g.Mark = "D-"
-		g.ClassSuffix = "d"
+		g.CSSClassSuffix = "d"
 	case g.Percentage < 60.0:
 		g.Mark = "F"
-		g.ClassSuffix = "f"
+		g.CSSClassSuffix = "f"
 	}
 
 	return g
 }
 
-func MapKeysToString(m map[string]interface{}, sep string) string {
-	var keysList []string
-
-	for k := range m {
-		keysList = append(keysList, k)
-	}
-
-	return strings.Join(keysList, sep)
-}
-
-func exportFullReportToHtml(
+// prepareHTMLFullReport prepares ready data to insert in HTML template.
+func prepareHTMLFullReport(
 	s *db.Statistics, reportTime time.Time, wafName string,
 	url string, openApiFile string, args string, ignoreUnresolved bool,
-) (fileName string, err error) {
-	data := htmlReport{
+) (*report.HtmlReport, error) {
+	data := &report.HtmlReport{
 		IgnoreUnresolved: ignoreUnresolved,
 		WafName:          wafName,
 		Url:              url,
@@ -213,32 +116,7 @@ func exportFullReportToHtml(
 		TestCasesFP:      s.TestCasesFingerprint,
 		OpenApiFile:      openApiFile,
 		Args:             args,
-		ComparisonTable: []*comparisonTableRow{
-			{
-				Name:         "ModSecurity PARANOIA=1",
-				ApiSec:       computeGrade(42.9, 1),
-				AppSec:       computeGrade(30.5, 1),
-				OverallScore: computeGrade(36.7, 1),
-			},
-			{
-				Name:         "ModSecurity PARANOIA=2",
-				ApiSec:       computeGrade(78.6, 1),
-				AppSec:       computeGrade(34.8, 1),
-				OverallScore: computeGrade(56.7, 1),
-			},
-			{
-				Name:         "ModSecurity PARANOIA=3",
-				ApiSec:       computeGrade(92.9, 1),
-				AppSec:       computeGrade(38.3, 1),
-				OverallScore: computeGrade(65.6, 1),
-			},
-			{
-				Name:         "ModSecurity PARANOIA=4",
-				ApiSec:       computeGrade(100, 1),
-				AppSec:       computeGrade(40.8, 1),
-				OverallScore: computeGrade(70.4, 1),
-			},
-		},
+		ComparisonTable:  comparisonTable,
 	}
 
 	var apiSecNegBlockedNum int
@@ -326,24 +204,17 @@ func exportFullReportToHtml(
 	data.Overall = computeGrade(
 		data.ApiSec.Grade.Percentage+data.AppSec.Grade.Percentage, divider)
 
-	apiChart, appChart, err := generateCharts(s)
-	if err != nil {
-		return "", errors.Wrap(err, "couldn't generate chart scripts")
-	}
+	apiIndicators, apiItems, appIndicators, appItems := generateChartData(s)
 
-	if apiChart != nil {
-		v := template.HTML(*apiChart)
-		data.ApiChartScript = &v
-	}
-	if appChart != nil {
-		v := template.HTML(*appChart)
-		data.AppChartScript = &v
-	}
+	data.ApiSecChartData.Indicators = apiIndicators
+	data.ApiSecChartData.Items = apiItems
+	data.AppSecChartData.Indicators = appIndicators
+	data.AppSecChartData.Items = appItems
 
-	data.NegativeTests.SummaryTable = make(map[string]*testSetSummary)
+	data.NegativeTests.SummaryTable = make(map[string]*report.TestSetSummary)
 	for _, row := range s.NegativeTests.SummaryTable {
 		if _, ok := data.NegativeTests.SummaryTable[row.TestSet]; !ok {
-			data.NegativeTests.SummaryTable[row.TestSet] = &testSetSummary{}
+			data.NegativeTests.SummaryTable[row.TestSet] = &report.TestSetSummary{}
 		}
 
 		testSetSum := data.NegativeTests.SummaryTable[row.TestSet]
@@ -357,18 +228,18 @@ func exportFullReportToHtml(
 		testSetSum.Failed += row.Failed
 
 		if row.Blocked+row.Bypassed != 0 {
-			testSetSum.resolvedTestCasesNumber += 1
+			testSetSum.ResolvedTestCasesNumber += 1
 			testSetSum.Percentage += row.Percentage
 		}
 	}
 	for _, testSetSum := range data.NegativeTests.SummaryTable {
-		testSetSum.Percentage = db.Round(testSetSum.Percentage / float64(testSetSum.resolvedTestCasesNumber))
+		testSetSum.Percentage = db.Round(testSetSum.Percentage / float64(testSetSum.ResolvedTestCasesNumber))
 	}
 
-	data.PositiveTests.SummaryTable = make(map[string]*testSetSummary)
+	data.PositiveTests.SummaryTable = make(map[string]*report.TestSetSummary)
 	for _, row := range s.PositiveTests.SummaryTable {
 		if _, ok := data.PositiveTests.SummaryTable[row.TestSet]; !ok {
-			data.PositiveTests.SummaryTable[row.TestSet] = &testSetSummary{}
+			data.PositiveTests.SummaryTable[row.TestSet] = &report.TestSetSummary{}
 		}
 
 		testSetSum := data.PositiveTests.SummaryTable[row.TestSet]
@@ -382,31 +253,31 @@ func exportFullReportToHtml(
 		testSetSum.Failed += row.Failed
 
 		if row.Blocked+row.Bypassed != 0 {
-			testSetSum.resolvedTestCasesNumber += 1
+			testSetSum.ResolvedTestCasesNumber += 1
 			testSetSum.Percentage += row.Percentage
 		}
 	}
 	for _, testSetSum := range data.PositiveTests.SummaryTable {
-		testSetSum.Percentage = db.Round(testSetSum.Percentage / float64(testSetSum.resolvedTestCasesNumber))
+		testSetSum.Percentage = db.Round(testSetSum.Percentage / float64(testSetSum.ResolvedTestCasesNumber))
 	}
 
 	// map[paths]map[payload]map[statusCode]*testDetails
-	negBypassed := make(map[string]map[string]map[int]*testDetails)
+	negBypassed := make(map[string]map[string]map[int]*report.TestDetails)
 	for _, d := range s.NegativeTests.Bypasses {
 		paths := strings.Join(d.AdditionalInfo, "\n")
 
 		if _, ok := negBypassed[paths]; !ok {
 			// map[payload]map[statusCode]*testDetails
-			negBypassed[paths] = make(map[string]map[int]*testDetails)
+			negBypassed[paths] = make(map[string]map[int]*report.TestDetails)
 		}
 
 		if _, ok := negBypassed[paths][d.Payload]; !ok {
 			// map[statusCode]*testDetails
-			negBypassed[paths][d.Payload] = make(map[int]*testDetails)
+			negBypassed[paths][d.Payload] = make(map[int]*report.TestDetails)
 		}
 
 		if _, ok := negBypassed[paths][d.Payload][d.ResponseStatusCode]; !ok {
-			negBypassed[paths][d.Payload][d.ResponseStatusCode] = &testDetails{
+			negBypassed[paths][d.Payload][d.ResponseStatusCode] = &report.TestDetails{
 				Encoders:     make(map[string]any),
 				Placeholders: make(map[string]any),
 			}
@@ -418,15 +289,15 @@ func exportFullReportToHtml(
 	}
 
 	// map[payload]map[statusCode]*testDetails
-	negUnresolved := make(map[string]map[int]*testDetails)
+	negUnresolved := make(map[string]map[int]*report.TestDetails)
 	for _, d := range s.NegativeTests.Unresolved {
 		if _, ok := negUnresolved[d.Payload]; !ok {
 			// map[statusCode]*testDetails
-			negUnresolved[d.Payload] = make(map[int]*testDetails)
+			negUnresolved[d.Payload] = make(map[int]*report.TestDetails)
 		}
 
 		if _, ok := negUnresolved[d.Payload][d.ResponseStatusCode]; !ok {
-			negUnresolved[d.Payload][d.ResponseStatusCode] = &testDetails{
+			negUnresolved[d.Payload][d.ResponseStatusCode] = &report.TestDetails{
 				Encoders:     make(map[string]any),
 				Placeholders: make(map[string]any),
 			}
@@ -438,15 +309,15 @@ func exportFullReportToHtml(
 	}
 
 	// map[payload]map[statusCode]*testDetails
-	posBlocked := make(map[string]map[int]*testDetails)
+	posBlocked := make(map[string]map[int]*report.TestDetails)
 	for _, d := range s.PositiveTests.FalsePositive {
 		if _, ok := posBlocked[d.Payload]; !ok {
 			// map[statusCode]*testDetails
-			posBlocked[d.Payload] = make(map[int]*testDetails)
+			posBlocked[d.Payload] = make(map[int]*report.TestDetails)
 		}
 
 		if _, ok := posBlocked[d.Payload][d.ResponseStatusCode]; !ok {
-			posBlocked[d.Payload][d.ResponseStatusCode] = &testDetails{
+			posBlocked[d.Payload][d.ResponseStatusCode] = &report.TestDetails{
 				Encoders:     make(map[string]any),
 				Placeholders: make(map[string]any),
 			}
@@ -458,15 +329,15 @@ func exportFullReportToHtml(
 	}
 
 	// map[payload]map[statusCode]*testDetails
-	posBypassed := make(map[string]map[int]*testDetails)
+	posBypassed := make(map[string]map[int]*report.TestDetails)
 	for _, d := range s.PositiveTests.TruePositive {
 		if _, ok := posBypassed[d.Payload]; !ok {
 			// map[statusCode]*testDetails
-			posBypassed[d.Payload] = make(map[int]*testDetails)
+			posBypassed[d.Payload] = make(map[int]*report.TestDetails)
 		}
 
 		if _, ok := posBypassed[d.Payload][d.ResponseStatusCode]; !ok {
-			posBypassed[d.Payload][d.ResponseStatusCode] = &testDetails{
+			posBypassed[d.Payload][d.ResponseStatusCode] = &report.TestDetails{
 				Encoders:     make(map[string]any),
 				Placeholders: make(map[string]any),
 			}
@@ -478,15 +349,15 @@ func exportFullReportToHtml(
 	}
 
 	// map[payload]map[statusCode]*testDetails
-	posUnresolved := make(map[string]map[int]*testDetails)
+	posUnresolved := make(map[string]map[int]*report.TestDetails)
 	for _, d := range s.PositiveTests.Unresolved {
 		if _, ok := posUnresolved[d.Payload]; !ok {
 			// map[statusCode]*testDetails
-			posUnresolved[d.Payload] = make(map[int]*testDetails)
+			posUnresolved[d.Payload] = make(map[int]*report.TestDetails)
 		}
 
 		if _, ok := posUnresolved[d.Payload][d.ResponseStatusCode]; !ok {
-			posUnresolved[d.Payload][d.ResponseStatusCode] = &testDetails{
+			posUnresolved[d.Payload][d.ResponseStatusCode] = &report.TestDetails{
 				Encoders:     make(map[string]any),
 				Placeholders: make(map[string]any),
 			}
@@ -526,24 +397,23 @@ func exportFullReportToHtml(
 	data.UnresolvedRequestsNumber = data.NegativeTests.UnresolvedRequestsNumber + data.PositiveTests.UnresolvedRequestsNumber
 	data.FailedRequestsNumber = data.NegativeTests.FailedRequestsNumber + data.PositiveTests.FailedRequestsNumber
 
-	templ := template.Must(
-		template.New("report").
-			Funcs(template.FuncMap{
-				"script": func(s string) template.HTML {
-					return template.HTML(s)
-				},
-			}).
-			Funcs(template.FuncMap{
-				"StringsJoin":     strings.Join,
-				"StringsSplit":    strings.Split,
-				"MapKeysToString": MapKeysToString,
-			}).Parse(htmlTemplate))
+	return data, nil
+}
 
-	var buffer bytes.Buffer
-
-	err = templ.Execute(io.MultiWriter(&buffer), data)
+// exportFullReportToHtml prepares and saves a full report in HTML format on a disk
+// to a temporary file.
+func exportFullReportToHtml(
+	s *db.Statistics, reportTime time.Time, wafName string,
+	url string, openApiFile string, args string, ignoreUnresolved bool,
+) (fileName string, err error) {
+	reportData, err := prepareHTMLFullReport(s, reportTime, wafName, url, openApiFile, args, ignoreUnresolved)
 	if err != nil {
-		return "", errors.Wrap(err, "couldn't execute template")
+		return "", errors.Wrap(err, "couldn't prepare data for HTML report")
+	}
+
+	reportHtml, err := report.RenderFullReportToHTML(reportData)
+	if err != nil {
+		return "", errors.Wrap(err, "couldn't substitute report data into HTML template")
 	}
 
 	file, err := os.CreateTemp("", "gotestwaf_report_*.html")
@@ -554,9 +424,27 @@ func exportFullReportToHtml(
 
 	fileName = file.Name()
 
-	file.Write(buffer.Bytes())
+	file.Write(reportHtml.Bytes())
 
 	err = os.Chmod(fileName, 0644)
 
 	return fileName, err
+}
+
+// printFullReportToHtml prepares and saves a full report in HTML format on a disk.
+func printFullReportToHtml(
+	s *db.Statistics, reportFile string, reportTime time.Time,
+	wafName string, url string, openApiFile string, args string, ignoreUnresolved bool,
+) error {
+	tempFileName, err := exportFullReportToHtml(s, reportTime, wafName, url, openApiFile, args, ignoreUnresolved)
+	if err != nil {
+		return errors.Wrap(err, "couldn't export report to HTML")
+	}
+
+	err = os.Rename(tempFileName, reportFile)
+	if err != nil {
+		return errors.Wrap(err, "couldn't export report to HTML")
+	}
+
+	return nil
 }

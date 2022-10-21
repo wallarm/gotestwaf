@@ -15,7 +15,7 @@ type Case struct {
 	Payloads       []string `yaml:"payload"`
 	Encoders       []string `yaml:"encoder"`
 	Placeholders   []string `yaml:"placeholder"`
-	Type           string   `yaml:"type"`
+	Type           string   `default:"unknown" yaml:"type"`
 	Set            string
 	Name           string
 	IsTruePositive bool
