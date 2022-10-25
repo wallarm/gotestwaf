@@ -157,6 +157,13 @@ func RenderFullReportToHTML(reportData *HtmlReport) (*bytes.Buffer, error) {
 				"script": func(s string) template.HTML {
 					return template.HTML(s)
 				},
+				"HTMLEscapeSlice": func(s []string) []string {
+					escapedSlice := make([]string, len(s))
+					for i := range s {
+						escapedSlice[i] = template.HTMLEscapeString(s[i])
+					}
+					return escapedSlice
+				},
 				"StringsJoin":     strings.Join,
 				"StringsSplit":    strings.Split,
 				"MapKeysToString": MapKeysToString,

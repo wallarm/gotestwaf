@@ -734,8 +734,9 @@
                     <div class="positive__grid--row-item">{{$row.Placeholder}}</div>
                 </div>
                 {{$length := len $row.Reason}}{{if ne $length 0}}
+                {{$escapedReason := HTMLEscapeSlice $row.Reason}}
                 <div class="positive__grid--additional--information--row">
-                    <div class="positive__grid--row-item">Reason: {{$reason := StringsJoin $row.Reason "<br>"}}{{script $reason}}</div>
+                    <div class="positive__grid--row-item">Reason: {{$reason := StringsJoin $escapedReason "<br>"}}{{script $reason}}</div>
                 </div>
                 {{end}}
                 {{end}}
@@ -756,8 +757,9 @@
                     {{$length := len $paths}}
                     {{if ne $length 0}}
                         {{$splitPaths := StringsSplit $paths "\n"}}
+                        {{$escapedSP := HTMLEscapeSlice $splitPaths}}
                 <div class="positive__grid--additional--information--row">
-                    <div class="positive__grid--row-item">{{$path := StringsJoin $splitPaths "<br>"}}{{script $path}}</div>
+                    <div class="positive__grid--row-item">{{$path := StringsJoin $escapedSP "<br>"}}{{script $path}}</div>
                 </div>
                     {{end}}
                     {{range $payload, $codeMap := $pathMap}}
@@ -820,8 +822,9 @@
                     <div class="positive__grid--row-item">{{$row.Placeholder}}</div>
                 </div>
                 {{$length := len $row.Reason}}{{if ne $length 0}}
+                {{$escapedReason := HTMLEscapeSlice $row.Reason}}
                 <div class="positive__grid--additional--information--row">
-                    <div class="positive__grid--row-item">Reason: {{$reason := StringsJoin $row.Reason "<br>"}}{{script $reason}}</div>
+                    <div class="positive__grid--row-item">Reason: {{$reason := StringsJoin $escapedReason "<br>"}}{{script $reason}}</div>
                 </div>
                 {{end}}
                 {{end}}
