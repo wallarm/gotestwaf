@@ -72,8 +72,8 @@ type Statistics struct {
 }
 
 type SummaryTableRow struct {
-	TestSet    string  `json:"test_set" validate:"required,printascii"`
-	TestCase   string  `json:"test_case" validate:"required,printascii"`
+	TestSet    string  `json:"test_set" validate:"required,printascii,max=256"`
+	TestCase   string  `json:"test_case" validate:"required,printascii,max=256"`
 	Percentage float64 `json:"percentage" validate:"min=0,max=100"`
 	Sent       int     `json:"sent" validate:"min=0"`
 	Blocked    int     `json:"blocked" validate:"min=0"`
@@ -104,8 +104,8 @@ type FailedDetails struct {
 }
 
 type Path struct {
-	Method string `json:"method" validate:"required,printascii"`
-	Path   string `json:"path" validate:"required,printascii"`
+	Method string `json:"method" validate:"required,printascii,max=32"`
+	Path   string `json:"path" validate:"required,printascii,max=1024"`
 }
 
 type ScannedPaths []*Path
