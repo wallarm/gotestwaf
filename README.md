@@ -342,6 +342,7 @@ Options:
       --reportName string       Report file name. Supports `time' package template format (default "waf-evaluation-report-2006-January-02-15-04-05")
       --reportPath string       A directory to store reports (default "reports")
       --sendDelay int           Delay in ms between requests (default 400)
+      --sendEmail string        Send PDF report by e-mail
       --skipWAFBlockCheck       If true, WAF detection tests will be skipped
       --skipWAFIdentification   Skip WAF identification
       --testCase string         If set then only this test case will be run
