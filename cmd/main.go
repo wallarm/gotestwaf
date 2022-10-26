@@ -164,17 +164,24 @@ func run(ctx context.Context, logger *logrus.Logger) error {
 		return err
 	}
 
+	if cfg.SendEmail != "" {
+		err = report.SendReportByEmail(
+			ctx, stat, cfg.SendEmail,
+			reportTime, cfg.WAFName, cfg.URL, cfg.OpenAPIFile, args,
+			cfg.IgnoreUnresolved,
+		)
+		if err != nil {
+			return errors.Wrap(err, "couldn't send report by email")
+		}
+	}
+
 	reportFile, err = report.ExportFullReport(
 		ctx, stat, reportFile,
 		reportTime, cfg.WAFName, cfg.URL, cfg.OpenAPIFile, args,
-		cfg.IgnoreUnresolved, cfg.ReportFormat, cfg.SendEmail,
+		cfg.IgnoreUnresolved, cfg.ReportFormat,
 	)
 	if err != nil {
 		return errors.Wrap(err, "couldn't export full report")
-	}
-
-	if cfg.SendEmail != "" {
-		return nil
 	}
 
 	if cfg.ReportFormat != report.NoneFormat {

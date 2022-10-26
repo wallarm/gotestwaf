@@ -2,6 +2,7 @@ package report
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -12,9 +13,19 @@ import (
 	"github.com/wallarm/gotestwaf/pkg/report"
 )
 
-const server = "http://localhost:3000/send-email"
+const server = "https://gotestwaf.wallarm.tools/v1/send-email"
 
-func sendEmail(reportData *report.HtmlReport, email string) error {
+var _ error = (*ErrorResponse)(nil)
+
+type ErrorResponse struct {
+	Msg string `json:"msg"`
+}
+
+func (e *ErrorResponse) Error() string {
+	return e.Msg
+}
+
+func sendEmail(ctx context.Context, reportData *report.HtmlReport, email string) error {
 	requestUrl, err := url.Parse(server)
 	if err != nil {
 		return errors.Wrap(err, "couldn't parse server URL")
@@ -29,7 +40,7 @@ func sendEmail(reportData *report.HtmlReport, email string) error {
 		return errors.Wrap(err, "couldn't marshal report data into JSON format")
 	}
 
-	req, err := http.NewRequest(http.MethodPost, requestUrl.String(), bytes.NewReader(data))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, requestUrl.String(), bytes.NewReader(data))
 	if err != nil {
 		return errors.Wrap(err, "couldn't create request")
 	}
@@ -39,9 +50,23 @@ func sendEmail(reportData *report.HtmlReport, email string) error {
 		return errors.Wrap(err, "couldn't send request to server")
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("bad status code: %d", resp.StatusCode)
-	}
+	switch resp.StatusCode {
+	case http.StatusOK:
+		return nil
 
-	return nil
+	case http.StatusInternalServerError:
+		return fmt.Errorf("bad status code: %d", resp.StatusCode)
+
+	default:
+		var errResp ErrorResponse
+		var body []byte
+
+		resp.Body.Read(body)
+
+		if err := json.Unmarshal(body, &errResp); err != nil {
+			return errors.Wrap(err, "couldn't parse error message from server")
+		}
+
+		return &errResp
+	}
 }

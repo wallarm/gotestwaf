@@ -23,25 +23,28 @@ const (
 	NoneFormat = "none"
 )
 
+func SendReportByEmail(
+	ctx context.Context, s *db.Statistics, email string, reportTime time.Time,
+	wafName string, url string, openApiFile string, args string, ignoreUnresolved bool,
+) error {
+	reportData, err := prepareHTMLFullReport(s, reportTime, wafName, url, openApiFile, args, ignoreUnresolved)
+	if err != nil {
+		return errors.Wrap(err, "couldn't prepare data for HTML report")
+	}
+
+	err = sendEmail(ctx, reportData, email)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // ExportFullReport saves full report on disk in different formats: HTML, PDF, JSON.
 func ExportFullReport(
 	ctx context.Context, s *db.Statistics, reportFile string, reportTime time.Time,
-	wafName string, url string, openApiFile string, args string, ignoreUnresolved bool, format string, email string,
+	wafName string, url string, openApiFile string, args string, ignoreUnresolved bool, format string,
 ) (fullName string, err error) {
-	if email != "" {
-		reportData, err := prepareHTMLFullReport(s, reportTime, wafName, url, openApiFile, args, ignoreUnresolved)
-		if err != nil {
-			return "", errors.Wrap(err, "couldn't prepare data for HTML report")
-		}
-
-		err = sendEmail(reportData, email)
-		if err != nil {
-			return "", errors.Wrap(err, "couldn't send report by e-mail")
-		}
-
-		return "", nil
-	}
-
 	_, reportFileName := filepath.Split(reportFile)
 	if len(reportFileName) > maxReportFilenameLength {
 		return "", errors.New("report filename too long")
