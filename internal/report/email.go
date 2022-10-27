@@ -13,7 +13,7 @@ import (
 	"github.com/wallarm/gotestwaf/pkg/report"
 )
 
-const server = "https://gotestwaf.wallarm.tools/v1/send-email"
+const serverURL = "https://gotestwaf.wallarm.tools/v1/send-report"
 
 var _ error = (*ErrorResponse)(nil)
 
@@ -26,7 +26,7 @@ func (e *ErrorResponse) Error() string {
 }
 
 func sendEmail(ctx context.Context, reportData *report.HtmlReport, email string) error {
-	requestUrl, err := url.Parse(server)
+	requestUrl, err := url.Parse(serverURL)
 	if err != nil {
 		return errors.Wrap(err, "couldn't parse server URL")
 	}
@@ -54,10 +54,11 @@ func sendEmail(ctx context.Context, reportData *report.HtmlReport, email string)
 	case http.StatusOK:
 		return nil
 
-	case http.StatusInternalServerError:
-		return fmt.Errorf("bad status code: %d", resp.StatusCode)
+	case http.StatusBadRequest,
+		http.StatusRequestEntityTooLarge,
+		http.StatusTooManyRequests,
+		http.StatusInternalServerError:
 
-	default:
 		var errResp ErrorResponse
 		var body []byte
 
@@ -68,5 +69,8 @@ func sendEmail(ctx context.Context, reportData *report.HtmlReport, email string)
 		}
 
 		return &errResp
+
+	default:
+		return fmt.Errorf("bad status code: %d", resp.StatusCode)
 	}
 }
