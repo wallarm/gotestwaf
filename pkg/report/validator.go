@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	gtwVersionRegex = regexp.MustCompile(`v\d+\.\d+\.\d+(\-\d+\-g[a-f0-9]{7})?`)
+	gtwVersionRegex = regexp.MustCompile(`(v\d+\.\d+\.\d+(\-\d+\-g[a-f0-9]{7})?|unknown)`)
 	fpRegex         = regexp.MustCompile(`[a-f0-9]{32}`)
 	markRegex       = regexp.MustCompile(`(N/A|[A-F][\+\-]?)`)
 	suffixRegex     = regexp.MustCompile(`(na|[a-f])`)
