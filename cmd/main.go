@@ -173,6 +173,8 @@ func run(ctx context.Context, logger *logrus.Logger) error {
 		if err != nil {
 			return errors.Wrap(err, "couldn't send report by email")
 		}
+
+		return nil
 	}
 
 	reportFile, err = report.ExportFullReport(
