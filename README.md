@@ -314,7 +314,7 @@ Supported GoTestWAF configuration options are described below.
 ## Configuration options
 
 ```
-Usage: ./gotestwaf [OPTIONS] --url <url>
+Usage: ./gotestwaf [OPTIONS] --url <URL> (--email <EMAIL> | --noEmailReport)
 
 Options:
       --addHeader string        An HTTP header to add to requests
