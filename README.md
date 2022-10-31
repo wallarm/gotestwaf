@@ -106,7 +106,7 @@ The steps below walk through downloading and starting GoTestWAF with minimal con
 
     ```
     docker run -v ${PWD}/reports:/app/reports --network="host" \
-        wallarm/gotestwaf --url=<EVALUATED_SECURITY_SOLUTION_URL>
+        wallarm/gotestwaf --url=<EVALUATED_SECURITY_SOLUTION_URL> --noEmailReport
     ```
 
     If required, you can replace `${PWD}/reports` with the path to another folder used to place the evaluation report.
@@ -117,7 +117,7 @@ The steps below walk through downloading and starting GoTestWAF with minimal con
 
     ```
     docker run -v ${PWD}/reports:/app/reports --network="host" \
-       wallarm/gotestwaf --grpcPort 9000 --url=http://my.grpc.endpoint
+       wallarm/gotestwaf --grpcPort 9000 --url=http://my.grpc.endpoint --noEmailReport
     ```
 
 3. Find the report file `waf-evaluation-report-<date>.pdf` in the `reports` folder that you mapped to `/app/reports`
@@ -257,7 +257,7 @@ To run the demo environment:
     ```
     docker pull wallarm/gotestwaf
     docker run -v ${PWD}/reports:/app/reports --network="host" \
-        wallarm/gotestwaf --url=http://127.0.0.1:8080
+        wallarm/gotestwaf --url=http://127.0.0.1:8080 --noEmailReport
     ```
 
     Build the GoTestWAF Docker image from the [Dockerfile](./Dockerfile) and run the
@@ -290,7 +290,7 @@ for example:
     cd gotestwaf
     docker build --build-arg GOTESTWAF_VERSION="$(git describe)" --force-rm -t gotestwaf .
     docker run -v ${PWD}/reports:/app/reports --network="host" \
-        gotestwaf --url=<EVALUATED_SECURITY_SOLUTION_URL>
+        gotestwaf --url=<EVALUATED_SECURITY_SOLUTION_URL> --noEmailReport
     ```
 
     If the evaluated security tool is available externally, you can skip the option `--network="host"`. This option enables interaction of Docker containers running on 127.0.0.1.
@@ -299,7 +299,7 @@ for example:
     ```
     git clone https://github.com/wallarm/gotestwaf.git
     cd gotestwaf
-    go run ./cmd --url=<EVALUATED_SECURITY_SOLUTION_URL>
+    go run ./cmd --url=<EVALUATED_SECURITY_SOLUTION_URL> --noEmailReport
     ```
 * Clone this repository and build GoTestWAF as the Go module:
 
@@ -322,6 +322,7 @@ Options:
       --blockRegex string       Regex to detect a blocking page with the same HTTP response status code as a not blocked request
       --blockStatusCode int     HTTP status code that WAF uses while blocking requests (default 403)
       --configPath string       Path to the config file (default "config.yaml")
+      --email string            E-mail to which the report will be sent
       --followCookies           If true, use cookies sent by the server. May work only with --maxIdleConns=1
       --grpcPort uint16         gRPC port to check
       --idleConnTimeout int     The maximum amount of time a keep-alive connection will live (default 2)
@@ -330,6 +331,7 @@ Options:
       --logLevel string         Logging level: panic, fatal, error, warn, info, debug, trace (default "info")
       --maxIdleConns int        The maximum number of keep-alive connections (default 2)
       --maxRedirects int        The maximum number of handling redirects (default 50)
+      --noEmailReport           Save report locally
       --nonBlockedAsPassed      If true, count requests that weren't blocked as passed. If false, requests that don't satisfy to PassStatusCode/PassRegExp as blocked
       --openapiFile string      Path to openAPI file
       --passRegex string        Regex to a detect normal (not blocked) web page with the same HTTP status code as a blocked request
@@ -342,7 +344,6 @@ Options:
       --reportName string       Report file name. Supports `time' package template format (default "waf-evaluation-report-2006-January-02-15-04-05")
       --reportPath string       A directory to store reports (default "reports")
       --sendDelay int           Delay in ms between requests (default 400)
-      --sendEmail string        Send PDF report by e-mail
       --skipWAFBlockCheck       If true, WAF detection tests will be skipped
       --skipWAFIdentification   Skip WAF identification
       --testCase string         If set then only this test case will be run
@@ -364,7 +365,7 @@ The listed options can be passed to GoTestWAF as follows:
 
     ```
     docker run -v ${PWD}/reports:/app/reports --network="host" wallarm/gotestwaf \
-        --url=http://127.0.0.1:8080/ --wsURL=ws://127.0.0.1:8080/api/ws
+        --url=http://127.0.0.1:8080/ --wsURL=ws://127.0.0.1:8080/api/ws --noEmailReport
     ```
 
 * If running GoTestWAF with `go run`, pass the configuration options and its values as the parameters for the main script.
@@ -372,7 +373,7 @@ The listed options can be passed to GoTestWAF as follows:
     For example, to run GoTestWAF with WebSocket check, you can specify the WebSocket URL via the `wsURL` option:
 
     ```
-    go run ./cmd --url=http://127.0.0.1:8080/ --wsURL=ws://127.0.0.1:8080/api/ws
+    go run ./cmd --url=http://127.0.0.1:8080/ --wsURL=ws://127.0.0.1:8080/api/ws --noEmailReport
     ```
 
 ### Report name
@@ -425,5 +426,5 @@ Based on the described principle of operation, it is extremely important that th
 
 Example:
 ```bash
-./gotestwaf --url https://example.com/v1 --openapiFile api.yaml
+./gotestwaf --url https://example.com/v1 --openapiFile api.yaml --noEmailReport
 ```
