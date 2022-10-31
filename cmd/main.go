@@ -164,9 +164,9 @@ func run(ctx context.Context, logger *logrus.Logger) error {
 		return err
 	}
 
-	if cfg.SendEmail != "" {
+	if !cfg.NoEmailReport {
 		err = report.SendReportByEmail(
-			ctx, stat, cfg.SendEmail,
+			ctx, stat, cfg.Email,
 			reportTime, cfg.WAFName, cfg.URL, cfg.OpenAPIFile, args,
 			cfg.IgnoreUnresolved,
 		)

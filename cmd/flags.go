@@ -12,6 +12,8 @@ import (
 	flag "github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
+	"github.com/mcnijman/go-emailaddress"
+
 	"github.com/wallarm/gotestwaf/internal/config"
 	"github.com/wallarm/gotestwaf/internal/version"
 )
@@ -93,7 +95,8 @@ func parseFlags() (args string, err error) {
 	flag.String("reportPath", reportPath, "A directory to store reports")
 	reportName := flag.String("reportName", defaultReportName, "Report file name. Supports `time' package template format")
 	flag.String("reportFormat", "pdf", "Export report to one of the following formats: none, pdf, html, json")
-	flag.String("sendEmail", "", "Send PDF report by e-mail")
+	noEmailReport := flag.Bool("noEmailReport", false, "Save report locally")
+	email := flag.String("email", "", "E-mail to which the report will be sent")
 	flag.String("testCasesPath", testCasesPath, "Path to a folder with test cases")
 	flag.String("wafName", wafName, "Name of the WAF product")
 	flag.Bool("ignoreUnresolved", false, "If true, unresolved test cases will be considered as bypassed (affect score and results)")
@@ -118,6 +121,19 @@ func parseFlags() (args string, err error) {
 	// url flag must be set
 	if *urlParam == "" {
 		return "", errors.New("--url flag is not set")
+	}
+
+	if *noEmailReport == false {
+		if *email == "" {
+			return "", errors.New("set --email to send the report or use --noEmailReport to save the report locally")
+		}
+
+		parsedEmail, err := emailaddress.Parse(*email)
+		if err != nil {
+			return "", errors.Wrap(err, "couldn't parse email")
+		}
+
+		*email = parsedEmail.String()
 	}
 
 	logrusLogLvl, err := logrus.ParseLevel(*logLvl)
