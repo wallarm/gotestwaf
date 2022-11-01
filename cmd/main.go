@@ -174,6 +174,8 @@ func run(ctx context.Context, logger *logrus.Logger) error {
 			return errors.Wrap(err, "couldn't send report by email")
 		}
 
+		logger.WithField("email", cfg.Email).Info("The report has been sent to the specified email")
+
 		return nil
 	}
 
