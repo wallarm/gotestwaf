@@ -72,14 +72,14 @@ type Statistics struct {
 }
 
 type SummaryTableRow struct {
-	TestSet    string
-	TestCase   string
-	Percentage float64
-	Sent       int
-	Blocked    int
-	Bypassed   int
-	Unresolved int
-	Failed     int
+	TestSet    string  `json:"test_set" validate:"required,printascii,max=256"`
+	TestCase   string  `json:"test_case" validate:"required,printascii,max=256"`
+	Percentage float64 `json:"percentage" validate:"min=0,max=100"`
+	Sent       int     `json:"sent" validate:"min=0"`
+	Blocked    int     `json:"blocked" validate:"min=0"`
+	Bypassed   int     `json:"bypassed" validate:"min=0"`
+	Unresolved int     `json:"unresolved" validate:"min=0"`
+	Failed     int     `json:"failed" validate:"min=0"`
 }
 
 type TestDetails struct {
@@ -94,18 +94,18 @@ type TestDetails struct {
 }
 
 type FailedDetails struct {
-	Payload     string
-	TestCase    string
-	TestSet     string
-	Encoder     string
-	Placeholder string
-	Reason      []string
-	Type        string
+	Payload     string   `json:"payload" validate:"required"`
+	TestCase    string   `json:"test_case" validate:"required,printascii"`
+	TestSet     string   `json:"test_set" validate:"required,printascii"`
+	Encoder     string   `json:"encoder" validate:"required,printascii"`
+	Placeholder string   `json:"placeholder" validate:"required,printascii"`
+	Reason      []string `json:"reason" validate:"omitempty,dive,required"`
+	Type        string   `json:"type" validate:"omitempty"`
 }
 
 type Path struct {
-	Method string
-	Path   string
+	Method string `json:"method" validate:"required,printascii,max=32"`
+	Path   string `json:"path" validate:"required,printascii,max=1024"`
 }
 
 type ScannedPaths []*Path

@@ -1,0 +1,25 @@
+sudo: false
+language: go
+go:
+  - "1.11.x"
+  - "1.10.x"
+  - "1.9.x"
+  - tip
+env:
+  global:
+    - GO111MODULE=on
+matrix:
+  allow_failures:
+    - go: tip
+  fast_finish: true
+install:
+  - go get golang.org/x/tools/cmd/cover
+  - go get github.com/mattn/goveralls
+  - GO111MODULE=off go get -u github.com/securego/gosec/cmd/gosec/...
+script:
+  - go get -t -v ./...
+  - diff -u <(echo -n) <(gofmt -d -s .)
+  - go tool vet .
+  - $GOPATH/bin/gosec ./...
+  - go test -race -covermode=atomic -coverprofile=coverage.txt ./...
+  - $GOPATH/bin/goveralls -coverprofile=coverage.txt -service=travis-ci
