@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -49,6 +50,7 @@ func sendEmail(ctx context.Context, reportData *report.HtmlReport, email string)
 	if err != nil {
 		return errors.Wrap(err, "couldn't send request to server")
 	}
+	defer resp.Body.Close()
 
 	switch resp.StatusCode {
 	case http.StatusOK:
@@ -60,9 +62,11 @@ func sendEmail(ctx context.Context, reportData *report.HtmlReport, email string)
 		http.StatusInternalServerError:
 
 		var errResp ErrorResponse
-		var body []byte
 
-		resp.Body.Read(body)
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return errors.Wrap(err, "couldn't read error message from server")
+		}
 
 		if err := json.Unmarshal(body, &errResp); err != nil {
 			return errors.Wrap(err, "couldn't parse error message from server")
