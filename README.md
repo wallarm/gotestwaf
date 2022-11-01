@@ -96,31 +96,40 @@ on the machine running the application security solution.
 
 The steps below walk through downloading and starting GoTestWAF with minimal configuration on Docker.
 
-1. Pull the [GoTestWAF image](https://hub.docker.com/r/wallarm/gotestwaf) from Docker Hub:
+1.  Pull the [GoTestWAF image](https://hub.docker.com/r/wallarm/gotestwaf) from Docker Hub:
 
     ```
     docker pull wallarm/gotestwaf
     ```
 
-2. Start the GoTestWAF image:
+2.  Start the GoTestWAF image:
 
-    ```
-    docker run -v ${PWD}/reports:/app/reports --network="host" \
-        wallarm/gotestwaf --url=<EVALUATED_SECURITY_SOLUTION_URL> --noEmailReport
+    ```sh
+    docker run --network="host" \
+        wallarm/gotestwaf --url=<EVALUATED_SECURITY_SOLUTION_URL> --email=<YOUR_EMAIL>
     ```
 
     If required, you can replace `${PWD}/reports` with the path to another folder used to place the evaluation report.
+
+    If you don't want to send a report by email, you can use `--noEmailReport` option:
+
+    ```sh
+    docker run -v ${PWD}/reports:/app/reports --network="host" \
+        wallarm/gotestwaf --url=<EVALUATED_SECURITY_SOLUTION_URL> --noEmailReport
+    ```
+    
+    In this case the report file `waf-evaluation-report-<date>.pdf` is available in the `reports` folder of the user directory. You can also specify the directory to save the reports with the `reportPath` parameter and the name of the report file with the `reportName` parameter. To learn advanced configuration options, please use this [link](#configuration-options).
 
     If the evaluated security tool is available externally, you can skip the option `--network="host"`. This option enables interaction of Docker containers running on 127.0.0.1.
 
     To perform the gRPC tests you must have a working endpoint and use the --grpcPort <port> cli option.
 
-    ```
+    ```sh
     docker run -v ${PWD}/reports:/app/reports --network="host" \
-       wallarm/gotestwaf --grpcPort 9000 --url=http://my.grpc.endpoint --noEmailReport
+        wallarm/gotestwaf --grpcPort 9000 --url=http://my.grpc.endpoint --email=<YOUR_EMAIL>
     ```
 
-3. Find the report file `waf-evaluation-report-<date>.pdf` in the `reports` folder that you mapped to `/app/reports`
+3.  Find the report file `waf-evaluation-report-<date>.pdf` in the `reports` folder that you mapped to `/app/reports`
 inside the container.
 
 You have successfully evaluated your application security solution by using GoTestWAF with minimal configuration.
@@ -216,8 +225,6 @@ Summary:
 INFO[0015] Export full report                            filename=reports/waf-evaluation-report-2022-October-04-15-10-33.pdf
 ```
 
-The report file `waf-evaluation-report-<date>.pdf` is available in the `reports` folder of the user directory. You can also specify the directory to save the reports with the `reportPath` parameter and the name of the report file with the `reportName` parameter. To learn advanced configuration options, please use this [link](#configuration-options).
-
 ![Example of GoTestWaf report](./docs/report_preview.png)
 
 ## Demos
@@ -227,16 +234,16 @@ and GoTestWAF evaluating ModSecurity on Docker.
 
 To run the demo environment:
 
-1. Clone this repository and go to the cloned directory:
+1.  Clone this repository and go to the cloned directory:
 
-    ```
+    ```sh
     git clone https://github.com/wallarm/gotestwaf.git
     cd gotestwaf
     ```
 
-2. Start ModSecurity from the [Docker image](https://hub.docker.com/r/owasp/modsecurity-crs/) by using the following `make` command:
+2.  Start ModSecurity from the [Docker image](https://hub.docker.com/r/owasp/modsecurity-crs/) by using the following `make` command:
 
-    ```
+    ```sh
     make modsec
     ```
 
@@ -246,15 +253,15 @@ To run the demo environment:
 
     To stop ModSecurity containers use the following command:
 
-    ```
+    ```sh
     make modsec_down
     ```
 
-3. Start GoTestWAF with minimal configuration by using one of the following methods:
+3.  Start GoTestWAF with minimal configuration by using one of the following methods:
 
     Start the [Docker image](https://hub.docker.com/r/wallarm/gotestwaf) by using the following `docker pull` and `docker run` commands:
 
-    ```
+    ```sh
     docker pull wallarm/gotestwaf
     docker run -v ${PWD}/reports:/app/reports --network="host" \
         wallarm/gotestwaf --url=http://127.0.0.1:8080 --noEmailReport
@@ -263,7 +270,7 @@ To run the demo environment:
     Build the GoTestWAF Docker image from the [Dockerfile](./Dockerfile) and run the
     image by using the following `make` commands (make sure ModSec is running on port 8080; if not, update the port value in the Makefile):
 
-    ```
+    ```sh
     make gotestwaf
     make scan_local_from_docker
     ```
@@ -271,21 +278,21 @@ To run the demo environment:
     Start GoTestWAF natively with go by using the following `make` command:
     (make sure ModSec is running on port 8080; if not, update the port value in the Makefile):
 
-    ```
+    ```sh
     make scan_local
     ```
 
-4. Find the [report](#checking-the-evaluation-results) file `waf-evaluation-report-<date>.pdf` in
+4.  Find the [report](#checking-the-evaluation-results) file `waf-evaluation-report-<date>.pdf` in
 the `reports` folder that you mapped to `/app/reports` inside the container.
 
 ## Other options to run GoTestWAF
 
 In addition to running the GoTestWAF Docker image downloaded from Docker Hub, you can run GoTestWAF by using the following options:
 
-* Clone this repository and build the GoTestWAF Docker image from the [Dockerfile](./Dockerfile), 
+*   Clone this repository and build the GoTestWAF Docker image from the [Dockerfile](./Dockerfile), 
 for example:
 
-    ```
+    ```sh
     git clone https://github.com/wallarm/gotestwaf.git
     cd gotestwaf
     docker build --build-arg GOTESTWAF_VERSION="$(git describe)" --force-rm -t gotestwaf .
@@ -294,16 +301,17 @@ for example:
     ```
 
     If the evaluated security tool is available externally, you can skip the option `--network="host"`. This option enables interaction of Docker containers running on 127.0.0.1.
-* Clone this repository and run GoTestWAF with [`go`](https://golang.org/doc/), for example:
+*   Clone this repository and run GoTestWAF with [`go`](https://golang.org/doc/), for example:
 
-    ```
+    ```sh
     git clone https://github.com/wallarm/gotestwaf.git
     cd gotestwaf
     go run ./cmd --url=<EVALUATED_SECURITY_SOLUTION_URL> --noEmailReport
     ```
-* Clone this repository and build GoTestWAF as the Go module:
+    
+*   Clone this repository and build GoTestWAF as the Go module:
 
-    ```
+    ```sh
     git clone https://github.com/wallarm/gotestwaf.git
     cd gotestwaf
     go build -mod vendor -o gotestwaf ./cmd
