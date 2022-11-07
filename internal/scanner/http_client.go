@@ -108,7 +108,7 @@ func (c *HTTPClient) SendPayload(
 	req.Host = c.hostHeader
 
 	if testHeaderValue != "" {
-		req.Header.Set("X-GoTestWAF-Test", testHeaderValue)
+		req.Header.Set("X-GoTestWAF", testHeaderValue)
 	}
 
 	if c.followCookies && c.renewSession {
@@ -153,7 +153,7 @@ func (c *HTTPClient) SendRequest(req *http.Request, testHeaderValue string) (
 	req.Host = c.hostHeader
 
 	if testHeaderValue != "" {
-		req.Header.Set("X-GoTestWAF-Test", testHeaderValue)
+		req.Header.Set("X-GoTestWAF", testHeaderValue)
 	}
 
 	if c.followCookies && c.renewSession {

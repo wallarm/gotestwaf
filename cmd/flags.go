@@ -103,6 +103,7 @@ func parseFlags() (args string, err error) {
 	flag.Bool("blockConnReset", false, "If true, connection resets will be considered as block")
 	flag.Bool("skipWAFBlockCheck", false, "If true, WAF detection tests will be skipped")
 	flag.String("addHeader", "", "An HTTP header to add to requests")
+	flag.Bool("addDebugHeader", false, "Add header with a hash of the test information in each request")
 	flag.String("openapiFile", "", "Path to openAPI file")
 	showVersion := flag.Bool("version", false, "Show GoTestWAF version and exit")
 	flag.Parse()
