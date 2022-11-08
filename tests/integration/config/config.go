@@ -105,7 +105,7 @@ func GetConfig() *config.Config {
 		IdleConnTimeout:    2,
 		FollowCookies:      false,
 		RenewSession:       false,
-		BlockStatusCode:    403,
+		BlockStatusCode:    []int{403},
 		PassStatusCode:     []int{200, 404},
 		BlockRegex:         "",
 		PassRegex:          "",

@@ -333,7 +333,14 @@ func (s *Scanner) checkBlocking(body string, statusCode int) (bool, error) {
 		m, _ := regexp.MatchString(s.cfg.BlockRegex, body)
 		return m, nil
 	}
-	return statusCode == s.cfg.BlockStatusCode, nil
+
+	for _, code := range s.cfg.BlockStatusCode {
+		if statusCode == code {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 // checkPass checks the response status-code or request body using
