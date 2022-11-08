@@ -1,6 +1,8 @@
 package config
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"net"
 	"os"
@@ -22,22 +24,25 @@ var (
 
 type TestCasesMap struct {
 	sync.Mutex
-	m map[string]struct{}
+	m map[string]string
 }
 
-func (tcm *TestCasesMap) CheckTestCaseAvailability(testCase string) bool {
+func (tcm *TestCasesMap) CheckTestCaseAvailability(caseHash string) (string, bool) {
 	tcm.Lock()
 	defer tcm.Unlock()
-	if _, ok := tcm.m[testCase]; ok {
-		delete(tcm.m, testCase)
-		return true
+
+	if value, ok := tcm.m[caseHash]; ok {
+		delete(tcm.m, caseHash)
+		return value, true
 	}
-	return false
+
+	return "", false
 }
 
 func (tcm *TestCasesMap) CountTestCases() int {
 	tcm.Lock()
 	defer tcm.Unlock()
+
 	return len(tcm.m)
 }
 
@@ -117,6 +122,7 @@ func GetConfig() *config.Config {
 		BlockConnReset:     false,
 		SkipWAFBlockCheck:  false,
 		AddHeader:          "",
+		AddDebugHeader:     true,
 	}
 }
 
@@ -124,7 +130,7 @@ func GenerateTestCases() (testCases []*db.Case, testCasesMap *TestCasesMap) {
 	var encoders []string
 	var placeholders []string
 	testCasesMap = new(TestCasesMap)
-	testCasesMap.m = make(map[string]struct{})
+	testCasesMap.m = make(map[string]string)
 
 	for encoderName, _ := range encoder.Encoders {
 		encoders = append(encoders, encoderName)
@@ -136,6 +142,10 @@ func GenerateTestCases() (testCases []*db.Case, testCasesMap *TestCasesMap) {
 
 	testSets := []string{"test-set1", "test-set2", "test-set3"}
 	payloads := []string{"bypassed", "blocked", "unresolved"}
+
+	var debugHeader string
+
+	hash := sha256.New()
 
 	for _, ts := range testSets {
 		for _, ph := range placeholders {
@@ -151,7 +161,21 @@ func GenerateTestCases() (testCases []*db.Case, testCasesMap *TestCasesMap) {
 				})
 
 				for _, p := range payloads {
-					testCasesMap.m[fmt.Sprintf("%s-%s-%s-%s-%s", ts, name, p, ph, enc)] = struct{}{}
+					hash.Write([]byte(ts))
+					hash.Write([]byte(name))
+					hash.Write([]byte(ph))
+					hash.Write([]byte(enc))
+					hash.Write([]byte(p))
+
+					debugHeader = hex.EncodeToString(hash.Sum(nil))
+
+					hash.Reset()
+
+					testCasesMap.m[debugHeader] = fmt.Sprintf(
+						"set=%s,name=%s,placeholder=%s,encoder=%s",
+						ts, name, ph, enc,
+					)
+					// fmt.Sprintf("%s-%s-%s-%s-%s", ts, name, p, ph, enc)
 				}
 			}
 		}

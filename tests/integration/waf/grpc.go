@@ -2,6 +2,8 @@ package waf
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"regexp"
@@ -28,12 +30,19 @@ func (s *grpcServer) Foo(ctx context.Context, in *gtw_grpc.Request) (*gtw_grpc.R
 		s.errChan <- errors.New("metadata not found")
 	}
 
-	headerValue := md.Get("X-GoTestWAF-Test")
+	headerValue := md.Get("X-GoTestWAF")
 	if len(headerValue) < 1 {
-		s.errChan <- errors.New("couldn't get X-GoTestWAF-Test header value")
+		s.errChan <- errors.New("couldn't get X-GoTestWAF header value")
 	}
 
-	headerValues := strings.Split(headerValue[0], ",")
+	caseHash := headerValue[0]
+
+	payloadInfo, ok := s.casesMap.CheckTestCaseAvailability(caseHash)
+	if !ok {
+		s.errChan <- fmt.Errorf("received unknown case hash: %s", caseHash)
+	}
+
+	payloadInfoValues := strings.Split(payloadInfo, ",")
 
 	var err error
 	var set string
@@ -45,7 +54,7 @@ func (s *grpcServer) Foo(ctx context.Context, in *gtw_grpc.Request) (*gtw_grpc.R
 
 	testCaseParameters := make(map[string]string)
 
-	for _, value = range headerValues {
+	for _, value = range payloadInfoValues {
 		kv := strings.Split(value, "=")
 
 		if len(kv) < 2 {
@@ -94,9 +103,16 @@ func (s *grpcServer) Foo(ctx context.Context, in *gtw_grpc.Request) (*gtw_grpc.R
 		s.errChan <- fmt.Errorf("couldn't decode payload: %v", err)
 	}
 
-	testCase := fmt.Sprintf("%s-%s-%s-%s-%s", set, name, value, placeholder, encoder)
-	if !s.casesMap.CheckTestCaseAvailability(testCase) {
-		s.errChan <- fmt.Errorf("received unknown payload: %s", testCase)
+	hash := sha256.New()
+	hash.Write([]byte(set))
+	hash.Write([]byte(name))
+	hash.Write([]byte(placeholder))
+	hash.Write([]byte(encoder))
+	hash.Write([]byte(value))
+	restoredCaseHash := hex.EncodeToString(hash.Sum(nil))
+
+	if caseHash != restoredCaseHash {
+		s.errChan <- fmt.Errorf("case hash mismatched: %s != %s", caseHash, restoredCaseHash)
 	}
 
 	if matched, _ := regexp.MatchString("bypassed", value); matched {

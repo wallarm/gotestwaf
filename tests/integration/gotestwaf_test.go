@@ -76,7 +76,7 @@ func runGoTestWAF(ctx context.Context, testCases []*db.Case) error {
 		return errors.Wrap(err, "couldn't create test cases DB")
 	}
 
-	s, err := scanner.New(logger, cfg, db, nil, nil, true)
+	s, err := scanner.New(logger, cfg, db, nil, nil, cfg.AddDebugHeader)
 	if err != nil {
 		return errors.Wrap(err, "couldn't create scanner")
 	}
