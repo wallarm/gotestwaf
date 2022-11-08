@@ -1,8 +1,7 @@
 GOTESTWAF_VERSION := $(shell git describe)
 
 gotestwaf:
-	docker build --build-arg GOTESTWAF_VERSION="$(GOTESTWAF_VERSION)" \
-		--force-rm -t gotestwaf .
+	docker build --force-rm -t gotestwaf .
 
 gotestwaf_bin:
 	go build -ldflags "-X github.com/wallarm/gotestwaf/internal/version.Version=$(GOTESTWAF_VERSION)" \
