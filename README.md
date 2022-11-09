@@ -112,7 +112,7 @@ The steps below walk through downloading and starting GoTestWAF with minimal con
 
     If required, you can replace `${PWD}/reports` with the path to another folder used to place the evaluation report.
 
-    If you don't want to send a report by email just press Enter, or you can use `--noEmailReport` option:
+    If you don't want to optionally email the report, just press Enter after the email request message appears, or you can use --noEmailReport to skip the message:
 
     ```sh
     docker run --network="host" --rm -v ${PWD}/reports:/app/reports \
