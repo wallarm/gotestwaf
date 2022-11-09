@@ -12,9 +12,8 @@ import (
 	flag "github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"github.com/mcnijman/go-emailaddress"
-
 	"github.com/wallarm/gotestwaf/internal/config"
+	"github.com/wallarm/gotestwaf/internal/helpers"
 	"github.com/wallarm/gotestwaf/internal/version"
 )
 
@@ -36,7 +35,7 @@ wide range of API protocols including REST, GraphQL, gRPC, WebSockets,
 SOAP, XMLRPC, and others.
 Homepage: https://github.com/wallarm/gotestwaf
 
-Usage: %s [OPTIONS] --url <URL> (--email <EMAIL> | --noEmailReport)
+Usage: %s [OPTIONS] --url <URL>
 
 Options:
 `
@@ -123,17 +122,11 @@ func parseFlags() (args string, err error) {
 		return "", errors.New("--url flag is not set")
 	}
 
-	if *noEmailReport == false {
-		if *email == "" {
-			return "", errors.New("set --email to send the report or use --noEmailReport to save the report locally")
-		}
-
-		parsedEmail, err := emailaddress.Parse(*email)
+	if *noEmailReport == false && *email != "" {
+		*email, err = helpers.ValidateEmail(*email)
 		if err != nil {
-			return "", errors.Wrap(err, "couldn't parse email")
+			return "", errors.Wrap(err, "couldn't validate email")
 		}
-
-		*email = parsedEmail.String()
 	}
 
 	logrusLogLvl, err := logrus.ParseLevel(*logLvl)
