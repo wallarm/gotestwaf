@@ -12,9 +12,8 @@ import (
 	flag "github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"github.com/mcnijman/go-emailaddress"
-
 	"github.com/wallarm/gotestwaf/internal/config"
+	"github.com/wallarm/gotestwaf/internal/helpers"
 	"github.com/wallarm/gotestwaf/internal/version"
 )
 
@@ -124,12 +123,10 @@ func parseFlags() (args string, err error) {
 	}
 
 	if *noEmailReport == false && *email != "" {
-		parsedEmail, err := emailaddress.Parse(*email)
+		*email, err = helpers.ValidateEmail(*email)
 		if err != nil {
-			return "", errors.Wrap(err, "couldn't parse email")
+			return "", errors.Wrap(err, "couldn't validate email")
 		}
-
-		*email = parsedEmail.String()
 	}
 
 	logrusLogLvl, err := logrus.ParseLevel(*logLvl)

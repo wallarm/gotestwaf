@@ -13,11 +13,11 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/routers"
-	"github.com/mcnijman/go-emailaddress"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/wallarm/gotestwaf/internal/db"
+	"github.com/wallarm/gotestwaf/internal/helpers"
 	"github.com/wallarm/gotestwaf/internal/openapi"
 	"github.com/wallarm/gotestwaf/internal/report"
 	"github.com/wallarm/gotestwaf/internal/scanner"
@@ -201,12 +201,10 @@ func run(ctx context.Context, logger *logrus.Logger) error {
 				return nil
 			}
 
-			parsedEmail, err := emailaddress.Parse(email)
+			email, err = helpers.ValidateEmail(email)
 			if err != nil {
-				return errors.Wrap(err, "couldn't parse email")
+				return errors.Wrap(err, "couldn't validate email")
 			}
-
-			email = parsedEmail.String()
 		}
 
 		err = report.SendReportByEmail(
