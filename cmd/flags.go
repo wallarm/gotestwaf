@@ -36,7 +36,7 @@ wide range of API protocols including REST, GraphQL, gRPC, WebSockets,
 SOAP, XMLRPC, and others.
 Homepage: https://github.com/wallarm/gotestwaf
 
-Usage: %s [OPTIONS] --url <URL> (--email <EMAIL> | --noEmailReport)
+Usage: %s [OPTIONS] --url <URL>
 
 Options:
 `
