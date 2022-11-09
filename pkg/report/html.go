@@ -24,7 +24,7 @@ type HtmlReport struct {
 	WafTestingDate string `json:"waf_testing_date" validate:"required,datetime=02 January 2006"`
 	GtwVersion     string `json:"gtw_version" validate:"required,gtw_version"`
 	TestCasesFP    string `json:"test_cases_fp" validate:"required,fp"`
-	OpenApiFile    string `json:"open_api_file" validate:"omitempty,file,max=1024"`
+	OpenApiFile    string `json:"open_api_file" validate:"omitempty,printascii,max=512"`
 	Args           string `json:"args" validate:"required,printascii,max=2048"`
 
 	ApiSecChartData struct {

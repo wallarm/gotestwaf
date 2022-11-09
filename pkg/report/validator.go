@@ -11,10 +11,10 @@ import (
 )
 
 var (
-	gtwVersionRegex = regexp.MustCompile(`(v\d+\.\d+\.\d+(\-\d+\-g[a-f0-9]{7})?|unknown)`)
-	fpRegex         = regexp.MustCompile(`[a-f0-9]{32}`)
-	markRegex       = regexp.MustCompile(`(N/A|[A-F][\+\-]?)`)
-	suffixRegex     = regexp.MustCompile(`(na|[a-f])`)
+	gtwVersionRegex = regexp.MustCompile(`^(v\d+\.\d+\.\d+(\-\d+\-g[a-f0-9]{7})?|unknown)$`)
+	fpRegex         = regexp.MustCompile(`^[a-f0-9]{32}$`)
+	markRegex       = regexp.MustCompile(`^(N/A|[A-F][\+\-]?)$`)
+	suffixRegex     = regexp.MustCompile(`^(na|[a-f])$`)
 )
 
 func validateGtwVersion(fl validator.FieldLevel) bool {
@@ -48,6 +48,10 @@ func validateCssSuffix(fl validator.FieldLevel) bool {
 func validateEncoders(fl validator.FieldLevel) bool {
 	encoders := fl.Field().MapKeys()
 
+	if len(encoders) == 0 {
+		return false
+	}
+
 	if _, ok := encoders[0].Interface().(string); !ok {
 		return false
 	}
@@ -63,6 +67,10 @@ func validateEncoders(fl validator.FieldLevel) bool {
 
 func validatePlaceholders(fl validator.FieldLevel) bool {
 	placeholders := fl.Field().MapKeys()
+
+	if len(placeholders) == 0 {
+		return false
+	}
 
 	if _, ok := placeholders[0].Interface().(string); !ok {
 		return false
