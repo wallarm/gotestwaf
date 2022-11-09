@@ -27,7 +27,7 @@ func SendReportByEmail(
 	ctx context.Context, s *db.Statistics, email string, reportTime time.Time,
 	wafName string, url string, openApiFile string, args string, ignoreUnresolved bool,
 ) error {
-	reportData, err := prepareHTMLFullReport(s, reportTime, wafName, url, openApiFile, args, ignoreUnresolved)
+	reportData, err := oncePrepareHTMLFullReport(s, reportTime, wafName, url, openApiFile, args, ignoreUnresolved)
 	if err != nil {
 		return errors.Wrap(err, "couldn't prepare data for HTML report")
 	}

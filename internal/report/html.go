@@ -3,6 +3,7 @@ package report
 import (
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -14,32 +15,37 @@ import (
 
 const naMark = "N/A"
 
-var comparisonTable = []*report.ComparisonTableRow{
-	{
-		Name:         "ModSecurity PARANOIA=1",
-		ApiSec:       computeGrade(42.9, 1),
-		AppSec:       computeGrade(30.5, 1),
-		OverallScore: computeGrade(36.7, 1),
-	},
-	{
-		Name:         "ModSecurity PARANOIA=2",
-		ApiSec:       computeGrade(78.6, 1),
-		AppSec:       computeGrade(34.8, 1),
-		OverallScore: computeGrade(56.7, 1),
-	},
-	{
-		Name:         "ModSecurity PARANOIA=3",
-		ApiSec:       computeGrade(92.9, 1),
-		AppSec:       computeGrade(38.3, 1),
-		OverallScore: computeGrade(65.6, 1),
-	},
-	{
-		Name:         "ModSecurity PARANOIA=4",
-		ApiSec:       computeGrade(100, 1),
-		AppSec:       computeGrade(40.8, 1),
-		OverallScore: computeGrade(70.4, 1),
-	},
-}
+var (
+	prepareHTMLReportOnce sync.Once
+	htmlReportData        *report.HtmlReport
+
+	comparisonTable = []*report.ComparisonTableRow{
+		{
+			Name:         "ModSecurity PARANOIA=1",
+			ApiSec:       computeGrade(42.9, 1),
+			AppSec:       computeGrade(30.5, 1),
+			OverallScore: computeGrade(36.7, 1),
+		},
+		{
+			Name:         "ModSecurity PARANOIA=2",
+			ApiSec:       computeGrade(78.6, 1),
+			AppSec:       computeGrade(34.8, 1),
+			OverallScore: computeGrade(56.7, 1),
+		},
+		{
+			Name:         "ModSecurity PARANOIA=3",
+			ApiSec:       computeGrade(92.9, 1),
+			AppSec:       computeGrade(38.3, 1),
+			OverallScore: computeGrade(65.6, 1),
+		},
+		{
+			Name:         "ModSecurity PARANOIA=4",
+			ApiSec:       computeGrade(100, 1),
+			AppSec:       computeGrade(40.8, 1),
+			OverallScore: computeGrade(70.4, 1),
+		},
+	}
+)
 
 func computeGrade(value float32, all int) *report.Grade {
 	g := &report.Grade{
@@ -102,7 +108,7 @@ func computeGrade(value float32, all int) *report.Grade {
 	return g
 }
 
-// prepareHTMLFullReport prepares ready data to insert in HTML template.
+// prepareHTMLFullReport prepares ready data to insert into the HTML template.
 func prepareHTMLFullReport(
 	s *db.Statistics, reportTime time.Time, wafName string,
 	url string, openApiFile string, args string, ignoreUnresolved bool,
@@ -400,13 +406,28 @@ func prepareHTMLFullReport(
 	return data, nil
 }
 
+// oncePrepareHTMLFullReport prepares ready data to insert into the HTML template
+// once at the first call, and then reuses the previously prepared data
+func oncePrepareHTMLFullReport(
+	s *db.Statistics, reportTime time.Time, wafName string,
+	url string, openApiFile string, args string, ignoreUnresolved bool,
+) (*report.HtmlReport, error) {
+	var err error
+
+	prepareHTMLReportOnce.Do(func() {
+		htmlReportData, err = prepareHTMLFullReport(s, reportTime, wafName, url, openApiFile, args, ignoreUnresolved)
+	})
+
+	return htmlReportData, err
+}
+
 // exportFullReportToHtml prepares and saves a full report in HTML format on a disk
 // to a temporary file.
 func exportFullReportToHtml(
 	s *db.Statistics, reportTime time.Time, wafName string,
 	url string, openApiFile string, args string, ignoreUnresolved bool,
 ) (fileName string, err error) {
-	reportData, err := prepareHTMLFullReport(s, reportTime, wafName, url, openApiFile, args, ignoreUnresolved)
+	reportData, err := oncePrepareHTMLFullReport(s, reportTime, wafName, url, openApiFile, args, ignoreUnresolved)
 	if err != nil {
 		return "", errors.Wrap(err, "couldn't prepare data for HTML report")
 	}

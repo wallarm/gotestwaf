@@ -123,11 +123,7 @@ func parseFlags() (args string, err error) {
 		return "", errors.New("--url flag is not set")
 	}
 
-	if *noEmailReport == false {
-		if *email == "" {
-			return "", errors.New("set --email to send the report or use --noEmailReport to save the report locally")
-		}
-
+	if *noEmailReport == false && *email != "" {
 		parsedEmail, err := emailaddress.Parse(*email)
 		if err != nil {
 			return "", errors.Wrap(err, "couldn't parse email")
