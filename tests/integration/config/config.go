@@ -175,7 +175,6 @@ func GenerateTestCases() (testCases []*db.Case, testCasesMap *TestCasesMap) {
 						"set=%s,name=%s,placeholder=%s,encoder=%s",
 						ts, name, ph, enc,
 					)
-					// fmt.Sprintf("%s-%s-%s-%s-%s", ts, name, p, ph, enc)
 				}
 			}
 		}
