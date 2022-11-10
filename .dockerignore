@@ -1,2 +1,14 @@
-reports/
-gotestwaf
+**/
+
+# build image
+!.git/
+!cmd/
+!internal/
+!pkg/
+!vendor/
+!go.mod
+!go.sum
+
+# result image
+!testcases/
+!config.yaml
