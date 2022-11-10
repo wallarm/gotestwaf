@@ -1,12 +1,15 @@
 FROM golang:1.19-alpine AS build
+
 RUN apk --no-cache add git
+
 WORKDIR /app/
 COPY . .
+
 RUN go build -ldflags "-X github.com/wallarm/gotestwaf/internal/version.Version=$(git describe)" \
 		-o gotestwaf ./cmd/
 
 FROM alpine
-WORKDIR /app
+
 RUN apk add --no-cache chromium fontconfig
 RUN apk add --no-cache wget curl && \
 	( \
@@ -28,6 +31,9 @@ RUN apk add --no-cache wget curl && \
 	) && \
 	fc-cache -fv && \
 	apk del --no-cache wget curl
+
+WORKDIR /app
+
 COPY --from=build /app/gotestwaf ./
 COPY ./testcases/ ./testcases/
 COPY ./config.yaml ./
