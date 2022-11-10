@@ -35,14 +35,14 @@ const (
 )
 
 type testWork struct {
-	setName        string
-	caseName       string
-	payload        string
-	encoder        string
-	placeholder    string
-	testType       string
-	isTruePositive bool
-	debugHeader    string
+	setName          string
+	caseName         string
+	payload          string
+	encoder          string
+	placeholder      string
+	testType         string
+	isTruePositive   bool
+	debugHeaderValue string
 }
 
 // Scanner allows you to test WAF in various ways with given payloads.
@@ -369,7 +369,7 @@ func (s *Scanner) produceTests(ctx context.Context, n int) <-chan *testWork {
 	go func() {
 		defer close(testChan)
 
-		var debugHeader string
+		var debugHeaderValue string
 
 		hash := sha256.New()
 
@@ -384,22 +384,22 @@ func (s *Scanner) produceTests(ctx context.Context, n int) <-chan *testWork {
 							hash.Write([]byte(e))
 							hash.Write([]byte(payload))
 
-							debugHeader = hex.EncodeToString(hash.Sum(nil))
+							debugHeaderValue = hex.EncodeToString(hash.Sum(nil))
 
 							hash.Reset()
 						} else {
-							debugHeader = ""
+							debugHeaderValue = ""
 						}
 
 						wrk := &testWork{
-							setName:        t.Set,
-							caseName:       t.Name,
-							payload:        payload,
-							encoder:        e,
-							placeholder:    placeholder,
-							testType:       t.Type,
-							isTruePositive: t.IsTruePositive,
-							debugHeader:    debugHeader,
+							setName:          t.Set,
+							caseName:         t.Name,
+							payload:          payload,
+							encoder:          e,
+							placeholder:      placeholder,
+							testType:         t.Type,
+							isTruePositive:   t.IsTruePositive,
+							debugHeaderValue: debugHeaderValue,
 						}
 
 						select {
@@ -432,8 +432,8 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 		}
 
 		newCtx := ctx
-		if w.debugHeader != "" {
-			newCtx = metadata.AppendToOutgoingContext(ctx, "X-GoTestWAF", w.debugHeader)
+		if w.debugHeaderValue != "" {
+			newCtx = metadata.AppendToOutgoingContext(ctx, "X-GoTestWAF", w.debugHeaderValue)
 		}
 
 		body, statusCode, err = s.grpcConn.Send(newCtx, w.encoder, w.payload)
@@ -445,7 +445,7 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 	}
 
 	if s.requestTemplates == nil {
-		body, statusCode, err = s.httpClient.SendPayload(ctx, s.cfg.URL, w.placeholder, w.encoder, w.payload, w.debugHeader)
+		body, statusCode, err = s.httpClient.SendPayload(ctx, s.cfg.URL, w.placeholder, w.encoder, w.payload, w.debugHeaderValue)
 
 		_, _, _, _, err = s.updateDB(ctx, w, nil, nil, nil, nil, nil,
 			statusCode, nil, body, err, "", false)
@@ -472,7 +472,7 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 			return errors.Wrap(err, "create request from template")
 		}
 
-		respHeaders, body, statusCode, err = s.httpClient.SendRequest(req, w.debugHeader)
+		respHeaders, body, statusCode, err = s.httpClient.SendRequest(req, w.debugHeaderValue)
 
 		additionalInfo = fmt.Sprintf("%s %s", template.Method, template.Path)
 
