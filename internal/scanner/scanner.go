@@ -68,7 +68,7 @@ func New(
 	db *db.DB,
 	requestTemplates openapi.Templates,
 	router routers.Router,
-	addDebugHeader bool,
+	enableDebugHeader bool,
 ) (*Scanner, error) {
 	httpClient, err := NewHTTPClient(cfg)
 	if err != nil {
@@ -89,7 +89,7 @@ func New(
 		requestTemplates:  requestTemplates,
 		router:            router,
 		wsClient:          websocket.DefaultDialer,
-		enableDebugHeader: addDebugHeader,
+		enableDebugHeader: enableDebugHeader,
 	}, nil
 }
 
