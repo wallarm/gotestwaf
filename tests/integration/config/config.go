@@ -147,33 +147,33 @@ func GenerateTestCases() (testCases []*db.Case, testCasesMap *TestCasesMap) {
 
 	hash := sha256.New()
 
-	for _, ts := range testSets {
-		for _, ph := range placeholders {
-			for _, enc := range encoders {
-				name := fmt.Sprintf("%s-%s", ph, enc)
+	for _, testSet := range testSets {
+		for _, placeholder := range placeholders {
+			for _, encoder := range encoders {
+				name := fmt.Sprintf("%s-%s", placeholder, encoder)
 				testCases = append(testCases, &db.Case{
 					Payloads:       payloads,
-					Encoders:       []string{enc},
-					Placeholders:   []string{ph},
-					Set:            ts,
+					Encoders:       []string{encoder},
+					Placeholders:   []string{placeholder},
+					Set:            testSet,
 					Name:           name,
 					IsTruePositive: true,
 				})
 
-				for _, p := range payloads {
+				for _, payload := range payloads {
 					hash.Reset()
 
-					hash.Write([]byte(ts))
+					hash.Write([]byte(testSet))
 					hash.Write([]byte(name))
-					hash.Write([]byte(ph))
-					hash.Write([]byte(enc))
-					hash.Write([]byte(p))
+					hash.Write([]byte(placeholder))
+					hash.Write([]byte(encoder))
+					hash.Write([]byte(payload))
 
 					debugHeader = hex.EncodeToString(hash.Sum(nil))
 
 					testCasesMap.m[debugHeader] = fmt.Sprintf(
 						"set=%s,name=%s,placeholder=%s,encoder=%s",
-						ts, name, ph, enc,
+						testSet, name, placeholder, encoder,
 					)
 				}
 			}

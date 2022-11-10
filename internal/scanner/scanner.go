@@ -373,17 +373,17 @@ func (s *Scanner) produceTests(ctx context.Context, n int) <-chan *testWork {
 
 		hash := sha256.New()
 
-		for _, t := range testCases {
-			for _, payload := range t.Payloads {
-				for _, e := range t.Encoders {
-					for _, placeholder := range t.Placeholders {
+		for _, testCase := range testCases {
+			for _, payload := range testCase.Payloads {
+				for _, encoder := range testCase.Encoders {
+					for _, placeholder := range testCase.Placeholders {
 						if s.enableDebugHeader {
 							hash.Reset()
 
-							hash.Write([]byte(t.Set))
-							hash.Write([]byte(t.Name))
+							hash.Write([]byte(testCase.Set))
+							hash.Write([]byte(testCase.Name))
 							hash.Write([]byte(placeholder))
-							hash.Write([]byte(e))
+							hash.Write([]byte(encoder))
 							hash.Write([]byte(payload))
 
 							debugHeaderValue = hex.EncodeToString(hash.Sum(nil))
@@ -392,13 +392,13 @@ func (s *Scanner) produceTests(ctx context.Context, n int) <-chan *testWork {
 						}
 
 						wrk := &testWork{
-							setName:          t.Set,
-							caseName:         t.Name,
+							setName:          testCase.Set,
+							caseName:         testCase.Name,
 							payload:          payload,
-							encoder:          e,
+							encoder:          encoder,
 							placeholder:      placeholder,
-							testType:         t.Type,
-							isTruePositive:   t.IsTruePositive,
+							testType:         testCase.Type,
+							isTruePositive:   testCase.IsTruePositive,
 							debugHeaderValue: debugHeaderValue,
 						}
 
