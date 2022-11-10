@@ -433,7 +433,7 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 
 		newCtx := ctx
 		if w.debugHeaderValue != "" {
-			newCtx = metadata.AppendToOutgoingContext(ctx, "X-GoTestWAF", w.debugHeaderValue)
+			newCtx = metadata.AppendToOutgoingContext(ctx, GTWDebugHeader, w.debugHeaderValue)
 		}
 
 		body, statusCode, err = s.grpcConn.Send(newCtx, w.encoder, w.payload)

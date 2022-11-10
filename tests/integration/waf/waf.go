@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc"
 
 	pb "github.com/wallarm/gotestwaf/internal/payload/placeholder/grpc"
+	"github.com/wallarm/gotestwaf/internal/scanner"
 	"github.com/wallarm/gotestwaf/tests/integration/config"
 )
 
@@ -115,7 +116,7 @@ func (waf *WAF) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (waf *WAF) httpRequestHandler(w http.ResponseWriter, r *http.Request) {
-	caseHash := r.Header.Get("X-GoTestWAF")
+	caseHash := r.Header.Get(scanner.GTWDebugHeader)
 	if caseHash == "" {
 		waf.errChan <- errors.New("couldn't get X-GoTestWAF header value")
 	}
