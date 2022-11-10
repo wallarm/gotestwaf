@@ -378,6 +378,8 @@ func (s *Scanner) produceTests(ctx context.Context, n int) <-chan *testWork {
 				for _, e := range t.Encoders {
 					for _, placeholder := range t.Placeholders {
 						if s.enableDebugHeader {
+							hash.Reset()
+
 							hash.Write([]byte(t.Set))
 							hash.Write([]byte(t.Name))
 							hash.Write([]byte(placeholder))
@@ -385,8 +387,6 @@ func (s *Scanner) produceTests(ctx context.Context, n int) <-chan *testWork {
 							hash.Write([]byte(payload))
 
 							debugHeaderValue = hex.EncodeToString(hash.Sum(nil))
-
-							hash.Reset()
 						} else {
 							debugHeaderValue = ""
 						}

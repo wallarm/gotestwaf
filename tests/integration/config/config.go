@@ -161,6 +161,8 @@ func GenerateTestCases() (testCases []*db.Case, testCasesMap *TestCasesMap) {
 				})
 
 				for _, p := range payloads {
+					hash.Reset()
+
 					hash.Write([]byte(ts))
 					hash.Write([]byte(name))
 					hash.Write([]byte(ph))
@@ -168,8 +170,6 @@ func GenerateTestCases() (testCases []*db.Case, testCasesMap *TestCasesMap) {
 					hash.Write([]byte(p))
 
 					debugHeader = hex.EncodeToString(hash.Sum(nil))
-
-					hash.Reset()
 
 					testCasesMap.m[debugHeader] = fmt.Sprintf(
 						"set=%s,name=%s,placeholder=%s,encoder=%s",
