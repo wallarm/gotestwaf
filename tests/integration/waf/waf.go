@@ -118,7 +118,7 @@ func (waf *WAF) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (waf *WAF) httpRequestHandler(w http.ResponseWriter, r *http.Request) {
 	caseHash := r.Header.Get(scanner.GTWDebugHeader)
 	if caseHash == "" {
-		waf.errChan <- errors.New("couldn't get X-GoTestWAF header value")
+		waf.errChan <- errors.New("couldn't get X-GoTestWAF-Test header value")
 	}
 
 	payloadInfo, ok := waf.casesMap.CheckTestCaseAvailability(caseHash)

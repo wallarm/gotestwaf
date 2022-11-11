@@ -33,7 +33,7 @@ func (s *grpcServer) Foo(ctx context.Context, in *gtw_grpc.Request) (*gtw_grpc.R
 
 	headerValue := md.Get(scanner.GTWDebugHeader)
 	if len(headerValue) < 1 {
-		s.errChan <- errors.New("couldn't get X-GoTestWAF header value")
+		s.errChan <- errors.New("couldn't get X-GoTestWAF-Test header value")
 	}
 
 	caseHash := headerValue[0]

@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	GTWDebugHeader = "X-GoTestWAF"
+	GTWDebugHeader = "X-GoTestWAF-Test"
 
 	getCookiesRepeatAttempts = 3
 )
