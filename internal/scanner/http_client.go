@@ -17,7 +17,11 @@ import (
 	"github.com/wallarm/gotestwaf/internal/payload/placeholder"
 )
 
-const getCookiesRepeatAttempts = 3
+const (
+	GTWDebugHeader = "X-GoTestWAF-Test"
+
+	getCookiesRepeatAttempts = 3
+)
 
 var redirectFunc func(req *http.Request, via []*http.Request) error
 
@@ -108,7 +112,7 @@ func (c *HTTPClient) SendPayload(
 	req.Host = c.hostHeader
 
 	if testHeaderValue != "" {
-		req.Header.Set("X-GoTestWAF-Test", testHeaderValue)
+		req.Header.Set(GTWDebugHeader, testHeaderValue)
 	}
 
 	if c.followCookies && c.renewSession {
@@ -153,7 +157,7 @@ func (c *HTTPClient) SendRequest(req *http.Request, testHeaderValue string) (
 	req.Host = c.hostHeader
 
 	if testHeaderValue != "" {
-		req.Header.Set("X-GoTestWAF-Test", testHeaderValue)
+		req.Header.Set(GTWDebugHeader, testHeaderValue)
 	}
 
 	if c.followCookies && c.renewSession {
