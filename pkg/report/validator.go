@@ -15,6 +15,7 @@ var (
 	fpRegex         = regexp.MustCompile(`^[a-f0-9]{32}$`)
 	markRegex       = regexp.MustCompile(`^(N/A|[A-F][\+\-]?)$`)
 	suffixRegex     = regexp.MustCompile(`^(na|[a-f])$`)
+	indicatorRegex  = regexp.MustCompile(`^[[:print:]]* \((unavailable|[0-9]{1,3}\.[0-9]%)\)$`)
 )
 
 func validateGtwVersion(fl validator.FieldLevel) bool {
@@ -41,6 +42,13 @@ func validateMark(fl validator.FieldLevel) bool {
 func validateCssSuffix(fl validator.FieldLevel) bool {
 	suffix := fl.Field().String()
 	result := suffixRegex.MatchString(suffix)
+
+	return result
+}
+
+func validateIndicator(fl validator.FieldLevel) bool {
+	indicator := fl.Field().String()
+	result := indicatorRegex.MatchString(indicator)
 
 	return result
 }
@@ -92,6 +100,7 @@ func ValidateReportData(reportData *HtmlReport) error {
 	validate.RegisterValidation("fp", validateFp)
 	validate.RegisterValidation("mark", validateMark)
 	validate.RegisterValidation("css_suffix", validateCssSuffix)
+	validate.RegisterValidation("indicator", validateIndicator)
 	validate.RegisterValidation("encoders", validateEncoders)
 	validate.RegisterValidation("placeholders", validatePlaceholders)
 

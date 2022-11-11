@@ -28,14 +28,14 @@ type HtmlReport struct {
 	Args           string `json:"args" validate:"required,printascii,max=2048"`
 
 	ApiSecChartData struct {
-		Indicators []string       `json:"indicators" validate:"omitempty,max=256,dive,printascii"`
-		Items      []float32      `json:"items" validate:"omitempty,max=256,dive,min=0,max=100"`
+		Indicators []string       `json:"indicators" validate:"omitempty,max=100,dive,indicator"`
+		Items      []float32      `json:"items" validate:"omitempty,max=100,dive,min=0,max=100"`
 		Chart      *template.HTML `json:"-" validate:"-"`
 	} `json:"api_sec_chart_data"`
 
 	AppSecChartData struct {
-		Indicators []string       `json:"indicators" validate:"omitempty,max=256,dive,printascii"`
-		Items      []float32      `json:"items" validate:"omitempty,max=256,dive,min=0,max=100"`
+		Indicators []string       `json:"indicators" validate:"omitempty,max=100,dive,indicator"`
+		Items      []float32      `json:"items" validate:"omitempty,max=100,dive,min=0,max=100"`
 		Chart      *template.HTML `json:"-" validate:"-"`
 	} `json:"app_sec_chart_data"`
 
