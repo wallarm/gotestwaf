@@ -57,6 +57,7 @@ Since the format of the YAML string is required for payloads, they must be [enco
 
 * `placeholder` is a place inside HTTP request where encoded payload should be. Possible placeholders are:
 
+    * gRPC
     * Header
     * RequestBody
     * JSONRequest
@@ -105,28 +106,26 @@ The steps below walk through downloading and starting GoTestWAF with minimal con
 2.  Start the GoTestWAF image:
 
     ```sh
-    docker run --network="host" \
-        wallarm/gotestwaf --url=<EVALUATED_SECURITY_SOLUTION_URL> --email=<YOUR_EMAIL>
+    docker run --network="host" --rm -it -v ${PWD}/reports:/app/reports \
+        wallarm/gotestwaf --url=<EVALUATED_SECURITY_SOLUTION_URL>
     ```
 
     If required, you can replace `${PWD}/reports` with the path to another folder used to place the evaluation report.
 
-    If you don't want to send a report by email, you can use `--noEmailReport` option:
+    If you don't want to optionally email the report, just press Enter after the email request message appears, or you can use --noEmailReport to skip the message:
 
     ```sh
-    docker run -v ${PWD}/reports:/app/reports --network="host" \
+    docker run --network="host" --rm -v ${PWD}/reports:/app/reports \
         wallarm/gotestwaf --url=<EVALUATED_SECURITY_SOLUTION_URL> --noEmailReport
     ```
-
-    If the `--noEmailReport` option is selected, the report file `waf-evaluation-report-<date>.pdf` is available in the `reports` folder of the user directory. You can also specify the directory to save the reports with the `reportPath` parameter and the name of the report file with the `reportName` parameter. To learn advanced configuration options, please use this [link](#configuration-options).
 
     If the evaluated security tool is available externally, you can skip the option `--network="host"`. This option enables interaction of Docker containers running on 127.0.0.1.
 
     To perform the gRPC tests you must have a working endpoint and use the --grpcPort <port> cli option.
 
     ```sh
-    docker run --network="host" \
-        wallarm/gotestwaf --grpcPort 9000 --url=http://my.grpc.endpoint --email=<YOUR_EMAIL>
+    docker run --network="host" --rm -it -v ${PWD}/reports:/app/reports \
+        wallarm/gotestwaf --grpcPort 9000 --url=http://my.grpc.endpoint
     ```
 
 3.  Check your email for the report.
@@ -224,6 +223,8 @@ Summary:
 INFO[0015] Export full report                            filename=reports/waf-evaluation-report-2022-October-04-15-10-33.pdf
 ```
 
+The report file `waf-evaluation-report-<date>.pdf` is available in the `reports` folder of the user directory. You can also specify the directory to save the reports with the `reportPath` parameter and the name of the report file with the `reportName` parameter. To learn advanced configuration options, please use this [link](#configuration-options).
+
 ![Example of GoTestWaf report](./docs/report_preview.png)
 
 ## Demos
@@ -262,7 +263,7 @@ To run the demo environment:
 
     ```sh
     docker pull wallarm/gotestwaf
-    docker run -v ${PWD}/reports:/app/reports --network="host" \
+    docker run --network="host" --rm -v ${PWD}/reports:/app/reports \
         wallarm/gotestwaf --url=http://127.0.0.1:8080 --noEmailReport
     ```
 
@@ -288,26 +289,26 @@ the `reports` folder that you mapped to `/app/reports` inside the container.
 
 In addition to running the GoTestWAF Docker image downloaded from Docker Hub, you can run GoTestWAF by using the following options:
 
-*   Clone this repository and build the GoTestWAF Docker image from the [Dockerfile](./Dockerfile), 
-for example:
+*   Clone this repository and build the GoTestWAF Docker image from the [Dockerfile](./Dockerfile), for example:
 
     ```sh
     git clone https://github.com/wallarm/gotestwaf.git
     cd gotestwaf
-    docker build --build-arg GOTESTWAF_VERSION="$(git describe)" --force-rm -t gotestwaf .
-    docker run --network="host" \
-        gotestwaf --url=<EVALUATED_SECURITY_SOLUTION_URL> --email=<YOUR_EMAIL>
+    docker build --force-rm -t gotestwaf .
+    docker run --network="host" --rm -it -v ${PWD}/reports:/app/reports \
+        gotestwaf --url=<EVALUATED_SECURITY_SOLUTION_URL>
     ```
 
     If the evaluated security tool is available externally, you can skip the option `--network="host"`. This option enables interaction of Docker containers running on 127.0.0.1.
-*   Clone this repository and run GoTestWAF with [`go`](https://golang.org/doc/), for example:
+
+* Clone this repository and run GoTestWAF with [`go`](https://golang.org/doc/), for example:
 
     ```sh
     git clone https://github.com/wallarm/gotestwaf.git
     cd gotestwaf
-    go run ./cmd --url=<EVALUATED_SECURITY_SOLUTION_URL> --email=<YOUR_EMAIL>
+    go run ./cmd --url=<EVALUATED_SECURITY_SOLUTION_URL>
     ```
-    
+
 *   Clone this repository and build GoTestWAF as the Go module:
 
     ```sh
@@ -321,13 +322,13 @@ Supported GoTestWAF configuration options are described below.
 ## Configuration options
 
 ```
-Usage: ./gotestwaf [OPTIONS] --url <URL> (--email <EMAIL> | --noEmailReport)
+Usage: ./gotestwaf [OPTIONS] --url <URL>
 
 Options:
       --addHeader string        An HTTP header to add to requests
       --blockConnReset          If true, connection resets will be considered as block
       --blockRegex string       Regex to detect a blocking page with the same HTTP response status code as a not blocked request
-      --blockStatusCode int     HTTP status code that WAF uses while blocking requests (default 403)
+      --blockStatusCode ints    HTTP status code that WAF uses while blocking requests (default [403])
       --configPath string       Path to the config file (default "config.yaml")
       --email string            E-mail to which the report will be sent
       --followCookies           If true, use cookies sent by the server. May work only with --maxIdleConns=1
@@ -370,17 +371,17 @@ The listed options can be passed to GoTestWAF as follows:
 
     For example, to run GoTestWAF with WebSocket check, you can specify the WebSocket URL via the `wsURL` option:
 
-    ```
-    docker run --network="host" wallarm/gotestwaf \
-        --url=http://127.0.0.1:8080/ --wsURL=ws://127.0.0.1:8080/api/ws --email=<YOUR_EMAIL>
+    ```sh
+    docker run --network="host" --rm -it -v ${PWD}/reports:/app/reports \
+        wallarm/gotestwaf --url=http://127.0.0.1:8080/ --wsURL=ws://127.0.0.1:8080/api/ws
     ```
 
 * If running GoTestWAF with `go run`, pass the configuration options and its values as the parameters for the main script.
 
     For example, to run GoTestWAF with WebSocket check, you can specify the WebSocket URL via the `wsURL` option:
 
-    ```
-    go run ./cmd --url=http://127.0.0.1:8080/ --wsURL=ws://127.0.0.1:8080/api/ws --email=<YOUR_EMAIL>
+    ```sh
+    go run ./cmd --url=http://127.0.0.1:8080/ --wsURL=ws://127.0.0.1:8080/api/ws
     ```
 
 ### Report name
@@ -432,6 +433,7 @@ Some supported OpenAPI features:
 Based on the described principle of operation, it is extremely important that the OpenAPI file correctly represents the implemented application API. Therefore, for example, you cannot use `default` to describe possible responses to queries.
 
 Example:
+
 ```sh
-./gotestwaf --url https://example.com/v1 --openapiFile api.yaml --email <YOUR_EMAIL>
+./gotestwaf --url https://example.com/v1 --openapiFile api.yaml
 ```

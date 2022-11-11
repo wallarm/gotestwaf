@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/wallarm/gotestwaf/internal/db"
+	"github.com/wallarm/gotestwaf/internal/helpers"
 	"github.com/wallarm/gotestwaf/internal/openapi"
 	"github.com/wallarm/gotestwaf/internal/report"
 	"github.com/wallarm/gotestwaf/internal/scanner"
@@ -164,21 +166,6 @@ func run(ctx context.Context, logger *logrus.Logger) error {
 		return err
 	}
 
-	if !cfg.NoEmailReport {
-		err = report.SendReportByEmail(
-			ctx, stat, cfg.Email,
-			reportTime, cfg.WAFName, cfg.URL, cfg.OpenAPIFile, args,
-			cfg.IgnoreUnresolved,
-		)
-		if err != nil {
-			return errors.Wrap(err, "couldn't send report by email")
-		}
-
-		logger.WithField("email", cfg.Email).Info("The report has been sent to the specified email")
-
-		return nil
-	}
-
 	reportFile, err = report.ExportFullReport(
 		ctx, stat, reportFile,
 		reportTime, cfg.WAFName, cfg.URL, cfg.OpenAPIFile, args,
@@ -196,6 +183,40 @@ func run(ctx context.Context, logger *logrus.Logger) error {
 	err = db.ExportPayloads(payloadFiles)
 	if err != nil {
 		errors.Wrap(err, "payloads exporting")
+	}
+
+	if !cfg.NoEmailReport {
+		email := ""
+
+		if cfg.Email != "" {
+			email = cfg.Email
+		} else {
+			fmt.Print("Email to send the report (ENTER to skip): ")
+			fmt.Scanln(&email)
+
+			email = strings.TrimSpace(email)
+			if email == "" {
+				logger.Info("Skip report sending to email")
+
+				return nil
+			}
+
+			email, err = helpers.ValidateEmail(email)
+			if err != nil {
+				return errors.Wrap(err, "couldn't validate email")
+			}
+		}
+
+		err = report.SendReportByEmail(
+			ctx, stat, email,
+			reportTime, cfg.WAFName, cfg.URL, cfg.OpenAPIFile, args,
+			cfg.IgnoreUnresolved,
+		)
+		if err != nil {
+			return errors.Wrap(err, "couldn't send report by email")
+		}
+
+		logger.WithField("email", email).Info("The report has been sent to the specified email")
 	}
 
 	return nil
