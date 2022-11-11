@@ -2,6 +2,8 @@ package waf
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net"
@@ -14,6 +16,7 @@ import (
 	"google.golang.org/grpc"
 
 	pb "github.com/wallarm/gotestwaf/internal/payload/placeholder/grpc"
+	"github.com/wallarm/gotestwaf/internal/scanner"
 	"github.com/wallarm/gotestwaf/tests/integration/config"
 )
 
@@ -113,13 +116,19 @@ func (waf *WAF) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (waf *WAF) httpRequestHandler(w http.ResponseWriter, r *http.Request) {
-	headerValues := strings.Split(r.Header.Get("X-GoTestWAF-Test"), ",")
-	if headerValues == nil {
+	caseHash := r.Header.Get(scanner.GTWDebugHeader)
+	if caseHash == "" {
 		waf.errChan <- errors.New("couldn't get X-GoTestWAF-Test header value")
 	}
 
+	payloadInfo, ok := waf.casesMap.CheckTestCaseAvailability(caseHash)
+	if !ok {
+		waf.errChan <- fmt.Errorf("received unknown case hash: %s", caseHash)
+	}
+
+	payloadInfoValues := strings.Split(payloadInfo, ",")
+
 	var err error
-	var ok bool
 	var set string
 	var name string
 	var placeholder string
@@ -129,7 +138,7 @@ func (waf *WAF) httpRequestHandler(w http.ResponseWriter, r *http.Request) {
 
 	testCaseParameters := make(map[string]string)
 
-	for _, value = range headerValues {
+	for _, value = range payloadInfoValues {
 		kv := strings.Split(value, "=")
 
 		if len(kv) < 2 {
@@ -221,9 +230,16 @@ func (waf *WAF) httpRequestHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	}
 
-	testCase := fmt.Sprintf("%s-%s-%s-%s-%s", set, name, value, placeholder, encoder)
-	if !waf.casesMap.CheckTestCaseAvailability(testCase) {
-		waf.errChan <- fmt.Errorf("received unknown payload: %s", testCase)
+	hash := sha256.New()
+	hash.Write([]byte(set))
+	hash.Write([]byte(name))
+	hash.Write([]byte(placeholder))
+	hash.Write([]byte(encoder))
+	hash.Write([]byte(value))
+	restoredCaseHash := hex.EncodeToString(hash.Sum(nil))
+
+	if caseHash != restoredCaseHash {
+		waf.errChan <- fmt.Errorf("case hash mismatched: %s != %s", caseHash, restoredCaseHash)
 	}
 }
 

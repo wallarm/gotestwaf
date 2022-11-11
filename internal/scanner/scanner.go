@@ -2,6 +2,8 @@ package scanner
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"math/rand"
@@ -33,14 +35,14 @@ const (
 )
 
 type testWork struct {
-	setName         string
-	caseName        string
-	payload         string
-	encoder         string
-	placeholder     string
-	testType        string
-	isTruePositive  bool
-	testHeaderValue string
+	setName          string
+	caseName         string
+	payload          string
+	encoder          string
+	placeholder      string
+	testType         string
+	isTruePositive   bool
+	debugHeaderValue string
 }
 
 // Scanner allows you to test WAF in various ways with given payloads.
@@ -56,7 +58,7 @@ type Scanner struct {
 	requestTemplates openapi.Templates
 	router           routers.Router
 
-	isTestEnv bool
+	enableDebugHeader bool
 }
 
 // New creates a new Scanner.
@@ -66,7 +68,7 @@ func New(
 	db *db.DB,
 	requestTemplates openapi.Templates,
 	router routers.Router,
-	isTestEnv bool,
+	enableDebugHeader bool,
 ) (*Scanner, error) {
 	httpClient, err := NewHTTPClient(cfg)
 	if err != nil {
@@ -79,15 +81,15 @@ func New(
 	}
 
 	return &Scanner{
-		logger:           logger,
-		cfg:              cfg,
-		db:               db,
-		httpClient:       httpClient,
-		grpcConn:         grpcConn,
-		requestTemplates: requestTemplates,
-		router:           router,
-		wsClient:         websocket.DefaultDialer,
-		isTestEnv:        isTestEnv,
+		logger:            logger,
+		cfg:               cfg,
+		db:                db,
+		httpClient:        httpClient,
+		grpcConn:          grpcConn,
+		requestTemplates:  requestTemplates,
+		router:            router,
+		wsClient:          websocket.DefaultDialer,
+		enableDebugHeader: enableDebugHeader,
 	}, nil
 }
 
@@ -367,30 +369,37 @@ func (s *Scanner) produceTests(ctx context.Context, n int) <-chan *testWork {
 	go func() {
 		defer close(testChan)
 
-		var testHeaderValue string
+		var debugHeaderValue string
 
-		for _, t := range testCases {
-			for _, payload := range t.Payloads {
-				for _, e := range t.Encoders {
-					for _, placeholder := range t.Placeholders {
-						if s.isTestEnv {
-							testHeaderValue = fmt.Sprintf(
-								"set=%s,name=%s,placeholder=%s,encoder=%s",
-								t.Set, t.Name, placeholder, e,
-							)
+		hash := sha256.New()
+
+		for _, testCase := range testCases {
+			for _, payload := range testCase.Payloads {
+				for _, encoder := range testCase.Encoders {
+					for _, placeholder := range testCase.Placeholders {
+						if s.enableDebugHeader {
+							hash.Reset()
+
+							hash.Write([]byte(testCase.Set))
+							hash.Write([]byte(testCase.Name))
+							hash.Write([]byte(placeholder))
+							hash.Write([]byte(encoder))
+							hash.Write([]byte(payload))
+
+							debugHeaderValue = hex.EncodeToString(hash.Sum(nil))
 						} else {
-							testHeaderValue = ""
+							debugHeaderValue = ""
 						}
 
 						wrk := &testWork{
-							t.Set,
-							t.Name,
-							payload,
-							e,
-							placeholder,
-							t.Type,
-							t.IsTruePositive,
-							testHeaderValue,
+							setName:          testCase.Set,
+							caseName:         testCase.Name,
+							payload:          payload,
+							encoder:          encoder,
+							placeholder:      placeholder,
+							testType:         testCase.Type,
+							isTruePositive:   testCase.IsTruePositive,
+							debugHeaderValue: debugHeaderValue,
 						}
 
 						select {
@@ -403,6 +412,7 @@ func (s *Scanner) produceTests(ctx context.Context, n int) <-chan *testWork {
 			}
 		}
 	}()
+
 	return testChan
 }
 
@@ -422,8 +432,8 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 		}
 
 		newCtx := ctx
-		if w.testHeaderValue != "" {
-			newCtx = metadata.AppendToOutgoingContext(ctx, "X-GoTestWAF-Test", w.testHeaderValue)
+		if w.debugHeaderValue != "" {
+			newCtx = metadata.AppendToOutgoingContext(ctx, GTWDebugHeader, w.debugHeaderValue)
 		}
 
 		body, statusCode, err = s.grpcConn.Send(newCtx, w.encoder, w.payload)
@@ -435,7 +445,7 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 	}
 
 	if s.requestTemplates == nil {
-		body, statusCode, err = s.httpClient.SendPayload(ctx, s.cfg.URL, w.placeholder, w.encoder, w.payload, w.testHeaderValue)
+		body, statusCode, err = s.httpClient.SendPayload(ctx, s.cfg.URL, w.placeholder, w.encoder, w.payload, w.debugHeaderValue)
 
 		_, _, _, _, err = s.updateDB(ctx, w, nil, nil, nil, nil, nil,
 			statusCode, nil, body, err, "", false)
@@ -462,7 +472,7 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 			return errors.Wrap(err, "create request from template")
 		}
 
-		respHeaders, body, statusCode, err = s.httpClient.SendRequest(req, w.testHeaderValue)
+		respHeaders, body, statusCode, err = s.httpClient.SendRequest(req, w.debugHeaderValue)
 
 		additionalInfo = fmt.Sprintf("%s %s", template.Method, template.Path)
 

@@ -129,7 +129,7 @@ func run(ctx context.Context, logger *logrus.Logger) error {
 		}
 	}
 
-	s, err := scanner.New(logger, cfg, db, templates, router, false)
+	s, err := scanner.New(logger, cfg, db, templates, router, cfg.AddDebugHeader)
 	if err != nil {
 		return errors.Wrap(err, "couldn't create scanner")
 	}
