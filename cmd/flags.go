@@ -166,9 +166,65 @@ func parseFlags() (args string, err error) {
 		return "", errors.New("report filename too long")
 	}
 
-	args = strings.Join(os.Args[1:], " ")
+	args = normalizedArgs()
+
+	fmt.Println(args)
 
 	return args, nil
+}
+
+func normalizedArgs() string {
+	// disable lexicographical order
+	flag.CommandLine.SortFlags = false
+
+	var args []string
+
+	fn := func(f *flag.Flag) {
+		// skip if flag wasn't changed
+		if !f.Changed {
+			return
+		}
+
+		var (
+			value string
+			arg   string
+		)
+
+		// all types listed in parseFlags function
+		argType := f.Value.Type()
+		switch argType {
+		case "string":
+			value = strings.TrimSpace(f.Value.String())
+
+			if strings.Contains(value, " ") {
+				value = `"` + value + `"`
+			}
+
+			arg = fmt.Sprintf("--%s=%s", f.Name, value)
+
+		case "bool":
+			arg = fmt.Sprintf("--%s", f.Name)
+
+		case "int", "uint16":
+			value = f.Value.String()
+			arg = fmt.Sprintf("--%s=%s", f.Name, value)
+
+		case "intSlice":
+			// remove square brackets
+			value = strings.Trim(f.Value.String(), "[]")
+			arg = fmt.Sprintf("--%s=%s", f.Name, value)
+
+		default:
+			panic(fmt.Sprintf("unknown CLI argument type: %s", argType))
+		}
+
+		args = append(args, arg)
+	}
+
+	// get all changed flags
+	flag.Visit(fn)
+
+	return strings.Join(args, " ")
 }
 
 // loadConfig loads the specified config file and merges it with the parameters passed via CLI
