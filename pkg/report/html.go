@@ -25,7 +25,7 @@ type HtmlReport struct {
 	GtwVersion     string `json:"gtw_version" validate:"required,gtw_version"`
 	TestCasesFP    string `json:"test_cases_fp" validate:"required,fp"`
 	OpenApiFile    string `json:"open_api_file" validate:"omitempty,printascii,max=512"`
-	Args           string `json:"args" validate:"required,printascii,max=2048"`
+	Args           string `json:"args" validate:"required,args,max=2048"`
 
 	ApiSecChartData struct {
 		Indicators []string       `json:"indicators" validate:"omitempty,max=100,dive,indicator"`
@@ -140,6 +140,11 @@ func RenderFullReportToHTML(reportData *HtmlReport) (*bytes.Buffer, error) {
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't generate chart scripts")
+	}
+
+	err = ValidateReportData(reportData)
+	if err != nil {
+		panic(err)
 	}
 
 	if apiChart != nil {
