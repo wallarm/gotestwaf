@@ -168,8 +168,6 @@ func parseFlags() (args string, err error) {
 
 	args = normalizedArgs()
 
-	fmt.Println(args)
-
 	return args, nil
 }
 
