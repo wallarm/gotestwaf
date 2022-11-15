@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"net/http"
+	"net/http/cookiejar"
 	"net/url"
 	"time"
 
@@ -43,11 +44,14 @@ func NewDetector(cfg *config.Config) (*WAFDetector, error) {
 		tr.Proxy = http.ProxyURL(proxyURL)
 	}
 
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't create cookie jar")
+	}
+
 	client := &http.Client{
 		Transport: tr,
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
+		Jar:       jar,
 	}
 
 	target, err := url.Parse(cfg.URL)
@@ -89,6 +93,7 @@ func (w *WAFDetector) doRequest(ctx context.Context) (*http.Response, error) {
 // the first positive match.
 func (w *WAFDetector) DetectWAF(ctx context.Context) (name, vendor string, err error) {
 	resp, err := w.doRequest(ctx)
+	defer resp.Body.Close()
 	if err != nil {
 		return "", "", errors.Wrap(err, "couldn't identify WAF")
 	}
