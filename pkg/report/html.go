@@ -142,11 +142,6 @@ func RenderFullReportToHTML(reportData *HtmlReport) (*bytes.Buffer, error) {
 		return nil, errors.Wrap(err, "couldn't generate chart scripts")
 	}
 
-	err = ValidateReportData(reportData)
-	if err != nil {
-		panic(err)
-	}
-
 	if apiChart != nil {
 		v := template.HTML(*apiChart)
 		reportData.ApiSecChartData.Chart = &v
