@@ -93,10 +93,11 @@ func (w *WAFDetector) doRequest(ctx context.Context) (*http.Response, error) {
 // the first positive match.
 func (w *WAFDetector) DetectWAF(ctx context.Context) (name, vendor string, err error) {
 	resp, err := w.doRequest(ctx)
-	defer resp.Body.Close()
 	if err != nil {
 		return "", "", errors.Wrap(err, "couldn't identify WAF")
 	}
+
+	defer resp.Body.Close()
 
 	for _, d := range detectors.Detectors {
 		if d.IsWAF(resp) {
