@@ -60,6 +60,7 @@ func CheckContent(regex string) Check {
 			return false
 		}
 
+		// body reuse
 		resp.Body.Close()
 		resp.Body = io.NopCloser(bytes.NewReader(body))
 
