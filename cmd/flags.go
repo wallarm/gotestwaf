@@ -216,7 +216,7 @@ func normalizeArgs() (string, error) {
 			arg = fmt.Sprintf("--%s=%s", f.Name, value)
 
 		case "intSlice":
-			// remove square brackets
+			// remove square brackets: [200,404] -> 200,404
 			value = strings.Trim(f.Value.String(), "[]")
 			arg = fmt.Sprintf("--%s=%s", f.Name, value)
 
