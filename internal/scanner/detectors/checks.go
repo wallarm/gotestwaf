@@ -1,6 +1,8 @@
 package detectors
 
 import (
+	"bytes"
+	"io"
 	"net/http"
 	"regexp"
 )
@@ -53,12 +55,13 @@ func CheckContent(regex string) Check {
 	re := regexp.MustCompile(regex)
 
 	f := func(resp *http.Response) bool {
-		var body []byte
-
-		_, err := resp.Body.Read(body)
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return false
 		}
+
+		resp.Body.Close()
+		resp.Body = io.NopCloser(bytes.NewReader(body))
 
 		if re.Match(body) {
 			return true
