@@ -166,12 +166,13 @@ func parseFlags() (args string, err error) {
 		return "", errors.New("report filename too long")
 	}
 
-	args = normalizedArgs()
+	args = normalizeArgs()
 
 	return args, nil
 }
 
-func normalizedArgs() string {
+// normalizeArgs returns string with used CLI args in a unified from.
+func normalizeArgs() string {
 	// disable lexicographical order
 	flag.CommandLine.SortFlags = false
 
