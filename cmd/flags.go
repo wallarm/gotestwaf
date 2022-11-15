@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
@@ -166,17 +167,23 @@ func parseFlags() (args string, err error) {
 		return "", errors.New("report filename too long")
 	}
 
-	args = normalizeArgs()
+	args, err = normalizeArgs()
+	if err != nil {
+		return "", errors.Wrap(err, "couldn't normalize args")
+	}
 
 	return args, nil
 }
 
 // normalizeArgs returns string with used CLI args in a unified from.
-func normalizeArgs() string {
+func normalizeArgs() (string, error) {
 	// disable lexicographical order
 	flag.CommandLine.SortFlags = false
 
-	var args []string
+	var (
+		args []string
+		err  error
+	)
 
 	fn := func(f *flag.Flag) {
 		// skip if flag wasn't changed
@@ -214,7 +221,7 @@ func normalizeArgs() string {
 			arg = fmt.Sprintf("--%s=%s", f.Name, value)
 
 		default:
-			panic(fmt.Sprintf("unknown CLI argument type: %s", argType))
+			err = multierror.Append(err, fmt.Errorf("unknown CLI argument type: %s", argType))
 		}
 
 		args = append(args, arg)
@@ -223,7 +230,11 @@ func normalizeArgs() string {
 	// get all changed flags
 	flag.Visit(fn)
 
-	return strings.Join(args, " ")
+	if err != nil {
+		return "", err
+	}
+
+	return strings.Join(args, " "), nil
 }
 
 // loadConfig loads the specified config file and merges it with the parameters passed via CLI
