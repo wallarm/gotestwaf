@@ -19,7 +19,7 @@ var HtmlTemplate string
 type HtmlReport struct {
 	IgnoreUnresolved bool `json:"ignore_unresolved" validate:"boolean"`
 
-	WafName        string `json:"waf_name" validate:"required,alphanum,max=256"`
+	WafName        string `json:"waf_name" validate:"required,printascii,max=256"`
 	Url            string `json:"url" validate:"required,url,max=256"`
 	WafTestingDate string `json:"waf_testing_date" validate:"required,datetime=02 January 2006"`
 	GtwVersion     string `json:"gtw_version" validate:"required,gtw_version"`
