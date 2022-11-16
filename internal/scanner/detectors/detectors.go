@@ -32,7 +32,10 @@ func (d *Detector) IsWAF(resp *http.Response) bool {
 // Detectors is the list of all available WAF detectors. The checks are performed
 // in the given order.
 var Detectors = []*Detector{
+	// Akamai
 	KonaSiteDefender(),
+
+	// Imperva
 	Incapsula(),
 	SecureSphere(),
 }

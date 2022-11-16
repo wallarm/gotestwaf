@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
@@ -166,9 +167,74 @@ func parseFlags() (args string, err error) {
 		return "", errors.New("report filename too long")
 	}
 
-	args = strings.Join(os.Args[1:], " ")
+	args, err = normalizeArgs()
+	if err != nil {
+		return "", errors.Wrap(err, "couldn't normalize args")
+	}
 
 	return args, nil
+}
+
+// normalizeArgs returns string with used CLI args in a unified from.
+func normalizeArgs() (string, error) {
+	// disable lexicographical order
+	flag.CommandLine.SortFlags = false
+
+	var (
+		args []string
+		err  error
+	)
+
+	fn := func(f *flag.Flag) {
+		// skip if flag wasn't changed
+		if !f.Changed {
+			return
+		}
+
+		var (
+			value string
+			arg   string
+		)
+
+		// all types listed in parseFlags function
+		argType := f.Value.Type()
+		switch argType {
+		case "string":
+			value = strings.TrimSpace(f.Value.String())
+
+			if strings.Contains(value, " ") {
+				value = `"` + value + `"`
+			}
+
+			arg = fmt.Sprintf("--%s=%s", f.Name, value)
+
+		case "bool":
+			arg = fmt.Sprintf("--%s", f.Name)
+
+		case "int", "uint16":
+			value = f.Value.String()
+			arg = fmt.Sprintf("--%s=%s", f.Name, value)
+
+		case "intSlice":
+			// remove square brackets: [200,404] -> 200,404
+			value = strings.Trim(f.Value.String(), "[]")
+			arg = fmt.Sprintf("--%s=%s", f.Name, value)
+
+		default:
+			err = multierror.Append(err, fmt.Errorf("unknown CLI argument type: %s", argType))
+		}
+
+		args = append(args, arg)
+	}
+
+	// get all changed flags
+	flag.Visit(fn)
+
+	if err != nil {
+		return "", err
+	}
+
+	return strings.Join(args, " "), nil
 }
 
 // loadConfig loads the specified config file and merges it with the parameters passed via CLI

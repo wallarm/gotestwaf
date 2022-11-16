@@ -19,23 +19,23 @@ var HtmlTemplate string
 type HtmlReport struct {
 	IgnoreUnresolved bool `json:"ignore_unresolved" validate:"boolean"`
 
-	WafName        string `json:"waf_name" validate:"required,alphanum,max=256"`
+	WafName        string `json:"waf_name" validate:"required,printascii,max=256"`
 	Url            string `json:"url" validate:"required,url,max=256"`
 	WafTestingDate string `json:"waf_testing_date" validate:"required,datetime=02 January 2006"`
 	GtwVersion     string `json:"gtw_version" validate:"required,gtw_version"`
 	TestCasesFP    string `json:"test_cases_fp" validate:"required,fp"`
-	OpenApiFile    string `json:"open_api_file" validate:"omitempty,file,max=1024"`
-	Args           string `json:"args" validate:"required,printascii,max=2048"`
+	OpenApiFile    string `json:"open_api_file" validate:"omitempty,printascii,max=512"`
+	Args           string `json:"args" validate:"required,args,max=2048"`
 
 	ApiSecChartData struct {
-		Indicators []string       `json:"indicators" validate:"omitempty,max=256,dive,printascii"`
-		Items      []float32      `json:"items" validate:"omitempty,max=256,dive,min=0,max=100"`
+		Indicators []string       `json:"indicators" validate:"omitempty,max=100,dive,indicator"`
+		Items      []float32      `json:"items" validate:"omitempty,max=100,dive,min=0,max=100"`
 		Chart      *template.HTML `json:"-" validate:"-"`
 	} `json:"api_sec_chart_data"`
 
 	AppSecChartData struct {
-		Indicators []string       `json:"indicators" validate:"omitempty,max=256,dive,printascii"`
-		Items      []float32      `json:"items" validate:"omitempty,max=256,dive,min=0,max=100"`
+		Indicators []string       `json:"indicators" validate:"omitempty,max=100,dive,indicator"`
+		Items      []float32      `json:"items" validate:"omitempty,max=100,dive,min=0,max=100"`
 		Chart      *template.HTML `json:"-" validate:"-"`
 	} `json:"app_sec_chart_data"`
 
@@ -67,9 +67,9 @@ type HtmlReport struct {
 		SummaryTable map[string]*TestSetSummary `json:"summary_table" validate:"omitempty,dive,keys,required,max=256,endkeys,required"`
 
 		// map[paths]map[payload]map[statusCode]*testDetails
-		Bypassed map[string]map[string]map[int]*TestDetails `json:"bypassed" validate:"omitempty,dive,keys,omitempty,endkeys,required,dive,keys,required,max=256000,endkeys,required,dive,keys,min=100,max=599,endkeys,required"`
+		Bypassed map[string]map[string]map[int]*TestDetails `json:"bypassed" validate:"omitempty,dive,keys,omitempty,endkeys,required,dive,keys,required,max=256000,endkeys,required,dive,keys,min=0,endkeys,required"`
 		// map[payload]map[statusCode]*testDetails
-		Unresolved map[string]map[int]*TestDetails `json:"unresolved" validate:"omitempty,dive,keys,required,max=256000,endkeys,required,dive,keys,min=100,max=599,endkeys,required"`
+		Unresolved map[string]map[int]*TestDetails `json:"unresolved" validate:"omitempty,dive,keys,required,max=256000,endkeys,required,dive,keys,min=0,endkeys,required"`
 		Failed     []*db.FailedDetails             `json:"failed" validate:"omitempty,dive,required"`
 
 		Percentage               float64 `json:"percentage" validate:"min=0,max=100"`
@@ -84,11 +84,11 @@ type HtmlReport struct {
 		SummaryTable map[string]*TestSetSummary `json:"summary_table" validate:"omitempty,dive,keys,required,endkeys,required"`
 
 		// map[payload]map[statusCode]*testDetails
-		Blocked map[string]map[int]*TestDetails `json:"blocked" validate:"omitempty,dive,keys,required,max=256000,endkeys,required,dive,keys,min=100,max=599,endkeys,required"`
+		Blocked map[string]map[int]*TestDetails `json:"blocked" validate:"omitempty,dive,keys,required,max=256000,endkeys,required,dive,keys,min=0,endkeys,required"`
 		// map[payload]map[statusCode]*testDetails
-		Bypassed map[string]map[int]*TestDetails `json:"bypassed" validate:"omitempty,dive,keys,required,max=256000,endkeys,required,dive,keys,min=100,max=599,endkeys,required"`
+		Bypassed map[string]map[int]*TestDetails `json:"bypassed" validate:"omitempty,dive,keys,required,max=256000,endkeys,required,dive,keys,min=0,endkeys,required"`
 		// map[payload]map[statusCode]*testDetails
-		Unresolved map[string]map[int]*TestDetails `json:"unresolved" validate:"omitempty,dive,keys,required,max=256000,endkeys,required,dive,keys,min=100,max=599,endkeys,required"`
+		Unresolved map[string]map[int]*TestDetails `json:"unresolved" validate:"omitempty,dive,keys,required,max=256000,endkeys,required,dive,keys,min=0,endkeys,required"`
 		Failed     []*db.FailedDetails             `json:"failed" validate:"omitempty,dive,required"`
 
 		Percentage               float64 `json:"percentage" validate:"min=0,max=100"`

@@ -8,6 +8,7 @@ require (
 	github.com/go-echarts/go-echarts/v2 v2.2.4
 	github.com/go-playground/validator/v10 v10.11.1
 	github.com/gorilla/websocket v1.4.2
+	github.com/hashicorp/go-multierror v1.1.1
 	github.com/leanovate/gopter v0.2.9
 	github.com/mcnijman/go-emailaddress v1.1.0
 	github.com/olekukonko/tablewriter v0.0.4
@@ -49,6 +50,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/google/go-cmp v0.5.3 // indirect
+	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.1 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/mailru/easyjson v0.0.0-20190626092158-b2ccc519800e // indirect
