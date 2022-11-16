@@ -67,9 +67,9 @@ type HtmlReport struct {
 		SummaryTable map[string]*TestSetSummary `json:"summary_table" validate:"omitempty,dive,keys,required,max=256,endkeys,required"`
 
 		// map[paths]map[payload]map[statusCode]*testDetails
-		Bypassed map[string]map[string]map[int]*TestDetails `json:"bypassed" validate:"omitempty,dive,keys,omitempty,endkeys,required,dive,keys,required,max=256000,endkeys,required,dive,keys,min=100,max=599,endkeys,required"`
+		Bypassed map[string]map[string]map[int]*TestDetails `json:"bypassed" validate:"omitempty,dive,keys,omitempty,endkeys,required,dive,keys,required,max=256000,endkeys,required,dive,keys,min=0,endkeys,required"`
 		// map[payload]map[statusCode]*testDetails
-		Unresolved map[string]map[int]*TestDetails `json:"unresolved" validate:"omitempty,dive,keys,required,max=256000,endkeys,required,dive,keys,min=100,max=599,endkeys,required"`
+		Unresolved map[string]map[int]*TestDetails `json:"unresolved" validate:"omitempty,dive,keys,required,max=256000,endkeys,required,dive,keys,min=0,endkeys,required"`
 		Failed     []*db.FailedDetails             `json:"failed" validate:"omitempty,dive,required"`
 
 		Percentage               float64 `json:"percentage" validate:"min=0,max=100"`
@@ -84,11 +84,11 @@ type HtmlReport struct {
 		SummaryTable map[string]*TestSetSummary `json:"summary_table" validate:"omitempty,dive,keys,required,endkeys,required"`
 
 		// map[payload]map[statusCode]*testDetails
-		Blocked map[string]map[int]*TestDetails `json:"blocked" validate:"omitempty,dive,keys,required,max=256000,endkeys,required,dive,keys,min=100,max=599,endkeys,required"`
+		Blocked map[string]map[int]*TestDetails `json:"blocked" validate:"omitempty,dive,keys,required,max=256000,endkeys,required,dive,keys,min=0,endkeys,required"`
 		// map[payload]map[statusCode]*testDetails
-		Bypassed map[string]map[int]*TestDetails `json:"bypassed" validate:"omitempty,dive,keys,required,max=256000,endkeys,required,dive,keys,min=100,max=599,endkeys,required"`
+		Bypassed map[string]map[int]*TestDetails `json:"bypassed" validate:"omitempty,dive,keys,required,max=256000,endkeys,required,dive,keys,min=0,endkeys,required"`
 		// map[payload]map[statusCode]*testDetails
-		Unresolved map[string]map[int]*TestDetails `json:"unresolved" validate:"omitempty,dive,keys,required,max=256000,endkeys,required,dive,keys,min=100,max=599,endkeys,required"`
+		Unresolved map[string]map[int]*TestDetails `json:"unresolved" validate:"omitempty,dive,keys,required,max=256000,endkeys,required,dive,keys,min=0,endkeys,required"`
 		Failed     []*db.FailedDetails             `json:"failed" validate:"omitempty,dive,required"`
 
 		Percentage               float64 `json:"percentage" validate:"min=0,max=100"`
