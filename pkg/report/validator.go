@@ -15,7 +15,7 @@ var (
 	fpRegex         = regexp.MustCompile(`^[a-f0-9]{32}$`)
 	markRegex       = regexp.MustCompile(`^(N/A|[A-F][\+\-]?)$`)
 	suffixRegex     = regexp.MustCompile(`^(na|[a-f])$`)
-	indicatorRegex  = regexp.MustCompile(`^[[:print:]]{1,30} \((unavailable|[0-9]{1,3}\.[0-9]%)\)$`)
+	indicatorRegex  = regexp.MustCompile(`^(-|[[:print:]]{1,30} \((unavailable|[0-9]{1,3}\.[0-9]%)\))$`)
 	argsRegex       = regexp.MustCompile(`^(\-\-((quiet|tlsVerify|followCookies|renewSession|skipWAFIdentification|nonBlockedAsPassed|noEmailReport|ignoreUnresolved|blockConnReset|skipWAFBlockCheck|addDebugHeader)|(configPath|logFormat|url|wsURL|proxy|blockRegex|passRegex|testCase|testSet|reportPath|reportName|reportFormat|email|testCasesPath|wafName|addHeader|openapiFile)\=[[:print:]]+|(grpcPort|maxIdleConns|maxRedirects|idleConnTimeout|workers|sendDelay|randomDelay)\=\d+|(blockStatusCode|passStatusCode)\=[\d,]+) ?)+$`)
 )
 
