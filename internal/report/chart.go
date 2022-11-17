@@ -133,6 +133,12 @@ func generateChartData(s *db.Statistics) (
 		counters["api"]["grpc"] = pair{}
 	}
 
+	// Add GraphQL counter if GraphQL is unavailable to display it on graphic
+	if !s.IsGraphQLAvailable && containsApiCat {
+		// GraphQL is part of the API Security tests
+		counters["api"]["graphql"] = pair{}
+	}
+
 	apiIndicators, apiItems = getIndicatorsAndItems(counters, "api")
 	appIndicators, appItems = getIndicatorsAndItems(counters, "app")
 
@@ -141,6 +147,16 @@ func generateChartData(s *db.Statistics) (
 		for i := 0; i < len(apiIndicators); i++ {
 			if strings.HasPrefix(apiIndicators[i], "grpc") {
 				apiIndicators[i] = "grpc (unavailable)"
+				apiItems[i] = float32(0)
+			}
+		}
+	}
+
+	// Fix label for GraphQL if it is unavailable
+	if !s.IsGraphQLAvailable && containsApiCat {
+		for i := 0; i < len(apiIndicators); i++ {
+			if strings.HasPrefix(apiIndicators[i], "graphql") {
+				apiIndicators[i] = "graphql (unavailable)"
 				apiItems[i] = float32(0)
 			}
 		}

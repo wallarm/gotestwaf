@@ -119,6 +119,32 @@ func (s *Scanner) CheckGRPCAvailability(ctx context.Context) {
 	s.db.IsGrpcAvailable = available
 }
 
+// CheckGraphQlAvailability checks if the GraphQL is available at the given URL.
+func (s *Scanner) CheckGraphQlAvailability(ctx context.Context) {
+	s.logger.WithField("status", "started").Info("GraphQL pre-check")
+
+	available, err := s.checkGraphQlAvailability(ctx)
+	if err != nil {
+		s.logger.WithFields(logrus.Fields{
+			"status":     "done",
+			"connection": "not available",
+		}).WithError(err).Infof("GraphQL pre-check")
+	}
+	if available {
+		s.logger.WithFields(logrus.Fields{
+			"status":     "done",
+			"connection": "available",
+		}).Info("GraphQL pre-check")
+	} else {
+		s.logger.WithFields(logrus.Fields{
+			"status":     "done",
+			"connection": "not available",
+		}).Info("GraphQL pre-check")
+	}
+
+	s.db.IsGraphQlAvailable = available
+}
+
 // WAFBlockCheck checks if WAF exists and blocks malicious requests.
 func (s *Scanner) WAFBlockCheck(ctx context.Context) error {
 	if !s.cfg.SkipWAFBlockCheck {
@@ -426,7 +452,8 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 		err         error
 	)
 
-	if w.placeholder == placeholder.DefaultGRPC.GetName() {
+	switch w.placeholder {
+	case placeholder.DefaultGRPC.GetName():
 		if !s.grpcConn.IsAvailable() {
 			return nil
 		}
@@ -440,6 +467,20 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 
 		_, _, _, _, err = s.updateDB(ctx, w, nil, nil, nil, nil, nil,
 			statusCode, nil, body, err, "", true)
+
+		return err
+
+	case placeholder.DefaultGraphQlGET.GetName(),
+		placeholder.DefaultGraphQlPOST.GetName():
+
+		if !s.httpClient.IsGraphQlAvailable() {
+			return nil
+		}
+
+		body, statusCode, err = s.httpClient.SendPayload(ctx, s.cfg.URL, w.placeholder, w.encoder, w.payload, w.debugHeaderValue)
+
+		_, _, _, _, err = s.updateDB(ctx, w, nil, nil, nil, nil, nil,
+			statusCode, nil, body, err, "", false)
 
 		return err
 	}

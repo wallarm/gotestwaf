@@ -70,6 +70,7 @@ func parseFlags() (args string, err error) {
 
 	urlParam := flag.String("url", "", "URL to check")
 	wsURL := flag.String("wsURL", "", "WebSocket URL to check")
+	graphqlURL := flag.String("graphqlURL", "", "GraphQL URL to check")
 	flag.Uint16("grpcPort", 0, "gRPC port to check")
 	flag.String("proxy", "", "Proxy URL to use")
 	flag.Bool("tlsVerify", false, "If true, the received TLS certificate will be verified")
@@ -152,14 +153,43 @@ func parseFlags() (args string, err error) {
 
 	// format WebSocket URL from given HTTP URL
 	if *wsURL == "" {
+		wsValidURL := *validURL
+
 		wsScheme := "ws"
-		if validURL.Scheme == "https" {
+		if wsValidURL.Scheme == "https" {
 			wsScheme = "wss"
 		}
-		validURL.Scheme = wsScheme
-		validURL.Path = ""
+		wsValidURL.Scheme = wsScheme
+		wsValidURL.Path = ""
 
-		*wsURL = validURL.String()
+		*wsURL = wsValidURL.String()
+	} else {
+		wsValidURL, err := url.Parse(*wsURL)
+		if err != nil ||
+			(wsValidURL.Scheme != "ws" && wsValidURL.Scheme != "wss") ||
+			wsValidURL.Host == "" {
+			return "", errors.New("wsURL is not valid")
+		}
+
+		*wsURL = wsValidURL.String()
+	}
+
+	// format GraphQL URL from given HTTP URL
+	if *graphqlURL == "" {
+		gqlValidURL := *validURL
+
+		gqlValidURL.Path = ""
+
+		*graphqlURL = gqlValidURL.String()
+	} else {
+		gqlValidURL, err := url.Parse(*wsURL)
+		if err != nil ||
+			(gqlValidURL.Scheme != "http" && gqlValidURL.Scheme != "https") ||
+			gqlValidURL.Host == "" {
+			return "", errors.New("graphqlURL is not valid")
+		}
+
+		*graphqlURL = gqlValidURL.String()
 	}
 
 	_, reportFileName := filepath.Split(*reportName)
