@@ -14,7 +14,7 @@ var (
 	headerRegexp   = regexp.MustCompile(fmt.Sprintf("X-[a-fA-F0-9]{%d}", ph.Seed*2))
 	soapBodyRegexp = regexp.MustCompile(fmt.Sprintf("<ab[a-fA-F0-9]{%d}>.*</ab[a-fA-F0-9]{%[1]d}>", ph.Seed*2))
 	jsonBodyRegexp = regexp.MustCompile(fmt.Sprintf("\"[a-fA-F0-9]{%d}\": \".*\"", ph.Seed*2))
-	urlParamRegexp = regexp.MustCompile(fmt.Sprintf("[a-fA-F0-9]{%d}", ph.Seed*2))
+	urlParamRegexp = regexp.MustCompile(fmt.Sprintf("(query|[a-fA-F0-9]{%d})", ph.Seed*2))
 )
 
 func getPayloadFromHeader(r *http.Request) (string, error) {

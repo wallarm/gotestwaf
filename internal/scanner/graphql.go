@@ -26,7 +26,6 @@ var checkAvailabilityEndpoints = []string{
 //	  }
 //	}
 func checkAnswer(body []byte) (bool, error) {
-	return true, nil
 	jsonMap := make(map[string]any)
 
 	err := json.Unmarshal(body, &jsonMap)

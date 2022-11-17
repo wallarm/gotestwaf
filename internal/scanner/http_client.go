@@ -83,11 +83,12 @@ func NewHTTPClient(cfg *config.Config) (*HTTPClient, error) {
 	}
 
 	return &HTTPClient{
-		client:        client,
-		headers:       configuredHeaders,
-		hostHeader:    configuredHeaders["Host"],
-		followCookies: cfg.FollowCookies,
-		renewSession:  cfg.RenewSession,
+		client:             client,
+		headers:            configuredHeaders,
+		hostHeader:         configuredHeaders["Host"],
+		followCookies:      cfg.FollowCookies,
+		renewSession:       cfg.RenewSession,
+		isGraphQlAvailable: true,
 	}, nil
 }
 
