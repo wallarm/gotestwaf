@@ -55,9 +55,11 @@ func renderToPDF(ctx context.Context, fileToRender string, pathToResultPDF strin
 
 	cmd := exec.CommandContext(ctx, chromePath,
 		"--headless",
+		"--no-zygote",
+		"--single-process",
+		"--no-sandbox",
 		"--disable-gpu",
 		"--run-all-compositor-stages-before-draw",
-		"--no-sandbox",
 		"--print-to-pdf-no-header",
 		fmt.Sprintf("--print-to-pdf=%s", pathToResultPDF),
 		fileToRender,
