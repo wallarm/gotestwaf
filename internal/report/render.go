@@ -10,13 +10,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-// chromium-browser
-// --headless
-// --disable-gpu
-// --run-all-compositor-stages-before-draw
-// --no-sandbox
-// --print-to-pdf-no-header
-// --print-to-pdf=test.pdf
+// chromium-browser \
+// --headless \
+// --no-zygote \
+// --single-process \
+// --no-sandbox \
+// --disable-gpu \
+// --run-all-compositor-stages-before-draw \
+// --print-to-pdf-no-header \
+// --print-to-pdf=test.pdf \
 // report.html
 
 func findChrome() (string, error) {
