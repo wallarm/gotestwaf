@@ -1,6 +1,7 @@
 package report
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"sync"
@@ -13,7 +14,12 @@ import (
 	"github.com/wallarm/gotestwaf/pkg/report"
 )
 
-const naMark = "N/A"
+const (
+	naMark = "N/A"
+
+	maxUntruncatedPayloadLength = 1100
+	truncatedPartsLength        = 150
+)
 
 var (
 	prepareHTMLReportOnce sync.Once
@@ -106,6 +112,27 @@ func computeGrade(value float32, all int) *report.Grade {
 	}
 
 	return g
+}
+
+// truncatePayload replaces the middle part of the payload if
+// it is longer than maxUntruncatedPayloadLength.
+func truncatePayload(payload string) string {
+	payloadLength := len(payload)
+
+	if payloadLength <= maxUntruncatedPayloadLength {
+		return payload
+	}
+
+	truncatedLength := payloadLength - 2*truncatedPartsLength
+
+	truncatedPayload := fmt.Sprintf(
+		"%s … truncated %d symbols … %s",
+		payload[:truncatedPartsLength],
+		truncatedLength,
+		payload[payloadLength-truncatedPartsLength:],
+	)
+
+	return truncatedPayload
 }
 
 // prepareHTMLFullReport prepares ready data to insert into the HTML template.
@@ -277,101 +304,111 @@ func prepareHTMLFullReport(
 			negBypassed[paths] = make(map[string]map[int]*report.TestDetails)
 		}
 
-		if _, ok := negBypassed[paths][d.Payload]; !ok {
+		payload := truncatePayload(d.Payload)
+
+		if _, ok := negBypassed[paths][payload]; !ok {
 			// map[statusCode]*testDetails
-			negBypassed[paths][d.Payload] = make(map[int]*report.TestDetails)
+			negBypassed[paths][payload] = make(map[int]*report.TestDetails)
 		}
 
-		if _, ok := negBypassed[paths][d.Payload][d.ResponseStatusCode]; !ok {
-			negBypassed[paths][d.Payload][d.ResponseStatusCode] = &report.TestDetails{
+		if _, ok := negBypassed[paths][payload][d.ResponseStatusCode]; !ok {
+			negBypassed[paths][payload][d.ResponseStatusCode] = &report.TestDetails{
 				Encoders:     make(map[string]any),
 				Placeholders: make(map[string]any),
 			}
 		}
 
-		negBypassed[paths][d.Payload][d.ResponseStatusCode].TestCase = d.TestCase
-		negBypassed[paths][d.Payload][d.ResponseStatusCode].Encoders[d.Encoder] = nil
-		negBypassed[paths][d.Payload][d.ResponseStatusCode].Placeholders[d.Placeholder] = nil
+		negBypassed[paths][payload][d.ResponseStatusCode].TestCase = d.TestCase
+		negBypassed[paths][payload][d.ResponseStatusCode].Encoders[d.Encoder] = nil
+		negBypassed[paths][payload][d.ResponseStatusCode].Placeholders[d.Placeholder] = nil
 	}
 
 	// map[payload]map[statusCode]*testDetails
 	negUnresolved := make(map[string]map[int]*report.TestDetails)
 	for _, d := range s.NegativeTests.Unresolved {
-		if _, ok := negUnresolved[d.Payload]; !ok {
+		payload := truncatePayload(d.Payload)
+
+		if _, ok := negUnresolved[payload]; !ok {
 			// map[statusCode]*testDetails
-			negUnresolved[d.Payload] = make(map[int]*report.TestDetails)
+			negUnresolved[payload] = make(map[int]*report.TestDetails)
 		}
 
-		if _, ok := negUnresolved[d.Payload][d.ResponseStatusCode]; !ok {
-			negUnresolved[d.Payload][d.ResponseStatusCode] = &report.TestDetails{
+		if _, ok := negUnresolved[payload][d.ResponseStatusCode]; !ok {
+			negUnresolved[payload][d.ResponseStatusCode] = &report.TestDetails{
 				Encoders:     make(map[string]any),
 				Placeholders: make(map[string]any),
 			}
 		}
 
-		negUnresolved[d.Payload][d.ResponseStatusCode].TestCase = d.TestCase
-		negUnresolved[d.Payload][d.ResponseStatusCode].Encoders[d.Encoder] = nil
-		negUnresolved[d.Payload][d.ResponseStatusCode].Placeholders[d.Placeholder] = nil
+		negUnresolved[payload][d.ResponseStatusCode].TestCase = d.TestCase
+		negUnresolved[payload][d.ResponseStatusCode].Encoders[d.Encoder] = nil
+		negUnresolved[payload][d.ResponseStatusCode].Placeholders[d.Placeholder] = nil
 	}
 
 	// map[payload]map[statusCode]*testDetails
 	posBlocked := make(map[string]map[int]*report.TestDetails)
 	for _, d := range s.PositiveTests.FalsePositive {
-		if _, ok := posBlocked[d.Payload]; !ok {
+		payload := truncatePayload(d.Payload)
+
+		if _, ok := posBlocked[payload]; !ok {
 			// map[statusCode]*testDetails
-			posBlocked[d.Payload] = make(map[int]*report.TestDetails)
+			posBlocked[payload] = make(map[int]*report.TestDetails)
 		}
 
-		if _, ok := posBlocked[d.Payload][d.ResponseStatusCode]; !ok {
-			posBlocked[d.Payload][d.ResponseStatusCode] = &report.TestDetails{
+		if _, ok := posBlocked[payload][d.ResponseStatusCode]; !ok {
+			posBlocked[payload][d.ResponseStatusCode] = &report.TestDetails{
 				Encoders:     make(map[string]any),
 				Placeholders: make(map[string]any),
 			}
 		}
 
-		posBlocked[d.Payload][d.ResponseStatusCode].TestCase = d.TestCase
-		posBlocked[d.Payload][d.ResponseStatusCode].Encoders[d.Encoder] = nil
-		posBlocked[d.Payload][d.ResponseStatusCode].Placeholders[d.Placeholder] = nil
+		posBlocked[payload][d.ResponseStatusCode].TestCase = d.TestCase
+		posBlocked[payload][d.ResponseStatusCode].Encoders[d.Encoder] = nil
+		posBlocked[payload][d.ResponseStatusCode].Placeholders[d.Placeholder] = nil
 	}
 
 	// map[payload]map[statusCode]*testDetails
 	posBypassed := make(map[string]map[int]*report.TestDetails)
 	for _, d := range s.PositiveTests.TruePositive {
-		if _, ok := posBypassed[d.Payload]; !ok {
+		payload := truncatePayload(d.Payload)
+
+		if _, ok := posBypassed[payload]; !ok {
 			// map[statusCode]*testDetails
-			posBypassed[d.Payload] = make(map[int]*report.TestDetails)
+			posBypassed[payload] = make(map[int]*report.TestDetails)
 		}
 
-		if _, ok := posBypassed[d.Payload][d.ResponseStatusCode]; !ok {
-			posBypassed[d.Payload][d.ResponseStatusCode] = &report.TestDetails{
+		if _, ok := posBypassed[payload][d.ResponseStatusCode]; !ok {
+			posBypassed[payload][d.ResponseStatusCode] = &report.TestDetails{
 				Encoders:     make(map[string]any),
 				Placeholders: make(map[string]any),
 			}
 		}
 
-		posBypassed[d.Payload][d.ResponseStatusCode].TestCase = d.TestCase
-		posBypassed[d.Payload][d.ResponseStatusCode].Encoders[d.Encoder] = nil
-		posBypassed[d.Payload][d.ResponseStatusCode].Placeholders[d.Placeholder] = nil
+		posBypassed[payload][d.ResponseStatusCode].TestCase = d.TestCase
+		posBypassed[payload][d.ResponseStatusCode].Encoders[d.Encoder] = nil
+		posBypassed[payload][d.ResponseStatusCode].Placeholders[d.Placeholder] = nil
 	}
 
 	// map[payload]map[statusCode]*testDetails
 	posUnresolved := make(map[string]map[int]*report.TestDetails)
 	for _, d := range s.PositiveTests.Unresolved {
-		if _, ok := posUnresolved[d.Payload]; !ok {
+		payload := truncatePayload(d.Payload)
+
+		if _, ok := posUnresolved[payload]; !ok {
 			// map[statusCode]*testDetails
-			posUnresolved[d.Payload] = make(map[int]*report.TestDetails)
+			posUnresolved[payload] = make(map[int]*report.TestDetails)
 		}
 
-		if _, ok := posUnresolved[d.Payload][d.ResponseStatusCode]; !ok {
-			posUnresolved[d.Payload][d.ResponseStatusCode] = &report.TestDetails{
+		if _, ok := posUnresolved[payload][d.ResponseStatusCode]; !ok {
+			posUnresolved[payload][d.ResponseStatusCode] = &report.TestDetails{
 				Encoders:     make(map[string]any),
 				Placeholders: make(map[string]any),
 			}
 		}
 
-		posUnresolved[d.Payload][d.ResponseStatusCode].TestCase = d.TestCase
-		posUnresolved[d.Payload][d.ResponseStatusCode].Encoders[d.Encoder] = nil
-		posUnresolved[d.Payload][d.ResponseStatusCode].Placeholders[d.Placeholder] = nil
+		posUnresolved[payload][d.ResponseStatusCode].TestCase = d.TestCase
+		posUnresolved[payload][d.ResponseStatusCode].Encoders[d.Encoder] = nil
+		posUnresolved[payload][d.ResponseStatusCode].Placeholders[d.Placeholder] = nil
 	}
 
 	data.ScannedPaths = s.Paths
