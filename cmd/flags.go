@@ -182,7 +182,7 @@ func parseFlags() (args string, err error) {
 
 		*graphqlURL = gqlValidURL.String()
 	} else {
-		gqlValidURL, err := url.Parse(*wsURL)
+		gqlValidURL, err := url.Parse(*graphqlURL)
 		if err != nil ||
 			(gqlValidURL.Scheme != "http" && gqlValidURL.Scheme != "https") ||
 			gqlValidURL.Host == "" {
