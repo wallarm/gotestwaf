@@ -95,7 +95,7 @@ func NewHTTPClient(cfg *config.Config) (*HTTPClient, error) {
 func (c *HTTPClient) SendPayload(
 	ctx context.Context,
 	targetURL, placeholderName, encoderName, payload string,
-	degubHeaderValue string,
+	debugHeaderValue string,
 ) (body string, statusCode int, err error) {
 	encodedPayload, err := encoder.Apply(encoderName, payload)
 	if err != nil {
@@ -114,8 +114,8 @@ func (c *HTTPClient) SendPayload(
 	}
 	req.Host = c.hostHeader
 
-	if degubHeaderValue != "" {
-		req.Header.Set(GTWDebugHeader, degubHeaderValue)
+	if debugHeaderValue != "" {
+		req.Header.Set(GTWDebugHeader, debugHeaderValue)
 	}
 
 	if c.followCookies && c.renewSession {
