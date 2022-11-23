@@ -104,17 +104,16 @@ func (s *Scanner) CheckGRPCAvailability(ctx context.Context) {
 			"connection": "not available",
 		}).WithError(err).Infof("gRPC pre-check")
 	}
+
+	connection := "not available"
 	if available {
-		s.logger.WithFields(logrus.Fields{
-			"status":     "done",
-			"connection": "available",
-		}).Info("gRPC pre-check")
-	} else {
-		s.logger.WithFields(logrus.Fields{
-			"status":     "done",
-			"connection": "not available",
-		}).Info("gRPC pre-check")
+		connection = "available"
 	}
+
+	s.logger.WithFields(logrus.Fields{
+		"status":     "done",
+		"connection": connection,
+	}).Info("gRPC pre-check")
 
 	s.db.IsGrpcAvailable = available
 }
@@ -130,17 +129,16 @@ func (s *Scanner) CheckGraphQlAvailability(ctx context.Context) {
 			"connection": "not available",
 		}).WithError(err).Infof("GraphQL pre-check")
 	}
+
+	connection := "not available"
 	if available {
-		s.logger.WithFields(logrus.Fields{
-			"status":     "done",
-			"connection": "available",
-		}).Info("GraphQL pre-check")
-	} else {
-		s.logger.WithFields(logrus.Fields{
-			"status":     "done",
-			"connection": "not available",
-		}).Info("GraphQL pre-check")
+		connection = "available"
 	}
+
+	s.logger.WithFields(logrus.Fields{
+		"status":     "done",
+		"connection": connection,
+	}).Info("GraphQL pre-check")
 
 	s.db.IsGraphQlAvailable = available
 }
