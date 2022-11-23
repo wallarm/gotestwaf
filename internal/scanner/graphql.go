@@ -52,6 +52,8 @@ func checkAnswer(body []byte) (bool, error) {
 }
 
 func (s *Scanner) checkGraphQlAvailability(ctx context.Context) (bool, error) {
+	endpointsToCheck := checkAvailabilityEndpoints
+
 	s.httpClient.isGraphQlAvailable = false
 
 	endpointURL, _ := url.Parse(s.cfg.GraphQlURL)
@@ -61,9 +63,17 @@ func (s *Scanner) checkGraphQlAvailability(ctx context.Context) (bool, error) {
 	queryParams.Set("query", "{__typename}")
 	endpointURL.RawQuery = queryParams.Encode()
 
-	// checker
-	check := func(url *url.URL) (bool, error) {
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url.String(), nil)
+	// If s.cfg.GraphQlURL is different from s.cfg.URL, we only need to check
+	// one endpoint - s.cfg.GraphQlURL
+	if s.cfg.GraphQlURL != s.cfg.URL {
+		endpointsToCheck = []string{endpointURL.Path}
+		endpointURL.Path = ""
+	}
+
+	for _, endpoint := range endpointsToCheck {
+		endpointURL.Path = endpoint
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpointURL.String(), nil)
 		if err != nil {
 			return false, errors.New("couldn't create request to check GraphQL availability")
 		}
@@ -79,24 +89,6 @@ func (s *Scanner) checkGraphQlAvailability(ctx context.Context) (bool, error) {
 				return false, errors.Wrap(err, "couldn't check response")
 			}
 
-			if ok {
-				return true, nil
-			}
-		}
-
-		return false, nil
-	}
-
-	// If GraphQlURL is the same as URL, search for the correct endpoint
-	if s.cfg.GraphQlURL == s.cfg.URL {
-		for _, endpoint := range checkAvailabilityEndpoints {
-			endpointURL.Path = endpoint
-
-			ok, err := check(endpointURL)
-			if err != nil {
-				return false, err
-			}
-
 			// If we found correct GraphQL endpoint, save it
 			if ok {
 				endpointURL.RawQuery = ""
@@ -107,23 +99,6 @@ func (s *Scanner) checkGraphQlAvailability(ctx context.Context) (bool, error) {
 				return true, nil
 			}
 		}
-
-		return false, nil
-	}
-
-	ok, err := check(endpointURL)
-	if err != nil {
-		return false, err
-	}
-
-	// If we found correct GraphQL endpoint, save it
-	if ok {
-		endpointURL.RawQuery = ""
-
-		s.cfg.GraphQlURL = endpointURL.String()
-		s.httpClient.isGraphQlAvailable = true
-
-		return true, nil
 	}
 
 	return false, nil
