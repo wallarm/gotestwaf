@@ -38,31 +38,31 @@ func validateURL(rawURL string, protocol string) (*url.URL, error) {
 	return validURL, nil
 }
 
-// craftOrCheckProtocolURL creates a URL from validHttpURL if the rawURL is empty
+// checkOrCraftProtocolURL creates a URL from validHttpURL if the rawURL is empty
 // or validates the rawURL.
-func craftOrCheckProtocolURL(rawURL string, validHttpURL string, protocol string) (*url.URL, error) {
-	if rawURL == "" {
-		validURL, err := validateURL(validHttpURL, httpProto)
+func checkOrCraftProtocolURL(rawURL string, validHttpURL string, protocol string) (*url.URL, error) {
+	if rawURL != "" {
+		validURL, err := validateURL(rawURL, protocol)
 		if err != nil {
 			return nil, err
 		}
 
-		scheme := protocol
-
-		if validURL.Scheme == "https" {
-			scheme += "s"
-		}
-
-		validURL.Scheme = scheme
-		validURL.Path = ""
-
 		return validURL, nil
 	}
 
-	validURL, err := validateURL(rawURL, protocol)
+	validURL, err := validateURL(validHttpURL, httpProto)
 	if err != nil {
 		return nil, err
 	}
+
+	scheme := protocol
+
+	if validURL.Scheme == "https" {
+		scheme += "s"
+	}
+
+	validURL.Scheme = scheme
+	validURL.Path = ""
 
 	return validURL, nil
 }

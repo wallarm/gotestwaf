@@ -147,14 +147,14 @@ func parseFlags() (args string, err error) {
 	}
 	*urlParam = validURL.String()
 
-	wsValidURL, err := craftOrCheckProtocolURL(*wsURL, *urlParam, wsProto)
+	wsValidURL, err := checkOrCraftProtocolURL(*wsURL, *urlParam, wsProto)
 	if err != nil {
 		return "", errors.Wrap(err, "wsURL is not valid")
 	}
 	*wsURL = wsValidURL.String()
 
 	// format GraphQL URL from given HTTP URL
-	gqlValidURL, err := craftOrCheckProtocolURL(*graphqlURL, *urlParam, graphqlProto)
+	gqlValidURL, err := checkOrCraftProtocolURL(*graphqlURL, *urlParam, graphqlProto)
 	if err != nil {
 		return "", errors.Wrap(err, "graphqlURL is not valid")
 	}
