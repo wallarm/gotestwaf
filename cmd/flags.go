@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -142,55 +141,24 @@ func parseFlags() (args string, err error) {
 		return "", fmt.Errorf("unknown logging format: %s", logFormat)
 	}
 
-	validURL, err := url.Parse(*urlParam)
-	if err != nil ||
-		(validURL.Scheme != "http" && validURL.Scheme != "https") ||
-		validURL.Host == "" {
-		return "", errors.New("URL is not valid")
+	validURL, err := validateURL(*urlParam, httpProto)
+	if err != nil {
+		return "", errors.Wrap(err, "URL is not valid")
 	}
-
 	*urlParam = validURL.String()
 
-	// format WebSocket URL from given HTTP URL
-	if *wsURL == "" {
-		wsValidURL := *validURL
-
-		wsScheme := "ws"
-		if wsValidURL.Scheme == "https" {
-			wsScheme = "wss"
-		}
-		wsValidURL.Scheme = wsScheme
-		wsValidURL.Path = ""
-
-		*wsURL = wsValidURL.String()
-	} else {
-		wsValidURL, err := url.Parse(*wsURL)
-		if err != nil ||
-			(wsValidURL.Scheme != "ws" && wsValidURL.Scheme != "wss") ||
-			wsValidURL.Host == "" {
-			return "", errors.New("wsURL is not valid")
-		}
-
-		*wsURL = wsValidURL.String()
+	wsValidURL, err := craftOrCheckProtocolURL(*wsURL, *urlParam, wsProto)
+	if err != nil {
+		return "", errors.Wrap(err, "wsURL is not valid")
 	}
+	*wsURL = wsValidURL.String()
 
 	// format GraphQL URL from given HTTP URL
-	if *graphqlURL == "" {
-		gqlValidURL := *validURL
-
-		gqlValidURL.Path = ""
-
-		*graphqlURL = gqlValidURL.String()
-	} else {
-		gqlValidURL, err := url.Parse(*graphqlURL)
-		if err != nil ||
-			(gqlValidURL.Scheme != "http" && gqlValidURL.Scheme != "https") ||
-			gqlValidURL.Host == "" {
-			return "", errors.New("graphqlURL is not valid")
-		}
-
-		*graphqlURL = gqlValidURL.String()
+	gqlValidURL, err := craftOrCheckProtocolURL(*graphqlURL, *urlParam, graphqlProto)
+	if err != nil {
+		return "", errors.Wrap(err, "graphqlURL is not valid")
 	}
+	*graphqlURL = gqlValidURL.String()
 
 	_, reportFileName := filepath.Split(*reportName)
 	if len(reportFileName) > maxReportFilenameLength {
