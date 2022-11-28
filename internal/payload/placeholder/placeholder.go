@@ -30,6 +30,8 @@ func init() {
 	Placeholders[DefaultNonCrudUrlParam.GetName()] = DefaultNonCrudUrlParam
 	Placeholders[DefaultNonCRUDHeader.GetName()] = DefaultNonCRUDHeader
 	Placeholders[DefaultNonCRUDRequestBody.GetName()] = DefaultNonCRUDRequestBody
+	Placeholders[DefaultGraphQlGET.GetName()] = DefaultGraphQlGET
+	Placeholders[DefaultGraphQlPOST.GetName()] = DefaultGraphQlPOST
 }
 
 func Apply(host, placeholder, data string) (*http.Request, error) {

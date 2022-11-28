@@ -71,8 +71,8 @@ func (g *GRPCConn) httpTest(ctx context.Context) (bool, error) {
 	if g.tlsConf == nil {
 		http2transport = &http2.Transport{
 			AllowHTTP: true,
-			DialTLS: func(netw, addr string, cfg *tls.Config) (net.Conn, error) {
-				return net.Dial(netw, addr)
+			DialTLSContext: func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
+				return net.Dial(network, addr)
 			},
 			DisableCompression: true,
 		}
