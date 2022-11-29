@@ -29,13 +29,13 @@ type HtmlReport struct {
 
 	ApiSecChartData struct {
 		Indicators []string       `json:"indicators" validate:"omitempty,max=100,dive,indicator"`
-		Items      []float32      `json:"items" validate:"omitempty,max=100,dive,min=0,max=100"`
+		Items      []float64      `json:"items" validate:"omitempty,max=100,dive,min=0,max=100"`
 		Chart      *template.HTML `json:"-" validate:"-"`
 	} `json:"api_sec_chart_data"`
 
 	AppSecChartData struct {
 		Indicators []string       `json:"indicators" validate:"omitempty,max=100,dive,indicator"`
-		Items      []float32      `json:"items" validate:"omitempty,max=100,dive,min=0,max=100"`
+		Items      []float64      `json:"items" validate:"omitempty,max=100,dive,min=0,max=100"`
 		Chart      *template.HTML `json:"-" validate:"-"`
 	} `json:"app_sec_chart_data"`
 
@@ -101,7 +101,7 @@ type HtmlReport struct {
 }
 
 type Grade struct {
-	Percentage     float32 `json:"percentage" validate:"min=0,max=100"`
+	Percentage     float64 `json:"percentage" validate:"min=0,max=100"`
 	Mark           string  `json:"mark" validate:"required,mark"`
 	CSSClassSuffix string  `json:"css_class_suffix" validate:"required,css_suffix"`
 }

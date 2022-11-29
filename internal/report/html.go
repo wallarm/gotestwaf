@@ -47,7 +47,7 @@ var (
 	}
 )
 
-func computeGrade(value float32, all int) *report.Grade {
+func computeGrade(value float64, all int) *report.Grade {
 	g := &report.Grade{
 		Percentage:     0.0,
 		Mark:           naMark,
@@ -58,7 +58,7 @@ func computeGrade(value float32, all int) *report.Grade {
 		return g
 	}
 
-	g.Percentage = value / float32(all)
+	g.Percentage = value / float64(all)
 	if g.Percentage <= 1 {
 		g.Percentage *= 100
 	}
@@ -170,8 +170,8 @@ func prepareHTMLFullReport(
 	}
 
 	divider := 0
-	data.ApiSec.TrueNegative = computeGrade(float32(apiSecNegBlockedNum), apiSecNegNum)
-	data.ApiSec.TruePositive = computeGrade(float32(apiSecPosBypassNum), apiSecPosNum)
+	data.ApiSec.TrueNegative = computeGrade(float64(apiSecNegBlockedNum), apiSecNegNum)
+	data.ApiSec.TruePositive = computeGrade(float64(apiSecPosBypassNum), apiSecPosNum)
 	if data.ApiSec.TrueNegative.Mark != naMark {
 		divider++
 	}
@@ -186,8 +186,8 @@ func prepareHTMLFullReport(
 
 	divider = 0
 
-	data.AppSec.TrueNegative = computeGrade(float32(appSecNegBlockedNum), appSecNegNum)
-	data.AppSec.TruePositive = computeGrade(float32(appSecPosBypassNum), appSecPosNum)
+	data.AppSec.TrueNegative = computeGrade(float64(appSecNegBlockedNum), appSecNegNum)
+	data.AppSec.TruePositive = computeGrade(float64(appSecPosBypassNum), appSecPosNum)
 	if data.AppSec.TrueNegative.Mark != naMark {
 		divider++
 	}
