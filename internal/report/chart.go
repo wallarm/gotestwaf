@@ -50,9 +50,9 @@ func updateCounters(t *db.TestDetails, counters map[string]map[string]pair, isBl
 func getIndicatorsAndItems(
 	counters map[string]map[string]pair,
 	category string,
-) (indicators []string, items []float32) {
+) (indicators []string, items []float64) {
 	for testType, val := range counters[category] {
-		percentage := float32(db.CalculatePercentage(val.blocked, val.blocked+val.bypassed))
+		percentage := float64(db.CalculatePercentage(val.blocked, val.blocked+val.bypassed))
 
 		indicators = append(indicators, fmt.Sprintf("%s (%.1f%%)", testType, percentage))
 		items = append(items, percentage)
@@ -67,7 +67,7 @@ func getIndicatorsAndItems(
 			indicators[0], emptyIndicator, emptyIndicator,
 			emptyIndicator, emptyIndicator, emptyIndicator,
 		}
-		items = []float32{
+		items = []float64{
 			items[0], 0.0, 0.0,
 			0.0, 0.0, 0.0,
 		}
@@ -77,7 +77,7 @@ func getIndicatorsAndItems(
 			emptyIndicator, indicators[0], emptyIndicator,
 			emptyIndicator, indicators[1], emptyIndicator,
 		}
-		items = []float32{
+		items = []float64{
 			0.0, items[0], 0.0,
 			0.0, items[1], 0.0,
 		}
@@ -87,7 +87,7 @@ func getIndicatorsAndItems(
 			indicators[0], emptyIndicator, indicators[1],
 			emptyIndicator, indicators[2], emptyIndicator,
 		}
-		items = []float32{
+		items = []float64{
 			items[0], 0.0, items[1],
 			0.0, items[2], 0.0,
 		}
@@ -99,7 +99,7 @@ func getIndicatorsAndItems(
 			emptyIndicator, indicators[2],
 			emptyIndicator, indicators[3],
 		}
-		items = []float32{
+		items = []float64{
 			0.0, items[0],
 			0.0, items[1],
 			0.0, items[2],
@@ -112,8 +112,8 @@ func getIndicatorsAndItems(
 
 // generateChartData generates indicators and their values for JS charts.
 func generateChartData(s *db.Statistics) (
-	apiIndicators []string, apiItems []float32,
-	appIndicators []string, appItems []float32,
+	apiIndicators []string, apiItems []float64,
+	appIndicators []string, appItems []float64,
 ) {
 	counters := make(map[string]map[string]pair)
 
@@ -148,7 +148,7 @@ func generateChartData(s *db.Statistics) (
 		for i := 0; i < len(apiIndicators); i++ {
 			if strings.HasPrefix(apiIndicators[i], protocolName) {
 				apiIndicators[i] = protocolName + " (unavailable)"
-				apiItems[i] = float32(0)
+				apiItems[i] = float64(0)
 			}
 		}
 	}

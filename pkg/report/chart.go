@@ -20,8 +20,8 @@ const (
 
 // GenerateCharts generates JS code to render charts in HTML/PDF report.
 func generateCharts(
-	apiIndicators []string, apiItems []float32,
-	appIndicators []string, appItems []float32,
+	apiIndicators []string, apiItems []float64,
+	appIndicators []string, appItems []float64,
 ) (apiChart *string, appChart *string, err error) {
 	var buffer bytes.Buffer
 
