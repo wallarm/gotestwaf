@@ -18,6 +18,10 @@ type Number interface {
 }
 
 func Round(n float64) float64 {
+	if math.IsNaN(n) {
+		return 0.0
+	}
+
 	return math.Round(n*100) / 100
 }
 
