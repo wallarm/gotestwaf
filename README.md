@@ -325,13 +325,15 @@ Supported GoTestWAF configuration options are described below.
 Usage: ./gotestwaf [OPTIONS] --url <URL>
 
 Options:
+      --addDebugHeader          Add header with a hash of the test information in each request
       --addHeader string        An HTTP header to add to requests
       --blockConnReset          If true, connection resets will be considered as block
       --blockRegex string       Regex to detect a blocking page with the same HTTP response status code as a not blocked request
-      --blockStatusCode ints    HTTP status code that WAF uses while blocking requests (default [403])
+      --blockStatusCodes ints   HTTP status code that WAF uses while blocking requests (default [403])
       --configPath string       Path to the config file (default "config.yaml")
       --email string            E-mail to which the report will be sent
       --followCookies           If true, use cookies sent by the server. May work only with --maxIdleConns=1
+      --graphqlURL string       GraphQL URL to check
       --grpcPort uint16         gRPC port to check
       --idleConnTimeout int     The maximum amount of time a keep-alive connection will live (default 2)
       --ignoreUnresolved        If true, unresolved test cases will be considered as bypassed (affect score and results)
@@ -340,10 +342,10 @@ Options:
       --maxIdleConns int        The maximum number of keep-alive connections (default 2)
       --maxRedirects int        The maximum number of handling redirects (default 50)
       --noEmailReport           Save report locally
-      --nonBlockedAsPassed      If true, count requests that weren't blocked as passed. If false, requests that don't satisfy to PassStatusCode/PassRegExp as blocked
+      --nonBlockedAsPassed      If true, count requests that weren't blocked as passed. If false, requests that don't satisfy to PassStatusCodes/PassRegExp as blocked
       --openapiFile string      Path to openAPI file
       --passRegex string        Regex to a detect normal (not blocked) web page with the same HTTP status code as a blocked request
-      --passStatusCode ints     HTTP response status code that WAF uses while passing requests (default [200,404])
+      --passStatusCodes ints    HTTP response status code that WAF uses while passing requests (default [200,404])
       --proxy string            Proxy URL to use
       --quiet                   If true, disable verbose logging
       --randomDelay int         Random delay in ms in addition to the delay between requests (default 400)

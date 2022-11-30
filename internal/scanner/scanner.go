@@ -167,7 +167,7 @@ func (s *Scanner) WAFBlockCheck(ctx context.Context) error {
 
 		if !ok {
 			return errors.Errorf("WAF was not detected. "+
-				"Please use the '--blockStatusCode' or '--blockRegex' flags. Use '--help' for additional info. "+
+				"Please use the '--blockStatusCodes' or '--blockRegex' flags. Use '--help' for additional info. "+
 				"Baseline attack status code: %v", httpStatus)
 		}
 
@@ -358,7 +358,7 @@ func (s *Scanner) checkBlocking(body string, statusCode int) (bool, error) {
 		return m, nil
 	}
 
-	for _, code := range s.cfg.BlockStatusCode {
+	for _, code := range s.cfg.BlockStatusCodes {
 		if statusCode == code {
 			return true, nil
 		}
@@ -375,7 +375,7 @@ func (s *Scanner) checkPass(body string, statusCode int) (bool, error) {
 		return m, nil
 	}
 
-	for _, code := range s.cfg.PassStatusCode {
+	for _, code := range s.cfg.PassStatusCodes {
 		if statusCode == code {
 			return true, nil
 		}

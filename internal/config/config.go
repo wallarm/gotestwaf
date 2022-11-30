@@ -14,8 +14,8 @@ type Config struct {
 	FollowCookies         bool              `mapstructure:"followCookies"`
 	RenewSession          bool              `mapstructure:"renewSession"`
 	SkipWAFIdentification bool              `mapstructure:"skipWAFIdentification"`
-	BlockStatusCode       []int             `mapstructure:"blockStatusCode"`
-	PassStatusCode        []int             `mapstructure:"passStatusCode"`
+	BlockStatusCodes      []int             `mapstructure:"blockStatusCodes"`
+	PassStatusCodes       []int             `mapstructure:"passStatusCodes"`
 	BlockRegex            string            `mapstructure:"blockRegex"`
 	PassRegex             string            `mapstructure:"passRegex"`
 	NonBlockedAsPassed    bool              `mapstructure:"nonBlockedAsPassed"`
