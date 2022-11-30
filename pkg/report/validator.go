@@ -16,7 +16,7 @@ var (
 	markRegex       = regexp.MustCompile(`^(N/A|[A-F][\+\-]?)$`)
 	suffixRegex     = regexp.MustCompile(`^(na|[a-f])$`)
 	indicatorRegex  = regexp.MustCompile(`^(-|[[:print:]]{1,30} \((unavailable|[0-9]{1,3}\.[0-9]%)\))$`)
-	argsRegex       = regexp.MustCompile(`^(\-\-((quiet|tlsVerify|followCookies|renewSession|skipWAFIdentification|nonBlockedAsPassed|noEmailReport|ignoreUnresolved|blockConnReset|skipWAFBlockCheck|addDebugHeader)|(configPath|logFormat|url|wsURL|proxy|blockRegex|passRegex|testCase|testSet|reportPath|reportName|reportFormat|email|testCasesPath|wafName|addHeader|openapiFile)\=[[:print:]]+|(grpcPort|maxIdleConns|maxRedirects|idleConnTimeout|workers|sendDelay|randomDelay)\=\d+|(blockStatusCodes|passStatusCodes)\=[\d,]+) ?)+$`)
+	argsRegex       = regexp.MustCompile(`^(\-\-((quiet|tlsVerify|followCookies|renewSession|skipWAFIdentification|nonBlockedAsPassed|noEmailReport|ignoreUnresolved|blockConnReset|skipWAFBlockCheck|addDebugHeader)|(configPath|logFormat|url|wsURL|graphqlURL|proxy|blockRegex|passRegex|testCase|testSet|reportPath|reportName|reportFormat|email|testCasesPath|wafName|addHeader|openapiFile)\=[[:print:]]+|(grpcPort|maxIdleConns|maxRedirects|idleConnTimeout|workers|sendDelay|randomDelay)\=\d+|(blockStatusCodes|passStatusCodes)\=[\d,]+) ?)+$`)
 )
 
 func validateGtwVersion(fl validator.FieldLevel) bool {
