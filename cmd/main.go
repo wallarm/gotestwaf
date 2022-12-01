@@ -141,7 +141,6 @@ func run(ctx context.Context, logger *logrus.Logger) error {
 
 	s.WAFwsBlockCheck(ctx)
 	s.CheckGRPCAvailability(ctx)
-	s.CheckGraphQlAvailability(ctx)
 
 	err = s.Run(ctx)
 	if err != nil {

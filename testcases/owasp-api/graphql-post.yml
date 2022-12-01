@@ -9,6 +9,6 @@ payload:
 encoder:
   - Plain
 placeholder:
-  - GraphQlPOST
+  - JSONBody
 type: "GraphQL"
 ...

@@ -56,7 +56,6 @@ func TestGoTestWAF(t *testing.T) {
 		if err != nil {
 			cancel()
 			t.Fatalf("got an error during the test: %v", err)
-			return
 		}
 	case <-done:
 		if allTestCases.CountTestCases() != 0 {

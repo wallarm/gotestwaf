@@ -127,41 +127,22 @@ func generateChartData(s *db.Statistics) (
 
 	_, containsApiCat := counters["api"]
 
-	if containsApiCat {
-		// Add gRPC counter if gRPC is unavailable to display it on graphic
-		if !s.IsGrpcAvailable {
-			// gRPC is part of the API Security tests
-			counters["api"]["grpc"] = pair{}
-		}
-
-		// Add GraphQL counter if GraphQL is unavailable to display it on graphic
-		if !s.IsGraphQLAvailable {
-			// GraphQL is part of the API Security tests
-			counters["api"]["graphql"] = pair{}
-		}
+	// Add gRPC counter if gRPC is unavailable to display it on graphic
+	if !s.IsGrpcAvailable && containsApiCat {
+		// gRPC is part of the API Security tests
+		counters["api"]["grpc"] = pair{}
 	}
 
 	apiIndicators, apiItems = getIndicatorsAndItems(counters, "api")
 	appIndicators, appItems = getIndicatorsAndItems(counters, "app")
 
-	fixIndicators := func(protocolName string) {
+	// Fix label for gRPC if it is unavailable
+	if !s.IsGrpcAvailable && containsApiCat {
 		for i := 0; i < len(apiIndicators); i++ {
-			if strings.HasPrefix(apiIndicators[i], protocolName) {
-				apiIndicators[i] = protocolName + " (unavailable)"
+			if strings.HasPrefix(apiIndicators[i], "grpc") {
+				apiIndicators[i] = "grpc (unavailable)"
 				apiItems[i] = float64(0)
 			}
-		}
-	}
-
-	if containsApiCat {
-		// Fix label for gRPC if it is unavailable
-		if !s.IsGrpcAvailable {
-			fixIndicators("grpc")
-		}
-
-		// Fix label for GraphQL if it is unavailable
-		if !s.IsGraphQLAvailable {
-			fixIndicators("graphql")
 		}
 	}
 

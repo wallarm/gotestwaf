@@ -5,8 +5,7 @@ import (
 )
 
 type Statistics struct {
-	IsGrpcAvailable    bool
-	IsGraphQLAvailable bool
+	IsGrpcAvailable bool
 
 	Paths ScannedPaths
 
@@ -141,7 +140,6 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 
 	s := &Statistics{
 		IsGrpcAvailable:      db.IsGrpcAvailable,
-		IsGraphQLAvailable:   db.IsGraphQlAvailable,
 		TestCasesFingerprint: db.Hash,
 	}
 

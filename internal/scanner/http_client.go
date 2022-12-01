@@ -32,8 +32,6 @@ type HTTPClient struct {
 
 	followCookies bool
 	renewSession  bool
-
-	isGraphQlAvailable bool
 }
 
 func NewHTTPClient(cfg *config.Config) (*HTTPClient, error) {
@@ -83,19 +81,18 @@ func NewHTTPClient(cfg *config.Config) (*HTTPClient, error) {
 	}
 
 	return &HTTPClient{
-		client:             client,
-		headers:            configuredHeaders,
-		hostHeader:         configuredHeaders["Host"],
-		followCookies:      cfg.FollowCookies,
-		renewSession:       cfg.RenewSession,
-		isGraphQlAvailable: true,
+		client:        client,
+		headers:       configuredHeaders,
+		hostHeader:    configuredHeaders["Host"],
+		followCookies: cfg.FollowCookies,
+		renewSession:  cfg.RenewSession,
 	}, nil
 }
 
 func (c *HTTPClient) SendPayload(
 	ctx context.Context,
 	targetURL, placeholderName, encoderName, payload string,
-	debugHeaderValue string,
+	testHeaderValue string,
 ) (body string, statusCode int, err error) {
 	encodedPayload, err := encoder.Apply(encoderName, payload)
 	if err != nil {
@@ -114,8 +111,8 @@ func (c *HTTPClient) SendPayload(
 	}
 	req.Host = c.hostHeader
 
-	if debugHeaderValue != "" {
-		req.Header.Set(GTWDebugHeader, debugHeaderValue)
+	if testHeaderValue != "" {
+		req.Header.Set(GTWDebugHeader, testHeaderValue)
 	}
 
 	if c.followCookies && c.renewSession {
@@ -148,7 +145,7 @@ func (c *HTTPClient) SendPayload(
 	return string(bodyBytes), statusCode, nil
 }
 
-func (c *HTTPClient) SendRequest(req *http.Request, debugHeaderValue string) (
+func (c *HTTPClient) SendRequest(req *http.Request, testHeaderValue string) (
 	respHeaders http.Header,
 	body string,
 	statusCode int,
@@ -159,8 +156,8 @@ func (c *HTTPClient) SendRequest(req *http.Request, debugHeaderValue string) (
 	}
 	req.Host = c.hostHeader
 
-	if debugHeaderValue != "" {
-		req.Header.Set(GTWDebugHeader, debugHeaderValue)
+	if testHeaderValue != "" {
+		req.Header.Set(GTWDebugHeader, testHeaderValue)
 	}
 
 	if c.followCookies && c.renewSession {
@@ -241,10 +238,6 @@ func (c *HTTPClient) getCookies(ctx context.Context, targetURL string) ([]*http.
 	}
 
 	return nil, returnErr
-}
-
-func (c *HTTPClient) IsGraphQlAvailable() bool {
-	return c.isGraphQlAvailable
 }
 
 func GetTargetURL(reqURL *url.URL) string {
