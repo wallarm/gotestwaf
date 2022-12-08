@@ -138,7 +138,7 @@ func truncatePayload(payload string) string {
 // prepareHTMLFullReport prepares ready data to insert into the HTML template.
 func prepareHTMLFullReport(
 	s *db.Statistics, reportTime time.Time, wafName string,
-	url string, openApiFile string, args string, ignoreUnresolved bool, includePayloads bool,
+	url string, openApiFile string, args []string, ignoreUnresolved bool, includePayloads bool,
 ) (*report.HtmlReport, error) {
 	data := &report.HtmlReport{
 		IgnoreUnresolved: ignoreUnresolved,
@@ -452,7 +452,7 @@ func prepareHTMLFullReport(
 // once at the first call, and then reuses the previously prepared data
 func oncePrepareHTMLFullReport(
 	s *db.Statistics, reportTime time.Time, wafName string,
-	url string, openApiFile string, args string, ignoreUnresolved bool, includePayloads bool,
+	url string, openApiFile string, args []string, ignoreUnresolved bool, includePayloads bool,
 ) (*report.HtmlReport, error) {
 	var err error
 
@@ -470,7 +470,7 @@ func oncePrepareHTMLFullReport(
 // to a temporary file.
 func exportFullReportToHtml(
 	s *db.Statistics, reportTime time.Time, wafName string,
-	url string, openApiFile string, args string, ignoreUnresolved bool, includePayloads bool,
+	url string, openApiFile string, args []string, ignoreUnresolved bool, includePayloads bool,
 ) (fileName string, err error) {
 	reportData, err := oncePrepareHTMLFullReport(s, reportTime, wafName, url, openApiFile, args, ignoreUnresolved, includePayloads)
 	if err != nil {
@@ -500,7 +500,7 @@ func exportFullReportToHtml(
 // printFullReportToHtml prepares and saves a full report in HTML format on a disk.
 func printFullReportToHtml(
 	s *db.Statistics, reportFile string, reportTime time.Time,
-	wafName string, url string, openApiFile string, args string,
+	wafName string, url string, openApiFile string, args []string,
 	ignoreUnresolved bool, includePayloads bool,
 ) error {
 	tempFileName, err := exportFullReportToHtml(s, reportTime, wafName, url, openApiFile, args, ignoreUnresolved, includePayloads)

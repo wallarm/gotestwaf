@@ -3,6 +3,7 @@ package report
 import (
 	"encoding/json"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -83,7 +84,7 @@ type payloadDetails struct {
 // printFullReportToJson prepares and prints a full report in JSON format to the file.
 func printFullReportToJson(
 	s *db.Statistics, reportFile string, reportTime time.Time,
-	wafName string, url string, args string, ignoreUnresolved bool,
+	wafName string, url string, args []string, ignoreUnresolved bool,
 ) error {
 	report := jsonReport{
 		Date:        reportTime.Format(time.ANSIC),
@@ -91,7 +92,7 @@ func printFullReportToJson(
 		URL:         url,
 		Score:       s.Score.Average,
 		TestCasesFP: s.TestCasesFingerprint,
-		Args:        args,
+		Args:        strings.Join(args, " "),
 	}
 
 	report.Summary = &summary{}

@@ -59,7 +59,7 @@ var usage = func() {
 }
 
 // parseFlags parses all GoTestWAF CLI flags
-func parseFlags() (args string, err error) {
+func parseFlags() (args []string, err error) {
 	reportPath := filepath.Join(".", defaultReportPath)
 	testCasesPath := filepath.Join(".", defaultTestCasesPath)
 
@@ -124,31 +124,31 @@ func parseFlags() (args string, err error) {
 
 	// url flag must be set
 	if *urlParam == "" {
-		return "", errors.New("--url flag is not set")
+		return nil, errors.New("--url flag is not set")
 	}
 
 	if *noEmailReport == false && *email != "" {
 		*email, err = helpers.ValidateEmail(*email)
 		if err != nil {
-			return "", errors.Wrap(err, "couldn't validate email")
+			return nil, errors.Wrap(err, "couldn't validate email")
 		}
 	}
 
 	logrusLogLvl, err := logrus.ParseLevel(*logLvl)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	logLevel = logrusLogLvl
 
 	if logFormat != textLogFormat && logFormat != jsonLogFormat {
-		return "", fmt.Errorf("unknown logging format: %s", logFormat)
+		return nil, fmt.Errorf("unknown logging format: %s", logFormat)
 	}
 
 	validURL, err := url.Parse(*urlParam)
 	if err != nil ||
 		(validURL.Scheme != "http" && validURL.Scheme != "https") ||
 		validURL.Host == "" {
-		return "", errors.New("URL is not valid")
+		return nil, errors.New("URL is not valid")
 	}
 
 	*urlParam = validURL.String()
@@ -167,14 +167,14 @@ func parseFlags() (args string, err error) {
 
 	_, reportFileName := filepath.Split(*reportName)
 	if len(reportFileName) > maxReportFilenameLength {
-		return "", errors.New("report filename too long")
+		return nil, errors.New("report filename too long")
 	}
 
 	checkUsedFlags()
 
 	args, err = normalizeArgs()
 	if err != nil {
-		return "", errors.Wrap(err, "couldn't normalize args")
+		return nil, errors.Wrap(err, "couldn't normalize args")
 	}
 
 	return args, nil
@@ -191,7 +191,7 @@ func checkUsedFlags() {
 }
 
 // normalizeArgs returns string with used CLI args in a unified from.
-func normalizeArgs() (string, error) {
+func normalizeArgs() ([]string, error) {
 	// disable lexicographical order
 	flag.CommandLine.SortFlags = false
 
@@ -246,10 +246,10 @@ func normalizeArgs() (string, error) {
 	flag.Visit(fn)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return strings.Join(args, " "), nil
+	return args, nil
 }
 
 // loadConfig loads the specified config file and merges it with the parameters passed via CLI
