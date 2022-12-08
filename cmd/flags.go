@@ -47,6 +47,8 @@ var (
 	quiet      bool
 	logLevel   logrus.Level
 	logFormat  string
+
+	isIncludePayloadsFlagUsed bool
 )
 
 var usage = func() {
@@ -95,6 +97,7 @@ func parseFlags() (args string, err error) {
 	flag.String("reportPath", reportPath, "A directory to store reports")
 	reportName := flag.String("reportName", defaultReportName, "Report file name. Supports `time' package template format")
 	flag.String("reportFormat", "pdf", "Export report to one of the following formats: none, pdf, html, json")
+	flag.Bool("includePayloads", false, "If true, payloads will be included in HTML/PDF report")
 	noEmailReport := flag.Bool("noEmailReport", false, "Save report locally")
 	email := flag.String("email", "", "E-mail to which the report will be sent")
 	flag.String("testCasesPath", testCasesPath, "Path to a folder with test cases")
@@ -167,12 +170,24 @@ func parseFlags() (args string, err error) {
 		return "", errors.New("report filename too long")
 	}
 
+	checkUsedFlags()
+
 	args, err = normalizeArgs()
 	if err != nil {
 		return "", errors.Wrap(err, "couldn't normalize args")
 	}
 
 	return args, nil
+}
+
+func checkUsedFlags() {
+	fn := func(f *flag.Flag) {
+		if f.Name == "includePayloads" {
+			isIncludePayloadsFlagUsed = f.Changed
+		}
+	}
+
+	flag.Visit(fn)
 }
 
 // normalizeArgs returns string with used CLI args in a unified from.

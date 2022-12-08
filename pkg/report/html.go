@@ -18,6 +18,7 @@ var HtmlTemplate string
 // HtmlReport represents a data required to render a full report in HTML/PDF format.
 type HtmlReport struct {
 	IgnoreUnresolved bool `json:"ignore_unresolved" validate:"boolean"`
+	IncludePayloads  bool `json:"include_payloads" validate:"boolean"`
 
 	WafName        string `json:"waf_name" validate:"required,printascii,max=256"`
 	Url            string `json:"url" validate:"required,url,max=256"`
