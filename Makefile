@@ -19,7 +19,9 @@ modsec_down:
 	docker kill gotestwaf_test_app gotestwaf_modsec
 
 modsec_stat: gotestwaf
+	docker pull mendhak/http-https-echo:20
 	docker pull owasp/modsecurity-crs:3.3.2-nginx
+	docker run --rm -d --name gotestwaf_test_app -p 8088:8080 -t mendhak/http-https-echo:20
 	docker run --rm -d -p 8080:80 -p 8443:443 -e PARANOIA=1 --name modsec_paranoia_1 -e BACKEND="http://172.17.0.1:8088" \
 		-v ${PWD}/resources/default.conf.template:/etc/nginx/templates/conf.d/default.conf.template \
 		owasp/modsecurity-crs:3.3.2-nginx
