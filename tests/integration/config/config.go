@@ -97,6 +97,7 @@ func GetConfig() *config.Config {
 		URL:                fmt.Sprintf("http://localhost:%d", HTTPPort),
 		GRPCPort:           uint16(GRPCPort),
 		WebSocketURL:       fmt.Sprintf("ws://localhost:%d", HTTPPort),
+		GraphQlURL:         fmt.Sprintf("http://localhost:%d/graphql", HTTPPort),
 		HTTPHeaders:        nil,
 		TLSVerify:          false,
 		Proxy:              "",

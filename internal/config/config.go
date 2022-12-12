@@ -3,6 +3,7 @@ package config
 type Config struct {
 	URL                   string            `mapstructure:"url"`
 	WebSocketURL          string            `mapstructure:"wsURL"`
+	GraphQlURL            string            `mapstructure:"graphqlURL"`
 	GRPCPort              uint16            `mapstructure:"grpcPort"`
 	HTTPHeaders           map[string]string `mapstructure:"headers"`
 	TLSVerify             bool              `mapstructure:"tlsVerify"`
