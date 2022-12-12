@@ -173,6 +173,11 @@ func run(ctx context.Context, logger *logrus.Logger) error {
 	includePayloads := cfg.IncludePayloads
 	if cfg.ReportFormat == report.HtmlFormat || cfg.ReportFormat == report.PdfFormat {
 		askForPayloads := true
+
+		// If the cfg.IncludePayloads is already explicitly set by the user OR
+		// the user has explicitly chosen not to send email report, or has
+		// provided the email to send the report to (which we interpret as
+		// non-interactive mode), do not ask to include the payloads in the report.
 		if isIncludePayloadsFlagUsed || cfg.NoEmailReport || cfg.Email != "" {
 			askForPayloads = false
 		}
