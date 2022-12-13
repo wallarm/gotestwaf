@@ -335,9 +335,11 @@ func (s *Scanner) checkBlocking(responseMsgHeader, body string, statusCode int) 
 			response = responseMsgHeader + body
 		}
 
-		m, _ := regexp.MatchString(s.cfg.BlockRegex, response)
+		if response != "" {
+			m, _ := regexp.MatchString(s.cfg.BlockRegex, response)
 
-		return m, nil
+			return m, nil
+		}
 	}
 
 	for _, code := range s.cfg.BlockStatusCodes {
@@ -358,9 +360,11 @@ func (s *Scanner) checkPass(responseMsgHeader, body string, statusCode int) (boo
 			response = responseMsgHeader + body
 		}
 
-		m, _ := regexp.MatchString(s.cfg.BlockRegex, response)
+		if response != "" {
+			m, _ := regexp.MatchString(s.cfg.BlockRegex, response)
 
-		return m, nil
+			return m, nil
+		}
 	}
 
 	for _, code := range s.cfg.PassStatusCodes {
