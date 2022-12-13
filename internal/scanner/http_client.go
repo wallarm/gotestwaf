@@ -52,9 +52,16 @@ func NewHTTPClient(cfg *config.Config) (*HTTPClient, error) {
 	}
 
 	redirectFunc = func(req *http.Request, via []*http.Request) error {
+		// if maxRedirects is equal to 0 then tell the HTTP client to use
+		// the first HTTP response (disable following redirects)
+		if cfg.MaxRedirects == 0 {
+			return http.ErrUseLastResponse
+		}
+
 		if len(via) > cfg.MaxRedirects {
 			return errors.New("max redirect number exceeded")
 		}
+
 		return nil
 	}
 
