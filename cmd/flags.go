@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/hashicorp/go-multierror"
@@ -81,9 +82,9 @@ func parseFlags() (args string, err error) {
 	flag.Bool("skipWAFIdentification", false, "Skip WAF identification")
 	flag.IntSlice("blockStatusCodes", []int{403}, "HTTP status code that WAF uses while blocking requests")
 	flag.IntSlice("passStatusCodes", []int{200, 404}, "HTTP response status code that WAF uses while passing requests")
-	flag.String("blockRegex", "",
+	blockRegex := flag.String("blockRegex", "",
 		"Regex to detect a blocking page with the same HTTP response status code as a not blocked request")
-	flag.String("passRegex", "",
+	passRegex := flag.String("passRegex", "",
 		"Regex to a detect normal (not blocked) web page with the same HTTP status code as a blocked request")
 	flag.Bool("nonBlockedAsPassed", false,
 		"If true, count requests that weren't blocked as passed. If false, requests that don't satisfy to PassStatusCodes/PassRegExp as blocked")
@@ -160,6 +161,20 @@ func parseFlags() (args string, err error) {
 		validURL.Path = ""
 
 		*wsURL = validURL.String()
+	}
+
+	if *blockRegex != "" {
+		_, err = regexp.Compile(*blockRegex)
+		if err != nil {
+			return "", errors.Wrap(err, "bad regexp")
+		}
+	}
+
+	if *passRegex != "" {
+		_, err = regexp.Compile(*passRegex)
+		if err != nil {
+			return "", errors.Wrap(err, "bad regexp")
+		}
 	}
 
 	_, reportFileName := filepath.Split(*reportName)
