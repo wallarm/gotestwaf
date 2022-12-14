@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -23,8 +24,10 @@ const (
 )
 
 type WAFDetector struct {
-	client *http.Client
-	target string
+	client     *http.Client
+	headers    map[string]string
+	hostHeader string
+	target     string
 }
 
 func NewDetector(cfg *config.Config) (*WAFDetector, error) {
@@ -59,9 +62,19 @@ func NewDetector(cfg *config.Config) (*WAFDetector, error) {
 		return nil, errors.Wrap(err, "couldn't parse URL")
 	}
 
+	configuredHeaders := cfg.HTTPHeaders
+	customHeader := strings.SplitN(cfg.AddHeader, ":", 2)
+	if len(customHeader) > 1 {
+		header := strings.TrimSpace(customHeader[0])
+		value := strings.TrimSpace(customHeader[1])
+		configuredHeaders[header] = value
+	}
+
 	return &WAFDetector{
-		client: client,
-		target: GetTargetURL(target),
+		client:     client,
+		headers:    configuredHeaders,
+		hostHeader: configuredHeaders["Host"],
+		target:     GetTargetURL(target),
 	}, nil
 }
 
@@ -80,6 +93,11 @@ func (w *WAFDetector) doRequest(ctx context.Context) (*http.Response, error) {
 	queryParams.Add("e", xxePayload)
 
 	req.URL.RawQuery = queryParams.Encode()
+
+	for header, value := range w.headers {
+		req.Header.Set(header, value)
+	}
+	req.Host = w.hostHeader
 
 	resp, err := w.client.Do(req)
 	if err != nil {

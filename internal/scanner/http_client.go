@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/cookiejar"
+	"net/http/httputil"
 	"net/url"
 	"strings"
 	"time"
@@ -52,9 +53,16 @@ func NewHTTPClient(cfg *config.Config) (*HTTPClient, error) {
 	}
 
 	redirectFunc = func(req *http.Request, via []*http.Request) error {
+		// if maxRedirects is equal to 0 then tell the HTTP client to use
+		// the first HTTP response (disable following redirects)
+		if cfg.MaxRedirects == 0 {
+			return http.ErrUseLastResponse
+		}
+
 		if len(via) > cfg.MaxRedirects {
 			return errors.New("max redirect number exceeded")
 		}
+
 		return nil
 	}
 
@@ -93,15 +101,20 @@ func (c *HTTPClient) SendPayload(
 	ctx context.Context,
 	targetURL, placeholderName, encoderName, payload string,
 	testHeaderValue string,
-) (body string, statusCode int, err error) {
+) (
+	responseMsgHeader string,
+	responseBody string,
+	statusCode int,
+	err error,
+) {
 	encodedPayload, err := encoder.Apply(encoderName, payload)
 	if err != nil {
-		return "", 0, errors.Wrap(err, "encoding payload")
+		return "", "", 0, errors.Wrap(err, "encoding payload")
 	}
 
 	req, err := placeholder.Apply(targetURL, placeholderName, encodedPayload)
 	if err != nil {
-		return "", 0, errors.Wrap(err, "apply placeholder")
+		return "", "", 0, errors.Wrap(err, "apply placeholder")
 	}
 
 	req = req.WithContext(ctx)
@@ -118,7 +131,7 @@ func (c *HTTPClient) SendPayload(
 	if c.followCookies && c.renewSession {
 		cookies, err := c.getCookies(ctx, targetURL)
 		if err != nil {
-			return "", 0, errors.Wrap(err, "couldn't get cookies for malicious request")
+			return "", "", 0, errors.Wrap(err, "couldn't get cookies for malicious request")
 		}
 
 		for _, cookie := range cookies {
@@ -128,13 +141,18 @@ func (c *HTTPClient) SendPayload(
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return "", 0, errors.Wrap(err, "sending http request")
+		return "", "", 0, errors.Wrap(err, "sending http request")
 	}
 	defer resp.Body.Close()
 
+	msgHeader, err := httputil.DumpResponse(resp, false)
+	if err != nil {
+		return "", "", 0, errors.Wrap(err, "dumping http response")
+	}
+
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", 0, errors.Wrap(err, "reading response body")
+		return "", "", 0, errors.Wrap(err, "reading response body")
 	}
 	statusCode = resp.StatusCode
 
@@ -142,11 +160,15 @@ func (c *HTTPClient) SendPayload(
 		c.client.Jar.SetCookies(req.URL, resp.Cookies())
 	}
 
-	return string(bodyBytes), statusCode, nil
+	return string(msgHeader), string(bodyBytes), statusCode, nil
 }
 
-func (c *HTTPClient) SendRequest(req *http.Request, testHeaderValue string) (
+func (c *HTTPClient) SendRequest(
+	req *http.Request,
+	testHeaderValue string,
+) (
 	respHeaders http.Header,
+	responseMsgHeader string,
 	body string,
 	statusCode int,
 	err error,
@@ -163,7 +185,7 @@ func (c *HTTPClient) SendRequest(req *http.Request, testHeaderValue string) (
 	if c.followCookies && c.renewSession {
 		cookies, err := c.getCookies(req.Context(), GetTargetURL(req.URL))
 		if err != nil {
-			return nil, "", 0, errors.Wrap(err, "couldn't get cookies for malicious request")
+			return nil, "", "", 0, errors.Wrap(err, "couldn't get cookies for malicious request")
 		}
 
 		for _, cookie := range cookies {
@@ -173,13 +195,18 @@ func (c *HTTPClient) SendRequest(req *http.Request, testHeaderValue string) (
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return nil, "", 0, errors.Wrap(err, "sending http request")
+		return nil, "", "", 0, errors.Wrap(err, "sending http request")
 	}
 	defer resp.Body.Close()
 
+	msgHeader, err := httputil.DumpResponse(resp, false)
+	if err != nil {
+		return nil, "", "", 0, errors.Wrap(err, "dumping http response")
+	}
+
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, "", 0, errors.Wrap(err, "reading response body")
+		return nil, "", "", 0, errors.Wrap(err, "reading response body")
 	}
 	statusCode = resp.StatusCode
 
@@ -187,7 +214,7 @@ func (c *HTTPClient) SendRequest(req *http.Request, testHeaderValue string) (
 		c.client.Jar.SetCookies(req.URL, resp.Cookies())
 	}
 
-	return resp.Header, string(bodyBytes), statusCode, nil
+	return resp.Header, string(msgHeader), string(bodyBytes), statusCode, nil
 }
 
 func (c *HTTPClient) getCookies(ctx context.Context, targetURL string) ([]*http.Cookie, error) {
