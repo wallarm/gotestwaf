@@ -138,10 +138,11 @@ func truncatePayload(payload string) string {
 // prepareHTMLFullReport prepares ready data to insert into the HTML template.
 func prepareHTMLFullReport(
 	s *db.Statistics, reportTime time.Time, wafName string,
-	url string, openApiFile string, args string, ignoreUnresolved bool,
+	url string, openApiFile string, args []string, ignoreUnresolved bool, includePayloads bool,
 ) (*report.HtmlReport, error) {
 	data := &report.HtmlReport{
 		IgnoreUnresolved: ignoreUnresolved,
+		IncludePayloads:  includePayloads,
 		WafName:          wafName,
 		Url:              url,
 		WafTestingDate:   reportTime.Format("02 January 2006"),
@@ -294,128 +295,136 @@ func prepareHTMLFullReport(
 		testSetSum.Percentage = db.Round(testSetSum.Percentage / float64(testSetSum.ResolvedTestCasesNumber))
 	}
 
-	// map[paths]map[payload]map[statusCode]*testDetails
-	negBypassed := make(map[string]map[string]map[int]*report.TestDetails)
-	for _, d := range s.NegativeTests.Bypasses {
-		paths := strings.Join(d.AdditionalInfo, "\n")
+	if includePayloads {
+		// map[paths]map[payload]map[statusCode]*testDetails
+		negBypassed := make(map[string]map[string]map[int]*report.TestDetails)
+		for _, d := range s.NegativeTests.Bypasses {
+			paths := strings.Join(d.AdditionalInfo, "\n")
 
-		if _, ok := negBypassed[paths]; !ok {
-			// map[payload]map[statusCode]*testDetails
-			negBypassed[paths] = make(map[string]map[int]*report.TestDetails)
-		}
-
-		payload := truncatePayload(d.Payload)
-
-		if _, ok := negBypassed[paths][payload]; !ok {
-			// map[statusCode]*testDetails
-			negBypassed[paths][payload] = make(map[int]*report.TestDetails)
-		}
-
-		if _, ok := negBypassed[paths][payload][d.ResponseStatusCode]; !ok {
-			negBypassed[paths][payload][d.ResponseStatusCode] = &report.TestDetails{
-				Encoders:     make(map[string]any),
-				Placeholders: make(map[string]any),
+			if _, ok := negBypassed[paths]; !ok {
+				// map[payload]map[statusCode]*testDetails
+				negBypassed[paths] = make(map[string]map[int]*report.TestDetails)
 			}
-		}
 
-		negBypassed[paths][payload][d.ResponseStatusCode].TestCase = d.TestCase
-		negBypassed[paths][payload][d.ResponseStatusCode].Encoders[d.Encoder] = nil
-		negBypassed[paths][payload][d.ResponseStatusCode].Placeholders[d.Placeholder] = nil
-	}
+			payload := truncatePayload(d.Payload)
 
-	// map[payload]map[statusCode]*testDetails
-	negUnresolved := make(map[string]map[int]*report.TestDetails)
-	for _, d := range s.NegativeTests.Unresolved {
-		payload := truncatePayload(d.Payload)
-
-		if _, ok := negUnresolved[payload]; !ok {
-			// map[statusCode]*testDetails
-			negUnresolved[payload] = make(map[int]*report.TestDetails)
-		}
-
-		if _, ok := negUnresolved[payload][d.ResponseStatusCode]; !ok {
-			negUnresolved[payload][d.ResponseStatusCode] = &report.TestDetails{
-				Encoders:     make(map[string]any),
-				Placeholders: make(map[string]any),
+			if _, ok := negBypassed[paths][payload]; !ok {
+				// map[statusCode]*testDetails
+				negBypassed[paths][payload] = make(map[int]*report.TestDetails)
 			}
-		}
 
-		negUnresolved[payload][d.ResponseStatusCode].TestCase = d.TestCase
-		negUnresolved[payload][d.ResponseStatusCode].Encoders[d.Encoder] = nil
-		negUnresolved[payload][d.ResponseStatusCode].Placeholders[d.Placeholder] = nil
-	}
-
-	// map[payload]map[statusCode]*testDetails
-	posBlocked := make(map[string]map[int]*report.TestDetails)
-	for _, d := range s.PositiveTests.FalsePositive {
-		payload := truncatePayload(d.Payload)
-
-		if _, ok := posBlocked[payload]; !ok {
-			// map[statusCode]*testDetails
-			posBlocked[payload] = make(map[int]*report.TestDetails)
-		}
-
-		if _, ok := posBlocked[payload][d.ResponseStatusCode]; !ok {
-			posBlocked[payload][d.ResponseStatusCode] = &report.TestDetails{
-				Encoders:     make(map[string]any),
-				Placeholders: make(map[string]any),
+			if _, ok := negBypassed[paths][payload][d.ResponseStatusCode]; !ok {
+				negBypassed[paths][payload][d.ResponseStatusCode] = &report.TestDetails{
+					Encoders:     make(map[string]any),
+					Placeholders: make(map[string]any),
+				}
 			}
+
+			negBypassed[paths][payload][d.ResponseStatusCode].TestCase = d.TestCase
+			negBypassed[paths][payload][d.ResponseStatusCode].Encoders[d.Encoder] = nil
+			negBypassed[paths][payload][d.ResponseStatusCode].Placeholders[d.Placeholder] = nil
 		}
 
-		posBlocked[payload][d.ResponseStatusCode].TestCase = d.TestCase
-		posBlocked[payload][d.ResponseStatusCode].Encoders[d.Encoder] = nil
-		posBlocked[payload][d.ResponseStatusCode].Placeholders[d.Placeholder] = nil
-	}
+		// map[payload]map[statusCode]*testDetails
+		negUnresolved := make(map[string]map[int]*report.TestDetails)
+		for _, d := range s.NegativeTests.Unresolved {
+			payload := truncatePayload(d.Payload)
 
-	// map[payload]map[statusCode]*testDetails
-	posBypassed := make(map[string]map[int]*report.TestDetails)
-	for _, d := range s.PositiveTests.TruePositive {
-		payload := truncatePayload(d.Payload)
-
-		if _, ok := posBypassed[payload]; !ok {
-			// map[statusCode]*testDetails
-			posBypassed[payload] = make(map[int]*report.TestDetails)
-		}
-
-		if _, ok := posBypassed[payload][d.ResponseStatusCode]; !ok {
-			posBypassed[payload][d.ResponseStatusCode] = &report.TestDetails{
-				Encoders:     make(map[string]any),
-				Placeholders: make(map[string]any),
+			if _, ok := negUnresolved[payload]; !ok {
+				// map[statusCode]*testDetails
+				negUnresolved[payload] = make(map[int]*report.TestDetails)
 			}
-		}
 
-		posBypassed[payload][d.ResponseStatusCode].TestCase = d.TestCase
-		posBypassed[payload][d.ResponseStatusCode].Encoders[d.Encoder] = nil
-		posBypassed[payload][d.ResponseStatusCode].Placeholders[d.Placeholder] = nil
-	}
-
-	// map[payload]map[statusCode]*testDetails
-	posUnresolved := make(map[string]map[int]*report.TestDetails)
-	for _, d := range s.PositiveTests.Unresolved {
-		payload := truncatePayload(d.Payload)
-
-		if _, ok := posUnresolved[payload]; !ok {
-			// map[statusCode]*testDetails
-			posUnresolved[payload] = make(map[int]*report.TestDetails)
-		}
-
-		if _, ok := posUnresolved[payload][d.ResponseStatusCode]; !ok {
-			posUnresolved[payload][d.ResponseStatusCode] = &report.TestDetails{
-				Encoders:     make(map[string]any),
-				Placeholders: make(map[string]any),
+			if _, ok := negUnresolved[payload][d.ResponseStatusCode]; !ok {
+				negUnresolved[payload][d.ResponseStatusCode] = &report.TestDetails{
+					Encoders:     make(map[string]any),
+					Placeholders: make(map[string]any),
+				}
 			}
+
+			negUnresolved[payload][d.ResponseStatusCode].TestCase = d.TestCase
+			negUnresolved[payload][d.ResponseStatusCode].Encoders[d.Encoder] = nil
+			negUnresolved[payload][d.ResponseStatusCode].Placeholders[d.Placeholder] = nil
 		}
 
-		posUnresolved[payload][d.ResponseStatusCode].TestCase = d.TestCase
-		posUnresolved[payload][d.ResponseStatusCode].Encoders[d.Encoder] = nil
-		posUnresolved[payload][d.ResponseStatusCode].Placeholders[d.Placeholder] = nil
+		data.NegativeTests.Bypassed = negBypassed
+		data.NegativeTests.Unresolved = negUnresolved
+		data.NegativeTests.Failed = s.NegativeTests.Failed
+
+		// map[payload]map[statusCode]*testDetails
+		posBlocked := make(map[string]map[int]*report.TestDetails)
+		for _, d := range s.PositiveTests.FalsePositive {
+			payload := truncatePayload(d.Payload)
+
+			if _, ok := posBlocked[payload]; !ok {
+				// map[statusCode]*testDetails
+				posBlocked[payload] = make(map[int]*report.TestDetails)
+			}
+
+			if _, ok := posBlocked[payload][d.ResponseStatusCode]; !ok {
+				posBlocked[payload][d.ResponseStatusCode] = &report.TestDetails{
+					Encoders:     make(map[string]any),
+					Placeholders: make(map[string]any),
+				}
+			}
+
+			posBlocked[payload][d.ResponseStatusCode].TestCase = d.TestCase
+			posBlocked[payload][d.ResponseStatusCode].Encoders[d.Encoder] = nil
+			posBlocked[payload][d.ResponseStatusCode].Placeholders[d.Placeholder] = nil
+		}
+
+		// map[payload]map[statusCode]*testDetails
+		posBypassed := make(map[string]map[int]*report.TestDetails)
+		for _, d := range s.PositiveTests.TruePositive {
+			payload := truncatePayload(d.Payload)
+
+			if _, ok := posBypassed[payload]; !ok {
+				// map[statusCode]*testDetails
+				posBypassed[payload] = make(map[int]*report.TestDetails)
+			}
+
+			if _, ok := posBypassed[payload][d.ResponseStatusCode]; !ok {
+				posBypassed[payload][d.ResponseStatusCode] = &report.TestDetails{
+					Encoders:     make(map[string]any),
+					Placeholders: make(map[string]any),
+				}
+			}
+
+			posBypassed[payload][d.ResponseStatusCode].TestCase = d.TestCase
+			posBypassed[payload][d.ResponseStatusCode].Encoders[d.Encoder] = nil
+			posBypassed[payload][d.ResponseStatusCode].Placeholders[d.Placeholder] = nil
+		}
+
+		// map[payload]map[statusCode]*testDetails
+		posUnresolved := make(map[string]map[int]*report.TestDetails)
+		for _, d := range s.PositiveTests.Unresolved {
+			payload := truncatePayload(d.Payload)
+
+			if _, ok := posUnresolved[payload]; !ok {
+				// map[statusCode]*testDetails
+				posUnresolved[payload] = make(map[int]*report.TestDetails)
+			}
+
+			if _, ok := posUnresolved[payload][d.ResponseStatusCode]; !ok {
+				posUnresolved[payload][d.ResponseStatusCode] = &report.TestDetails{
+					Encoders:     make(map[string]any),
+					Placeholders: make(map[string]any),
+				}
+			}
+
+			posUnresolved[payload][d.ResponseStatusCode].TestCase = d.TestCase
+			posUnresolved[payload][d.ResponseStatusCode].Encoders[d.Encoder] = nil
+			posUnresolved[payload][d.ResponseStatusCode].Placeholders[d.Placeholder] = nil
+		}
+
+		data.PositiveTests.Blocked = posBlocked
+		data.PositiveTests.Bypassed = posBypassed
+		data.PositiveTests.Unresolved = posUnresolved
+		data.PositiveTests.Failed = s.PositiveTests.Failed
 	}
 
 	data.ScannedPaths = s.Paths
 
-	data.NegativeTests.Bypassed = negBypassed
-	data.NegativeTests.Unresolved = negUnresolved
-	data.NegativeTests.Failed = s.NegativeTests.Failed
 	data.NegativeTests.Percentage = s.WafScore
 	data.NegativeTests.TotalSent = s.NegativeTests.AllRequestsNumber
 	data.NegativeTests.BlockedRequestsNumber = s.NegativeTests.BlockedRequestsNumber
@@ -423,10 +432,6 @@ func prepareHTMLFullReport(
 	data.NegativeTests.UnresolvedRequestsNumber = s.NegativeTests.UnresolvedRequestsNumber
 	data.NegativeTests.FailedRequestsNumber = s.NegativeTests.FailedRequestsNumber
 
-	data.PositiveTests.Blocked = posBlocked
-	data.PositiveTests.Bypassed = posBypassed
-	data.PositiveTests.Unresolved = posUnresolved
-	data.PositiveTests.Failed = s.PositiveTests.Failed
 	data.PositiveTests.Percentage = s.PositiveTests.ResolvedTrueRequestsPercentage
 	data.PositiveTests.TotalSent = s.PositiveTests.AllRequestsNumber
 	data.PositiveTests.BlockedRequestsNumber = s.PositiveTests.BlockedRequestsNumber
@@ -447,12 +452,15 @@ func prepareHTMLFullReport(
 // once at the first call, and then reuses the previously prepared data
 func oncePrepareHTMLFullReport(
 	s *db.Statistics, reportTime time.Time, wafName string,
-	url string, openApiFile string, args string, ignoreUnresolved bool,
+	url string, openApiFile string, args []string, ignoreUnresolved bool, includePayloads bool,
 ) (*report.HtmlReport, error) {
 	var err error
 
 	prepareHTMLReportOnce.Do(func() {
-		htmlReportData, err = prepareHTMLFullReport(s, reportTime, wafName, url, openApiFile, args, ignoreUnresolved)
+		htmlReportData, err = prepareHTMLFullReport(
+			s, reportTime, wafName, url, openApiFile,
+			args, ignoreUnresolved, includePayloads,
+		)
 	})
 
 	return htmlReportData, err
@@ -462,9 +470,9 @@ func oncePrepareHTMLFullReport(
 // to a temporary file.
 func exportFullReportToHtml(
 	s *db.Statistics, reportTime time.Time, wafName string,
-	url string, openApiFile string, args string, ignoreUnresolved bool,
+	url string, openApiFile string, args []string, ignoreUnresolved bool, includePayloads bool,
 ) (fileName string, err error) {
-	reportData, err := oncePrepareHTMLFullReport(s, reportTime, wafName, url, openApiFile, args, ignoreUnresolved)
+	reportData, err := oncePrepareHTMLFullReport(s, reportTime, wafName, url, openApiFile, args, ignoreUnresolved, includePayloads)
 	if err != nil {
 		return "", errors.Wrap(err, "couldn't prepare data for HTML report")
 	}
@@ -492,9 +500,10 @@ func exportFullReportToHtml(
 // printFullReportToHtml prepares and saves a full report in HTML format on a disk.
 func printFullReportToHtml(
 	s *db.Statistics, reportFile string, reportTime time.Time,
-	wafName string, url string, openApiFile string, args string, ignoreUnresolved bool,
+	wafName string, url string, openApiFile string, args []string,
+	ignoreUnresolved bool, includePayloads bool,
 ) error {
-	tempFileName, err := exportFullReportToHtml(s, reportTime, wafName, url, openApiFile, args, ignoreUnresolved)
+	tempFileName, err := exportFullReportToHtml(s, reportTime, wafName, url, openApiFile, args, ignoreUnresolved, includePayloads)
 	if err != nil {
 		return errors.Wrap(err, "couldn't export report to HTML")
 	}

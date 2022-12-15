@@ -399,7 +399,7 @@
                         {{end}}
                         <span class="row__name">Used arguments</span>
                         :
-                        <span class="row__args mono">{{.Args}}</span>
+                        <span class="row__args mono">{{StringsJoin .Args " "}}</span>
                         <br>
                     </div>
                 </div>
@@ -643,6 +643,7 @@
             {{end}}
             <h3 class="detail__sub-title">False Positive Tests</h3>
             <p>{{.PositiveTests.BlockedRequestsNumber}} false positive requests identified as blocked (failed, bad behavior)</p>
+            {{if .IncludePayloads}}
             {{if .PositiveTests.BlockedRequestsNumber}}
             <div class="positive__grid">
                 <div class="positive__grid--head">
@@ -667,7 +668,9 @@
                 {{end}}
             </div>
             {{end}}
+            {{end}}
             <p>{{.PositiveTests.BypassedRequestsNumber}} false positive requests identified as bypassed (passed, good behavior)</p>
+            {{if .IncludePayloads}}
             {{if .PositiveTests.BypassedRequestsNumber}}
             <div class="positive__grid">
                 <div class="positive__grid--head">
@@ -692,8 +695,10 @@
                 {{end}}
             </div>
             {{end}}
+            {{end}}
             {{if .PositiveTests.UnresolvedRequestsNumber}}
             <p>{{.PositiveTests.UnresolvedRequestsNumber}} true positive requests identified as unresolved</p>
+            {{if .IncludePayloads}}
             <div class="positive__grid">
                 <div class="positive__grid--head">
                     <div class="positive__grid--head-item">Payload</div>
@@ -717,8 +722,10 @@
                 {{end}}
             </div>
             {{end}}
+            {{end}}
             {{if .PositiveTests.FailedRequestsNumber}}
             <p>{{.PositiveTests.FailedRequestsNumber}} true positive requests are failed</p>
+            {{if .IncludePayloads}}
             <div class="positive__grid">
                 <div class="positive__grid--failed--head">
                     <div class="positive__grid--head-item">Payload</div>
@@ -742,8 +749,10 @@
                 {{end}}
             </div>
             {{end}}
+            {{end}}
             <h3 class="detail__sub-title">Bypasses in Details</h3>
             <p>{{.NegativeTests.BypassedRequestsNumber}} malicious requests have bypassed the security solution</p>
+            {{if .IncludePayloads}}
             {{if .NegativeTests.BypassedRequestsNumber}}
             <div class="positive__grid">
                 <div class="positive__grid--head">
@@ -778,9 +787,11 @@
                 {{end}}
             </div>
             {{end}}
+            {{end}}
             {{if .NegativeTests.UnresolvedRequestsNumber}}
             <h3 class="detail__sub-title">Unresolved requests in Details</h3>
             <p>{{.NegativeTests.UnresolvedRequestsNumber}} requests identified as blocked and passed or as not-blocked and not-passed</p>
+            {{if .IncludePayloads}}
             <div class="positive__grid">
                 <div class="positive__grid--head">
                     <div class="positive__grid--head-item">Payload</div>
@@ -804,9 +815,11 @@
                 {{end}}
             </div>
             {{end}}
+            {{end}}
             {{if .NegativeTests.FailedRequestsNumber}}
             <h3 class="detail__sub-title">Failed requests in Details</h3>
             <p>{{.NegativeTests.FailedRequestsNumber}} requests are failed</p>
+            {{if .IncludePayloads}}
             <div class="positive__grid">
                 <div class="positive__grid--failed--head">
                     <div class="positive__grid--head-item">Payload</div>
@@ -829,6 +842,7 @@
                 {{end}}
                 {{end}}
             </div>
+            {{end}}
             {{end}}
         </div>
     </main>
