@@ -169,14 +169,14 @@ func parseFlags() (args []string, err error) {
 	if *blockRegex != "" {
 		_, err = regexp.Compile(*blockRegex)
 		if err != nil {
-			return "", errors.Wrap(err, "bad regexp")
+			return nil, errors.Wrap(err, "bad regexp")
 		}
 	}
 
 	if *passRegex != "" {
 		_, err = regexp.Compile(*passRegex)
 		if err != nil {
-			return "", errors.Wrap(err, "bad regexp")
+			return nil, errors.Wrap(err, "bad regexp")
 		}
 	}
 
