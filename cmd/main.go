@@ -184,7 +184,7 @@ func run(ctx context.Context, logger *logrus.Logger) error {
 
 		if askForPayloads {
 			input := ""
-			fmt.Print("Do you want to include payload details to ([y/N]): ")
+			fmt.Print("Do you want to include payload details to the report? ([y/N]): ")
 			fmt.Scanln(&input)
 
 			if strings.TrimSpace(input) == "y" {
