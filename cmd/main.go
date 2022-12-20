@@ -167,18 +167,43 @@ func run(ctx context.Context, logger *logrus.Logger) error {
 		return err
 	}
 
+	if cfg.ReportFormat == report.NoneFormat {
+		return nil
+	}
+
+	includePayloads := cfg.IncludePayloads
+	if cfg.ReportFormat == report.HtmlFormat || cfg.ReportFormat == report.PdfFormat {
+		askForPayloads := true
+
+		// If the cfg.IncludePayloads is already explicitly set by the user OR
+		// the user has explicitly chosen not to send email report, or has
+		// provided the email to send the report to (which we interpret as
+		// non-interactive mode), do not ask to include the payloads in the report.
+		if isIncludePayloadsFlagUsed || cfg.NoEmailReport || cfg.Email != "" {
+			askForPayloads = false
+		}
+
+		if askForPayloads {
+			input := ""
+			fmt.Print("Do you want to include payload details to the report? ([y/N]): ")
+			fmt.Scanln(&input)
+
+			if strings.TrimSpace(input) == "y" {
+				includePayloads = true
+			}
+		}
+	}
+
 	reportFile, err = report.ExportFullReport(
 		ctx, stat, reportFile,
 		reportTime, cfg.WAFName, cfg.URL, cfg.OpenAPIFile, args,
-		cfg.IgnoreUnresolved, cfg.ReportFormat,
+		cfg.IgnoreUnresolved, includePayloads, cfg.ReportFormat,
 	)
 	if err != nil {
 		return errors.Wrap(err, "couldn't export full report")
 	}
 
-	if cfg.ReportFormat != report.NoneFormat {
-		logger.WithField("filename", reportFile).Infof("Export full report")
-	}
+	logger.WithField("filename", reportFile).Infof("Export full report")
 
 	payloadFiles := filepath.Join(cfg.ReportPath, reportName+".csv")
 	err = db.ExportPayloads(payloadFiles)
@@ -211,7 +236,7 @@ func run(ctx context.Context, logger *logrus.Logger) error {
 		err = report.SendReportByEmail(
 			ctx, stat, email,
 			reportTime, cfg.WAFName, cfg.URL, cfg.OpenAPIFile, args,
-			cfg.IgnoreUnresolved,
+			cfg.IgnoreUnresolved, includePayloads,
 		)
 		if err != nil {
 			return errors.Wrap(err, "couldn't send report by email")

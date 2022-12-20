@@ -21,7 +21,7 @@ func RenderConsoleReport(
 	reportTime time.Time,
 	wafName string,
 	url string,
-	args string,
+	args []string,
 	ignoreUnresolved bool,
 	format string,
 ) error {
@@ -245,14 +245,14 @@ func printConsoleReportJson(
 	reportTime time.Time,
 	wafName string,
 	url string,
-	args string,
+	args []string,
 ) error {
 	report := jsonReport{
 		Date:        reportTime.Format(time.ANSIC),
 		ProjectName: wafName,
 		URL:         url,
 		TestCasesFP: s.TestCasesFingerprint,
-		Args:        args,
+		Args:        strings.Join(args, " "),
 		Score:       s.Score.Average,
 	}
 

@@ -78,7 +78,7 @@ func (s *Scanner) checkGraphQlAvailability(ctx context.Context) (bool, error) {
 			return false, errors.New("couldn't create request to check GraphQL availability")
 		}
 
-		_, body, statusCode, err := s.httpClient.SendRequest(req, "")
+		_, _, body, statusCode, err := s.httpClient.SendRequest(req, "")
 		if err != nil {
 			return false, errors.New("couldn't send request to check GraphQL availability")
 		}
