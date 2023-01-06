@@ -269,6 +269,9 @@ func parseQueryParameter(parameter *openapi3.Parameter) (paramName string, spec 
 			spec.paramSpec = paramSpec
 		}
 
+	case openapi3.TypeBoolean:
+		spec.value = "false"
+
 	default:
 		return "", nil, fmt.Errorf("unsupported query parameter type: %s", schema.Type)
 	}
