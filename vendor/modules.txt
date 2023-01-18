@@ -140,6 +140,24 @@ github.com/spf13/viper
 # github.com/subosito/gotenv v1.2.0
 ## explicit
 github.com/subosito/gotenv
+# go.mercari.io/go-dnscache v0.0.0-20220124075326-2701c2ab5df5
+## explicit; go 1.17
+go.mercari.io/go-dnscache
+# go.uber.org/atomic v1.10.0
+## explicit; go 1.18
+go.uber.org/atomic
+# go.uber.org/multierr v1.9.0
+## explicit; go 1.19
+go.uber.org/multierr
+# go.uber.org/zap v1.24.0
+## explicit; go 1.19
+go.uber.org/zap
+go.uber.org/zap/buffer
+go.uber.org/zap/internal
+go.uber.org/zap/internal/bufferpool
+go.uber.org/zap/internal/color
+go.uber.org/zap/internal/exit
+go.uber.org/zap/zapcore
 # golang.org/x/crypto v0.0.0-20220214200702-86341886e292
 ## explicit; go 1.17
 golang.org/x/crypto/sha3
