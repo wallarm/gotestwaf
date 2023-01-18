@@ -14,6 +14,8 @@ import (
 	"syscall"
 	"time"
 
+	"go.mercari.io/go-dnscache"
+
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/getkin/kin-openapi/routers"
 	"github.com/gorilla/websocket"
@@ -66,11 +68,12 @@ func New(
 	logger *logrus.Logger,
 	cfg *config.Config,
 	db *db.DB,
+	dnsResolver *dnscache.Resolver,
 	requestTemplates openapi.Templates,
 	router routers.Router,
 	enableDebugHeader bool,
 ) (*Scanner, error) {
-	httpClient, err := NewHTTPClient(cfg)
+	httpClient, err := NewHTTPClient(cfg, dnsResolver)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't create HTTP client")
 	}
