@@ -27,4 +27,4 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/test-app:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/gotestwaf:latest
