@@ -6,7 +6,7 @@ on:
       - master
 
 jobs:
-  docker:
+  build-and-push:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
