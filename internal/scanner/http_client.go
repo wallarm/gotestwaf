@@ -12,7 +12,8 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"go.mercari.io/go-dnscache"
+
+	"github.com/wallarm/gotestwaf/internal/dnscache"
 
 	"github.com/wallarm/gotestwaf/internal/config"
 	"github.com/wallarm/gotestwaf/internal/payload/encoder"

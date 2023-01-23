@@ -3,17 +3,18 @@ package scanner
 import (
 	"time"
 
-	"go.mercari.io/go-dnscache"
-	"go.uber.org/zap"
+	"github.com/sirupsen/logrus"
+
+	"github.com/wallarm/gotestwaf/internal/dnscache"
 )
 
 const (
-	dnsRefreshTime   = 1 * time.Minute
+	dnsRefreshTime   = 30 * time.Minute
 	dnsLookupTimeout = 10 * time.Second
 )
 
-func NewDNSCache() (*dnscache.Resolver, error) {
-	dnsResolver, err := dnscache.New(dnsRefreshTime, dnsLookupTimeout, zap.NewNop())
+func NewDNSCache(logger *logrus.Logger) (*dnscache.Resolver, error) {
+	dnsResolver, err := dnscache.New(dnsRefreshTime, dnsLookupTimeout, logger)
 	if err != nil {
 		return nil, err
 	}

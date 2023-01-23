@@ -102,7 +102,7 @@ func run(ctx context.Context, logger *logrus.Logger) error {
 
 	logger.WithField("fp", db.Hash).Info("Test cases fingerprint")
 
-	dnsCache, err := scanner.NewDNSCache()
+	dnsCache, err := scanner.NewDNSCache(logger)
 	if err != nil {
 		return errors.Wrap(err, "couldn't create DNS cache")
 	}

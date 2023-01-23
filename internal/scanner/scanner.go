@@ -14,7 +14,7 @@ import (
 	"syscall"
 	"time"
 
-	"go.mercari.io/go-dnscache"
+	"github.com/wallarm/gotestwaf/internal/dnscache"
 
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/getkin/kin-openapi/routers"
