@@ -14,8 +14,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/wallarm/gotestwaf/internal/dnscache"
-
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/getkin/kin-openapi/routers"
 	"github.com/gorilla/websocket"
@@ -26,6 +24,7 @@ import (
 
 	"github.com/wallarm/gotestwaf/internal/config"
 	"github.com/wallarm/gotestwaf/internal/db"
+	"github.com/wallarm/gotestwaf/internal/dnscache"
 	"github.com/wallarm/gotestwaf/internal/openapi"
 	"github.com/wallarm/gotestwaf/internal/payload/encoder"
 	"github.com/wallarm/gotestwaf/internal/payload/placeholder"
