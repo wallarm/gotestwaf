@@ -65,8 +65,9 @@ tidy:
 	go mod vendor
 
 fmt:
-	gofmt -w ./
-	goimports -local "github.com/wallarm/gotestwaf" -w ./
+	go fmt $(shell go list ./... | grep -v /vendor/)
+	goimports -local "github.com/wallarm/gotestwaf" -w $(shell find . -type f -name '*.go' -not -path "./vendor/*")
+
 
 delete_reports:
 	rm -f ./reports/*.pdf
