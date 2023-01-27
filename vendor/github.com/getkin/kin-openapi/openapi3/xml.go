@@ -7,9 +7,9 @@ import (
 )
 
 // XML is specified by OpenAPI/Swagger standard version 3.
-// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#xmlObject
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#xml-object
 type XML struct {
-	ExtensionProps
+	ExtensionProps `json:"-" yaml:"-"`
 
 	Name      string `json:"name,omitempty" yaml:"name,omitempty"`
 	Namespace string `json:"namespace,omitempty" yaml:"namespace,omitempty"`
@@ -18,14 +18,19 @@ type XML struct {
 	Wrapped   bool   `json:"wrapped,omitempty" yaml:"wrapped,omitempty"`
 }
 
-func (value *XML) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(value)
+// MarshalJSON returns the JSON encoding of XML.
+func (xml *XML) MarshalJSON() ([]byte, error) {
+	return jsoninfo.MarshalStrictStruct(xml)
 }
 
-func (value *XML) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, value)
+// UnmarshalJSON sets XML to a copy of data.
+func (xml *XML) UnmarshalJSON(data []byte) error {
+	return jsoninfo.UnmarshalStrictStruct(data, xml)
 }
 
-func (value *XML) Validate(ctx context.Context) error {
+// Validate returns an error if XML does not comply with the OpenAPI spec.
+func (xml *XML) Validate(ctx context.Context, opts ...ValidationOption) error {
+	// ctx = WithValidationOptions(ctx, opts...)
+
 	return nil // TODO
 }

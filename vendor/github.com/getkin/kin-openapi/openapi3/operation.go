@@ -6,14 +6,15 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/getkin/kin-openapi/jsoninfo"
 	"github.com/go-openapi/jsonpointer"
+
+	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
 // Operation represents "operation" specified by" OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#operation-object
 type Operation struct {
-	ExtensionProps
+	ExtensionProps `json:"-" yaml:"-"`
 
 	// Optional tags for documentation.
 	Tags []string `json:"tags,omitempty" yaml:"tags,omitempty"`
@@ -56,14 +57,17 @@ func NewOperation() *Operation {
 	return &Operation{}
 }
 
+// MarshalJSON returns the JSON encoding of Operation.
 func (operation *Operation) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(operation)
 }
 
+// UnmarshalJSON sets Operation to a copy of data.
 func (operation *Operation) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, operation)
 }
 
+// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
 func (operation Operation) JSONLookup(token string) (interface{}, error) {
 	switch token {
 	case "requestBody":
@@ -122,28 +126,35 @@ func (operation *Operation) AddResponse(status int, response *Response) {
 	}
 }
 
-func (value *Operation) Validate(ctx context.Context) error {
-	if v := value.Parameters; v != nil {
+// Validate returns an error if Operation does not comply with the OpenAPI spec.
+func (operation *Operation) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
+	if v := operation.Parameters; v != nil {
 		if err := v.Validate(ctx); err != nil {
 			return err
 		}
 	}
-	if v := value.RequestBody; v != nil {
+
+	if v := operation.RequestBody; v != nil {
 		if err := v.Validate(ctx); err != nil {
 			return err
 		}
 	}
-	if v := value.Responses; v != nil {
+
+	if v := operation.Responses; v != nil {
 		if err := v.Validate(ctx); err != nil {
 			return err
 		}
 	} else {
 		return errors.New("value of responses must be an object")
 	}
-	if v := value.ExternalDocs; v != nil {
+
+	if v := operation.ExternalDocs; v != nil {
 		if err := v.Validate(ctx); err != nil {
 			return fmt.Errorf("invalid external docs: %w", err)
 		}
 	}
+
 	return nil
 }

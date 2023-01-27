@@ -102,8 +102,13 @@ func run(ctx context.Context, logger *logrus.Logger) error {
 
 	logger.WithField("fp", db.Hash).Info("Test cases fingerprint")
 
+	dnsCache, err := scanner.NewDNSCache(logger)
+	if err != nil {
+		return errors.Wrap(err, "couldn't create DNS cache")
+	}
+
 	if !cfg.SkipWAFIdentification {
-		detector, err := scanner.NewDetector(cfg)
+		detector, err := scanner.NewDetector(cfg, dnsCache)
 		if err != nil {
 			return errors.Wrap(err, "couldn't create WAF detector")
 		}
@@ -129,7 +134,7 @@ func run(ctx context.Context, logger *logrus.Logger) error {
 		}
 	}
 
-	s, err := scanner.New(logger, cfg, db, templates, router, cfg.AddDebugHeader)
+	s, err := scanner.New(logger, cfg, db, dnsCache, templates, router, cfg.AddDebugHeader)
 	if err != nil {
 		return errors.Wrap(err, "couldn't create scanner")
 	}
