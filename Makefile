@@ -66,6 +66,8 @@ tidy:
 
 fmt:
 	go fmt $(shell go list ./... | grep -v /vendor/)
+	goimports -local "github.com/wallarm/gotestwaf" -w $(shell find . -type f -name '*.go' -not -name '*_mocks.go' -not -name '*.pb.go' -not -path "./vendor/*")
+
 
 delete_reports:
 	rm -f ./reports/*.pdf

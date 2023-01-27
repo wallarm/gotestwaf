@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/wallarm/gotestwaf/internal/config"
+	"github.com/wallarm/gotestwaf/internal/dnscache"
 	"github.com/wallarm/gotestwaf/internal/payload/encoder"
 	"github.com/wallarm/gotestwaf/internal/payload/placeholder"
 )
@@ -35,8 +36,9 @@ type HTTPClient struct {
 	renewSession  bool
 }
 
-func NewHTTPClient(cfg *config.Config) (*HTTPClient, error) {
+func NewHTTPClient(cfg *config.Config, dnsResolver *dnscache.Resolver) (*HTTPClient, error) {
 	tr := &http.Transport{
+		DialContext:         dnscache.DialFunc(dnsResolver, nil),
 		TLSClientConfig:     &tls.Config{InsecureSkipVerify: !cfg.TLSVerify},
 		IdleConnTimeout:     time.Duration(cfg.IdleConnTimeout) * time.Second,
 		MaxIdleConns:        cfg.MaxIdleConns,
@@ -230,6 +232,7 @@ func (c *HTTPClient) getCookies(ctx context.Context, targetURL string) ([]*http.
 
 	sessionClient := &http.Client{
 		Transport: &http.Transport{
+			DialContext:         tr.DialContext,
 			TLSClientConfig:     &tls.Config{InsecureSkipVerify: tr.TLSClientConfig.InsecureSkipVerify},
 			IdleConnTimeout:     tr.IdleConnTimeout,
 			MaxIdleConns:        tr.MaxIdleConns,

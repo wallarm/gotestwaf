@@ -24,6 +24,7 @@ import (
 
 	"github.com/wallarm/gotestwaf/internal/config"
 	"github.com/wallarm/gotestwaf/internal/db"
+	"github.com/wallarm/gotestwaf/internal/dnscache"
 	"github.com/wallarm/gotestwaf/internal/openapi"
 	"github.com/wallarm/gotestwaf/internal/payload/encoder"
 	"github.com/wallarm/gotestwaf/internal/payload/placeholder"
@@ -66,11 +67,12 @@ func New(
 	logger *logrus.Logger,
 	cfg *config.Config,
 	db *db.DB,
+	dnsResolver *dnscache.Resolver,
 	requestTemplates openapi.Templates,
 	router routers.Router,
 	enableDebugHeader bool,
 ) (*Scanner, error) {
-	httpClient, err := NewHTTPClient(cfg)
+	httpClient, err := NewHTTPClient(cfg, dnsResolver)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't create HTTP client")
 	}

@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/wallarm/gotestwaf/internal/config"
+	"github.com/wallarm/gotestwaf/internal/dnscache"
 	"github.com/wallarm/gotestwaf/internal/scanner/detectors"
 )
 
@@ -30,8 +31,9 @@ type WAFDetector struct {
 	target     string
 }
 
-func NewDetector(cfg *config.Config) (*WAFDetector, error) {
+func NewDetector(cfg *config.Config, dnsResolver *dnscache.Resolver) (*WAFDetector, error) {
 	tr := &http.Transport{
+		DialContext:         dnscache.DialFunc(dnsResolver, nil),
 		TLSClientConfig:     &tls.Config{InsecureSkipVerify: !cfg.TLSVerify},
 		IdleConnTimeout:     time.Duration(cfg.IdleConnTimeout) * time.Second,
 		MaxIdleConns:        cfg.MaxIdleConns,
