@@ -12,7 +12,7 @@ RUN go build -ldflags "-X github.com/wallarm/gotestwaf/internal/version.Version=
 # Main Stage ===================================================================
 FROM alpine
 
-RUN apk add --no-cache chromium fontconfig wget curl && \
+RUN apk add --no-cache chromium fontconfig wget curl unzip && \
 	( \
 		cd /tmp && \
 		curl -s https://api.github.com/repos/rsms/inter/releases/latest \
@@ -31,7 +31,7 @@ RUN apk add --no-cache chromium fontconfig wget curl && \
 		rm -rf ./iosevka* \
 	) && \
 	fc-cache -fv && \
-	apk del --no-cache wget curl
+	apk del --no-cache wget curl unzip
 
 WORKDIR /app
 
