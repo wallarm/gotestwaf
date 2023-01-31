@@ -18,14 +18,14 @@ RUN apk add --no-cache chromium fontconfig wget curl && \
 		curl -s https://api.github.com/repos/rsms/inter/releases/latest \
 			| grep "browser_download_url.*zip" \
 			| cut -d '"' -f 4 | wget -qi - -O inter.zip && \
-		unzip inter.zip -d inter && \
+		mkdir inter && unzip inter.zip -d inter && \
 		mkdir -p /usr/share/fonts/inter && \
 		mv ./inter/Inter\ Desktop/* /usr/share/fonts/inter/ && \
 		rm -rf ./inter* && \
 		curl -s https://api.github.com/repos/be5invis/Iosevka/releases/latest \
 			| grep "browser_download_url.*ttf-iosevka-[0-9\.]*\.zip" \
 			| cut -d '"' -f 4 | wget -qi - -O iosevka.zip && \
-		unzip iosevka.zip -d iosevka && \
+		mkdir iosevka && unzip iosevka.zip -d iosevka && \
 		mkdir -p /usr/share/fonts/ && \
 		mv ./iosevka /usr/share/fonts/ && \
 		rm -rf ./iosevka* \
