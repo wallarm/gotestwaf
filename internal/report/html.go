@@ -425,7 +425,7 @@ func prepareHTMLFullReport(
 
 	data.ScannedPaths = s.Paths
 
-	data.NegativeTests.Percentage = s.WafScore
+	data.NegativeTests.Percentage = s.NegativeTests.ResolvedBlockedRequestsPercentage
 	data.NegativeTests.TotalSent = s.NegativeTests.AllRequestsNumber
 	data.NegativeTests.BlockedRequestsNumber = s.NegativeTests.BlockedRequestsNumber
 	data.NegativeTests.BypassedRequestsNumber = s.NegativeTests.BypassedRequestsNumber
