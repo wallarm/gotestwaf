@@ -33,6 +33,8 @@ type HTTPClient struct {
 
 	followCookies bool
 	renewSession  bool
+
+	isGraphQlAvailable bool
 }
 
 func NewHTTPClient(cfg *config.Config) (*HTTPClient, error) {
@@ -89,18 +91,19 @@ func NewHTTPClient(cfg *config.Config) (*HTTPClient, error) {
 	}
 
 	return &HTTPClient{
-		client:        client,
-		headers:       configuredHeaders,
-		hostHeader:    configuredHeaders["Host"],
-		followCookies: cfg.FollowCookies,
-		renewSession:  cfg.RenewSession,
+		client:             client,
+		headers:            configuredHeaders,
+		hostHeader:         configuredHeaders["Host"],
+		followCookies:      cfg.FollowCookies,
+		renewSession:       cfg.RenewSession,
+		isGraphQlAvailable: true,
 	}, nil
 }
 
 func (c *HTTPClient) SendPayload(
 	ctx context.Context,
 	targetURL, placeholderName, encoderName, payload string,
-	testHeaderValue string,
+	debugHeaderValue string,
 ) (
 	responseMsgHeader string,
 	responseBody string,
@@ -124,8 +127,8 @@ func (c *HTTPClient) SendPayload(
 	}
 	req.Host = c.hostHeader
 
-	if testHeaderValue != "" {
-		req.Header.Set(GTWDebugHeader, testHeaderValue)
+	if debugHeaderValue != "" {
+		req.Header.Set(GTWDebugHeader, debugHeaderValue)
 	}
 
 	if c.followCookies && c.renewSession {
@@ -165,7 +168,7 @@ func (c *HTTPClient) SendPayload(
 
 func (c *HTTPClient) SendRequest(
 	req *http.Request,
-	testHeaderValue string,
+	debugHeaderValue string,
 ) (
 	respHeaders http.Header,
 	responseMsgHeader string,
@@ -178,8 +181,8 @@ func (c *HTTPClient) SendRequest(
 	}
 	req.Host = c.hostHeader
 
-	if testHeaderValue != "" {
-		req.Header.Set(GTWDebugHeader, testHeaderValue)
+	if debugHeaderValue != "" {
+		req.Header.Set(GTWDebugHeader, debugHeaderValue)
 	}
 
 	if c.followCookies && c.renewSession {
@@ -265,6 +268,10 @@ func (c *HTTPClient) getCookies(ctx context.Context, targetURL string) ([]*http.
 	}
 
 	return nil, returnErr
+}
+
+func (c *HTTPClient) IsGraphQlAvailable() bool {
+	return c.isGraphQlAvailable
 }
 
 func GetTargetURL(reqURL *url.URL) string {

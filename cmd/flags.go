@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -73,6 +72,7 @@ func parseFlags() (args []string, err error) {
 
 	urlParam := flag.String("url", "", "URL to check")
 	wsURL := flag.String("wsURL", "", "WebSocket URL to check")
+	graphqlURL := flag.String("graphqlURL", "", "GraphQL URL to check")
 	flag.Uint16("grpcPort", 0, "gRPC port to check")
 	flag.String("proxy", "", "Proxy URL to use")
 	flag.Bool("tlsVerify", false, "If true, the received TLS certificate will be verified")
@@ -145,26 +145,24 @@ func parseFlags() (args []string, err error) {
 		return nil, fmt.Errorf("unknown logging format: %s", logFormat)
 	}
 
-	validURL, err := url.Parse(*urlParam)
-	if err != nil ||
-		(validURL.Scheme != "http" && validURL.Scheme != "https") ||
-		validURL.Host == "" {
-		return nil, errors.New("URL is not valid")
+	validURL, err := validateURL(*urlParam, httpProto)
+	if err != nil {
+		return nil, errors.Wrap(err, "URL is not valid")
 	}
-
 	*urlParam = validURL.String()
 
-	// format WebSocket URL from given HTTP URL
-	if *wsURL == "" {
-		wsScheme := "ws"
-		if validURL.Scheme == "https" {
-			wsScheme = "wss"
-		}
-		validURL.Scheme = wsScheme
-		validURL.Path = ""
-
-		*wsURL = validURL.String()
+	wsValidURL, err := checkOrCraftProtocolURL(*wsURL, *urlParam, wsProto)
+	if err != nil {
+		return nil, errors.Wrap(err, "wsURL is not valid")
 	}
+	*wsURL = wsValidURL.String()
+
+	// format GraphQL URL from given HTTP URL
+	gqlValidURL, err := checkOrCraftProtocolURL(*graphqlURL, *urlParam, graphqlProto)
+	if err != nil {
+		return nil, errors.Wrap(err, "graphqlURL is not valid")
+	}
+	*graphqlURL = gqlValidURL.String()
 
 	if *blockRegex != "" {
 		_, err = regexp.Compile(*blockRegex)
