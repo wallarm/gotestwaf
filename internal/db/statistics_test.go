@@ -184,9 +184,7 @@ func testPropertyOnlyPositiveNumberValues(db *DB, ignoreUnresolved, nonBlockedAs
 		stat.PositiveTests.UnresolvedRequestsPercentage < 0 ||
 		stat.PositiveTests.ResolvedFalseRequestsPercentage < 0 ||
 		stat.PositiveTests.ResolvedTrueRequestsPercentage < 0 ||
-		stat.PositiveTests.FailedRequestsPercentage < 0 ||
-		stat.OverallRequests < 0 ||
-		stat.WafScore < 0 {
+		stat.PositiveTests.FailedRequestsPercentage < 0 {
 		return false
 	}
 
@@ -259,12 +257,6 @@ func testPropertyCorrectStatValues(db *DB, ignoreUnresolved, nonBlockedAsPassed 
 		counters["positive"]["unresolved"] != stat.PositiveTests.UnresolvedRequestsNumber ||
 		counters["positive"]["failed"] != stat.PositiveTests.FailedRequestsNumber ||
 		counters["positive"]["resolved"] != stat.PositiveTests.ResolvedRequestsNumber {
-		return false
-	}
-
-	overallRequests := counters["negative"]["all"] + counters["positive"]["all"]
-
-	if overallRequests != stat.OverallRequests {
 		return false
 	}
 

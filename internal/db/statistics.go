@@ -67,9 +67,6 @@ type Statistics struct {
 
 		Average float64
 	}
-
-	OverallRequests int
-	WafScore        float64
 }
 
 type SummaryTableRow struct {
@@ -196,8 +193,6 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 			}
 
 			totalResolvedRequests := passedRequests + blockedRequests
-
-			s.OverallRequests += totalRequests
 
 			row := &SummaryTableRow{
 				TestSet:    testSet,
