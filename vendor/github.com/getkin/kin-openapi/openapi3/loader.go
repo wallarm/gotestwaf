@@ -44,6 +44,7 @@ type Loader struct {
 
 	visitedDocuments map[string]*T
 
+	visitedCallback       map[*Callback]struct{}
 	visitedExample        map[*Example]struct{}
 	visitedHeader         map[*Header]struct{}
 	visitedLink           map[*Link]struct{}
@@ -175,6 +176,7 @@ func (loader *Loader) loadFromDataWithPathInternal(data []byte, location *url.UR
 func unmarshal(data []byte, v interface{}) error {
 	// See https://github.com/getkin/kin-openapi/issues/680
 	if err := json.Unmarshal(data, v); err != nil {
+		// UnmarshalStrict(data, v) TODO: investigate how ymlv3 handles duplicate map keys
 		return yaml.Unmarshal(data, v)
 	}
 	return nil
@@ -190,63 +192,63 @@ func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
 		loader.resetVisitedPathItemRefs()
 	}
 
-	// Visit all components
-	components := doc.Components
-	for _, component := range components.Headers {
-		if err = loader.resolveHeaderRef(doc, component, location); err != nil {
-			return
+	if components := doc.Components; components != nil {
+		for _, component := range components.Headers {
+			if err = loader.resolveHeaderRef(doc, component, location); err != nil {
+				return
+			}
 		}
-	}
-	for _, component := range components.Parameters {
-		if err = loader.resolveParameterRef(doc, component, location); err != nil {
-			return
+		for _, component := range components.Parameters {
+			if err = loader.resolveParameterRef(doc, component, location); err != nil {
+				return
+			}
 		}
-	}
-	for _, component := range components.RequestBodies {
-		if err = loader.resolveRequestBodyRef(doc, component, location); err != nil {
-			return
+		for _, component := range components.RequestBodies {
+			if err = loader.resolveRequestBodyRef(doc, component, location); err != nil {
+				return
+			}
 		}
-	}
-	for _, component := range components.Responses {
-		if err = loader.resolveResponseRef(doc, component, location); err != nil {
-			return
+		for _, component := range components.Responses {
+			if err = loader.resolveResponseRef(doc, component, location); err != nil {
+				return
+			}
 		}
-	}
-	for _, component := range components.Schemas {
-		if err = loader.resolveSchemaRef(doc, component, location, []string{}); err != nil {
-			return
+		for _, component := range components.Schemas {
+			if err = loader.resolveSchemaRef(doc, component, location, []string{}); err != nil {
+				return
+			}
 		}
-	}
-	for _, component := range components.SecuritySchemes {
-		if err = loader.resolveSecuritySchemeRef(doc, component, location); err != nil {
-			return
+		for _, component := range components.SecuritySchemes {
+			if err = loader.resolveSecuritySchemeRef(doc, component, location); err != nil {
+				return
+			}
 		}
-	}
 
-	examples := make([]string, 0, len(components.Examples))
-	for name := range components.Examples {
-		examples = append(examples, name)
-	}
-	sort.Strings(examples)
-	for _, name := range examples {
-		component := components.Examples[name]
-		if err = loader.resolveExampleRef(doc, component, location); err != nil {
-			return
+		examples := make([]string, 0, len(components.Examples))
+		for name := range components.Examples {
+			examples = append(examples, name)
 		}
-	}
+		sort.Strings(examples)
+		for _, name := range examples {
+			component := components.Examples[name]
+			if err = loader.resolveExampleRef(doc, component, location); err != nil {
+				return
+			}
+		}
 
-	for _, component := range components.Callbacks {
-		if err = loader.resolveCallbackRef(doc, component, location); err != nil {
-			return
+		for _, component := range components.Callbacks {
+			if err = loader.resolveCallbackRef(doc, component, location); err != nil {
+				return
+			}
 		}
 	}
 
 	// Visit all operations
-	for entrypoint, pathItem := range doc.Paths {
+	for _, pathItem := range doc.Paths {
 		if pathItem == nil {
 			continue
 		}
-		if err = loader.resolvePathItemRef(doc, entrypoint, pathItem, location); err != nil {
+		if err = loader.resolvePathItemRef(doc, pathItem, location); err != nil {
 			return
 		}
 	}
@@ -349,22 +351,51 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 			return nil
 		}
 		if err := codec(cursor, resolved); err != nil {
-			return nil, nil, fmt.Errorf("bad data in %q", ref)
+			return nil, nil, fmt.Errorf("bad data in %q (expecting %s)", ref, readableType(resolved))
 		}
 		return componentDoc, componentPath, nil
 
 	default:
-		return nil, nil, fmt.Errorf("bad data in %q", ref)
+		return nil, nil, fmt.Errorf("bad data in %q (expecting %s)", ref, readableType(resolved))
+	}
+}
+
+func readableType(x interface{}) string {
+	switch x.(type) {
+	case *Callback:
+		return "callback object"
+	case *CallbackRef:
+		return "ref to callback object"
+	case *ExampleRef:
+		return "ref to example object"
+	case *HeaderRef:
+		return "ref to header object"
+	case *LinkRef:
+		return "ref to link object"
+	case *ParameterRef:
+		return "ref to parameter object"
+	case *PathItem:
+		return "pathItem object"
+	case *RequestBodyRef:
+		return "ref to requestBody object"
+	case *ResponseRef:
+		return "ref to response object"
+	case *SchemaRef:
+		return "ref to schema object"
+	case *SecuritySchemeRef:
+		return "ref to securityScheme object"
+	default:
+		panic(fmt.Sprintf("unreachable %T", x))
 	}
 }
 
 func drillIntoField(cursor interface{}, fieldName string) (interface{}, error) {
 	// Special case due to multijson
 	if s, ok := cursor.(*SchemaRef); ok && fieldName == "additionalProperties" {
-		if ap := s.Value.AdditionalPropertiesAllowed; ap != nil {
+		if ap := s.Value.AdditionalProperties.Has; ap != nil {
 			return *ap, nil
 		}
-		return s.Value.AdditionalProperties, nil
+		return s.Value.AdditionalProperties.Schema, nil
 	}
 
 	switch val := reflect.Indirect(reflect.ValueOf(cursor)); val.Kind() {
@@ -390,14 +421,7 @@ func drillIntoField(cursor interface{}, fieldName string) (interface{}, error) {
 		hasFields := false
 		for i := 0; i < val.NumField(); i++ {
 			hasFields = true
-			field := val.Type().Field(i)
-			tagValue := field.Tag.Get("yaml")
-			yamlKey := strings.Split(tagValue, ",")[0]
-			if yamlKey == "-" {
-				tagValue := field.Tag.Get("multijson")
-				yamlKey = strings.Split(tagValue, ",")[0]
-			}
-			if yamlKey == fieldName {
+			if fieldName == strings.Split(val.Type().Field(i).Tag.Get("yaml"), ",")[0] {
 				return val.Field(i).Interface(), nil
 			}
 		}
@@ -407,14 +431,10 @@ func drillIntoField(cursor interface{}, fieldName string) (interface{}, error) {
 			return drillIntoField(val.FieldByName("Value").Interface(), fieldName)
 		}
 		if hasFields {
-			if ff := val.Type().Field(0); ff.PkgPath == "" && ff.Name == "ExtensionProps" {
-				extensions := val.Field(0).Interface().(ExtensionProps).Extensions
+			if ff := val.Type().Field(0); ff.PkgPath == "" && ff.Name == "Extensions" {
+				extensions := val.Field(0).Interface().(map[string]interface{})
 				if enc, ok := extensions[fieldName]; ok {
-					var dec interface{}
-					if err := json.Unmarshal(enc.(json.RawMessage), &dec); err != nil {
-						return nil, err
-					}
-					return dec, nil
+					return enc, nil
 				}
 			}
 		}
@@ -757,7 +777,7 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			return err
 		}
 	}
-	if v := value.AdditionalProperties; v != nil {
+	if v := value.AdditionalProperties.Schema; v != nil {
 		if err := loader.resolveSchemaRef(doc, v, documentPath, visited); err != nil {
 			return err
 		}
@@ -860,6 +880,16 @@ func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentP
 }
 
 func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documentPath *url.URL) (err error) {
+	if component != nil && component.Value != nil {
+		if loader.visitedCallback == nil {
+			loader.visitedCallback = make(map[*Callback]struct{})
+		}
+		if _, ok := loader.visitedCallback[component.Value]; ok {
+			return nil
+		}
+		loader.visitedCallback[component.Value] = struct{}{}
+	}
+
 	if component == nil {
 		return errors.New("invalid callback: value MUST be an object")
 	}
@@ -876,7 +906,7 @@ func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documen
 			if err != nil {
 				return err
 			}
-			if err := loader.resolveCallbackRef(doc, &resolved, componentPath); err != nil {
+			if err = loader.resolveCallbackRef(doc, &resolved, componentPath); err != nil {
 				return err
 			}
 			component.Value = resolved.Value
@@ -888,58 +918,8 @@ func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documen
 		return nil
 	}
 
-	for entrypoint, pathItem := range *value {
-		entrypoint, pathItem := entrypoint, pathItem
-		err = func() (err error) {
-			key := "-"
-			if documentPath != nil {
-				key = documentPath.EscapedPath()
-			}
-			key += entrypoint
-			if _, ok := loader.visitedPathItemRefs[key]; ok {
-				return nil
-			}
-			loader.visitedPathItemRefs[key] = struct{}{}
-
-			if pathItem == nil {
-				return errors.New("invalid path item: value MUST be an object")
-			}
-			ref := pathItem.Ref
-			if ref != "" {
-				if isSingleRefElement(ref) {
-					var p PathItem
-					if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &p); err != nil {
-						return err
-					}
-					*pathItem = p
-				} else {
-					if doc, ref, documentPath, err = loader.resolveRef(doc, ref, documentPath); err != nil {
-						return
-					}
-
-					rest := strings.TrimPrefix(ref, "#/components/callbacks/")
-					if rest == ref {
-						return fmt.Errorf(`expected prefix "#/components/callbacks/" in URI %q`, ref)
-					}
-					id := unescapeRefString(rest)
-
-					if doc.Components.Callbacks == nil {
-						return failedToResolveRefFragmentPart(ref, "callbacks")
-					}
-					resolved := doc.Components.Callbacks[id]
-					if resolved == nil {
-						return failedToResolveRefFragmentPart(ref, id)
-					}
-
-					for _, p := range *resolved.Value {
-						*pathItem = *p
-						break
-					}
-				}
-			}
-			return loader.resolvePathItemRefContinued(doc, pathItem, documentPath)
-		}()
-		if err != nil {
+	for _, pathItem := range *value {
+		if err = loader.resolvePathItemRef(doc, pathItem, documentPath); err != nil {
 			return err
 		}
 	}
@@ -983,22 +963,27 @@ func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *u
 	return nil
 }
 
-func (loader *Loader) resolvePathItemRef(doc *T, entrypoint string, pathItem *PathItem, documentPath *url.URL) (err error) {
-	key := "_"
-	if documentPath != nil {
-		key = documentPath.EscapedPath()
-	}
-	key += entrypoint
-	if _, ok := loader.visitedPathItemRefs[key]; ok {
-		return nil
-	}
-	loader.visitedPathItemRefs[key] = struct{}{}
-
+func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPath *url.URL) (err error) {
 	if pathItem == nil {
 		return errors.New("invalid path item: value MUST be an object")
 	}
 	ref := pathItem.Ref
 	if ref != "" {
+		if pathItem.Summary != "" ||
+			pathItem.Description != "" ||
+			pathItem.Connect != nil ||
+			pathItem.Delete != nil ||
+			pathItem.Get != nil ||
+			pathItem.Head != nil ||
+			pathItem.Options != nil ||
+			pathItem.Patch != nil ||
+			pathItem.Post != nil ||
+			pathItem.Put != nil ||
+			pathItem.Trace != nil ||
+			len(pathItem.Servers) != 0 ||
+			len(pathItem.Parameters) != 0 {
+			return nil
+		}
 		if isSingleRefElement(ref) {
 			var p PathItem
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &p); err != nil {
@@ -1006,25 +991,13 @@ func (loader *Loader) resolvePathItemRef(doc *T, entrypoint string, pathItem *Pa
 			}
 			*pathItem = p
 		} else {
-			if doc, ref, documentPath, err = loader.resolveRef(doc, ref, documentPath); err != nil {
-				return
+			var resolved PathItem
+			if doc, documentPath, err = loader.resolveComponent(doc, ref, documentPath, &resolved); err != nil {
+				return err
 			}
-
-			rest := strings.TrimPrefix(ref, "#/paths/")
-			if rest == ref {
-				return fmt.Errorf(`expected prefix "#/paths/" in URI %q`, ref)
-			}
-			id := unescapeRefString(rest)
-
-			if doc.Paths == nil {
-				return failedToResolveRefFragmentPart(ref, "paths")
-			}
-			resolved := doc.Paths[id]
-			if resolved == nil {
-				return failedToResolveRefFragmentPart(ref, id)
-			}
-			*pathItem = *resolved
+			*pathItem = resolved
 		}
+		pathItem.Ref = ref
 	}
 	return loader.resolvePathItemRefContinued(doc, pathItem, documentPath)
 }

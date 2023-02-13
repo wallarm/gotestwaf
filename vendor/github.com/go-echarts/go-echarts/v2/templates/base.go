@@ -9,8 +9,10 @@ var BaseTpl = `
 <script type="text/javascript">
     "use strict";
     let goecharts_{{ .ChartID | safeJS }} = echarts.init(document.getElementById('{{ .ChartID | safeJS }}'), "{{ .Theme }}");
-    let option_{{ .ChartID | safeJS }} = {{ .JSON }};
+    let option_{{ .ChartID | safeJS }} = {{ .JSONNotEscaped | safeJS }};
+	let action_{{ .ChartID | safeJS }} = {{ .JSONNotEscapedAction | safeJS }};
     goecharts_{{ .ChartID | safeJS }}.setOption(option_{{ .ChartID | safeJS }});
+ 	goecharts_{{ .ChartID | safeJS }}.dispatchAction(action_{{ .ChartID | safeJS }});
 
     {{- range .JSFunctions.Fns }}
     {{ . | safeJS }}

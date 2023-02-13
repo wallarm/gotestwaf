@@ -9,6 +9,7 @@ import (
 // Funnel represents a funnel chart.
 type Funnel struct {
 	BaseConfiguration
+	BaseActions
 }
 
 // Type returns the chart type.
@@ -25,7 +26,7 @@ func NewFunnel() *Funnel {
 // AddSeries adds new data sets.
 func (c *Funnel) AddSeries(name string, data []opts.FunnelData, options ...SeriesOpts) *Funnel {
 	series := SingleSeries{Name: name, Type: types.ChartFunnel, Data: data}
-	series.configureSeriesOpts(options...)
+	series.ConfigureSeriesOpts(options...)
 	c.MultiSeries = append(c.MultiSeries, series)
 	return c
 }
@@ -36,7 +37,13 @@ func (c *Funnel) SetGlobalOptions(options ...GlobalOpts) *Funnel {
 	return c
 }
 
-// Validate
+// SetDispatchActions sets actions for the Gauge instance.
+func (c *Funnel) SetDispatchActions(actions ...GlobalActions) *Funnel {
+	c.BaseActions.setBaseGlobalActions(actions...)
+	return c
+}
+
+// Validate validates the given configuration.
 func (c *Funnel) Validate() {
 	c.Assets.Validate(c.AssetsHost)
 }

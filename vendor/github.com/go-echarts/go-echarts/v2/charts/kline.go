@@ -32,12 +32,12 @@ func (c *Kline) SetXAxis(xAxis interface{}) *Kline {
 // AddSeries adds the new series.
 func (c *Kline) AddSeries(name string, data []opts.KlineData, options ...SeriesOpts) *Kline {
 	series := SingleSeries{Name: name, Type: types.ChartKline, Data: data}
-	series.configureSeriesOpts(options...)
+	series.ConfigureSeriesOpts(options...)
 	c.MultiSeries = append(c.MultiSeries, series)
 	return c
 }
 
-// Validate
+// Validate validates the given configuration.
 func (c *Kline) Validate() {
 	c.XAxisList[0].Data = c.xAxisData
 	c.Assets.Validate(c.AssetsHost)
