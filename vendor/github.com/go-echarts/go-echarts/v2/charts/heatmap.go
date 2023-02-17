@@ -32,12 +32,12 @@ func (c *HeatMap) SetXAxis(x interface{}) *HeatMap {
 // AddSeries adds the new series.
 func (c *HeatMap) AddSeries(name string, data []opts.HeatMapData, options ...SeriesOpts) *HeatMap {
 	series := SingleSeries{Name: name, Type: types.ChartHeatMap, Data: data}
-	series.configureSeriesOpts(options...)
+	series.ConfigureSeriesOpts(options...)
 	c.MultiSeries = append(c.MultiSeries, series)
 	return c
 }
 
-// Validate
+// Validate validates the given configuration.
 func (c *HeatMap) Validate() {
 	c.Assets.Validate(c.AssetsHost)
 }

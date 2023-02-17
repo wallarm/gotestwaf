@@ -10,6 +10,7 @@ import (
 // Map represents a map chart.
 type Map struct {
 	BaseConfiguration
+	BaseActions
 
 	mapType string
 }
@@ -25,7 +26,7 @@ func NewMap() *Map {
 	return c
 }
 
-// RegisterMapType
+// RegisterMapType registers the given mapType.
 func (c *Map) RegisterMapType(mapType string) {
 	c.mapType = mapType
 	c.JSAssets.Add("maps/" + datasets.MapFileNames[mapType] + ".js")
@@ -34,7 +35,7 @@ func (c *Map) RegisterMapType(mapType string) {
 // AddSeries adds new data sets.
 func (c *Map) AddSeries(name string, data []opts.MapData, options ...SeriesOpts) *Map {
 	series := SingleSeries{Name: name, Type: types.ChartMap, MapType: c.mapType, Data: data}
-	series.configureSeriesOpts(options...)
+	series.ConfigureSeriesOpts(options...)
 	c.MultiSeries = append(c.MultiSeries, series)
 	return c
 }
@@ -45,7 +46,13 @@ func (c *Map) SetGlobalOptions(options ...GlobalOpts) *Map {
 	return c
 }
 
-// Validate
+// SetDispatchActions sets actions for the Radar instance.
+func (c *Map) SetDispatchActions(actions ...GlobalActions) *Map {
+	c.BaseActions.setBaseGlobalActions(actions...)
+	return c
+}
+
+// Validate validates the given configuration.
 func (c *Map) Validate() {
 	c.Assets.Validate(c.AssetsHost)
 }

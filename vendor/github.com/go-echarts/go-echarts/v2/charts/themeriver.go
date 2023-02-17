@@ -9,6 +9,7 @@ import (
 // ThemeRiver represents a theme river chart.
 type ThemeRiver struct {
 	BaseConfiguration
+	BaseActions
 }
 
 // Type returns the chart type.
@@ -30,7 +31,7 @@ func (c *ThemeRiver) AddSeries(name string, data []opts.ThemeRiverData, options 
 		cd[i] = data[i].ToList()
 	}
 	series := SingleSeries{Name: name, Type: types.ChartThemeRiver, Data: cd}
-	series.configureSeriesOpts(options...)
+	series.ConfigureSeriesOpts(options...)
 	c.MultiSeries = append(c.MultiSeries, series)
 	return c
 }
@@ -41,7 +42,13 @@ func (c *ThemeRiver) SetGlobalOptions(options ...GlobalOpts) *ThemeRiver {
 	return c
 }
 
-// Validate
+// SetDispatchActions sets actions for the ThemeRiver instance.
+func (c *ThemeRiver) SetDispatchActions(actions ...GlobalActions) *ThemeRiver {
+	c.BaseActions.setBaseGlobalActions(actions...)
+	return c
+}
+
+// Validate validates the given configuration.
 func (c *ThemeRiver) Validate() {
 	c.Assets.Validate(c.AssetsHost)
 }

@@ -9,6 +9,7 @@ import (
 // Liquid represents a liquid chart.
 type Liquid struct {
 	BaseConfiguration
+	BaseActions
 }
 
 // Type returns the chart type.
@@ -26,7 +27,7 @@ func NewLiquid() *Liquid {
 // AddSeries adds new data sets.
 func (c *Liquid) AddSeries(name string, data []opts.LiquidData, options ...SeriesOpts) *Liquid {
 	series := SingleSeries{Name: name, Type: types.ChartLiquid, Data: data}
-	series.configureSeriesOpts(options...)
+	series.ConfigureSeriesOpts(options...)
 	c.MultiSeries = append(c.MultiSeries, series)
 	return c
 }
@@ -37,7 +38,13 @@ func (c *Liquid) SetGlobalOptions(options ...GlobalOpts) *Liquid {
 	return c
 }
 
-// Validate
+// SetDispatchActions sets actions for the Liquid instance.
+func (c *Liquid) SetDispatchActions(actions ...GlobalActions) *Liquid {
+	c.BaseActions.setBaseGlobalActions(actions...)
+	return c
+}
+
+// Validate validates the given configuration.
 func (c *Liquid) Validate() {
 	c.Assets.Validate(c.AssetsHost)
 }
