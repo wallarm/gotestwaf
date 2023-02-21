@@ -294,7 +294,7 @@ In addition to running the GoTestWAF Docker image downloaded from Docker Hub, yo
     ```sh
     git clone https://github.com/wallarm/gotestwaf.git
     cd gotestwaf
-    docker build --force-rm -t gotestwaf .
+    DOCKER_BUILDKIT=1 docker build --force-rm -t gotestwaf .
     docker run --network="host" --rm -it -v ${PWD}/reports:/app/reports \
         gotestwaf --url=<EVALUATED_SECURITY_SOLUTION_URL>
     ```
