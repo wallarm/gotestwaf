@@ -349,10 +349,10 @@ Options:
       --quiet                   If true, disable verbose logging
       --randomDelay int         Random delay in ms in addition to the delay between requests (default 400)
       --renewSession            Renew cookies before each test. Should be used with --followCookies flag
-      --reportFormat string     Export report to one of the following formats: none, pdf, html, json (default "pdf")
+      --reportFormat string     Export report to one of the following formats: none, pdf, html, json (default "html")
       --reportName string       Report file name. Supports `time' package template format (default "waf-evaluation-report-2006-January-02-15-04-05")
       --reportPath string       A directory to store reports (default "reports")
-      --sendDelay int           Delay in ms between requests (default 400)
+      --sendDelay int           Delay in ms between requests (default 1000)
       --skipWAFBlockCheck       If true, WAF detection tests will be skipped
       --skipWAFIdentification   Skip WAF identification
       --testCase string         If set then only this test case will be run
