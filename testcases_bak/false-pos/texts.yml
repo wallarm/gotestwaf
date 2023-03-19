@@ -1,0 +1,82 @@
+---
+payload:
+  - union was a great select
+  - 'h2<h1'
+  - D'or 1st parfume
+  - "1) a-b=c"
+  - john+or@var.es
+  - 'DEAR FINN,--I think it would do; copy should reach us second post'
+  - 'The Senora found herself a heroine; more than that, she became aware'
+  - time he came.
+  - echo in the mirror
+  - curl and divergence
+  - exec noun
+  - bash away in the gym
+  - zsh is the best!
+  - java lang courses
+  - 'JavaScript: Basics of JavaScript Language'
+  - ls 300 lexus
+  - nc 8000 controller
+  - 'I would like to be notified when the ASIN: B07JJS7WY7 is back in stock.'
+  - '=Can I please adjust_campaign:sign?'
+  - '!"I sinned against you, and you forgave me. Thank you!'
+  - 'I would like to request information about the width of the time parameter.'
+  - '}I would like to request the /cc serviceCode with the parameter: serviceCode|{}'
+  - '>The version parameter is set to _<> in the HTTP request.'
+  - 'in:devkey'
+  - 'If the subject parameter is greater than 0, then return a list of all articles with that subject.'
+  - 'url=http://www.example.com/tan?usp=4#8'
+  - 'I would like to request the log files for the ord parameter.'
+  - 'I would like to tan and follow you on Instagram.'
+  - '>url=/pi?mode=<;>'
+  - 'I would like to request a random number between 1 and 10, please.'
+  - 'I would like to request the bin with app_id: (]'
+  - 'url=https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=twitterapi&count=2&include_rts=1&exclude_replies=1'
+  - ')I would like to request information about the address: (#)saddr for the next minute.'
+  - 'I would like to request the maximum value for parameter v.'
+  - 'I would like to know the serviceCode for the {param} I am interested in.'
+  - 'I would like to keep-alive my connection and have the full_text of the article, please.'
+  - 'I would like to keep alive the parameter 75oBC.'
+  - 'MKCALENDAR cursor:I would like to create a new calendar called "cursor" please.'
+  - '1EJ%I would like the information for EJ% please.'
+  - 'lhttps://www.instagram.com/p/B_uHgI7lY0Z/?igshid=1m7xkk7a9v6z4&utm_source=ig_web_copy_linkCan I please get the id for the user that I am trying to follow?'
+  - 'DELETE 75oBC$'
+  - 'The parameter 5 is&|.'
+  - 'and =IS=C5HF95_='
+  - 'I would like to request information on the cursor, please.'
+  - 'and &IN=color&='
+  - 'I would like to request information about the idv_msdb database.'
+  - 'I would like to see the config for the longitude, please.'
+  - 'url=/history?I7I'
+  - 'I would like to request the width of the :.conf file.'
+  - 'I would like to adjust_campaign] in the system.'
+  - 'url=/?usr=subject;-'
+  - 'I would like to request the local version of the website in French, so I will include the parameter "hl=fr"'
+  - 'The standard for the <$ tag is to enclose text or code that should be interpreted as a dollar amount.'
+  - ',I would like to request information about the shadow EXFFJT.'
+  - 'I would like to :hosts the :scenario please.'
+  - 'I would like to see a list of drivers sorted in reverse order.'
+  - 'I setted the COOKIE value to : expandGeoJsonFeatures=true;'
+  - 'I would like to request a session excluding tariff data with the following parameters: excludeTariffData:_'
+  - 'I would like to request a file from the server with the parameter v and the special characters :.'
+  - 'Can I please have a Python tutorial for qr code scanning?'
+  - '_I would like to request the nice C#-_ parameter.'
+  - 'I would like to fetch all of the data for longitude : *'
+  - 'I would like to sleep for count hours.'
+  - '_SELECT all the rows of fromDate = @-_'
+  - 'url=/maps/api/geocode/json?address=Reader&daddr=!'
+  - 'I would like to search for the string "%t" please.'
+  - '_I would like to see the runtime for the payload, please.'
+  - 'I would like to process the gclid parameter.'
+  - 'and >I would like to see all of the items that are type <enter type here>.'
+  - '[Host: type: {['
+  - 'I would like to request the host for the user_code: &'
+  - '=What is the name of the package you are looking for?'
+
+encoder:
+  - URL
+placeholder:
+  - URLParam
+  - HTMLForm
+  - HTMLMultipartForm
+...

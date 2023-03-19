@@ -1,0 +1,19 @@
+---
+payload:
+  - '%00'' UNION SELECT password FROM Users WHERE username-''tom''--'
+  - "[\u201C1807192982')) union select 1,2,3,4,5,6,7,8,9,0,11#\u201D]"
+  - "[\u201C1807192982')) union/**/select/**/1,/**/2,/**/3,/**/4,/**/5,/**/6,/**/7,/**/8,/**/9,/**/\u2019pentestit\u2019,/**/11#\u201D]"
+  - (select%20group_concat(table_name,0x3a,column_name,0x5c6e)%20from%20information_schema.columns%20where%20table_schema=database())
+  - '%55nion(%53elect+1,2,3,/*!50000concat*/(0x3c7363726970743e616c657274607873735f795f73716c5f62795f59303030215f,0x5c6e,0x2d2d2d2d2d2d,0x5c6e,0x7573756172696f3a3a,user(),0x603c2f7363726970743e)...'
+  - /*!%55NiOn*/%20/*!%53eLEct*/+
+  - -1945+/*!%55NiOn*/%20/*!%53eLEct*/+1,2,3,%27soy%20vulnerable%27,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19+--+
+  - "a' UNION SELECT 1, NULL, NULL, table_name, column_name FROM information_schema.columns-- -"
+encoder:
+  - URL
+placeholder:
+  - URLParam
+  - HTMLForm
+  - HTMLMultipartForm
+  - JSONRequest
+type: "SQL Injection"
+...

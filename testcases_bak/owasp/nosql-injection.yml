@@ -8,6 +8,7 @@ payload:
   - "0;var date=new Date(); do{curDate = new Date();}while(curDate-date<10000)"
   - "' && this.passwordzz.match(/.*/)//"
 encoder:
+  - Base64Flat
   - URL
 placeholder:
   - URLPath

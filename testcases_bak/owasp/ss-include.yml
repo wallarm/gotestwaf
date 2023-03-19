@@ -6,6 +6,7 @@ payload:
   - '<!--#exec cmd="dir" -->'
   - '<!--#include file=”UUUUUUUU...UU”-->'
 encoder:
+  - Base64Flat
   - URL
 placeholder:
   - URLPath

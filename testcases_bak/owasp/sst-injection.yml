@@ -9,6 +9,7 @@ payload:
   - '{{request|attr("__class__")}}'
   - '{{1337*1338}}'
 encoder:
+  - Base64Flat
   - URL
 placeholder:
   - URLPath

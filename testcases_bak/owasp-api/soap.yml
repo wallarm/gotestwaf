@@ -1,0 +1,21 @@
+---
+payload:
+  - '"union select -7431.1, name, @aaa from u_base--w-'
+  - "<script>alert(31337)</script>"
+  - "\'-alert(1)//"
+  - 'confirm.call(null,1)'
+  - 'alert.call(%20, "XSS");'
+  - "[1].find(alert('1'))"
+  - "-1134') OR JSON_EXTRACT('{''aKER'': 9648}', '$.aKER') = 9648*7799 AND ('QlYa' LIKE 'QlYa"
+  - "123) AND 12=12 AND JSON_DEPTH('{}') != 2521"
+  - "<F5>/strrr/821} union # distinctrow/**/select 1,2,3--{<F5>/**/TRUE"
+  - 'Function("\x61\x6c\x65\x72\x74\x28\x31\x29")();'
+  - "[1].find(alert('1'))"
+  - '\"autofocus=alert(1)//'
+  - "alert.apply(null, [1])"
+encoder:
+  - Plain
+placeholder:
+  - SOAPBody
+type: "SOAP"
+...

