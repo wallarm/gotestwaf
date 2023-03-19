@@ -16,6 +16,21 @@ func SecureSphere() *Detector {
 	return d
 }
 
+func SecureSphereCustom() *Detector {
+	d := &Detector{
+		WAFName: "SecureSphereCustom",
+		Vendor:  "Imperva Inc.",
+	}
+
+	d.Checks = []Check{
+		CheckStatusCode(406),
+		CheckContent("If you keep seeing this page, please contact support."),
+		CheckContent("Please provide your company name and other contact information"),
+	}
+
+	return d
+}
+
 func Incapsula() *Detector {
 	d := &Detector{
 		WAFName: "Incapsula",

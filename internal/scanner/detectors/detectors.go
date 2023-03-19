@@ -38,4 +38,8 @@ var Detectors = []*Detector{
 	// Imperva
 	Incapsula(),
 	SecureSphere(),
+	SecureSphereCustom(),
+
+	// Cloudflare
+	Cloudflare(),
 }
