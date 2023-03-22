@@ -70,8 +70,8 @@ RUN <<EOF
 EOF
 
 # add fonts
-COPY --from=build /fonts/inter /usr/share/fonts/inter
-COPY --from=build /fonts/iosevka /usr/share/fonts/iosevka
+COPY --from=build /fonts/inter /usr/local/share/fonts/inter
+COPY --from=build /fonts/iosevka /usr/local/share/fonts/iosevka
 RUN fc-cache -fv
 
 WORKDIR /app
