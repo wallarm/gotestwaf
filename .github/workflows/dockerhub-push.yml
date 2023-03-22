@@ -2,8 +2,8 @@ name: Build Docker image and push to DockerHub
 
 on:
   push:
-    branches:
-      - master
+    tag:
+      - "v.*"
 
 jobs:
   build-and-push:

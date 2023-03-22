@@ -2,11 +2,8 @@ name: Update DockerHub Description
 
 on:
   push:
-    branches:
-      - master
-    paths:
-      - README.md
-      - .github/workflows/dockerhub-description.yml
+    tag:
+      - "v.*"
 
 jobs:
   update-description:
