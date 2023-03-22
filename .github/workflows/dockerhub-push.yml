@@ -2,6 +2,8 @@ name: Build Docker image and push to DockerHub
 
 on:
   push:
+    branches:
+      - master
     tag:
       - "v.*"
 
@@ -33,10 +35,22 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: wallarm/gotestwaf
+          tags: |
+            # set edge tag for default branch
+            type=edge,branch={{is_default_branch}}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
       - name: Build and push
         uses: docker/build-push-action@v3
         with:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: wallarm/gotestwaf:latest
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
