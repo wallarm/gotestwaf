@@ -2,8 +2,8 @@ name: Update DockerHub Description
 
 on:
   push:
-    tag:
-      - "v.*"
+    tags:
+      - v*
 
 jobs:
   update-description:

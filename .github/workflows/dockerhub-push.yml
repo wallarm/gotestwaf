@@ -4,8 +4,8 @@ on:
   push:
     branches:
       - master
-    tag:
-      - "v.*"
+    tags:
+      - v*
 
 jobs:
   build-and-push:
@@ -44,10 +44,9 @@ jobs:
         with:
           images: wallarm/gotestwaf
           tags: |
-            # set edge tag for default branch
-            type=edge,branch=master
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
+            type=edge,branch=master
 
       - name: Build and push
         uses: docker/build-push-action@v3
