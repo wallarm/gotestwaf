@@ -1,0 +1,34 @@
+name: Update DockerHub Description
+
+on:
+  push:
+    tag:
+      - "v.*"
+
+jobs:
+  update-description:
+    runs-on: self-hosted-1cpu
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Import secrets
+        uses: hashicorp/vault-action@v2
+        id: secrets
+        with:
+          exportEnv: false
+          url: ${{ secrets.VAULT_URL }}
+          role: ${{ secrets.VAULT_ROLE }}
+          method: kubernetes
+          secrets: |
+            kv-gitlab-ci/data/github/shared/dockerhub-creds user | DOCKERHUB_USER ;
+            kv-gitlab-ci/data/github/shared/dockerhub-creds password | DOCKERHUB_PASSWORD ;
+
+      - name: Update DockerHub Description
+        uses: peter-evans/dockerhub-description@v3
+        with:
+          username: ${{ steps.secrets.outputs.DOCKERHUB_USER }}
+          password: ${{ steps.secrets.outputs.DOCKERHUB_PASSWORD }}
+          repository: wallarm/gotestwaf
+          short-description: ${{ github.event.repository.description }}
+          readme-filepath: ./README.md
