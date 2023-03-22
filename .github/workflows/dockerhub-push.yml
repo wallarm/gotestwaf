@@ -58,3 +58,49 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  clean-old-cache:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Delete old cached docker layers
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eu -o pipefail
+
+          LAST_WORKFLOW_TIME=$(
+              gh run list \
+                  --json workflowName,startedAt \
+                  --jq ".[] | select( .workflowName == \"${{ github.workflow }}\") | .startedAt" \
+              | head -n 1
+          )
+
+          echo "Time of the last running '${{ github.workflow }}' workflow: $LAST_WORKFLOW_TIME"
+
+          while true; do
+              OLD_CACHE_IDS=$(
+                  gh api \
+                      -H "Accept: application/vnd.github+json" \
+                      --jq ".actions_caches[] | select(.last_accessed_at < \"$LAST_WORKFLOW_TIME\") | .id" \
+                      /repos/wallarm/gotestwaf/actions/caches \
+                  | tr '\n' ' '
+              )
+
+              if [ -z "$OLD_CACHE_IDS" ]; then
+                  echo "Done"
+                  break
+              fi
+
+              echo "ID of caches to delete: $OLD_CACHE_IDS"
+
+              for cache_id in $OLD_CACHE_IDS; do
+                  gh api \
+                      --method DELETE \
+                      -H "Accept: application/vnd.github+json" \
+                      /repos/wallarm/gotestwaf/actions/caches/$cache_id
+              done
+          done
