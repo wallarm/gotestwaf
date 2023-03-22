@@ -27,7 +27,7 @@ import (
 
 const (
 	grpcContentType            = "application/grpc"
-	grpcUserAgent              = "grpc-go/1.42.0"
+	grpcUserAgent              = "grpc-go/1.53.0"
 	grpcServerDetectionTimeout = 3 * time.Second
 )
 

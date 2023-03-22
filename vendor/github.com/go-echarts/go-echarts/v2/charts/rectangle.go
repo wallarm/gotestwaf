@@ -29,7 +29,7 @@ func (xy *XYAxis) ExtendYAxis(yAxis ...opts.YAxis) {
 	xy.YAxisList = append(xy.YAxisList, yAxis...)
 }
 
-// WithXAxisOpts
+// WithXAxisOpts sets the X axis.
 func WithXAxisOpts(opt opts.XAxis, index ...int) GlobalOpts {
 	return func(bc *BaseConfiguration) {
 		if len(index) == 0 {
@@ -41,7 +41,7 @@ func WithXAxisOpts(opt opts.XAxis, index ...int) GlobalOpts {
 	}
 }
 
-// WithYAxisOpts
+// WithYAxisOpts sets the Y axis.
 func WithYAxisOpts(opt opts.YAxis, index ...int) GlobalOpts {
 	return func(bc *BaseConfiguration) {
 		if len(index) == 0 {
@@ -56,10 +56,15 @@ func WithYAxisOpts(opt opts.YAxis, index ...int) GlobalOpts {
 // RectConfiguration contains options for the rectangular coordinates.
 type RectConfiguration struct {
 	BaseConfiguration
+	BaseActions
 }
 
 func (rect *RectConfiguration) setRectGlobalOptions(options ...GlobalOpts) {
 	rect.BaseConfiguration.setBaseGlobalOptions(options...)
+}
+
+func (rect *RectConfiguration) setRectGlobalActions(options ...GlobalActions) {
+	rect.BaseActions.setBaseGlobalActions(options...)
 }
 
 // RectChart is a chart in RectChart coordinate.
@@ -79,6 +84,12 @@ func (rc *RectChart) SetGlobalOptions(options ...GlobalOpts) *RectChart {
 	return rc
 }
 
+//SetDispatchActions sets actions for the RectChart instance.
+func (rc *RectChart) SetDispatchActions(options ...GlobalActions) *RectChart {
+	rc.RectConfiguration.setRectGlobalActions(options...)
+	return rc
+}
+
 // Overlap composes multiple charts into one single canvas.
 // It is only suited for some of the charts which are in rectangular coordinate.
 // Supported charts: Bar/BoxPlot/Line/Scatter/EffectScatter/Kline/HeatMap
@@ -88,7 +99,7 @@ func (rc *RectChart) Overlap(a ...Overlaper) {
 	}
 }
 
-// Validate
+// Validate validates the given configuration.
 func (rc *RectChart) Validate() {
 	// Make sure that the data of X axis won't be cleaned for XAxisOpts
 	rc.XAxisList[0].Data = rc.xAxisData

@@ -1,6 +1,9 @@
 package openapi3filter
 
 import (
+	"archive/zip"
+	"bytes"
+	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -1004,15 +1007,17 @@ func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, 
 }
 
 func init() {
-	RegisterBodyDecoder("text/plain", plainBodyDecoder)
 	RegisterBodyDecoder("application/json", jsonBodyDecoder)
 	RegisterBodyDecoder("application/json-patch+json", jsonBodyDecoder)
-	RegisterBodyDecoder("application/x-yaml", yamlBodyDecoder)
-	RegisterBodyDecoder("application/yaml", yamlBodyDecoder)
+	RegisterBodyDecoder("application/octet-stream", FileBodyDecoder)
 	RegisterBodyDecoder("application/problem+json", jsonBodyDecoder)
 	RegisterBodyDecoder("application/x-www-form-urlencoded", urlencodedBodyDecoder)
+	RegisterBodyDecoder("application/x-yaml", yamlBodyDecoder)
+	RegisterBodyDecoder("application/yaml", yamlBodyDecoder)
+	RegisterBodyDecoder("application/zip", zipFileBodyDecoder)
 	RegisterBodyDecoder("multipart/form-data", multipartBodyDecoder)
-	RegisterBodyDecoder("application/octet-stream", FileBodyDecoder)
+	RegisterBodyDecoder("text/csv", csvBodyDecoder)
+	RegisterBodyDecoder("text/plain", plainBodyDecoder)
 }
 
 func plainBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error) {
@@ -1025,7 +1030,9 @@ func plainBodyDecoder(body io.Reader, header http.Header, schema *openapi3.Schem
 
 func jsonBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error) {
 	var value interface{}
-	if err := json.NewDecoder(body).Decode(&value); err != nil {
+	dec := json.NewDecoder(body)
+	dec.UseNumber()
+	if err := dec.Decode(&value); err != nil {
 		return nil, &ParseError{Kind: KindInvalidFormat, Cause: err}
 	}
 	return value, nil
@@ -1120,33 +1127,43 @@ func multipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.S
 			enc = encFn(name)
 		}
 		subEncFn := func(string) *openapi3.Encoding { return enc }
-		// If the property's schema has type "array" it is means that the form contains a few parts with the same name.
-		// Every such part has a type that is defined by an items schema in the property's schema.
+
 		var valueSchema *openapi3.SchemaRef
-		var exists bool
-		valueSchema, exists = schema.Value.Properties[name]
-		if !exists {
-			anyProperties := schema.Value.AdditionalPropertiesAllowed
-			if anyProperties != nil {
-				switch *anyProperties {
-				case true:
-					//additionalProperties: true
-					continue
-				default:
-					//additionalProperties: false
-					return nil, &ParseError{Kind: KindOther, Cause: fmt.Errorf("part %s: undefined", name)}
+		if len(schema.Value.AllOf) > 0 {
+			var exists bool
+			for _, sr := range schema.Value.AllOf {
+				if valueSchema, exists = sr.Value.Properties[name]; exists {
+					break
 				}
 			}
-			if schema.Value.AdditionalProperties == nil {
-				return nil, &ParseError{Kind: KindOther, Cause: fmt.Errorf("part %s: undefined", name)}
-			}
-			valueSchema, exists = schema.Value.AdditionalProperties.Value.Properties[name]
 			if !exists {
 				return nil, &ParseError{Kind: KindOther, Cause: fmt.Errorf("part %s: undefined", name)}
 			}
-		}
-		if valueSchema.Value.Type == "array" {
-			valueSchema = valueSchema.Value.Items
+		} else {
+			// If the property's schema has type "array" it is means that the form contains a few parts with the same name.
+			// Every such part has a type that is defined by an items schema in the property's schema.
+			var exists bool
+			if valueSchema, exists = schema.Value.Properties[name]; !exists {
+				if anyProperties := schema.Value.AdditionalProperties.Has; anyProperties != nil {
+					switch *anyProperties {
+					case true:
+						//additionalProperties: true
+						continue
+					default:
+						//additionalProperties: false
+						return nil, &ParseError{Kind: KindOther, Cause: fmt.Errorf("part %s: undefined", name)}
+					}
+				}
+				if schema.Value.AdditionalProperties.Schema == nil {
+					return nil, &ParseError{Kind: KindOther, Cause: fmt.Errorf("part %s: undefined", name)}
+				}
+				if valueSchema, exists = schema.Value.AdditionalProperties.Schema.Value.Properties[name]; !exists {
+					return nil, &ParseError{Kind: KindOther, Cause: fmt.Errorf("part %s: undefined", name)}
+				}
+			}
+			if valueSchema.Value.Type == "array" {
+				valueSchema = valueSchema.Value.Items
+			}
 		}
 
 		var value interface{}
@@ -1160,14 +1177,28 @@ func multipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.S
 	}
 
 	allTheProperties := make(map[string]*openapi3.SchemaRef)
-	for k, v := range schema.Value.Properties {
-		allTheProperties[k] = v
-	}
-	if schema.Value.AdditionalProperties != nil {
-		for k, v := range schema.Value.AdditionalProperties.Value.Properties {
+	if len(schema.Value.AllOf) > 0 {
+		for _, sr := range schema.Value.AllOf {
+			for k, v := range sr.Value.Properties {
+				allTheProperties[k] = v
+			}
+			if addProps := sr.Value.AdditionalProperties.Schema; addProps != nil {
+				for k, v := range addProps.Value.Properties {
+					allTheProperties[k] = v
+				}
+			}
+		}
+	} else {
+		for k, v := range schema.Value.Properties {
 			allTheProperties[k] = v
 		}
+		if addProps := schema.Value.AdditionalProperties.Schema; addProps != nil {
+			for k, v := range addProps.Value.Properties {
+				allTheProperties[k] = v
+			}
+		}
 	}
+
 	// Make an object value from form values.
 	obj := make(map[string]interface{})
 	for name, prop := range allTheProperties {
@@ -1192,4 +1223,75 @@ func FileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.Schema
 		return nil, err
 	}
 	return string(data), nil
+}
+
+// zipFileBodyDecoder is a body decoder that decodes a zip file body to a string.
+func zipFileBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error) {
+	buff := bytes.NewBuffer([]byte{})
+	size, err := io.Copy(buff, body)
+	if err != nil {
+		return nil, err
+	}
+
+	zr, err := zip.NewReader(bytes.NewReader(buff.Bytes()), size)
+	if err != nil {
+		return nil, err
+	}
+
+	const bufferSize = 256
+	content := make([]byte, 0, bufferSize*len(zr.File))
+	buffer := make([]byte /*0,*/, bufferSize)
+
+	for _, f := range zr.File {
+		err := func() error {
+			rc, err := f.Open()
+			if err != nil {
+				return err
+			}
+			defer func() {
+				_ = rc.Close()
+			}()
+
+			for {
+				n, err := rc.Read(buffer)
+				if 0 < n {
+					content = append(content, buffer...)
+				}
+				if err == io.EOF {
+					break
+				}
+				if err != nil {
+					return err
+				}
+			}
+
+			return nil
+		}()
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return string(content), nil
+}
+
+// csvBodyDecoder is a body decoder that decodes a csv body to a string.
+func csvBodyDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (interface{}, error) {
+	r := csv.NewReader(body)
+
+	var content string
+	for {
+		record, err := r.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		content += strings.Join(record, ",") + "\n"
+	}
+
+	return content, nil
 }

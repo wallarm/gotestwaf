@@ -9,6 +9,7 @@ import (
 // Radar represents a radar chart.
 type Radar struct {
 	BaseConfiguration
+	BaseActions
 }
 
 // Type returns the chart type.
@@ -26,7 +27,7 @@ func NewRadar() *Radar {
 // AddSeries adds new data sets.
 func (c *Radar) AddSeries(name string, data []opts.RadarData, options ...SeriesOpts) *Radar {
 	series := SingleSeries{Name: name, Type: types.ChartRadar, Data: data}
-	series.configureSeriesOpts(options...)
+	series.ConfigureSeriesOpts(options...)
 	c.MultiSeries = append(c.MultiSeries, series)
 	c.legends = append(c.legends, name)
 	return c
@@ -38,7 +39,13 @@ func (c *Radar) SetGlobalOptions(options ...GlobalOpts) *Radar {
 	return c
 }
 
-// Validate
+// SetDispatchActions sets actions for the Radar instance.
+func (c *Radar) SetDispatchActions(actions ...GlobalActions) *Radar {
+	c.BaseActions.setBaseGlobalActions(actions...)
+	return c
+}
+
+// Validate validates the given configuration.
 func (c *Radar) Validate() {
 	c.Legend.Data = c.legends
 	c.Assets.Validate(c.AssetsHost)

@@ -9,6 +9,7 @@ import (
 // Pie represents a pie chart.
 type Pie struct {
 	BaseConfiguration
+	BaseActions
 }
 
 // Type returns the chart type.
@@ -25,7 +26,7 @@ func NewPie() *Pie {
 // AddSeries adds new data sets.
 func (c *Pie) AddSeries(name string, data []opts.PieData, options ...SeriesOpts) *Pie {
 	series := SingleSeries{Name: name, Type: types.ChartPie, Data: data}
-	series.configureSeriesOpts(options...)
+	series.ConfigureSeriesOpts(options...)
 	c.MultiSeries = append(c.MultiSeries, series)
 	return c
 }
@@ -36,7 +37,13 @@ func (c *Pie) SetGlobalOptions(options ...GlobalOpts) *Pie {
 	return c
 }
 
-// Validate
+// SetDispatchActions sets actions for the Pie instance.
+func (c *Pie) SetDispatchActions(actions ...GlobalActions) *Pie {
+	c.BaseActions.setBaseGlobalActions(actions...)
+	return c
+}
+
+// Validate validates the given configuration.
 func (c *Pie) Validate() {
 	c.Assets.Validate(c.AssetsHost)
 }
