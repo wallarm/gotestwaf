@@ -47,7 +47,7 @@ EOF
 WORKDIR /app
 COPY . .
 
-RUN go build -o gotestwaf -ldflags "-X github.com/wallarm/gotestwaf/internal/version.Version=$(git describe)" ./cmd/
+RUN go build -o gotestwaf -ldflags "-X github.com/wallarm/gotestwaf/internal/version.Version=$(git describe --tags)" ./cmd/
 
 
 # Main Stage ===================================================================
