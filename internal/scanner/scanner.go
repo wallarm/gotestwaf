@@ -363,7 +363,7 @@ func (s *Scanner) checkPass(responseMsgHeader, body string, statusCode int) (boo
 		}
 
 		if response != "" {
-			m, _ := regexp.MatchString(s.cfg.BlockRegex, response)
+			m, _ := regexp.MatchString(s.cfg.PassRegex, response)
 
 			return m, nil
 		}
