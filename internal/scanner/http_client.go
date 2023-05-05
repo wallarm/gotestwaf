@@ -121,7 +121,14 @@ func (c *HTTPClient) SendPayload(
 
 	req = req.WithContext(ctx)
 
+	isUAPlaceholder := placeholderName == placeholder.DefaultUserAgent.GetName()
+
 	for header, value := range c.headers {
+		// Skip setting the User-Agent header to the value from the GoTestWAF config file
+		// if the placeholder is UserAgent.
+		if strings.EqualFold(header, placeholder.UAHeader) && isUAPlaceholder {
+			continue
+		}
 		req.Header.Set(header, value)
 	}
 	req.Host = c.hostHeader

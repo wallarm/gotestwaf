@@ -17,6 +17,7 @@ func init() {
 	Placeholders = make(map[string]Placeholder)
 	Placeholders[DefaultGRPC.GetName()] = DefaultGRPC
 	Placeholders[DefaultHeader.GetName()] = DefaultHeader
+	Placeholders[DefaultUserAgent.GetName()] = DefaultUserAgent
 	Placeholders[DefaultHTMLForm.GetName()] = DefaultHTMLForm
 	Placeholders[DefaultHTMLMultipartForm.GetName()] = DefaultHTMLMultipartForm
 	Placeholders[DefaultJSONBody.GetName()] = DefaultJSONBody
