@@ -1,6 +1,7 @@
 package placeholder
 
 import (
+	"fmt"
 	"net/http"
 )
 
@@ -13,10 +14,21 @@ type Placeholder interface {
 
 var Placeholders map[string]Placeholder
 
+type UnknownPlaceholderError struct {
+	name string
+}
+
+func (e *UnknownPlaceholderError) Error() string {
+	return fmt.Sprintf("unknown placeholder: %s", e.name)
+}
+
+var _ error = (*UnknownPlaceholderError)(nil)
+
 func init() {
 	Placeholders = make(map[string]Placeholder)
 	Placeholders[DefaultGRPC.GetName()] = DefaultGRPC
 	Placeholders[DefaultHeader.GetName()] = DefaultHeader
+	Placeholders[DefaultUserAgent.GetName()] = DefaultUserAgent
 	Placeholders[DefaultHTMLForm.GetName()] = DefaultHTMLForm
 	Placeholders[DefaultHTMLMultipartForm.GetName()] = DefaultHTMLMultipartForm
 	Placeholders[DefaultJSONBody.GetName()] = DefaultJSONBody
@@ -35,7 +47,12 @@ func init() {
 }
 
 func Apply(host, placeholder, data string) (*http.Request, error) {
-	req, err := Placeholders[placeholder].CreateRequest(host, data)
+	ph, ok := Placeholders[placeholder]
+	if !ok {
+		return nil, &UnknownPlaceholderError{name: placeholder}
+	}
+
+	req, err := ph.CreateRequest(host, data)
 	if err != nil {
 		return nil, err
 	}

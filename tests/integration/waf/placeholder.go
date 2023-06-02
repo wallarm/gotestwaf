@@ -17,6 +17,14 @@ var (
 	urlParamRegexp = regexp.MustCompile(fmt.Sprintf("(query|[a-fA-F0-9]{%d})", ph.Seed*2))
 )
 
+func getPayloadFromUAHeader(r *http.Request) (string, error) {
+	if header := r.UserAgent(); header != "" {
+		return header, nil
+	}
+
+	return "", errors.New("couldn't get payload from UA header: required header not found")
+}
+
 func getPayloadFromHeader(r *http.Request) (string, error) {
 	for header, values := range r.Header {
 		if matched := headerRegexp.MatchString(header); matched {

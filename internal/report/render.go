@@ -17,7 +17,7 @@ import (
 // --no-sandbox \
 // --disable-gpu \
 // --run-all-compositor-stages-before-draw \
-// --print-to-pdf-no-header \
+// --no-pdf-header-footer \
 // --print-to-pdf=test.pdf \
 // report.html
 
@@ -58,11 +58,10 @@ func renderToPDF(ctx context.Context, fileToRender string, pathToResultPDF strin
 	cmd := exec.CommandContext(ctx, chromePath,
 		"--headless",
 		"--no-zygote",
-		"--single-process",
 		"--no-sandbox",
 		"--disable-gpu",
 		"--run-all-compositor-stages-before-draw",
-		"--print-to-pdf-no-header",
+		"--no-pdf-header-footer",
 		fmt.Sprintf("--print-to-pdf=%s", pathToResultPDF),
 		fileToRender,
 	)

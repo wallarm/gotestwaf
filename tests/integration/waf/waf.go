@@ -166,6 +166,8 @@ func (waf *WAF) httpRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch placeholder {
+	case "UserAgent":
+		placeholderValue, err = getPayloadFromUAHeader(r)
 	case "Header":
 		placeholderValue, err = getPayloadFromHeader(r)
 	case "HTMLForm":
