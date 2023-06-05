@@ -19,6 +19,17 @@ var (
 	argsRegex       = regexp.MustCompile(`^\-\-((quiet|tlsVerify|followCookies|renewSession|skipWAFIdentification|nonBlockedAsPassed|noEmailReport|ignoreUnresolved|blockConnReset|skipWAFBlockCheck|addDebugHeader|includePayloads)|(configPath|logFormat|url|wsURL|graphqlURL|proxy|blockRegex|passRegex|testCase|testSet|reportPath|reportName|reportFormat|email|testCasesPath|wafName|addHeader|openapiFile)\=[[:print:]]+|(grpcPort|maxIdleConns|maxRedirects|idleConnTimeout|workers|sendDelay|randomDelay)\=\d+|(blockStatusCodes|passStatusCodes)\=[\d,]+)$`)
 )
 
+var customValidators = map[string]validator.Func{
+	"gtw_version":  validateGtwVersion,
+	"fp":           validateFp,
+	"mark":         validateMark,
+	"css_suffix":   validateCssSuffix,
+	"indicator":    validateIndicator,
+	"args":         validateArgs,
+	"encoders":     validateEncoders,
+	"placeholders": validatePlaceholders,
+}
+
 func validateGtwVersion(fl validator.FieldLevel) bool {
 	version := fl.Field().String()
 
@@ -110,18 +121,21 @@ func validatePlaceholders(fl validator.FieldLevel) bool {
 // ValidateReportData validates report data
 func ValidateReportData(reportData *HtmlReport) error {
 	validate := validator.New()
-	validate.RegisterValidation("gtw_version", validateGtwVersion)
-	validate.RegisterValidation("fp", validateFp)
-	validate.RegisterValidation("mark", validateMark)
-	validate.RegisterValidation("css_suffix", validateCssSuffix)
-	validate.RegisterValidation("indicator", validateIndicator)
-	validate.RegisterValidation("args", validateArgs)
-	validate.RegisterValidation("encoders", validateEncoders)
-	validate.RegisterValidation("placeholders", validatePlaceholders)
+	for tag, validatorFunc := range customValidators {
+		err := validate.RegisterValidation(tag, validatorFunc)
+		if err != nil {
+			return errors.Wrap(err, "couldn't build validator")
+		}
+	}
 
 	err := validate.Struct(reportData)
 	if err != nil {
-		return errors.Wrap(err, "found invalid values in the report data")
+		var validatorErr validator.ValidationErrors
+		if errors.As(err, &validatorErr) {
+			return &ValidationError{validatorErr}
+		}
+
+		return errors.Wrap(err, "couldn't validate report data")
 	}
 
 	return nil
