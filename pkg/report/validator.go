@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	gtwVersionRegex = regexp.MustCompile(`^(v\d+\.\d+\.\d+(\-\d+\-g[a-f0-9]{7})?|unknown)$`)
+	gtwVersionRegex = regexp.MustCompile(`^(v\d+\.\d+\.\d+(\-\d+\-g[a-f0-9]{7})?)$`)
 	fpRegex         = regexp.MustCompile(`^[a-f0-9]{32}$`)
 	markRegex       = regexp.MustCompile(`^(N/A|[A-F][\+\-]?)$`)
 	suffixRegex     = regexp.MustCompile(`^(na|[a-f])$`)
@@ -21,6 +21,12 @@ var (
 
 func validateGtwVersion(fl validator.FieldLevel) bool {
 	version := fl.Field().String()
+
+	// skip validation if empty or 'unknown' version
+	if version == "" || version == "unknown" {
+		return true
+	}
+
 	result := gtwVersionRegex.MatchString(version)
 
 	return result
