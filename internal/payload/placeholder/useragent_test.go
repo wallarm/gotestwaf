@@ -15,7 +15,7 @@ func TestUserAgent(t *testing.T) {
 	}
 
 	for _, testUA := range tests {
-		req, err := DefaultUserAgent.CreateRequest(testUrl, testUA)
+		req, err := DefaultUserAgent.CreateRequest(testUrl, testUA, nil)
 		if err != nil {
 			t.Fatalf("got an error while testing: %v", err)
 		}

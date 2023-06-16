@@ -40,7 +40,7 @@ type testWork struct {
 	caseName         string
 	payload          string
 	encoder          string
-	placeholder      string
+	placeholder      *db.Placeholder
 	testType         string
 	isTruePositive   bool
 	debugHeaderValue string
@@ -163,7 +163,7 @@ func (s *Scanner) WAFBlockCheck(ctx context.Context) error {
 
 // preCheck sends given payload during the pre-check stage.
 func (s *Scanner) preCheck(ctx context.Context, payload string) (blocked bool, statusCode int, err error) {
-	respMsgHeader, respBody, code, err := s.httpClient.SendPayload(ctx, s.cfg.URL, "URLParam", "URL", payload, "")
+	respMsgHeader, respBody, code, err := s.httpClient.SendPayload(ctx, s.cfg.URL, payload, "URL", "URLParam", nil, "")
 	if err != nil {
 		return false, 0, err
 	}
@@ -400,7 +400,7 @@ func (s *Scanner) produceTests(ctx context.Context, n int) <-chan *testWork {
 
 							hash.Write([]byte(testCase.Set))
 							hash.Write([]byte(testCase.Name))
-							hash.Write([]byte(placeholder))
+							hash.Write([]byte(placeholder.Name))
 							hash.Write([]byte(encoder))
 							hash.Write([]byte(payload))
 
@@ -445,7 +445,7 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 		err           error
 	)
 
-	if w.placeholder == placeholder.DefaultGRPC.GetName() {
+	if w.placeholder.Name == placeholder.DefaultGRPC.GetName() {
 		if !s.grpcConn.IsAvailable() {
 			return nil
 		}
@@ -464,7 +464,7 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 	}
 
 	if s.requestTemplates == nil {
-		respMsgHeader, respBody, statusCode, err = s.httpClient.SendPayload(ctx, s.cfg.URL, w.placeholder, w.encoder, w.payload, w.debugHeaderValue)
+		respMsgHeader, respBody, statusCode, err = s.httpClient.SendPayload(ctx, s.cfg.URL, w.payload, w.encoder, w.placeholder.Name, w.placeholder.Config, w.debugHeaderValue)
 
 		_, _, _, _, err = s.updateDB(ctx, w, nil, nil, nil, nil, nil,
 			statusCode, nil, respMsgHeader, respBody, err, "", false)
@@ -472,7 +472,7 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 		return err
 	}
 
-	templates := s.requestTemplates[w.placeholder]
+	templates := s.requestTemplates[w.placeholder.Name]
 
 	encodedPayload, err := encoder.Apply(w.encoder, w.payload)
 	if err != nil {
@@ -486,7 +486,7 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 	var additionalInfo string
 
 	for _, template := range templates {
-		req, err := template.CreateRequest(ctx, w.placeholder, encodedPayload)
+		req, err := template.CreateRequest(ctx, w.placeholder.Name, encodedPayload)
 		if err != nil {
 			return errors.Wrap(err, "create request from template")
 		}
@@ -680,7 +680,7 @@ func (w *testWork) toInfo(respStatusCode int) *db.Info {
 		Case:               w.caseName,
 		Payload:            w.payload,
 		Encoder:            w.encoder,
-		Placeholder:        w.placeholder,
+		Placeholder:        w.placeholder.Name,
 		ResponseStatusCode: respStatusCode,
 		Type:               w.testType,
 	}

@@ -1,28 +1,25 @@
 package placeholder
 
 import (
-	"fmt"
 	"net/http"
+
+	"github.com/pkg/errors"
 )
 
-const Seed = 5
+const (
+	Seed = 5
+
+	payloadPlaceholder = "{{payload}}"
+)
 
 type Placeholder interface {
+	newConfig(conf map[any]any) (any, error)
+
 	GetName() string
-	CreateRequest(url, data string) (*http.Request, error)
+	CreateRequest(url, data string, config any) (*http.Request, error)
 }
 
 var Placeholders map[string]Placeholder
-
-type UnknownPlaceholderError struct {
-	name string
-}
-
-func (e *UnknownPlaceholderError) Error() string {
-	return fmt.Sprintf("unknown placeholder: %s", e.name)
-}
-
-var _ error = (*UnknownPlaceholderError)(nil)
 
 func init() {
 	Placeholders = make(map[string]Placeholder)
@@ -42,15 +39,41 @@ func init() {
 	Placeholders[DefaultNonCrudUrlParam.GetName()] = DefaultNonCrudUrlParam
 	Placeholders[DefaultNonCRUDHeader.GetName()] = DefaultNonCRUDHeader
 	Placeholders[DefaultNonCRUDRequestBody.GetName()] = DefaultNonCRUDRequestBody
+	Placeholders[DefaultRawRequest.GetName()] = DefaultRawRequest
 }
 
-func Apply(host, placeholder, data string) (*http.Request, error) {
+func GetPlaceholderConfig(name string, conf any) (any, error) {
+	ph, ok := Placeholders[name]
+	if !ok {
+		return nil, &UnknownPlaceholderError{name: name}
+	}
+
+	phConfMap, ok := conf.(map[any]any)
+	if !ok {
+		return nil, &BadPlaceholderConfigError{
+			name: name,
+			err:  errors.Errorf("bad placeholder config, expected: map[any]any, got: %T", conf),
+		}
+	}
+
+	phConf, err := ph.newConfig(phConfMap)
+	if err != nil {
+		return nil, &BadPlaceholderConfigError{
+			name: name,
+			err:  err,
+		}
+	}
+
+	return phConf, err
+}
+
+func Apply(url, data, placeholder string, config any) (*http.Request, error) {
 	ph, ok := Placeholders[placeholder]
 	if !ok {
 		return nil, &UnknownPlaceholderError{name: placeholder}
 	}
 
-	req, err := ph.CreateRequest(host, data)
+	req, err := ph.CreateRequest(url, data, config)
 	if err != nil {
 		return nil, err
 	}

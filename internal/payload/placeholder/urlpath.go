@@ -13,11 +13,15 @@ var DefaultURLPath = URLPath{name: "URLPath"}
 
 var _ Placeholder = (*URLPath)(nil)
 
+func (p URLPath) newConfig(_ map[any]any) (any, error) {
+	return nil, nil
+}
+
 func (p URLPath) GetName() string {
 	return p.name
 }
 
-func (p URLPath) CreateRequest(requestURL, payload string) (*http.Request, error) {
+func (p URLPath) CreateRequest(requestURL, payload string, _ any) (*http.Request, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err
