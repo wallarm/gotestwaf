@@ -165,6 +165,9 @@ func (waf *WAF) httpRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch placeholder {
+	case "RawRequest":
+		err = nil
+		placeholderValue = config.RawRequestConfigs[set].GetPayloadFunc(r)
 	case "UserAgent":
 		placeholderValue, err = getPayloadFromUAHeader(r)
 	case "Header":
