@@ -7,15 +7,15 @@ require 'find'
 max_paranoia_level = 2
 
 crs_testcases = {
-  'modsec_crs_rce' => 'REQUEST-932-APPLICATION-ATTACK-RCE',
-  'modsec_crs_php' => 'REQUEST-933-APPLICATION-ATTACK-PHP',
-  'modsec_crs_xss' => 'REQUEST-941-APPLICATION-ATTACK-XSS',
-  'modsec_crs_lfi' => 'REQUEST-930-APPLICATION-ATTACK-LFI',
-  'modsec_crs_rfi' => 'REQUEST-931-APPLICATION-ATTACK-RFI',
-  'modsec_crs_sqli' => 'REQUEST-942-APPLICATION-ATTACK-SQLI',
-  'modsec_crs_java' => 'REQUEST-944-APPLICATION-ATTACK-JAVA',
-  'modsec_crs_generic' => 'REQUEST-934-APPLICATION-ATTACK-GENERIC',
-  'modsec_crs_scanner_detection' => 'REQUEST-913-SCANNER-DETECTION'
+  'modsec-crs-rce' => 'REQUEST-932-APPLICATION-ATTACK-RCE',
+  'modsec-crs-php' => 'REQUEST-933-APPLICATION-ATTACK-PHP',
+  'modsec-crs-xss' => 'REQUEST-941-APPLICATION-ATTACK-XSS',
+  'modsec-crs-lfi' => 'REQUEST-930-APPLICATION-ATTACK-LFI',
+  'modsec-crs-rfi' => 'REQUEST-931-APPLICATION-ATTACK-RFI',
+  'modsec-crs-sqli' => 'REQUEST-942-APPLICATION-ATTACK-SQLI',
+  'modsec-crs-java' => 'REQUEST-944-APPLICATION-ATTACK-JAVA',
+  'modsec-crs-generic' => 'REQUEST-934-APPLICATION-ATTACK-GENERIC',
+  'modsec-crs-scanner_detection' => 'REQUEST-913-SCANNER-DETECTION'
 }
 
 def separate_negative_and_positive_tests(tests)
@@ -122,7 +122,7 @@ def convert_and_save_get_testcases(testcases, gtw_testcase_name, test_set)
     'test_titles' => result.map { |x| x['title'] }.uniq.join(', ')
   }
 
-  File.open("testcases/modsec_crs/#{gtw_testcase_name}.yml", 'w') { |file| file.write(output_data.to_yaml) }
+  File.open("testcases/modsec-crs/#{gtw_testcase_name}.yml", 'w') { |file| file.write(output_data.to_yaml) }
 end
 
 def convert_and_save_post_testcases(testcases, gtw_testcase_name, test_set)
@@ -139,11 +139,11 @@ def convert_and_save_post_testcases(testcases, gtw_testcase_name, test_set)
       'modsec_rule_name'=> test_set,
       'test_titles' => result.select { |x| x['placeholder'] == placeholder }.map { |x| x['title'] }.uniq.join(', ')
     }
-    File.open("testcases/modsec_crs/#{gtw_testcase_name}_#{placeholder}.yml", 'w') { |file| file.write(output_data.to_yaml) }
+    File.open("testcases/modsec-crs/#{gtw_testcase_name}_#{placeholder}.yml", 'w') { |file| file.write(output_data.to_yaml) }
   end
 end
 
-Dir.mkdir('testcases/modsec_crs') unless File.exist?('testcases/modsec_crs')
+Dir.mkdir('testcases/modsec-crs') unless File.exist?('testcases/modsec-crs')
 all_fp_testcases = []
 crs_testcases.each do |gtw_testcase_name, test_set|
   current_test_set_data = []

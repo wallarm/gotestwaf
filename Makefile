@@ -55,11 +55,12 @@ scan_local_from_docker:
 
 modsec_crs_regression_tests_convert:
 	rm -rf .tmp/coreruleset
-	rm -rf testcases/modsec_crs/
-	rm -f testcases/false-pos/fp_*
-	git clone https://github.com/coreruleset/coreruleset .tmp/coreruleset
+	rm -rf testcases/modsec-crs/
+	rm -rf testcases/modsec-crs-false-pos/
+	git clone https://github.com/coreruleset/coreruleset .tmp/coreruleset --depth 1
 	ruby misc/modsec_regression_testset_converter.rb
-	mv testcases/modsec_crs/fp_* testcases/false-pos
+	mkdir testcases/modsec-crs-false-pos
+	mv testcases/modsec-crs/fp_* testcases/modsec-crs-false-pos/
 	rm -rf .tmp
 
 test:
