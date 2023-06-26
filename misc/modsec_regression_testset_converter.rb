@@ -15,7 +15,7 @@ crs_testcases = {
   'modsec-crs-sqli' => 'REQUEST-942-APPLICATION-ATTACK-SQLI',
   'modsec-crs-java' => 'REQUEST-944-APPLICATION-ATTACK-JAVA',
   'modsec-crs-generic' => 'REQUEST-934-APPLICATION-ATTACK-GENERIC',
-  'modsec-crs-scanner_detection' => 'REQUEST-913-SCANNER-DETECTION'
+  'modsec-crs-scanner-detection' => 'REQUEST-913-SCANNER-DETECTION'
 }
 
 def separate_negative_and_positive_tests(tests)
