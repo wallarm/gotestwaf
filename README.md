@@ -14,6 +14,7 @@ IPS, API gateways, and others.
 * [Demos](#demos)
 * [Other options to run GoTestWAF](#other-options-to-run-gotestwaf)
 * [Configuration options](#configuration-options)
+* [Running with OWASP Core Rule Set regression testing suite](#running-with-owasp-core-rule-set-regression-testing-suite)
 ---
 
 ## How it works
@@ -439,3 +440,29 @@ Example:
 ```sh
 ./gotestwaf --url https://example.com/v1 --openapiFile api.yaml
 ```
+
+## Running with OWASP Core Rule Set regression testing suite
+
+GoTestWAF allows easy integration of additional test suites.
+
+In this example, we will demonstrate how to add tests from the OWASP Core Rule Set regression testing suite.
+
+Since the tests are written in a different format than the GoTestWAF format, a conversion is required. For this purpose, the script **misc/modsec_regression_testset_converter.rb** is provided.
+
+To convert the tests, run `make modsec_crs_regression_tests_convert`.
+Then, build a container with the updated set of tests.
+`make gotestwaf`
+
+Note that by default, tests are converted for only a subset of rules. The following categories have been chosen:
+
+- REQUEST-932-APPLICATION-ATTACK-RCE
+- REQUEST-933-APPLICATION-ATTACK-PHP
+- REQUEST-941-APPLICATION-ATTACK-XSS
+- REQUEST-930-APPLICATION-ATTACK-LFI
+- REQUEST-931-APPLICATION-ATTACK-RFI
+- REQUEST-942-APPLICATION-ATTACK-SQLI
+- REQUEST-944-APPLICATION-ATTACK-JAVA
+- REQUEST-934-APPLICATION-ATTACK-GENERIC
+- REQUEST-913-SCANNER-DETECTION
+
+If needed, modify the variable "crs_testcases" in misc/modsec_regression_testset_converter.rb to add or remove test categories.
