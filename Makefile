@@ -57,7 +57,7 @@ modsec_crs_regression_tests_convert:
 	rm -rf .tmp/coreruleset
 	rm -rf testcases/modsec-crs/
 	rm -rf testcases/modsec-crs-false-pos/
-	git clone https://github.com/coreruleset/coreruleset .tmp/coreruleset --depth 1
+	git clone --depth 1 https://github.com/coreruleset/coreruleset .tmp/coreruleset
 	ruby misc/modsec_regression_testset_converter.rb
 	mkdir testcases/modsec-crs-false-pos
 	mv testcases/modsec-crs/fp_* testcases/modsec-crs-false-pos/
