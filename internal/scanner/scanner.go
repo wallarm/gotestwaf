@@ -8,9 +8,12 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
+	"os"
+	"os/signal"
 	"regexp"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -296,8 +299,40 @@ func (s *Scanner) Run(ctx context.Context) error {
 		progressbarOptions...,
 	)
 
+	// progressbar doesn't support getting the current value of counter,
+	// only the percentage. Because of that we count the number of sent requests
+	// separately.
+	var requestsCounter uint64
+
+	userSignal := make(chan os.Signal, 1)
+	signal.Notify(userSignal, syscall.SIGUSR1)
+	defer func() {
+		signal.Stop(userSignal)
+		close(userSignal)
+	}()
+
+	go func() {
+		for {
+			select {
+			case _, ok := <-userSignal:
+				if !ok {
+					return
+				}
+
+				s.logger.
+					WithFields(logrus.Fields{
+						"sent":  atomic.LoadUint64(&requestsCounter),
+						"total": s.db.NumberOfTests,
+					}).Info("Testing status")
+
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
 	for e := 0; e < gn; e++ {
-		go func(ctx context.Context) {
+		go func() {
 			defer wg.Done()
 			for {
 				select {
@@ -311,13 +346,15 @@ func (s *Scanner) Run(ctx context.Context) error {
 						s.logger.WithError(err).Error("Got an error while scanning")
 					}
 
+					// count the number of sent request to show statistics on the SIGUSR1 signal
+					atomic.AddUint64(&requestsCounter, 1)
 					bar.Add(1)
 
 				case <-ctx.Done():
 					return
 				}
 			}
-		}(ctx)
+		}()
 	}
 
 	wg.Wait()
