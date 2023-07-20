@@ -53,6 +53,16 @@ scan_local_from_docker:
 	docker run --rm --init -v ${PWD}/reports:/app/reports --network="host" \
 		gotestwaf --url=http://127.0.0.1:8080/ --workers 200 --noEmailReport
 
+modsec_crs_regression_tests_convert:
+	rm -rf .tmp/coreruleset
+	rm -rf testcases/modsec-crs/
+	rm -rf testcases/modsec-crs-false-pos/
+	git clone --depth 1 https://github.com/coreruleset/coreruleset .tmp/coreruleset
+	ruby misc/modsec_regression_testset_converter.rb
+	mkdir testcases/modsec-crs-false-pos
+	mv testcases/modsec-crs/fp_* testcases/modsec-crs-false-pos/
+	rm -rf .tmp
+
 test:
 	go test -count=1 -v ./...
 
