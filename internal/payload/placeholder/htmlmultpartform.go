@@ -15,11 +15,15 @@ var DefaultHTMLMultipartForm = HTMLMultipartForm{name: "HTMLMultipartForm"}
 
 var _ Placeholder = (*HTMLMultipartForm)(nil)
 
+func (p HTMLMultipartForm) newConfig(_ map[any]any) (any, error) {
+	return nil, nil
+}
+
 func (p HTMLMultipartForm) GetName() string {
 	return p.name
 }
 
-func (p HTMLMultipartForm) CreateRequest(requestURL, payload string) (*http.Request, error) {
+func (p HTMLMultipartForm) CreateRequest(requestURL, payload string, _ any) (*http.Request, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err

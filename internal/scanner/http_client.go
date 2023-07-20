@@ -101,7 +101,11 @@ func NewHTTPClient(cfg *config.Config, dnsResolver *dnscache.Resolver) (*HTTPCli
 
 func (c *HTTPClient) SendPayload(
 	ctx context.Context,
-	targetURL, placeholderName, encoderName, payload string,
+	targetURL string,
+	payload string,
+	encoderName string,
+	placeholderName string,
+	placeholderConfig any,
 	testHeaderValue string,
 ) (
 	responseMsgHeader string,
@@ -114,7 +118,7 @@ func (c *HTTPClient) SendPayload(
 		return "", "", 0, errors.Wrap(err, "encoding payload")
 	}
 
-	req, err := placeholder.Apply(targetURL, placeholderName, encodedPayload)
+	req, err := placeholder.Apply(targetURL, encodedPayload, placeholderName, placeholderConfig)
 	if err != nil {
 		return "", "", 0, errors.Wrap(err, "apply placeholder")
 	}
@@ -129,7 +133,11 @@ func (c *HTTPClient) SendPayload(
 		if strings.EqualFold(header, placeholder.UAHeader) && isUAPlaceholder {
 			continue
 		}
-		req.Header.Set(header, value)
+
+		// Do not replace header values for RawRequest headers
+		if req.Header.Get(header) == "" {
+			req.Header.Set(header, value)
+		}
 	}
 	req.Host = c.hostHeader
 

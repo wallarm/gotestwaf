@@ -8,6 +8,8 @@ import (
 	"sync"
 
 	"github.com/pkg/errors"
+
+	"github.com/wallarm/gotestwaf/internal/payload/placeholder"
 )
 
 type DB struct {
@@ -37,6 +39,7 @@ func NewDB(tests []*Case) (*DB, error) {
 	var encodedCase bytes.Buffer
 
 	enc := gob.NewEncoder(&encodedCase)
+	gob.Register(placeholder.RawRequestConfig{})
 	sha256hash := sha256.New()
 
 	for _, test := range tests {

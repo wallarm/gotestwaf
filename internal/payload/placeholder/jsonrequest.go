@@ -17,11 +17,15 @@ var DefaultJSONRequest = JSONRequest{name: "JSONRequest"}
 
 var _ Placeholder = (*JSONRequest)(nil)
 
+func (p JSONRequest) newConfig(_ map[any]any) (any, error) {
+	return nil, nil
+}
+
 func (p JSONRequest) GetName() string {
 	return p.name
 }
 
-func (p JSONRequest) CreateRequest(requestURL, payload string) (*http.Request, error) {
+func (p JSONRequest) CreateRequest(requestURL, payload string, _ any) (*http.Request, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err

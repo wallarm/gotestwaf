@@ -73,6 +73,48 @@ Since the format of the YAML string is required for payloads, they must be [enco
     * NonCrudUrlParam
     * NonCRUDHeader
     * NonCRUDRequestBody
+    * RawRequest
+
+    The `RawRequest` placeholder will allow you to do an arbitrary HTTP request. The payload is substituted by replacing the string `{{payload}}` in the URL path, Headers or body. Fields of `RawRequest` placeholder:
+
+    * `method`
+    * `path`
+    * `headers`
+    * `body`
+
+    Required fields for `RawRequest` placeholder:
+    
+    * `method` field
+
+    Example:
+    
+    ```yaml
+    ---
+    payload:
+      - test
+    encoder:
+      - Plain
+    placeholder:
+      - RawRequest:
+          method: "POST"
+          path: "/"
+          headers:
+            Content-Type: "multipart/form-data; boundary=boundary"
+          body: |
+            --boundary
+            Content-disposition: form-data; name="field1"
+            
+            Test
+            --boundary
+            Content-disposition: form-data; name="field2"
+            Content-Type: text/plain; charset=utf-7
+            
+            Knock knock.
+            {{payload}}
+            --boundary--
+    type: "RawRequest test"
+    ...
+    ```
 
 * `type` is a name of entire group of the payloads in file. It can be arbitrary, but should reflect the type of attacks in the file.
 
