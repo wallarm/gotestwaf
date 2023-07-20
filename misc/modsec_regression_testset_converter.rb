@@ -101,9 +101,8 @@ def parse_post_requests(test_params, test_title)
   when /application\/xml/i
     return result.merge({ 'placeholder' => 'XMLBody' })
   when /multipart\/form-data/i
-    # not fully supported in GTW yet.
-    return nil
-    #return result.merge({ 'placeholder' => 'HTMLMultipartForm', 'payload' => test_params['data'].gsub(/^---.*\n/, '') })
+    payload = test_params['data'].gsub(/^---.*\n/, '').split("\n").last
+    return result.merge({ 'placeholder' => 'HTMLMultipartForm', 'payload' => payload }) if payload.length > 15    
   end
   nil
 end
