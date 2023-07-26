@@ -150,7 +150,7 @@ The steps below walk through downloading and starting GoTestWAF with minimal con
 2.  Start the GoTestWAF image:
 
     ```sh
-    docker run --rm --init --network="host" --rm -it -v ${PWD}/reports:/app/reports \
+    docker run --rm --network="host" --rm -it -v ${PWD}/reports:/app/reports \
         wallarm/gotestwaf --url=<EVALUATED_SECURITY_SOLUTION_URL>
     ```
 
@@ -159,7 +159,7 @@ The steps below walk through downloading and starting GoTestWAF with minimal con
     If you don't want to optionally email the report, just press Enter after the email request message appears, or you can use --noEmailReport to skip the message:
 
     ```sh
-    docker run --rm --init --network="host" --rm -v ${PWD}/reports:/app/reports \
+    docker run --rm --network="host" --rm -v ${PWD}/reports:/app/reports \
         wallarm/gotestwaf --url=<EVALUATED_SECURITY_SOLUTION_URL> --noEmailReport
     ```
 
@@ -168,7 +168,7 @@ The steps below walk through downloading and starting GoTestWAF with minimal con
     To perform the gRPC tests you must have a working endpoint and use the --grpcPort <port> cli option.
 
     ```sh
-    docker run --rm --init --network="host" --rm -it -v ${PWD}/reports:/app/reports \
+    docker run --rm --network="host" --rm -it -v ${PWD}/reports:/app/reports \
         wallarm/gotestwaf --grpcPort 9000 --url=http://my.grpc.endpoint
     ```
 
@@ -307,7 +307,7 @@ To run the demo environment:
 
     ```sh
     docker pull wallarm/gotestwaf
-    docker run --rm --init --network="host" --rm -v ${PWD}/reports:/app/reports \
+    docker run --rm --network="host" --rm -v ${PWD}/reports:/app/reports \
         wallarm/gotestwaf --url=http://127.0.0.1:8080 --noEmailReport
     ```
 
@@ -339,7 +339,7 @@ In addition to running the GoTestWAF Docker image downloaded from Docker Hub, yo
     git clone https://github.com/wallarm/gotestwaf.git
     cd gotestwaf
     DOCKER_BUILDKIT=1 docker build --force-rm -t gotestwaf .
-    docker run --rm --init --network="host" --rm -it -v ${PWD}/reports:/app/reports \
+    docker run --rm --network="host" --rm -it -v ${PWD}/reports:/app/reports \
         gotestwaf --url=<EVALUATED_SECURITY_SOLUTION_URL>
     ```
 
@@ -417,7 +417,7 @@ The listed options can be passed to GoTestWAF as follows:
     For example, to run GoTestWAF with WebSocket check, you can specify the WebSocket URL via the `wsURL` option:
 
     ```sh
-    docker run --rm --init --network="host" --rm -it -v ${PWD}/reports:/app/reports \
+    docker run --rm --network="host" --rm -it -v ${PWD}/reports:/app/reports \
         wallarm/gotestwaf --url=http://127.0.0.1:8080/ --wsURL=ws://127.0.0.1:8080/api/ws
     ```
 
