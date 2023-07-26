@@ -66,7 +66,8 @@ RUN <<EOF
 
     # create dir for application
     mkdir /app
-    chown gtw:gtw /app
+    mkdir /app/reports
+    chown -R gtw:gtw /app
 EOF
 
 # add fonts
