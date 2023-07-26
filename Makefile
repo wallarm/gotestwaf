@@ -24,25 +24,25 @@ modsec_stat: gotestwaf
 	docker run --rm -d -p 8080:80 -p 8443:443 -e PARANOIA=1 --name modsec_paranoia_1 -e BACKEND="http://172.17.0.1:8088" \
 		-v ${PWD}/resources/default.conf.template:/etc/nginx/templates/conf.d/default.conf.template \
 		owasp/modsecurity-crs:3.3.2-nginx
-	docker run --rm --init -v ${PWD}/reports:/app/reports --network="host" \
+	docker run --rm -v ${PWD}/reports:/app/reports --network="host" \
 		gotestwaf --url=http://127.0.0.1:8080/ --workers 100 --ignoreUnresolved --wafName "ModSecurity PARANOIA 1" --noEmailReport
 	docker kill modsec_paranoia_1
 	docker run --rm -d -p 8080:80 -p 8443:443 -e PARANOIA=2 --name modsec_paranoia_2 -e BACKEND="http://172.17.0.1:8088" \
 		-v ${PWD}/resources/default.conf.template:/etc/nginx/templates/conf.d/default.conf.template \
 		owasp/modsecurity-crs:3.3.2-nginx
-	docker run --rm --init -v ${PWD}/reports:/app/reports --network="host" \
+	docker run --rm -v ${PWD}/reports:/app/reports --network="host" \
 		gotestwaf --url=http://127.0.0.1:8080/ --workers 100 --ignoreUnresolved --wafName "ModSecurity PARANOIA 2" --noEmailReport
 	docker kill modsec_paranoia_2
 	docker run --rm -d -p 8080:80 -p 8443:443 -e PARANOIA=3 --name modsec_paranoia_3 -e BACKEND="http://172.17.0.1:8088" \
 		-v ${PWD}/resources/default.conf.template:/etc/nginx/templates/conf.d/default.conf.template \
 		owasp/modsecurity-crs:3.3.2-nginx
-	docker run --rm --init -v ${PWD}/reports:/app/reports --network="host" \
+	docker run --rm -v ${PWD}/reports:/app/reports --network="host" \
 		gotestwaf --url=http://127.0.0.1:8080/ --workers 100 --ignoreUnresolved --wafName "ModSecurity PARANOIA 3" --noEmailReport
 	docker kill modsec_paranoia_3
 	docker run --rm -d -p 8080:80 -p 8443:443 -e PARANOIA=4 --name modsec_paranoia_4 -e BACKEND="http://172.17.0.1:8088" \
 		-v ${PWD}/resources/default.conf.template:/etc/nginx/templates/conf.d/default.conf.template \
 		owasp/modsecurity-crs:3.3.2-nginx
-	docker run --rm --init -v ${PWD}/reports:/app/reports --network="host" \
+	docker run --rm -v ${PWD}/reports:/app/reports --network="host" \
 		gotestwaf --url=http://127.0.0.1:8080/ --workers 100 --ignoreUnresolved --wafName "ModSecurity PARANOIA 4" --noEmailReport
 	docker kill modsec_paranoia_4
 
@@ -50,7 +50,7 @@ scan_local:
 	go run ./cmd --url=http://127.0.0.1:8080/ --workers 200 --noEmailReport
 
 scan_local_from_docker:
-	docker run --rm --init -v ${PWD}/reports:/app/reports --network="host" \
+	docker run --rm -v ${PWD}/reports:/app/reports --network="host" \
 		gotestwaf --url=http://127.0.0.1:8080/ --workers 200 --noEmailReport
 
 modsec_crs_regression_tests_convert:
