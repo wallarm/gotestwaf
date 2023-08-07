@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/wallarm/gotestwaf/internal/db"
+	"github.com/wallarm/gotestwaf/internal/helpers"
 	"github.com/wallarm/gotestwaf/internal/version"
 	"github.com/wallarm/gotestwaf/pkg/report"
 )
@@ -508,7 +509,7 @@ func printFullReportToHtml(
 		return errors.Wrap(err, "couldn't export report to HTML")
 	}
 
-	err = os.Rename(tempFileName, reportFile)
+	err = helpers.Move(tempFileName, reportFile)
 	if err != nil {
 		return errors.Wrap(err, "couldn't export report to HTML")
 	}
