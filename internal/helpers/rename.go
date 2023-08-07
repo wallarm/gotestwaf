@@ -5,12 +5,18 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // Move moves a file from a source path to a destination path.
 // This must be used across the codebase for compatibility with Docker volumes
 // and Golang (fixes Invalid cross-device link when using [os.Rename])
 func Move(sourcePath, destPath string) error {
+	err := os.Rename(sourcePath, destPath)
+	if err != nil && !strings.Contains(err.Error(), "cross-device") {
+		return err
+	}
+
 	sourceAbs, err := filepath.Abs(sourcePath)
 	if err != nil {
 		return err
