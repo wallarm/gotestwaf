@@ -509,7 +509,7 @@ func printFullReportToHtml(
 		return errors.Wrap(err, "couldn't export report to HTML")
 	}
 
-	err = helpers.Move(tempFileName, reportFile)
+	err = helpers.FileMove(tempFileName, reportFile)
 	if err != nil {
 		return errors.Wrap(err, "couldn't export report to HTML")
 	}

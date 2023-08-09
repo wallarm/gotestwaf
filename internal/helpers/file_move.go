@@ -4,46 +4,30 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
-	"strings"
 )
 
-// Move moves a file from a source path to a destination path.
+// FileMove moves a file from a source path to a destination path.
 // This must be used across the codebase for compatibility with Docker volumes
 // and Golang (fixes Invalid cross-device link when using [os.Rename])
-func Move(sourcePath, destPath string) error {
-	err := os.Rename(sourcePath, destPath)
-	if err != nil && !strings.Contains(err.Error(), "cross-device") {
-		return err
-	}
-
-	sourceAbs, err := filepath.Abs(sourcePath)
+func FileMove(sourcePath, destPath string) error {
+	// check the source file is exist
+	sourceFileStat, err := os.Stat(sourcePath)
 	if err != nil {
 		return err
 	}
 
-	destAbs, err := filepath.Abs(destPath)
-	if err != nil {
-		return err
-	}
-
-	if sourceAbs == destAbs {
-		return nil
+	// check the destination file
+	destFileStat, err := os.Stat(destPath)
+	if err == nil {
+		// return error if the destination file is the same file as source one
+		if sourcePath == destPath || os.SameFile(sourceFileStat, destFileStat) {
+			return fmt.Errorf("files %s and %s are the same", sourcePath, destPath)
+		}
 	}
 
 	inputFile, err := os.Open(sourcePath)
 	if err != nil {
 		return err
-	}
-
-	destDir := filepath.Dir(destPath)
-	_, err = os.Stat(destDir)
-	if os.IsNotExist(err) {
-		err = os.MkdirAll(destDir, 0755)
-		if err != nil {
-			inputFile.Close()
-			return err
-		}
 	}
 
 	outputFile, err := os.Create(destPath)
