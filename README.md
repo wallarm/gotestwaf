@@ -14,6 +14,7 @@ IPS, API gateways, and others.
 * [Demos](#demos)
 * [Other options to run GoTestWAF](#other-options-to-run-gotestwaf)
 * [Configuration options](#configuration-options)
+* [Running with OWASP Core Rule Set regression testing suite](#running-with-owasp-core-rule-set-regression-testing-suite)
 ---
 
 ## How it works
@@ -73,6 +74,48 @@ Since the format of the YAML string is required for payloads, they must be [enco
     * NonCrudUrlParam
     * NonCRUDHeader
     * NonCRUDRequestBody
+    * RawRequest
+
+    The `RawRequest` placeholder will allow you to do an arbitrary HTTP request. The payload is substituted by replacing the string `{{payload}}` in the URL path, Headers or body. Fields of `RawRequest` placeholder:
+
+    * `method`
+    * `path`
+    * `headers`
+    * `body`
+
+    Required fields for `RawRequest` placeholder:
+    
+    * `method` field
+
+    Example:
+    
+    ```yaml
+    ---
+    payload:
+      - test
+    encoder:
+      - Plain
+    placeholder:
+      - RawRequest:
+          method: "POST"
+          path: "/"
+          headers:
+            Content-Type: "multipart/form-data; boundary=boundary"
+          body: |
+            --boundary
+            Content-disposition: form-data; name="field1"
+            
+            Test
+            --boundary
+            Content-disposition: form-data; name="field2"
+            Content-Type: text/plain; charset=utf-7
+            
+            Knock knock.
+            {{payload}}
+            --boundary--
+    type: "RawRequest test"
+    ...
+    ```
 
 * `type` is a name of entire group of the payloads in file. It can be arbitrary, but should reflect the type of attacks in the file.
 
@@ -107,7 +150,7 @@ The steps below walk through downloading and starting GoTestWAF with minimal con
 2.  Start the GoTestWAF image:
 
     ```sh
-    docker run --rm --init --network="host" --rm -it -v ${PWD}/reports:/app/reports \
+    docker run --rm --network="host" -it -v ${PWD}/reports:/app/reports \
         wallarm/gotestwaf --url=<EVALUATED_SECURITY_SOLUTION_URL>
     ```
 
@@ -116,7 +159,7 @@ The steps below walk through downloading and starting GoTestWAF with minimal con
     If you don't want to optionally email the report, just press Enter after the email request message appears, or you can use --noEmailReport to skip the message:
 
     ```sh
-    docker run --rm --init --network="host" --rm -v ${PWD}/reports:/app/reports \
+    docker run --rm --network="host" -v ${PWD}/reports:/app/reports \
         wallarm/gotestwaf --url=<EVALUATED_SECURITY_SOLUTION_URL> --noEmailReport
     ```
 
@@ -125,7 +168,7 @@ The steps below walk through downloading and starting GoTestWAF with minimal con
     To perform the gRPC tests you must have a working endpoint and use the --grpcPort <port> cli option.
 
     ```sh
-    docker run --rm --init --network="host" --rm -it -v ${PWD}/reports:/app/reports \
+    docker run --rm --network="host" -it -v ${PWD}/reports:/app/reports \
         wallarm/gotestwaf --grpcPort 9000 --url=http://my.grpc.endpoint
     ```
 
@@ -264,7 +307,7 @@ To run the demo environment:
 
     ```sh
     docker pull wallarm/gotestwaf
-    docker run --rm --init --network="host" --rm -v ${PWD}/reports:/app/reports \
+    docker run --rm --network="host" -v ${PWD}/reports:/app/reports \
         wallarm/gotestwaf --url=http://127.0.0.1:8080 --noEmailReport
     ```
 
@@ -296,7 +339,7 @@ In addition to running the GoTestWAF Docker image downloaded from Docker Hub, yo
     git clone https://github.com/wallarm/gotestwaf.git
     cd gotestwaf
     DOCKER_BUILDKIT=1 docker build --force-rm -t gotestwaf .
-    docker run --rm --init --network="host" --rm -it -v ${PWD}/reports:/app/reports \
+    docker run --rm --network="host" -it -v ${PWD}/reports:/app/reports \
         gotestwaf --url=<EVALUATED_SECURITY_SOLUTION_URL>
     ```
 
@@ -375,7 +418,7 @@ The listed options can be passed to GoTestWAF as follows:
     For example, to run GoTestWAF with WebSocket check, you can specify the WebSocket URL via the `wsURL` option:
 
     ```sh
-    docker run --rm --init --network="host" --rm -it -v ${PWD}/reports:/app/reports \
+    docker run --rm --network="host" -it -v ${PWD}/reports:/app/reports \
         wallarm/gotestwaf --url=http://127.0.0.1:8080/ --wsURL=ws://127.0.0.1:8080/api/ws
     ```
 
@@ -440,3 +483,29 @@ Example:
 ```sh
 ./gotestwaf --url https://example.com/v1 --openapiFile api.yaml
 ```
+
+## Running with OWASP Core Rule Set regression testing suite
+
+GoTestWAF allows easy integration of additional test suites.
+
+In this example, we will demonstrate how to add tests from the OWASP Core Rule Set regression testing suite.
+
+Since the tests are written in a different format than the GoTestWAF format, a conversion is required. For this purpose, the script **misc/modsec_regression_testset_converter.rb** is provided.
+
+To convert the tests, run `make modsec_crs_regression_tests_convert`.
+Then, build a container with the updated set of tests.
+`make gotestwaf`
+
+Note that by default, tests are converted for only a subset of rules. The following categories have been chosen:
+
+- REQUEST-932-APPLICATION-ATTACK-RCE
+- REQUEST-933-APPLICATION-ATTACK-PHP
+- REQUEST-941-APPLICATION-ATTACK-XSS
+- REQUEST-930-APPLICATION-ATTACK-LFI
+- REQUEST-931-APPLICATION-ATTACK-RFI
+- REQUEST-942-APPLICATION-ATTACK-SQLI
+- REQUEST-944-APPLICATION-ATTACK-JAVA
+- REQUEST-934-APPLICATION-ATTACK-GENERIC
+- REQUEST-913-SCANNER-DETECTION
+
+If needed, modify the variable "crs_testcases" in misc/modsec_regression_testset_converter.rb to add or remove test categories.

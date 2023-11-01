@@ -9,6 +9,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/wallarm/gotestwaf/internal/config"
+	"github.com/wallarm/gotestwaf/internal/payload/placeholder"
 )
 
 func LoadTestCases(cfg *config.Config) (testCases []*Case, err error) {
@@ -51,22 +52,50 @@ func LoadTestCases(cfg *config.Config) (testCases []*Case, err error) {
 			return nil, err
 		}
 
-		var t Case
+		var t yamlConfig
 		err = yaml.Unmarshal(yamlFile, &t)
 		if err != nil {
 			return nil, err
 		}
 
-		t.Name = testCaseName
-		t.Set = testSetName
+		var placeholders []*Placeholder
+		for _, ph := range t.Placeholders {
+			switch typedPh := ph.(type) {
+			case string:
+				placeholders = append(placeholders, &Placeholder{Name: typedPh})
 
-		if strings.Contains(testSetName, "false") {
-			t.IsTruePositive = false // test case is false positive
-		} else {
-			t.IsTruePositive = true // test case is true positive
+			case map[any]any:
+				placeholderName := mapToString(typedPh)
+				placeholderConfig, confErr := placeholder.GetPlaceholderConfig(placeholderName, typedPh[placeholderName])
+				if confErr != nil {
+					return nil, errors.Wrap(confErr, "couldn't parse config")
+				}
+
+				placeholders = append(placeholders, &Placeholder{
+					Name:   placeholderName,
+					Config: placeholderConfig,
+				})
+
+			default:
+				return nil, errors.Errorf("couldn't parse config: unknown placeholder type, expected array of string or map[string]any, got %T", ph)
+			}
 		}
 
-		testCases = append(testCases, &t)
+		testCase := &Case{
+			Payloads:       t.Payloads,
+			Encoders:       t.Encoders,
+			Placeholders:   placeholders,
+			Type:           t.Type,
+			Set:            testSetName,
+			Name:           testCaseName,
+			IsTruePositive: true, // test case is true positive
+		}
+
+		if strings.Contains(testSetName, "false") {
+			testCase.IsTruePositive = false // test case is false positive
+		}
+
+		testCases = append(testCases, testCase)
 	}
 
 	if testCases == nil {

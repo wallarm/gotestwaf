@@ -9,6 +9,7 @@ payload:
 encoder:
   - Plain
 placeholder:
-  - GraphQlPOST
+  - GraphQL:
+      method: "POST"
 type: "GraphQL"
 ...

@@ -166,6 +166,9 @@ func (waf *WAF) httpRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch placeholder {
+	case "RawRequest":
+		err = nil
+		placeholderValue = config.RawRequestConfigs[set].GetPayloadFunc(r)
 	case "UserAgent":
 		placeholderValue, err = getPayloadFromUAHeader(r)
 	case "Header":
@@ -196,10 +199,9 @@ func (waf *WAF) httpRequestHandler(w http.ResponseWriter, r *http.Request) {
 		placeholderValue, err = getPayloadFromHeader(r)
 	case "NonCRUDRequestBody":
 		placeholderValue, err = getPayloadFromRequestBody(r)
-	case "GraphQlGET":
-		placeholderValue, err = getPayloadFromURLParam(r)
-	case "GraphQlPOST":
-		placeholderValue, err = getPayloadFromRequestBody(r)
+	case "GraphQL":
+		err = nil
+		placeholderValue = config.GraphQLConfigs[set].GetPayloadFunc(r)
 	default:
 		waf.errChan <- fmt.Errorf("unknown placeholder: %s", placeholder)
 	}

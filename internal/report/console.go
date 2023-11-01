@@ -308,7 +308,7 @@ func printConsoleReportJson(
 		}
 	}
 
-	jsonBytes, err := json.MarshalIndent(report, "", "    ")
+	jsonBytes, err := json.Marshal(report)
 	if err != nil {
 		return errors.Wrap(err, "couldn't export report to JSON")
 	}

@@ -34,11 +34,15 @@ var _ Placeholder = (*NonCrudUrlParam)(nil)
 var _ Placeholder = (*NonCRUDHeader)(nil)
 var _ Placeholder = (*NonCRUDRequestBody)(nil)
 
+func (p NonCrudUrlPath) newConfig(_ map[any]any) (any, error) {
+	return nil, nil
+}
+
 func (p NonCrudUrlPath) GetName() string {
 	return p.name
 }
 
-func (p NonCrudUrlPath) CreateRequest(requestURL, payload string) (*http.Request, error) {
+func (p NonCrudUrlPath) CreateRequest(requestURL, payload string, _ any) (*http.Request, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err
@@ -61,11 +65,15 @@ func (p NonCrudUrlPath) CreateRequest(requestURL, payload string) (*http.Request
 	return req, nil
 }
 
+func (p NonCrudUrlParam) newConfig(_ map[any]any) (any, error) {
+	return nil, nil
+}
+
 func (p NonCrudUrlParam) GetName() string {
 	return p.name
 }
 
-func (p NonCrudUrlParam) CreateRequest(requestURL, payload string) (*http.Request, error) {
+func (p NonCrudUrlParam) CreateRequest(requestURL, payload string, _ any) (*http.Request, error) {
 	param, err := RandomHex(Seed)
 	if err != nil {
 		return nil, err
@@ -101,11 +109,15 @@ func (p NonCrudUrlParam) CreateRequest(requestURL, payload string) (*http.Reques
 	return req, err
 }
 
+func (p NonCRUDHeader) newConfig(_ map[any]any) (any, error) {
+	return nil, nil
+}
+
 func (p NonCRUDHeader) GetName() string {
 	return p.name
 }
 
-func (p NonCRUDHeader) CreateRequest(requestURL, payload string) (*http.Request, error) {
+func (p NonCRUDHeader) CreateRequest(requestURL, payload string, _ any) (*http.Request, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err
@@ -125,11 +137,15 @@ func (p NonCRUDHeader) CreateRequest(requestURL, payload string) (*http.Request,
 	return req, nil
 }
 
+func (p NonCRUDRequestBody) newConfig(_ map[any]any) (any, error) {
+	return nil, nil
+}
+
 func (p NonCRUDRequestBody) GetName() string {
 	return p.name
 }
 
-func (p NonCRUDRequestBody) CreateRequest(requestURL, payload string) (*http.Request, error) {
+func (p NonCRUDRequestBody) CreateRequest(requestURL, payload string, _ any) (*http.Request, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err

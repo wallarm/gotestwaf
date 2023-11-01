@@ -35,7 +35,7 @@ type HTTPClient struct {
 	followCookies bool
 	renewSession  bool
 
-	isGraphQlAvailable bool
+	isGraphQLAvailable bool
 }
 
 func NewHTTPClient(cfg *config.Config, dnsResolver *dnscache.Resolver) (*HTTPClient, error) {
@@ -98,13 +98,17 @@ func NewHTTPClient(cfg *config.Config, dnsResolver *dnscache.Resolver) (*HTTPCli
 		hostHeader:         configuredHeaders["Host"],
 		followCookies:      cfg.FollowCookies,
 		renewSession:       cfg.RenewSession,
-		isGraphQlAvailable: true,
+		isGraphQLAvailable: true,
 	}, nil
 }
 
 func (c *HTTPClient) SendPayload(
 	ctx context.Context,
-	targetURL, placeholderName, encoderName, payload string,
+	targetURL string,
+	payload string,
+	encoderName string,
+	placeholderName string,
+	placeholderConfig any,
 	debugHeaderValue string,
 ) (
 	responseMsgHeader string,
@@ -117,7 +121,7 @@ func (c *HTTPClient) SendPayload(
 		return "", "", 0, errors.Wrap(err, "encoding payload")
 	}
 
-	req, err := placeholder.Apply(targetURL, placeholderName, encodedPayload)
+	req, err := placeholder.Apply(targetURL, encodedPayload, placeholderName, placeholderConfig)
 	if err != nil {
 		return "", "", 0, errors.Wrap(err, "apply placeholder")
 	}
@@ -132,7 +136,11 @@ func (c *HTTPClient) SendPayload(
 		if strings.EqualFold(header, placeholder.UAHeader) && isUAPlaceholder {
 			continue
 		}
-		req.Header.Set(header, value)
+
+		// Do not replace header values for RawRequest headers
+		if req.Header.Get(header) == "" {
+			req.Header.Set(header, value)
+		}
 	}
 	req.Host = c.hostHeader
 
@@ -280,8 +288,8 @@ func (c *HTTPClient) getCookies(ctx context.Context, targetURL string) ([]*http.
 	return nil, returnErr
 }
 
-func (c *HTTPClient) IsGraphQlAvailable() bool {
-	return c.isGraphQlAvailable
+func (c *HTTPClient) IsGraphQLAvailable() bool {
+	return c.isGraphQLAvailable
 }
 
 func GetTargetURL(reqURL *url.URL) string {

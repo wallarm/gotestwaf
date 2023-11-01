@@ -97,7 +97,7 @@ func GetConfig() *config.Config {
 		URL:                fmt.Sprintf("http://localhost:%d", HTTPPort),
 		GRPCPort:           uint16(GRPCPort),
 		WebSocketURL:       fmt.Sprintf("ws://localhost:%d", HTTPPort),
-		GraphQlURL:         fmt.Sprintf("http://localhost:%d/graphql", HTTPPort),
+		GraphQLURL:         fmt.Sprintf("http://localhost:%d/graphql", HTTPPort),
 		HTTPHeaders:        nil,
 		TLSVerify:          false,
 		Proxy:              "",
@@ -137,7 +137,15 @@ func GenerateTestCases() (testCases []*db.Case, testCasesMap *TestCasesMap) {
 		encoders = append(encoders, encoderName)
 	}
 
-	for placeholderName, _ := range placeholder.Placeholders {
+	for placeholderName := range placeholder.Placeholders {
+		if placeholderName == placeholder.DefaultRawRequest.GetName() {
+			continue
+		}
+
+		if placeholderName == placeholder.DefaultGraphQL.GetName() {
+			continue
+		}
+
 		placeholders = append(placeholders, placeholderName)
 	}
 
@@ -148,36 +156,55 @@ func GenerateTestCases() (testCases []*db.Case, testCasesMap *TestCasesMap) {
 
 	hash := sha256.New()
 
+	f := func(testSet string, payloads []string, encoder string, placeholderName string, placeholderConf any) {
+		name := fmt.Sprintf("%s-%s", placeholderName, encoder)
+		testCases = append(testCases, &db.Case{
+			Payloads: payloads,
+			Encoders: []string{encoder},
+			Placeholders: []*db.Placeholder{{
+				Name:   placeholderName,
+				Config: placeholderConf,
+			}},
+			Set:            testSet,
+			Name:           name,
+			IsTruePositive: true,
+		})
+
+		for _, payload := range payloads {
+			hash.Reset()
+
+			hash.Write([]byte(testSet))
+			hash.Write([]byte(name))
+			hash.Write([]byte(placeholderName))
+			hash.Write([]byte(encoder))
+			hash.Write([]byte(payload))
+
+			debugHeader = hex.EncodeToString(hash.Sum(nil))
+
+			testCasesMap.m[debugHeader] = fmt.Sprintf(
+				"set=%s,name=%s,placeholder=%s,encoder=%s",
+				testSet, name, placeholderName, encoder,
+			)
+		}
+	}
+
 	for _, testSet := range testSets {
 		for _, placeholder := range placeholders {
 			for _, encoder := range encoders {
-				name := fmt.Sprintf("%s-%s", placeholder, encoder)
-				testCases = append(testCases, &db.Case{
-					Payloads:       payloads,
-					Encoders:       []string{encoder},
-					Placeholders:   []string{placeholder},
-					Set:            testSet,
-					Name:           name,
-					IsTruePositive: true,
-				})
-
-				for _, payload := range payloads {
-					hash.Reset()
-
-					hash.Write([]byte(testSet))
-					hash.Write([]byte(name))
-					hash.Write([]byte(placeholder))
-					hash.Write([]byte(encoder))
-					hash.Write([]byte(payload))
-
-					debugHeader = hex.EncodeToString(hash.Sum(nil))
-
-					testCasesMap.m[debugHeader] = fmt.Sprintf(
-						"set=%s,name=%s,placeholder=%s,encoder=%s",
-						testSet, name, placeholder, encoder,
-					)
-				}
+				f(testSet, payloads, encoder, placeholder, nil)
 			}
+		}
+	}
+
+	for testSet, settings := range RawRequestConfigs {
+		for _, encoder := range encoders {
+			f(testSet, payloads, encoder, placeholder.DefaultRawRequest.GetName(), settings.Config)
+		}
+	}
+
+	for testSet, settings := range GraphQLConfigs {
+		for _, encoder := range encoders {
+			f(testSet, payloads, encoder, placeholder.DefaultGraphQL.GetName(), settings.Config)
 		}
 	}
 

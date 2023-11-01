@@ -8,6 +8,8 @@ import (
 	"sync"
 
 	"github.com/pkg/errors"
+
+	"github.com/wallarm/gotestwaf/internal/payload/placeholder"
 )
 
 type DB struct {
@@ -26,7 +28,7 @@ type DB struct {
 	Hash          string
 
 	IsGrpcAvailable    bool
-	IsGraphQlAvailable bool
+	IsGraphQLAvailable bool
 }
 
 func NewDB(tests []*Case) (*DB, error) {
@@ -38,6 +40,8 @@ func NewDB(tests []*Case) (*DB, error) {
 	var encodedCase bytes.Buffer
 
 	enc := gob.NewEncoder(&encodedCase)
+	gob.Register(placeholder.RawRequestConfig{})
+	gob.Register(placeholder.GraphQLConfig{})
 	sha256hash := sha256.New()
 
 	for _, test := range tests {

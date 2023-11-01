@@ -67,6 +67,14 @@ func renderToPDF(ctx context.Context, fileToRender string, pathToResultPDF strin
 	)
 
 	err = cmd.Run()
+	if err != nil {
+		return errors.Wrap(err, "couldn't render HTML file to PDF")
+	}
 
-	return err
+	_, err = os.Stat(pathToResultPDF)
+	if errors.Is(err, os.ErrNotExist) {
+		return errors.Wrap(err, "couldn't save PDF file")
+	}
+
+	return nil
 }

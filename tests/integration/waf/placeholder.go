@@ -14,7 +14,7 @@ var (
 	headerRegexp   = regexp.MustCompile(fmt.Sprintf("X-[a-fA-F0-9]{%d}", ph.Seed*2))
 	soapBodyRegexp = regexp.MustCompile(fmt.Sprintf("<ab[a-fA-F0-9]{%d}>.*</ab[a-fA-F0-9]{%[1]d}>", ph.Seed*2))
 	jsonBodyRegexp = regexp.MustCompile(fmt.Sprintf("\"[a-fA-F0-9]{%d}\": \".*\"", ph.Seed*2))
-	urlParamRegexp = regexp.MustCompile(fmt.Sprintf("(query|[a-fA-F0-9]{%d})", ph.Seed*2))
+	urlParamRegexp = regexp.MustCompile(fmt.Sprintf("[a-fA-F0-9]{%d}", ph.Seed*2))
 )
 
 func getPayloadFromUAHeader(r *http.Request) (string, error) {
@@ -36,6 +36,7 @@ func getPayloadFromHeader(r *http.Request) (string, error) {
 }
 
 func getPayloadFromHTMLForm(r *http.Request) (string, error) {
+	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		return "", fmt.Errorf("couldn't get payload from form body: %v", err)
@@ -67,6 +68,7 @@ func getPayloadFromHTMLMultipartForm(r *http.Request) (string, error) {
 }
 
 func getPayloadFromJSONBody(r *http.Request) (string, error) {
+	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		return "", fmt.Errorf("couldn't get payload from JSON body: %v", err)
@@ -75,6 +77,7 @@ func getPayloadFromJSONBody(r *http.Request) (string, error) {
 }
 
 func getPayloadFromJSONRequest(r *http.Request) (string, error) {
+	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		return "", fmt.Errorf("couldn't read request body: %v", err)
@@ -89,6 +92,7 @@ func getPayloadFromJSONRequest(r *http.Request) (string, error) {
 }
 
 func getPayloadFromRequestBody(r *http.Request) (string, error) {
+	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		return "", fmt.Errorf("couldn't get payload from request body: %v", err)
@@ -97,6 +101,7 @@ func getPayloadFromRequestBody(r *http.Request) (string, error) {
 }
 
 func getPayloadFromSOAPBody(r *http.Request) (string, error) {
+	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		return "", fmt.Errorf("couldn't read request body: %v", err)
@@ -120,16 +125,21 @@ func getPayloadFromURLParam(r *http.Request) (string, error) {
 	return "", errors.New("couldn't get payload from URL parameters: required parameter not found")
 }
 
-func getPayloadFromURLPath(r *http.Request) (string, error) {
-	payload := r.URL.Path[1:]
-	if recoveryMessage := recover(); recoveryMessage != nil {
-		return "", fmt.Errorf("couldn't get payload from URL path: %s", recoveryMessage)
-	}
+func getPayloadFromURLPath(r *http.Request) (payload string, err error) {
+	defer func() {
+		if recoveryMessage := recover(); recoveryMessage != nil {
+			payload = ""
+			err = fmt.Errorf("couldn't get payload from URL path: %s", recoveryMessage)
+		}
+	}()
+
+	payload = r.URL.Path[1:]
 
 	return payload, nil
 }
 
 func getPayloadFromXMLBody(r *http.Request) (string, error) {
+	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		return "", fmt.Errorf("couldn't get payload from XML body: %v", err)

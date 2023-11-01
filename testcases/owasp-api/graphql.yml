@@ -5,6 +5,7 @@ payload:
 encoder:
   - Plain
 placeholder:
-  - GraphQlGET
+  - GraphQL:
+      method: "GET"
 type: "GraphQL"
 ...

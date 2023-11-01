@@ -8,9 +8,12 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
+	"os"
+	"os/signal"
 	"regexp"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -40,7 +43,7 @@ type testWork struct {
 	caseName         string
 	payload          string
 	encoder          string
-	placeholder      string
+	placeholder      *db.Placeholder
 	testType         string
 	isTruePositive   bool
 	debugHeaderValue string
@@ -120,11 +123,11 @@ func (s *Scanner) CheckGRPCAvailability(ctx context.Context) {
 	s.db.IsGrpcAvailable = available
 }
 
-// CheckGraphQlAvailability checks if the GraphQL is available at the given URL.
-func (s *Scanner) CheckGraphQlAvailability(ctx context.Context) {
+// CheckGraphQLAvailability checks if the GraphQL is available at the given URL.
+func (s *Scanner) CheckGraphQLAvailability(ctx context.Context) {
 	s.logger.WithField("status", "started").Info("GraphQL pre-check")
 
-	available, err := s.checkGraphQlAvailability(ctx)
+	available, err := s.checkGraphQLAvailability(ctx)
 	if err != nil {
 		s.logger.WithFields(logrus.Fields{
 			"status":     "done",
@@ -142,7 +145,7 @@ func (s *Scanner) CheckGraphQlAvailability(ctx context.Context) {
 		"connection": connection,
 	}).Info("GraphQL pre-check")
 
-	s.db.IsGraphQlAvailable = available
+	s.db.IsGraphQLAvailable = available
 }
 
 // WAFBlockCheck checks if WAF exists and blocks malicious requests.
@@ -187,7 +190,7 @@ func (s *Scanner) WAFBlockCheck(ctx context.Context) error {
 
 // preCheck sends given payload during the pre-check stage.
 func (s *Scanner) preCheck(ctx context.Context, payload string) (blocked bool, statusCode int, err error) {
-	respMsgHeader, respBody, code, err := s.httpClient.SendPayload(ctx, s.cfg.URL, "URLParam", "URL", payload, "")
+	respMsgHeader, respBody, code, err := s.httpClient.SendPayload(ctx, s.cfg.URL, payload, "URL", "URLParam", nil, "")
 	if err != nil {
 		return false, 0, err
 	}
@@ -320,8 +323,40 @@ func (s *Scanner) Run(ctx context.Context) error {
 		progressbarOptions...,
 	)
 
+	// progressbar doesn't support getting the current value of counter,
+	// only the percentage. Because of that we count the number of sent requests
+	// separately.
+	var requestsCounter uint64
+
+	userSignal := make(chan os.Signal, 1)
+	signal.Notify(userSignal, syscall.SIGUSR1)
+	defer func() {
+		signal.Stop(userSignal)
+		close(userSignal)
+	}()
+
+	go func() {
+		for {
+			select {
+			case _, ok := <-userSignal:
+				if !ok {
+					return
+				}
+
+				s.logger.
+					WithFields(logrus.Fields{
+						"sent":  atomic.LoadUint64(&requestsCounter),
+						"total": s.db.NumberOfTests,
+					}).Info("Testing status")
+
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
 	for e := 0; e < gn; e++ {
-		go func(ctx context.Context) {
+		go func() {
 			defer wg.Done()
 			for {
 				select {
@@ -335,13 +370,15 @@ func (s *Scanner) Run(ctx context.Context) error {
 						s.logger.WithError(err).Error("Got an error while scanning")
 					}
 
+					// count the number of sent request to show statistics on the SIGUSR1 signal
+					atomic.AddUint64(&requestsCounter, 1)
 					bar.Add(1)
 
 				case <-ctx.Done():
 					return
 				}
 			}
-		}(ctx)
+		}()
 	}
 
 	wg.Wait()
@@ -424,7 +461,7 @@ func (s *Scanner) produceTests(ctx context.Context, n int) <-chan *testWork {
 
 							hash.Write([]byte(testCase.Set))
 							hash.Write([]byte(testCase.Name))
-							hash.Write([]byte(placeholder))
+							hash.Write([]byte(placeholder.Name))
 							hash.Write([]byte(encoder))
 							hash.Write([]byte(payload))
 
@@ -469,7 +506,7 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 		err           error
 	)
 
-	switch w.placeholder {
+	switch w.placeholder.Name {
 	case placeholder.DefaultGRPC.GetName():
 		if !s.grpcConn.IsAvailable() {
 			return nil
@@ -487,14 +524,12 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 
 		return err
 
-	case placeholder.DefaultGraphQlGET.GetName(),
-		placeholder.DefaultGraphQlPOST.GetName():
-
-		if !s.httpClient.IsGraphQlAvailable() {
+	case placeholder.DefaultGraphQL.GetName():
+		if !s.httpClient.IsGraphQLAvailable() {
 			return nil
 		}
 
-		respMsgHeader, respBody, statusCode, err = s.httpClient.SendPayload(ctx, s.cfg.URL, w.placeholder, w.encoder, w.payload, w.debugHeaderValue)
+		respMsgHeader, respBody, statusCode, err = s.httpClient.SendPayload(ctx, s.cfg.URL, w.payload, w.encoder, w.placeholder.Name, w.placeholder.Config, w.debugHeaderValue)
 
 		_, _, _, _, err = s.updateDB(ctx, w, nil, nil, nil, nil, nil,
 			statusCode, nil, respMsgHeader, respBody, err, "", false)
@@ -503,7 +538,7 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 	}
 
 	if s.requestTemplates == nil {
-		respMsgHeader, respBody, statusCode, err = s.httpClient.SendPayload(ctx, s.cfg.URL, w.placeholder, w.encoder, w.payload, w.debugHeaderValue)
+		respMsgHeader, respBody, statusCode, err = s.httpClient.SendPayload(ctx, s.cfg.URL, w.payload, w.encoder, w.placeholder.Name, w.placeholder.Config, w.debugHeaderValue)
 
 		_, _, _, _, err = s.updateDB(ctx, w, nil, nil, nil, nil, nil,
 			statusCode, nil, respMsgHeader, respBody, err, "", false)
@@ -511,7 +546,7 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 		return err
 	}
 
-	templates := s.requestTemplates[w.placeholder]
+	templates := s.requestTemplates[w.placeholder.Name]
 
 	encodedPayload, err := encoder.Apply(w.encoder, w.payload)
 	if err != nil {
@@ -525,7 +560,7 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 	var additionalInfo string
 
 	for _, template := range templates {
-		req, err := template.CreateRequest(ctx, w.placeholder, encodedPayload)
+		req, err := template.CreateRequest(ctx, w.placeholder.Name, encodedPayload)
 		if err != nil {
 			return errors.Wrap(err, "create request from template")
 		}
@@ -719,7 +754,7 @@ func (w *testWork) toInfo(respStatusCode int) *db.Info {
 		Case:               w.caseName,
 		Payload:            w.payload,
 		Encoder:            w.encoder,
-		Placeholder:        w.placeholder,
+		Placeholder:        w.placeholder.Name,
 		ResponseStatusCode: respStatusCode,
 		Type:               w.testType,
 	}

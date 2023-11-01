@@ -14,11 +14,15 @@ var DefaultHTMLForm = HTMLForm{name: "HTMLForm"}
 
 var _ Placeholder = (*HTMLForm)(nil)
 
+func (p HTMLForm) newConfig(_ map[any]any) (any, error) {
+	return nil, nil
+}
+
 func (p HTMLForm) GetName() string {
 	return p.name
 }
 
-func (p HTMLForm) CreateRequest(requestURL, payload string) (*http.Request, error) {
+func (p HTMLForm) CreateRequest(requestURL, payload string, _ any) (*http.Request, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err

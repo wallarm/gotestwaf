@@ -46,3 +46,11 @@ func isPositiveTest(setName string) bool {
 func isApiTest(setName string) bool {
 	return strings.Contains(setName, "api")
 }
+
+func mapToString(m map[any]any) string {
+	for k := range m {
+		return k.(string)
+	}
+
+	return ""
+}
