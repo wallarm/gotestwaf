@@ -18,18 +18,25 @@ func (db *DB) ExportPayloads(payloadsExportFile string) error {
 	csvWriter := csv.NewWriter(csvFile)
 	defer csvWriter.Flush()
 
-	if err := csvWriter.Write([]string{"Payload", "Check Status", "Response Code", "Placeholder", "Encoder", "Case"}); err != nil {
+	if err := csvWriter.Write([]string{"Payload", "Check Status", "Response Code", "Placeholder", "Encoder", "Set", "Case", "Test Result"}); err != nil {
 		return err
 	}
 
-	for _, failedTest := range db.blockedTests {
-		p := failedTest.Payload
-		e := failedTest.Encoder
+	for _, blockedTest := range db.blockedTests {
+		p := blockedTest.Payload
+		e := blockedTest.Encoder
+		result := "passed"
+
 		ep, err := encoder.Apply(e, p)
 		if err != nil {
 			return err
 		}
-		err = csvWriter.Write([]string{ep, "blocked", strconv.Itoa(failedTest.ResponseStatusCode), failedTest.Placeholder, failedTest.Encoder, failedTest.Case})
+
+		if isPositiveTest(blockedTest.Set) {
+			result = "failed"
+		}
+
+		err = csvWriter.Write([]string{ep, "blocked", strconv.Itoa(blockedTest.ResponseStatusCode), blockedTest.Placeholder, blockedTest.Encoder, blockedTest.Set, blockedTest.Case, result})
 		if err != nil {
 			return err
 		}
@@ -38,11 +45,18 @@ func (db *DB) ExportPayloads(payloadsExportFile string) error {
 	for _, passedTest := range db.passedTests {
 		p := passedTest.Payload
 		e := passedTest.Encoder
+		result := "failed"
+
 		ep, err := encoder.Apply(e, p)
 		if err != nil {
 			return err
 		}
-		err = csvWriter.Write([]string{ep, "passed", strconv.Itoa(passedTest.ResponseStatusCode), passedTest.Placeholder, passedTest.Encoder, passedTest.Case})
+
+		if isPositiveTest(passedTest.Set) {
+			result = "passed"
+		}
+
+		err = csvWriter.Write([]string{ep, "passed", strconv.Itoa(passedTest.ResponseStatusCode), passedTest.Placeholder, passedTest.Encoder, passedTest.Set, passedTest.Case, result})
 		if err != nil {
 			return err
 		}
@@ -51,11 +65,13 @@ func (db *DB) ExportPayloads(payloadsExportFile string) error {
 	for _, naTest := range db.naTests {
 		p := naTest.Payload
 		e := naTest.Encoder
+
 		ep, err := encoder.Apply(e, p)
 		if err != nil {
 			return err
 		}
-		err = csvWriter.Write([]string{ep, "NA", strconv.Itoa(naTest.ResponseStatusCode), naTest.Placeholder, naTest.Encoder, naTest.Case})
+
+		err = csvWriter.Write([]string{ep, "NA", strconv.Itoa(naTest.ResponseStatusCode), naTest.Placeholder, naTest.Encoder, naTest.Set, naTest.Case, "unknown"})
 		if err != nil {
 			return err
 		}
