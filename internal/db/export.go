@@ -18,14 +18,23 @@ func (db *DB) ExportPayloads(payloadsExportFile string) error {
 	csvWriter := csv.NewWriter(csvFile)
 	defer csvWriter.Flush()
 
-	if err := csvWriter.Write([]string{"Payload", "Check Status", "Response Code", "Placeholder", "Encoder", "Set", "Case", "Test Result"}); err != nil {
+	if err := csvWriter.Write([]string{
+		"Payload",
+		"Check Status",
+		"Response Code",
+		"Placeholder",
+		"Encoder",
+		"Set",
+		"Case",
+		"Test Result",
+	}); err != nil {
 		return err
 	}
 
 	for _, blockedTest := range db.blockedTests {
 		p := blockedTest.Payload
 		e := blockedTest.Encoder
-		result := "passed"
+		testResult := "passed"
 
 		ep, err := encoder.Apply(e, p)
 		if err != nil {
@@ -33,10 +42,19 @@ func (db *DB) ExportPayloads(payloadsExportFile string) error {
 		}
 
 		if isPositiveTest(blockedTest.Set) {
-			result = "failed"
+			testResult = "failed"
 		}
 
-		err = csvWriter.Write([]string{ep, "blocked", strconv.Itoa(blockedTest.ResponseStatusCode), blockedTest.Placeholder, blockedTest.Encoder, blockedTest.Set, blockedTest.Case, result})
+		err = csvWriter.Write([]string{
+			ep,
+			"blocked",
+			strconv.Itoa(blockedTest.ResponseStatusCode),
+			blockedTest.Placeholder,
+			blockedTest.Encoder,
+			blockedTest.Set,
+			blockedTest.Case,
+			testResult,
+		})
 		if err != nil {
 			return err
 		}
@@ -45,7 +63,7 @@ func (db *DB) ExportPayloads(payloadsExportFile string) error {
 	for _, passedTest := range db.passedTests {
 		p := passedTest.Payload
 		e := passedTest.Encoder
-		result := "failed"
+		testResult := "failed"
 
 		ep, err := encoder.Apply(e, p)
 		if err != nil {
@@ -53,10 +71,19 @@ func (db *DB) ExportPayloads(payloadsExportFile string) error {
 		}
 
 		if isPositiveTest(passedTest.Set) {
-			result = "passed"
+			testResult = "passed"
 		}
 
-		err = csvWriter.Write([]string{ep, "passed", strconv.Itoa(passedTest.ResponseStatusCode), passedTest.Placeholder, passedTest.Encoder, passedTest.Set, passedTest.Case, result})
+		err = csvWriter.Write([]string{
+			ep,
+			"passed",
+			strconv.Itoa(passedTest.ResponseStatusCode),
+			passedTest.Placeholder,
+			passedTest.Encoder,
+			passedTest.Set,
+			passedTest.Case,
+			testResult,
+		})
 		if err != nil {
 			return err
 		}
@@ -71,7 +98,16 @@ func (db *DB) ExportPayloads(payloadsExportFile string) error {
 			return err
 		}
 
-		err = csvWriter.Write([]string{ep, "NA", strconv.Itoa(naTest.ResponseStatusCode), naTest.Placeholder, naTest.Encoder, naTest.Set, naTest.Case, "unknown"})
+		err = csvWriter.Write([]string{
+			ep,
+			"unresolved",
+			strconv.Itoa(naTest.ResponseStatusCode),
+			naTest.Placeholder,
+			naTest.Encoder,
+			naTest.Set,
+			naTest.Case,
+			"unknown",
+		})
 		if err != nil {
 			return err
 		}
