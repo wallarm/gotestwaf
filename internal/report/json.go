@@ -73,6 +73,7 @@ type payloadDetails struct {
 	Encoder     string `json:"encoder"`
 	Placeholder string `json:"placeholder"`
 	Status      int    `json:"status,omitempty"`
+	TestResult  string `json:"test_result"`
 
 	// Used for non-failed payloads
 	AdditionalInformation []string `json:"additional_info,omitempty"`
@@ -159,6 +160,7 @@ func printFullReportToJson(
 			Encoder:               bypass.Encoder,
 			Placeholder:           bypass.Encoder,
 			Status:                bypass.ResponseStatusCode,
+			TestResult:            "failed",
 			AdditionalInformation: bypass.AdditionalInfo,
 		}
 
@@ -173,6 +175,7 @@ func printFullReportToJson(
 				Encoder:               unresolved.Encoder,
 				Placeholder:           unresolved.Encoder,
 				Status:                unresolved.ResponseStatusCode,
+				TestResult:            "unknown",
 				AdditionalInformation: unresolved.AdditionalInfo,
 			}
 
@@ -202,6 +205,7 @@ func printFullReportToJson(
 			Encoder:               blocked.Encoder,
 			Placeholder:           blocked.Encoder,
 			Status:                blocked.ResponseStatusCode,
+			TestResult:            "failed",
 			AdditionalInformation: blocked.AdditionalInfo,
 		}
 
@@ -216,6 +220,7 @@ func printFullReportToJson(
 				Encoder:               unresolved.Encoder,
 				Placeholder:           unresolved.Encoder,
 				Status:                unresolved.ResponseStatusCode,
+				TestResult:            "unknown",
 				AdditionalInformation: unresolved.AdditionalInfo,
 			}
 
