@@ -335,7 +335,7 @@ func NewDBAllUnresolvedGenerator(ignoreUnresolved, nonBlockedAsPassed bool) gopt
 				if db.counters[t.Set][t.Case] == nil {
 					db.counters[t.Set][t.Case] = make(map[string]int)
 				}
-				if (ignoreUnresolved || nonBlockedAsPassed) && !isPositiveTest(t.Set) {
+				if (ignoreUnresolved || nonBlockedAsPassed) && !isFalsePositiveTest(t.Set) {
 					db.counters[t.Set][t.Case]["passed"]++
 				} else {
 					db.counters[t.Set][t.Case]["blocked"]++
@@ -428,7 +428,7 @@ func NewDBGenerator(ignoreUnresolved, nonBlockedAsPassed bool) gopter.Gen {
 				if db.counters[t.Set][t.Case] == nil {
 					db.counters[t.Set][t.Case] = make(map[string]int)
 				}
-				if (ignoreUnresolved || nonBlockedAsPassed) && !isPositiveTest(t.Set) {
+				if (ignoreUnresolved || nonBlockedAsPassed) && !isFalsePositiveTest(t.Set) {
 					db.counters[t.Set][t.Case]["passed"]++
 				} else {
 					db.counters[t.Set][t.Case]["blocked"]++

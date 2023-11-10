@@ -41,7 +41,7 @@ func (db *DB) ExportPayloads(payloadsExportFile string) error {
 			return err
 		}
 
-		if isPositiveTest(blockedTest.Set) {
+		if isFalsePositiveTest(blockedTest.Set) {
 			testResult = "failed"
 		}
 
@@ -70,7 +70,7 @@ func (db *DB) ExportPayloads(payloadsExportFile string) error {
 			return err
 		}
 
-		if isPositiveTest(passedTest.Set) {
+		if isFalsePositiveTest(passedTest.Set) {
 			testResult = "passed"
 		}
 

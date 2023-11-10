@@ -171,7 +171,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 		}
 		sort.Strings(sortedTestCases)
 
-		isPositive := isPositiveTest(testSet)
+		isFalsePositive := isFalsePositiveTest(testSet)
 
 		for _, testCase := range sortedTestCases {
 			// Number of requests for all request types for the selected testCase
@@ -204,7 +204,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 			}
 
 			// If positive set - move to another table (remove from general cases)
-			if isPositive {
+			if isFalsePositive {
 				// False positive - blocked by the WAF (bad behavior, blockedRequests)
 				s.PositiveTests.BlockedRequestsNumber += blockedRequests
 				// True positive - bypassed (good behavior, passedRequests)
@@ -275,7 +275,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 			Type:               blockedTest.Type,
 		}
 
-		if isPositiveTest(blockedTest.Set) {
+		if isFalsePositiveTest(blockedTest.Set) {
 			s.PositiveTests.FalsePositive = append(s.PositiveTests.FalsePositive, testDetails)
 		} else {
 			s.NegativeTests.Blocked = append(s.NegativeTests.Blocked, testDetails)
@@ -296,7 +296,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 			Type:               passedTest.Type,
 		}
 
-		if isPositiveTest(passedTest.Set) {
+		if isFalsePositiveTest(passedTest.Set) {
 			s.PositiveTests.TruePositive = append(s.PositiveTests.TruePositive, testDetails)
 		} else {
 			s.NegativeTests.Bypasses = append(s.NegativeTests.Bypasses, testDetails)
@@ -318,13 +318,13 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 		}
 
 		if ignoreUnresolved || nonBlockedAsPassed {
-			if isPositiveTest(unresolvedTest.Set) {
+			if isFalsePositiveTest(unresolvedTest.Set) {
 				s.PositiveTests.FalsePositive = append(s.PositiveTests.FalsePositive, testDetails)
 			} else {
 				s.NegativeTests.Bypasses = append(s.NegativeTests.Bypasses, testDetails)
 			}
 		} else {
-			if isPositiveTest(unresolvedTest.Set) {
+			if isFalsePositiveTest(unresolvedTest.Set) {
 				s.PositiveTests.Unresolved = append(s.PositiveTests.Unresolved, testDetails)
 			} else {
 				s.NegativeTests.Unresolved = append(s.NegativeTests.Unresolved, testDetails)
@@ -343,7 +343,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 			Type:        failedTest.Type,
 		}
 
-		if isPositiveTest(failedTest.Set) {
+		if isFalsePositiveTest(failedTest.Set) {
 			s.PositiveTests.Failed = append(s.PositiveTests.Failed, testDetails)
 		} else {
 			s.NegativeTests.Failed = append(s.NegativeTests.Failed, testDetails)
