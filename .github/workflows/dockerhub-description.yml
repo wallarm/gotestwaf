@@ -7,7 +7,7 @@ on:
 
 jobs:
   update-description:
-    runs-on: self-hosted-1cpu
+    runs-on: self-hosted-amd64-1cpu
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -20,6 +20,7 @@ jobs:
           url: ${{ secrets.VAULT_URL }}
           role: ${{ secrets.VAULT_ROLE }}
           method: kubernetes
+          path: kubernetes-ci
           secrets: |
             kv-gitlab-ci/data/github/shared/dockerhub-creds user | DOCKERHUB_USER ;
             kv-gitlab-ci/data/github/shared/dockerhub-creds password | DOCKERHUB_PASSWORD ;
