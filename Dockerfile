@@ -19,11 +19,11 @@ RUN <<EOF
     set -e -o pipefail
 
     # install all dependencies
-    apk add --no-cache  \
-        tini            \
-        chromium        \
-        font-inter      \
-        font-iosevka    \
+    apk add --no-cache     \
+        tini               \
+        chromium           \
+        font-inter         \
+        font-iosevka-base  \
         fontconfig
 
     fc-cache -fv
