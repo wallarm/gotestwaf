@@ -477,10 +477,16 @@ Some supported OpenAPI features:
 
 Based on the described principle of operation, it is extremely important that the OpenAPI file correctly represents the implemented application API. Therefore, for example, you cannot use `default` to describe possible responses to queries.
 
-Example:
+Note: You need to forward volume with openapi spec to GoTestWAF container. 
 
 ```sh
-./gotestwaf --url https://example.com/v1 --openapiFile api.yaml
+-v ${PWD}/api.yaml:/app/api.yaml
+```
+
+Complete Docker Example:
+
+```sh
+docker run --rm --network="host" -it -v ${PWD}/reports:/app/reports -v ${PWD}/api.yaml:/app/api.yaml wallarm/gotestwaf --wafName your_waf_name --url=https://example.com/v1 --openapiFile api.yaml
 ```
 
 ## Running with OWASP Core Rule Set regression testing suite
