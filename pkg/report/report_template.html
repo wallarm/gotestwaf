@@ -488,6 +488,22 @@
                 </div>
                 {{end}}
 
+                <div class="grid__row">
+                    <div class="row__item"><a href="https://www.wallarm.com/request-demo">Wallarm</a></div>
+                    <div class="row__item row__item--{{.WallarmResult.ApiSec.CSSClassSuffix}}">
+                        <div class="row__item-grade row__item-grade--{{.WallarmResult.ApiSec.CSSClassSuffix}}">{{.WallarmResult.ApiSec.Mark}}</div>
+                        <div class="row__item-value">{{printf "%.1f%%" .WallarmResult.ApiSec.Percentage}}</div>
+                    </div>
+                    <div class="row__item row__item--{{.WallarmResult.AppSec.CSSClassSuffix}}">
+                        <div class="row__item-grade row__item-grade--{{.WallarmResult.AppSec.CSSClassSuffix}}">{{.WallarmResult.AppSec.Mark}}</div>
+                        <div class="row__item-value">{{printf "%.1f%%" .WallarmResult.AppSec.Percentage}}</div>
+                    </div>
+                    <div class="row__item row__item--{{.WallarmResult.OverallScore.CSSClassSuffix}}">
+                        <div class="row__item-grade row__item-grade--{{.WallarmResult.OverallScore.CSSClassSuffix}}">{{.WallarmResult.OverallScore.Mark}}</div>
+                        <div class="row__item-value">{{printf "%.1f%%" .WallarmResult.OverallScore.Percentage}}</div>
+                    </div>
+                </div>
+
                 <div class="grid__footer">
                     <div class="row__item">Your project</div>
                     <div class="row__item row__item--{{.ApiSec.Grade.CSSClassSuffix}}">

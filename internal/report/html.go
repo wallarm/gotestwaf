@@ -52,6 +52,13 @@ var (
 			OverallScore: computeGrade(70.4, 1),
 		},
 	}
+
+	wallarmResult = &report.ComparisonTableRow{
+		Name:         "Wallarm",
+		ApiSec:       computeGrade(100, 1),
+		AppSec:       computeGrade(94.6, 1),
+		OverallScore: computeGrade(97.3, 1),
+	}
 )
 
 func computeGrade(value float64, all int) *report.Grade {
@@ -152,6 +159,7 @@ func prepareHTMLFullReport(
 		OpenApiFile:      openApiFile,
 		Args:             args,
 		ComparisonTable:  comparisonTable,
+		WallarmResult:    wallarmResult,
 	}
 
 	var apiSecNegBlockedNum int
