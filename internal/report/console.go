@@ -55,7 +55,7 @@ func printConsoleReportTable(
 
 	var buffer strings.Builder
 
-	fmt.Fprintf(&buffer, "Negative Tests:\n")
+	fmt.Fprintf(&buffer, "True-Positive Tests:\n")
 
 	// Negative cases summary table
 	table := tablewriter.NewWriter(&buffer)
@@ -85,7 +85,7 @@ func printConsoleReportTable(
 	footerNegativeTests := []string{
 		fmt.Sprintf("Date:\n%s", reportTime.Format("2006-01-02")),
 		fmt.Sprintf("Project Name:\n%s", wafName),
-		fmt.Sprintf("True Negative Score:\n%.2f%%", s.NegativeTests.ResolvedBlockedRequestsPercentage),
+		fmt.Sprintf("True-Positive Score:\n%.2f%%", s.NegativeTests.ResolvedBlockedRequestsPercentage),
 		fmt.Sprintf("Blocked (Resolved):\n%d/%d (%.2f%%)",
 			s.NegativeTests.BlockedRequestsNumber,
 			s.NegativeTests.ResolvedRequestsNumber,
@@ -118,7 +118,7 @@ func printConsoleReportTable(
 	table.SetFooter(footerNegativeTests)
 	table.Render()
 
-	fmt.Fprintf(&buffer, "\nPositive Tests:\n")
+	fmt.Fprintf(&buffer, "\nTrue-Negative Tests:\n")
 
 	// Positive cases summary table
 	posTable := tablewriter.NewWriter(&buffer)
@@ -148,7 +148,7 @@ func printConsoleReportTable(
 	footerPositiveTests := []string{
 		fmt.Sprintf("Date:\n%s", reportTime.Format("2006-01-02")),
 		fmt.Sprintf("Project Name:\n%s", wafName),
-		fmt.Sprintf("False Positive Score:\n%.2f%%", s.PositiveTests.ResolvedTrueRequestsPercentage),
+		fmt.Sprintf("True-Negative Score:\n%.2f%%", s.PositiveTests.ResolvedTrueRequestsPercentage),
 		fmt.Sprintf("Blocked (Resolved):\n%d/%d (%.2f%%)",
 			s.PositiveTests.BlockedRequestsNumber,
 			s.PositiveTests.ResolvedRequestsNumber,
@@ -185,7 +185,7 @@ func printConsoleReportTable(
 
 	// summary table
 	sumTable := tablewriter.NewWriter(&buffer)
-	baseHeader = []string{"Type", "True-negative tests blocked", "True-positive tests passed", "Average"}
+	baseHeader = []string{"Type", "True-Positive tests blocked", "True-Negative tests passed", "Average"}
 	sumTable.SetHeader(baseHeader)
 	for index := range baseHeader {
 		sumTable.SetColMinWidth(index, 27)
