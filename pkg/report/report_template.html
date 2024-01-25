@@ -411,8 +411,8 @@
         <div class="grid">
             <div class="grid__head">
                 <div class="head__item">Type</div>
-                <div class="head__item">True-negative tests blocked</div>
-                <div class="head__item">True-positive tests passed</div>
+                <div class="head__item">True-positive tests blocked</div>
+                <div class="head__item">True-negative tests passed</div>
                 <div class="head__item">Grade</div>
             </div>
             <div class="grid__row">
@@ -532,7 +532,7 @@
             {{end}}
             <p>Number of failed requests: {{.FailedRequestsNumber}}</p>
             {{$length := len .NegativeTests.SummaryTable}}{{if ne $length 0}}
-            <h4 class="detail__sub-sub-title">True-negative tests</h4>
+            <h4 class="detail__sub-sub-title">True-positive tests</h4>
             <div class="summary__grid">
                 <div class="summary__grid--head">
                     <div class="summary__grid--head-item">Test set</div>
@@ -591,7 +591,7 @@
             </div>
             {{end}}
             {{$length := len .PositiveTests.SummaryTable}}{{if ne $length 0}}
-            <h4 class="detail__sub-sub-title">False-positive tests</h4>
+            <h4 class="detail__sub-sub-title">True-negative tests</h4>
             <div class="summary__grid">
                 <div class="summary__grid--head">
                     <div class="summary__grid--head-item">Test set</div>
@@ -657,8 +657,8 @@
             <p class="mono">{{$row.Method}} {{$row.Path}}</p>
             {{end}}
             {{end}}
-            <h3 class="detail__sub-title">False Positive Tests</h3>
-            <p>{{.PositiveTests.BlockedRequestsNumber}} false positive requests identified as blocked (failed, bad behavior)</p>
+            <h3 class="detail__sub-title">True Negative Tests</h3>
+            <p>{{.PositiveTests.BlockedRequestsNumber}} true-negative requests identified as blocked (test failed, bad behavior)</p>
             {{if .IncludePayloads}}
             {{if .PositiveTests.BlockedRequestsNumber}}
             <div class="positive__grid">
@@ -685,7 +685,7 @@
             </div>
             {{end}}
             {{end}}
-            <p>{{.PositiveTests.BypassedRequestsNumber}} false positive requests identified as bypassed (passed, good behavior)</p>
+            <p>{{.PositiveTests.BypassedRequestsNumber}} true-negative requests identified as bypassed (test passed, good behavior)</p>
             {{if .IncludePayloads}}
             {{if .PositiveTests.BypassedRequestsNumber}}
             <div class="positive__grid">
