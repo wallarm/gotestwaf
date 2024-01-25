@@ -21,13 +21,13 @@ type jsonReport struct {
 	Args        string  `json:"args"`
 
 	// fields for console report in JSON format
-	NegativeTests *testsInfo `json:"negative,omitempty"`
-	PositiveTests *testsInfo `json:"positive,omitempty"`
+	TruePositiveTests *testsInfo `json:"true_positive_tests,omitempty"`
+	TrueNegativeTests *testsInfo `json:"true_negative_tests,omitempty"`
 
 	// fields for full report in JSON format
-	Summary               *summary      `json:"summary,omitempty"`
-	NegativeTestsPayloads *testPayloads `json:"negative_payloads,omitempty"`
-	PositiveTestsPayloads *testPayloads `json:"positive_payloads,omitempty"`
+	Summary                   *summary      `json:"summary,omitempty"`
+	TruePositiveTestsPayloads *testPayloads `json:"true_positive_tests_payloads,omitempty"`
+	TrueNegativeTestsPayloads *testPayloads `json:"true_negative_tests_payloads,omitempty"`
 }
 
 type testsInfo struct {
@@ -98,18 +98,18 @@ func printFullReportToJson(
 
 	report.Summary = &summary{}
 
-	if len(s.NegativeTests.SummaryTable) != 0 {
+	if len(s.TruePositiveTests.SummaryTable) != 0 {
 		report.Summary.NegativeTests = &testsInfo{
-			Score:           s.NegativeTests.ResolvedBlockedRequestsPercentage,
-			TotalSent:       s.NegativeTests.AllRequestsNumber,
-			ResolvedTests:   s.NegativeTests.ResolvedRequestsNumber,
-			BlockedTests:    s.NegativeTests.BlockedRequestsNumber,
-			BypassedTests:   s.NegativeTests.BypassedRequestsNumber,
-			UnresolvedTests: s.NegativeTests.UnresolvedRequestsNumber,
-			FailedTests:     s.NegativeTests.FailedRequestsNumber,
+			Score:           s.TruePositiveTests.ResolvedBlockedRequestsPercentage,
+			TotalSent:       s.TruePositiveTests.AllRequestsNumber,
+			ResolvedTests:   s.TruePositiveTests.ResolvedRequestsNumber,
+			BlockedTests:    s.TruePositiveTests.BlockedRequestsNumber,
+			BypassedTests:   s.TruePositiveTests.BypassedRequestsNumber,
+			UnresolvedTests: s.TruePositiveTests.UnresolvedRequestsNumber,
+			FailedTests:     s.TruePositiveTests.FailedRequestsNumber,
 			TestSets:        make(testSets),
 		}
-		for _, row := range s.NegativeTests.SummaryTable {
+		for _, row := range s.TruePositiveTests.SummaryTable {
 			if report.Summary.NegativeTests.TestSets[row.TestSet] == nil {
 				report.Summary.NegativeTests.TestSets[row.TestSet] = make(testCases)
 			}
@@ -124,18 +124,18 @@ func printFullReportToJson(
 		}
 	}
 
-	if len(s.PositiveTests.SummaryTable) != 0 {
+	if len(s.TrueNegativeTests.SummaryTable) != 0 {
 		report.Summary.PositiveTests = &testsInfo{
-			Score:           s.PositiveTests.ResolvedTrueRequestsPercentage,
-			TotalSent:       s.PositiveTests.AllRequestsNumber,
-			ResolvedTests:   s.PositiveTests.ResolvedRequestsNumber,
-			BlockedTests:    s.PositiveTests.BlockedRequestsNumber,
-			BypassedTests:   s.PositiveTests.BypassedRequestsNumber,
-			UnresolvedTests: s.PositiveTests.UnresolvedRequestsNumber,
-			FailedTests:     s.PositiveTests.FailedRequestsNumber,
+			Score:           s.TrueNegativeTests.ResolvedTrueRequestsPercentage,
+			TotalSent:       s.TrueNegativeTests.AllRequestsNumber,
+			ResolvedTests:   s.TrueNegativeTests.ResolvedRequestsNumber,
+			BlockedTests:    s.TrueNegativeTests.BlockedRequestsNumber,
+			BypassedTests:   s.TrueNegativeTests.BypassedRequestsNumber,
+			UnresolvedTests: s.TrueNegativeTests.UnresolvedRequestsNumber,
+			FailedTests:     s.TrueNegativeTests.FailedRequestsNumber,
 			TestSets:        make(testSets),
 		}
-		for _, row := range s.PositiveTests.SummaryTable {
+		for _, row := range s.TrueNegativeTests.SummaryTable {
 			if report.Summary.PositiveTests.TestSets[row.TestSet] == nil {
 				report.Summary.PositiveTests.TestSets[row.TestSet] = make(testCases)
 			}
@@ -150,9 +150,9 @@ func printFullReportToJson(
 		}
 	}
 
-	report.NegativeTestsPayloads = &testPayloads{}
+	report.TruePositiveTestsPayloads = &testPayloads{}
 
-	for _, bypass := range s.NegativeTests.Bypasses {
+	for _, bypass := range s.TruePositiveTests.Bypasses {
 		bypassDetail := &payloadDetails{
 			Payload:               bypass.Payload,
 			TestSet:               bypass.TestSet,
@@ -164,10 +164,10 @@ func printFullReportToJson(
 			AdditionalInformation: bypass.AdditionalInfo,
 		}
 
-		report.NegativeTestsPayloads.Bypassed = append(report.NegativeTestsPayloads.Bypassed, bypassDetail)
+		report.TruePositiveTestsPayloads.Bypassed = append(report.TruePositiveTestsPayloads.Bypassed, bypassDetail)
 	}
 	if !ignoreUnresolved {
-		for _, unresolved := range s.NegativeTests.Unresolved {
+		for _, unresolved := range s.TruePositiveTests.Unresolved {
 			unresolvedDetail := &payloadDetails{
 				Payload:               unresolved.Payload,
 				TestSet:               unresolved.TestSet,
@@ -179,10 +179,10 @@ func printFullReportToJson(
 				AdditionalInformation: unresolved.AdditionalInfo,
 			}
 
-			report.NegativeTestsPayloads.Unresolved = append(report.NegativeTestsPayloads.Unresolved, unresolvedDetail)
+			report.TruePositiveTestsPayloads.Unresolved = append(report.TruePositiveTestsPayloads.Unresolved, unresolvedDetail)
 		}
 	}
-	for _, failed := range s.NegativeTests.Failed {
+	for _, failed := range s.TruePositiveTests.Failed {
 		failedDetail := &payloadDetails{
 			Payload:     failed.Payload,
 			TestSet:     failed.TestSet,
@@ -192,12 +192,12 @@ func printFullReportToJson(
 			Reason:      failed.Reason,
 		}
 
-		report.NegativeTestsPayloads.Failed = append(report.NegativeTestsPayloads.Failed, failedDetail)
+		report.TruePositiveTestsPayloads.Failed = append(report.TruePositiveTestsPayloads.Failed, failedDetail)
 	}
 
-	report.PositiveTestsPayloads = &testPayloads{}
+	report.TrueNegativeTestsPayloads = &testPayloads{}
 
-	for _, blocked := range s.PositiveTests.FalsePositive {
+	for _, blocked := range s.TrueNegativeTests.FalsePositive {
 		blockedDetails := &payloadDetails{
 			Payload:               blocked.Payload,
 			TestSet:               blocked.TestSet,
@@ -209,10 +209,10 @@ func printFullReportToJson(
 			AdditionalInformation: blocked.AdditionalInfo,
 		}
 
-		report.PositiveTestsPayloads.Blocked = append(report.PositiveTestsPayloads.Blocked, blockedDetails)
+		report.TrueNegativeTestsPayloads.Blocked = append(report.TrueNegativeTestsPayloads.Blocked, blockedDetails)
 	}
 	if !ignoreUnresolved {
-		for _, unresolved := range s.PositiveTests.Unresolved {
+		for _, unresolved := range s.TrueNegativeTests.Unresolved {
 			unresolvedDetail := &payloadDetails{
 				Payload:               unresolved.Payload,
 				TestSet:               unresolved.TestSet,
@@ -224,10 +224,10 @@ func printFullReportToJson(
 				AdditionalInformation: unresolved.AdditionalInfo,
 			}
 
-			report.PositiveTestsPayloads.Unresolved = append(report.PositiveTestsPayloads.Unresolved, unresolvedDetail)
+			report.TrueNegativeTestsPayloads.Unresolved = append(report.TrueNegativeTestsPayloads.Unresolved, unresolvedDetail)
 		}
 	}
-	for _, failed := range s.PositiveTests.Failed {
+	for _, failed := range s.TrueNegativeTests.Failed {
 		failedDetail := &payloadDetails{
 			Payload:     failed.Payload,
 			TestSet:     failed.TestSet,
@@ -237,7 +237,7 @@ func printFullReportToJson(
 			Reason:      failed.Reason,
 		}
 
-		report.PositiveTestsPayloads.Failed = append(report.PositiveTestsPayloads.Failed, failedDetail)
+		report.TrueNegativeTestsPayloads.Failed = append(report.TrueNegativeTestsPayloads.Failed, failedDetail)
 	}
 
 	jsonBytes, err := json.MarshalIndent(report, "", "    ")
