@@ -117,11 +117,11 @@ func generateChartData(s *db.Statistics) (
 ) {
 	counters := make(map[string]map[string]pair)
 
-	for _, t := range s.NegativeTests.Blocked {
+	for _, t := range s.TruePositiveTests.Blocked {
 		updateCounters(t, counters, true)
 	}
 
-	for _, t := range s.NegativeTests.Bypasses {
+	for _, t := range s.TruePositiveTests.Bypasses {
 		updateCounters(t, counters, false)
 	}
 

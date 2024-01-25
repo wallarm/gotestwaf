@@ -43,18 +43,19 @@ type HtmlReport struct {
 	Overall *Grade `json:"overall" validate:"required"`
 
 	ApiSec struct {
-		TrueNegative *Grade `json:"true_negative" validate:"required"`
-		TruePositive *Grade `json:"true_positive" validate:"required"`
-		Grade        *Grade `json:"grade" validate:"required"`
+		TruePositiveTestsGrade *Grade `json:"true_positive_grade" validate:"required"`
+		TrueNegativeTestsGrade *Grade `json:"true_negative_grade" validate:"required"`
+		Grade                  *Grade `json:"grade" validate:"required"`
 	} `json:"api_sec"`
 
 	AppSec struct {
-		TrueNegative *Grade `json:"true_negative" validate:"required"`
-		TruePositive *Grade `json:"true_positive" validate:"required"`
-		Grade        *Grade `json:"grade" validate:"required"`
+		TruePositiveTestsGrade *Grade `json:"true_positive_grade" validate:"required"`
+		TrueNegativeTestsGrade *Grade `json:"true_negative_grade" validate:"required"`
+		Grade                  *Grade `json:"grade" validate:"required"`
 	} `json:"app_sec"`
 
 	ComparisonTable []*ComparisonTableRow `json:"comparison_table" validate:"required,dive,required"`
+	WallarmResult   *ComparisonTableRow   `json:"wallarm_result" validate:"required,dive,required"`
 
 	TotalSent                int `json:"total_sent" validate:"min=0"`
 	BlockedRequestsNumber    int `json:"blocked_requests_number" validate:"min=0"`
@@ -64,7 +65,7 @@ type HtmlReport struct {
 
 	ScannedPaths db.ScannedPaths `json:"scanned_paths" validate:"omitempty,max=2048,dive,required"`
 
-	NegativeTests struct {
+	TruePositiveTests struct {
 		SummaryTable map[string]*TestSetSummary `json:"summary_table" validate:"omitempty,dive,keys,required,max=256,endkeys,required"`
 
 		// map[paths]map[payload]map[statusCode]*testDetails
@@ -79,9 +80,9 @@ type HtmlReport struct {
 		BypassedRequestsNumber   int     `json:"bypassed_requests_number" validate:"min=0"`
 		UnresolvedRequestsNumber int     `json:"unresolved_requests_number" validate:"min=0"`
 		FailedRequestsNumber     int     `json:"failed_requests_number" validate:"min=0"`
-	} `json:"negative_tests"`
+	} `json:"true_positive_tests"`
 
-	PositiveTests struct {
+	TrueNegativeTests struct {
 		SummaryTable map[string]*TestSetSummary `json:"summary_table" validate:"omitempty,dive,keys,required,endkeys,required"`
 
 		// map[payload]map[statusCode]*testDetails
@@ -98,7 +99,7 @@ type HtmlReport struct {
 		BypassedRequestsNumber   int     `json:"bypassed_requests_number" validate:"min=0"`
 		UnresolvedRequestsNumber int     `json:"unresolved_requests_number" validate:"min=0"`
 		FailedRequestsNumber     int     `json:"failed_requests_number" validate:"min=0"`
-	} `json:"positive_tests"`
+	} `json:"true_negative_tests"`
 }
 
 type Grade struct {

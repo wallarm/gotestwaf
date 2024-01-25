@@ -22,7 +22,7 @@ func TestCustomValidators(t *testing.T) {
 	report := &HtmlReport{
 		Overall: &Grade{},
 	}
-	report.NegativeTests.Bypassed = map[string]map[string]map[int]*TestDetails{
+	report.TruePositiveTests.Bypassed = map[string]map[string]map[int]*TestDetails{
 		"path": {
 			"payload": map[int]*TestDetails{
 				200: {
@@ -40,10 +40,10 @@ func TestCustomValidators(t *testing.T) {
 	setIndicator := func(value any) { report.ApiSecChartData.Indicators = []string{value.(string)} }
 	setArgs := func(value any) { report.Args = strings.Split(value.(string), "|") }
 	setEncoders := func(value any) {
-		report.NegativeTests.Bypassed["path"]["payload"][200].Encoders = map[string]any{value.(string): nil}
+		report.TruePositiveTests.Bypassed["path"]["payload"][200].Encoders = map[string]any{value.(string): nil}
 	}
 	setPlaceholders := func(value any) {
-		report.NegativeTests.Bypassed["path"]["payload"][200].Placeholders = map[string]any{value.(string): nil}
+		report.TruePositiveTests.Bypassed["path"]["payload"][200].Placeholders = map[string]any{value.(string): nil}
 	}
 
 	type testCaseType struct {
@@ -153,22 +153,22 @@ func TestCustomValidators(t *testing.T) {
 		{tag: "args", field: "Args", setter: setArgs, value: "--quiet|--url=url|--workers=10|--blockStatusCodes=403,401", isBad: false},
 
 		// encoders, bad
-		{tag: "encoders", field: "NegativeTests.Bypassed[path][payload][200].Encoders", setter: setEncoders, value: "", isBad: true},
-		{tag: "encoders", field: "NegativeTests.Bypassed[path][payload][200].Encoders", setter: setEncoders, value: "unknown", isBad: true},
+		{tag: "encoders", field: "TruePositiveTests.Bypassed[path][payload][200].Encoders", setter: setEncoders, value: "", isBad: true},
+		{tag: "encoders", field: "TruePositiveTests.Bypassed[path][payload][200].Encoders", setter: setEncoders, value: "unknown", isBad: true},
 
 		// placeholders, bad
-		{tag: "placeholders", field: "NegativeTests.Bypassed[path][payload][200].Placeholders", setter: setPlaceholders, value: "", isBad: true},
-		{tag: "placeholders", field: "NegativeTests.Bypassed[path][payload][200].Placeholders", setter: setPlaceholders, value: "unknown", isBad: true},
+		{tag: "placeholders", field: "TruePositiveTests.Bypassed[path][payload][200].Placeholders", setter: setPlaceholders, value: "", isBad: true},
+		{tag: "placeholders", field: "TruePositiveTests.Bypassed[path][payload][200].Placeholders", setter: setPlaceholders, value: "unknown", isBad: true},
 	}
 
 	// encoders, good
 	for enc, _ := range encoder.Encoders {
-		testCases = append(testCases, testCaseType{tag: "encoders", field: "NegativeTests.Bypassed[path][payload][200].Encoders", setter: setEncoders, value: enc, isBad: false})
+		testCases = append(testCases, testCaseType{tag: "encoders", field: "TruePositiveTests.Bypassed[path][payload][200].Encoders", setter: setEncoders, value: enc, isBad: false})
 	}
 
 	// placeholders, good
 	for ph, _ := range placeholder.Placeholders {
-		testCases = append(testCases, testCaseType{tag: "placeholders", field: "NegativeTests.Bypassed[path][payload][200].Placeholders", setter: setPlaceholders, value: ph, isBad: false})
+		testCases = append(testCases, testCaseType{tag: "placeholders", field: "TruePositiveTests.Bypassed[path][payload][200].Placeholders", setter: setPlaceholders, value: ph, isBad: false})
 	}
 
 	var err error
