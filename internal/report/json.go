@@ -55,8 +55,8 @@ type testCaseInfo struct {
 }
 
 type summary struct {
-	NegativeTests *testsInfo `json:"negative,omitempty"`
-	PositiveTests *testsInfo `json:"positive,omitempty"`
+	TruePositiveTests *testsInfo `json:"true_positive_tests,omitempty"`
+	TrueNegativeTests *testsInfo `json:"true_negative_tests,omitempty"`
 }
 
 type testPayloads struct {
@@ -99,7 +99,7 @@ func printFullReportToJson(
 	report.Summary = &summary{}
 
 	if len(s.TruePositiveTests.SummaryTable) != 0 {
-		report.Summary.NegativeTests = &testsInfo{
+		report.Summary.TruePositiveTests = &testsInfo{
 			Score:           s.TruePositiveTests.ResolvedBlockedRequestsPercentage,
 			TotalSent:       s.TruePositiveTests.AllRequestsNumber,
 			ResolvedTests:   s.TruePositiveTests.ResolvedRequestsNumber,
@@ -110,10 +110,10 @@ func printFullReportToJson(
 			TestSets:        make(testSets),
 		}
 		for _, row := range s.TruePositiveTests.SummaryTable {
-			if report.Summary.NegativeTests.TestSets[row.TestSet] == nil {
-				report.Summary.NegativeTests.TestSets[row.TestSet] = make(testCases)
+			if report.Summary.TruePositiveTests.TestSets[row.TestSet] == nil {
+				report.Summary.TruePositiveTests.TestSets[row.TestSet] = make(testCases)
 			}
-			report.Summary.NegativeTests.TestSets[row.TestSet][row.TestCase] = &testCaseInfo{
+			report.Summary.TruePositiveTests.TestSets[row.TestSet][row.TestCase] = &testCaseInfo{
 				Percentage: row.Percentage,
 				Sent:       row.Sent,
 				Blocked:    row.Blocked,
@@ -125,7 +125,7 @@ func printFullReportToJson(
 	}
 
 	if len(s.TrueNegativeTests.SummaryTable) != 0 {
-		report.Summary.PositiveTests = &testsInfo{
+		report.Summary.TrueNegativeTests = &testsInfo{
 			Score:           s.TrueNegativeTests.ResolvedTrueRequestsPercentage,
 			TotalSent:       s.TrueNegativeTests.AllRequestsNumber,
 			ResolvedTests:   s.TrueNegativeTests.ResolvedRequestsNumber,
@@ -136,10 +136,10 @@ func printFullReportToJson(
 			TestSets:        make(testSets),
 		}
 		for _, row := range s.TrueNegativeTests.SummaryTable {
-			if report.Summary.PositiveTests.TestSets[row.TestSet] == nil {
-				report.Summary.PositiveTests.TestSets[row.TestSet] = make(testCases)
+			if report.Summary.TrueNegativeTests.TestSets[row.TestSet] == nil {
+				report.Summary.TrueNegativeTests.TestSets[row.TestSet] = make(testCases)
 			}
-			report.Summary.PositiveTests.TestSets[row.TestSet][row.TestCase] = &testCaseInfo{
+			report.Summary.TrueNegativeTests.TestSets[row.TestSet][row.TestCase] = &testCaseInfo{
 				Percentage: row.Percentage,
 				Sent:       row.Sent,
 				Blocked:    row.Blocked,
