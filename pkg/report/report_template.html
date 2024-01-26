@@ -658,6 +658,7 @@
             {{end}}
             {{end}}
             <h3 class="detail__sub-title">True Negative Tests</h3>
+            <p>{{.TrueNegativeTests.BypassedRequestsNumber}} true-negative requests identified as bypassed (test passed, good behavior)</p>
             <p>{{.TrueNegativeTests.BlockedRequestsNumber}} true-negative requests identified as blocked (test failed, bad behavior)</p>
             {{if .IncludePayloads}}
             {{if .TrueNegativeTests.BlockedRequestsNumber}}
@@ -670,33 +671,6 @@
                     <div class="positive__grid--head-item">Status</div>
                 </div>
                 {{range $payload, $codeMap := .TrueNegativeTests.Blocked}}
-                    {{range $code, $testDetails := $codeMap}}
-                        {{$encoders := MapKeysToString $testDetails.Encoders ", "}}
-                        {{$placeholders := MapKeysToString $testDetails.Placeholders ", "}}
-                <div class="positive__grid--row">
-                    <div class="positive__grid--row-item-payload mono">{{$payload}}</div>
-                    <div class="positive__grid--row-item">{{$testDetails.TestCase}}</div>
-                    <div class="positive__grid--row-item">{{$encoders}}</div>
-                    <div class="positive__grid--row-item">{{$placeholders}}</div>
-                    <div class="positive__grid--row-item">{{$code}}</div>
-                </div>
-                    {{end}}
-                {{end}}
-            </div>
-            {{end}}
-            {{end}}
-            <p>{{.TrueNegativeTests.BypassedRequestsNumber}} true-negative requests identified as bypassed (test passed, good behavior)</p>
-            {{if .IncludePayloads}}
-            {{if .TrueNegativeTests.BypassedRequestsNumber}}
-            <div class="positive__grid">
-                <div class="positive__grid--head">
-                    <div class="positive__grid--head-item">Payload</div>
-                    <div class="positive__grid--head-item">Test case</div>
-                    <div class="positive__grid--head-item">Encoder</div>
-                    <div class="positive__grid--head-item">Placeholder</div>
-                    <div class="positive__grid--head-item">Status</div>
-                </div>
-                {{range $payload, $codeMap := .TrueNegativeTests.Bypassed}}
                     {{range $code, $testDetails := $codeMap}}
                         {{$encoders := MapKeysToString $testDetails.Encoders ", "}}
                         {{$placeholders := MapKeysToString $testDetails.Placeholders ", "}}
