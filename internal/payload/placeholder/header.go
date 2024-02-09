@@ -13,7 +13,7 @@ var DefaultHeader = Header{name: "Header"}
 
 var _ Placeholder = (*Header)(nil)
 
-func (p Header) newConfig(_ map[any]any) (any, error) {
+func (p Header) newConfig(map[any]any) (PlaceholderConfig, error) {
 	return nil, nil
 }
 
@@ -21,7 +21,7 @@ func (p Header) GetName() string {
 	return p.name
 }
 
-func (p Header) CreateRequest(requestURL, payload string, _ any) (*http.Request, error) {
+func (p Header) CreateRequest(requestURL, payload string, _ PlaceholderConfig) (*http.Request, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err

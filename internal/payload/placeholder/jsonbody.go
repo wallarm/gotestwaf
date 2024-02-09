@@ -14,7 +14,7 @@ var DefaultJSONBody = JSONBody{name: "JSONBody"}
 
 var _ Placeholder = (*JSONBody)(nil)
 
-func (p JSONBody) newConfig(_ map[any]any) (any, error) {
+func (p JSONBody) newConfig(map[any]any) (PlaceholderConfig, error) {
 	return nil, nil
 }
 
@@ -22,7 +22,7 @@ func (p JSONBody) GetName() string {
 	return p.name
 }
 
-func (p JSONBody) CreateRequest(requestURL, payload string, _ any) (*http.Request, error) {
+func (p JSONBody) CreateRequest(requestURL, payload string, _ PlaceholderConfig) (*http.Request, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err

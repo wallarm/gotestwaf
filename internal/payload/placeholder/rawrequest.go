@@ -1,6 +1,7 @@
 package placeholder
 
 import (
+	"crypto/sha256"
 	"io"
 	"net/http"
 	"strings"
@@ -22,8 +23,9 @@ type RawRequestConfig struct {
 var DefaultRawRequest = RawRequest{name: "RawRequest"}
 
 var _ Placeholder = (*RawRequest)(nil)
+var _ PlaceholderConfig = (*RawRequestConfig)(nil)
 
-func (p RawRequest) newConfig(conf map[any]any) (any, error) {
+func (p RawRequest) newConfig(conf map[any]any) (PlaceholderConfig, error) {
 	result := &RawRequestConfig{}
 
 	method, ok := conf["method"]
@@ -104,7 +106,7 @@ func (p RawRequest) GetName() string {
 
 // CreateRequest creates a new request from config.
 // config must be a RawRequestConfig struct.
-func (p RawRequest) CreateRequest(requestURL, payload string, config any) (*http.Request, error) {
+func (p RawRequest) CreateRequest(requestURL, payload string, config PlaceholderConfig) (*http.Request, error) {
 	conf, ok := config.(*RawRequestConfig)
 	if !ok {
 		return nil, &BadPlaceholderConfigError{
@@ -140,4 +142,20 @@ func (p RawRequest) CreateRequest(requestURL, payload string, config any) (*http
 	}
 
 	return req, nil
+}
+
+func (r *RawRequestConfig) Hash() []byte {
+	sha256sum := sha256.New()
+
+	sha256sum.Write([]byte(r.Method))
+	sha256sum.Write([]byte(r.Path))
+
+	for header, value := range r.Headers {
+		sha256sum.Write([]byte(header))
+		sha256sum.Write([]byte(value))
+	}
+
+	sha256sum.Write([]byte(r.Body))
+
+	return sha256sum.Sum(nil)
 }
