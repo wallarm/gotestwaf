@@ -23,7 +23,6 @@ RUN <<EOF
         tini               \
         chromium           \
         font-inter         \
-        font-iosevka-base  \
         fontconfig
 
     fc-cache -fv

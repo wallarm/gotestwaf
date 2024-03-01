@@ -27,7 +27,10 @@ func findChrome() (string, error) {
 	case "windows":
 		chromePath = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
 	case "darwin":
-		chromePath = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+		chromePath = "/Applications/Chromium.app/Contents/MacOS/Chromium"
+		if _, err := os.Stat(chromePath); errors.Is(err, os.ErrNotExist) {
+			chromePath = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+		}
 	case "linux":
 		var err error
 		for _, name := range []string{"chromium-browser", "google-chrome-stable"} {
