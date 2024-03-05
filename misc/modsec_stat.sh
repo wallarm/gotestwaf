@@ -57,7 +57,7 @@ for PARANOIA in $(seq 1 4); do
 	API_SEC="$(echo "$OUTPUT" | grep -E '\| *API Security *\|' | cut -d '|' -f 5 | sed 's/^ *//; s/%//; s/ *$//')"
 	APP_SEC="$(echo "$OUTPUT" | grep -E '\| *Application Security *\|' | cut -d '|' -f 5 | sed 's/^ *//; s/%//; s/ *$//')"
 
-	printf "{\n\tName: \"ModSecurity PARANOIA=$PARANOIA\",\n\tApiSec: computeGrade($API_SEC, 1),\n\tAppSec: computeGrade($APP_SEC, 1),\n\tOverallScore: computeGrade($OVERALL_SCORE, 1),\n}," >> "$RESULT_OUTPUT"
+	printf "{\n\tName: \"ModSecurity PARANOIA=$PARANOIA\",\n\tApiSec: computeGrade($API_SEC, 1),\n\tAppSec: computeGrade($APP_SEC, 1),\n\tOverallScore: computeGrade($OVERALL_SCORE, 1),\n},\n" >> "$RESULT_OUTPUT"
 
 	docker kill "modsec_paranoia_$PARANOIA"
 done
