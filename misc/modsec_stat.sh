@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
 RESULT_OUTPUT="modsec_stat_$(date -u +"%Y-%m-%dT%H:%M:%SZ").txt"
-GTW_WORKERS_NUMBER=100
+GTW_WORKERS_NUMBER=10
 
 ENDPOINT="localhost"
 if [ "$(uname -s)" = "Darwin" ]; then
@@ -50,6 +50,7 @@ for PARANOIA in $(seq 1 4); do
 				--ignoreUnresolved \
 				--wafName "ModSecurity PARANOIA $PARANOIA" \
 				--noEmailReport \
+				--includePayloads \
 	)
 
 	OVERALL_SCORE="$(echo "$OUTPUT" | grep -E '\| *SCORE *\|' | cut -d '|' -f 3 | sed 's/^ *//; s/%//; s/ *$//')"
