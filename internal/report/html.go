@@ -29,27 +29,27 @@ var (
 	comparisonTable = []*report.ComparisonTableRow{
 		{
 			Name:         "ModSecurity PARANOIA=1",
-			ApiSec:       computeGrade(42.9, 1),
-			AppSec:       computeGrade(30.5, 1),
-			OverallScore: computeGrade(36.7, 1),
+			ApiSec:       computeGrade(57.89, 1),
+			AppSec:       computeGrade(73.76, 1),
+			OverallScore: computeGrade(65.83, 1),
 		},
 		{
 			Name:         "ModSecurity PARANOIA=2",
-			ApiSec:       computeGrade(78.6, 1),
-			AppSec:       computeGrade(34.8, 1),
-			OverallScore: computeGrade(56.7, 1),
+			ApiSec:       computeGrade(65.79, 1),
+			AppSec:       computeGrade(67.00, 1),
+			OverallScore: computeGrade(66.40, 1),
 		},
 		{
 			Name:         "ModSecurity PARANOIA=3",
-			ApiSec:       computeGrade(92.9, 1),
-			AppSec:       computeGrade(38.3, 1),
-			OverallScore: computeGrade(65.6, 1),
+			ApiSec:       computeGrade(92.11, 1),
+			AppSec:       computeGrade(56.17, 1),
+			OverallScore: computeGrade(74.14, 1),
 		},
 		{
 			Name:         "ModSecurity PARANOIA=4",
-			ApiSec:       computeGrade(100, 1),
-			AppSec:       computeGrade(40.8, 1),
-			OverallScore: computeGrade(70.4, 1),
+			ApiSec:       computeGrade(100.00, 1),
+			AppSec:       computeGrade(39.88, 1),
+			OverallScore: computeGrade(69.94, 1),
 		},
 	}
 

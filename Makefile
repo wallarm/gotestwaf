@@ -7,44 +7,19 @@ gotestwaf_bin:
 	go build -o gotestwaf -ldflags "-X github.com/wallarm/gotestwaf/internal/version.Version=$(GOTESTWAF_VERSION)" ./cmd
 
 modsec:
-	docker pull mendhak/http-https-echo:20
-	docker run --rm -d --name gotestwaf_test_app -p 8088:8080 -t mendhak/http-https-echo:20
-	docker pull owasp/modsecurity-crs:3.3.2-nginx
-	docker run --rm -d --name gotestwaf_modsec -p 8080:80 -p 8443:443 -e BACKEND="http://172.17.0.1:8088" -e PARANOIA=1 \
-		-v ${PWD}/resources/default.conf.template:/etc/nginx/templates/conf.d/default.conf.template \
-		owasp/modsecurity-crs:3.3.2-nginx
+	docker pull mendhak/http-https-echo:31
+	docker run --rm -d --name gotestwaf_test_app -p 8088:8080 mendhak/http-https-echo:31
+	docker pull owasp/modsecurity-crs:nginx-alpine
+	docker run --rm -d --name gotestwaf_modsec -p 8080:8080 -p 8443:8443 \
+		-e BACKEND="http://$$(docker inspect --format '{{.NetworkSettings.IPAddress}}' gotestwaf_test_app):8080" \
+		-e PARANOIA=1 \
+		owasp/modsecurity-crs:nginx-alpine
 
 modsec_down:
 	docker kill gotestwaf_test_app gotestwaf_modsec
 
 modsec_stat: gotestwaf
-	docker pull mendhak/http-https-echo:20
-	docker pull owasp/modsecurity-crs:3.3.2-nginx
-	docker run --rm -d --name gotestwaf_test_app -p 8088:8080 -t mendhak/http-https-echo:20
-	docker run --rm -d -p 8080:80 -p 8443:443 -e PARANOIA=1 --name modsec_paranoia_1 -e BACKEND="http://172.17.0.1:8088" \
-		-v ${PWD}/resources/default.conf.template:/etc/nginx/templates/conf.d/default.conf.template \
-		owasp/modsecurity-crs:3.3.2-nginx
-	docker run --rm -v ${PWD}/reports:/app/reports --network="host" \
-		gotestwaf --url=http://127.0.0.1:8080/ --workers 100 --ignoreUnresolved --wafName "ModSecurity PARANOIA 1" --noEmailReport
-	docker kill modsec_paranoia_1
-	docker run --rm -d -p 8080:80 -p 8443:443 -e PARANOIA=2 --name modsec_paranoia_2 -e BACKEND="http://172.17.0.1:8088" \
-		-v ${PWD}/resources/default.conf.template:/etc/nginx/templates/conf.d/default.conf.template \
-		owasp/modsecurity-crs:3.3.2-nginx
-	docker run --rm -v ${PWD}/reports:/app/reports --network="host" \
-		gotestwaf --url=http://127.0.0.1:8080/ --workers 100 --ignoreUnresolved --wafName "ModSecurity PARANOIA 2" --noEmailReport
-	docker kill modsec_paranoia_2
-	docker run --rm -d -p 8080:80 -p 8443:443 -e PARANOIA=3 --name modsec_paranoia_3 -e BACKEND="http://172.17.0.1:8088" \
-		-v ${PWD}/resources/default.conf.template:/etc/nginx/templates/conf.d/default.conf.template \
-		owasp/modsecurity-crs:3.3.2-nginx
-	docker run --rm -v ${PWD}/reports:/app/reports --network="host" \
-		gotestwaf --url=http://127.0.0.1:8080/ --workers 100 --ignoreUnresolved --wafName "ModSecurity PARANOIA 3" --noEmailReport
-	docker kill modsec_paranoia_3
-	docker run --rm -d -p 8080:80 -p 8443:443 -e PARANOIA=4 --name modsec_paranoia_4 -e BACKEND="http://172.17.0.1:8088" \
-		-v ${PWD}/resources/default.conf.template:/etc/nginx/templates/conf.d/default.conf.template \
-		owasp/modsecurity-crs:3.3.2-nginx
-	docker run --rm -v ${PWD}/reports:/app/reports --network="host" \
-		gotestwaf --url=http://127.0.0.1:8080/ --workers 100 --ignoreUnresolved --wafName "ModSecurity PARANOIA 4" --noEmailReport
-	docker kill modsec_paranoia_4
+	./misc/modsec_stat.sh
 
 scan_local:
 	go run ./cmd --url=http://127.0.0.1:8080/ --workers 200 --noEmailReport

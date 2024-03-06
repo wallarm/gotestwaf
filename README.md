@@ -380,6 +380,7 @@ Options:
       --grpcPort uint16         gRPC port to check
       --idleConnTimeout int     The maximum amount of time a keep-alive connection will live (default 2)
       --ignoreUnresolved        If true, unresolved test cases will be considered as bypassed (affect score and results)
+      --includePayloads         If true, payloads will be included in HTML/PDF report
       --logFormat string        Set logging format: text, json (default "text")
       --logLevel string         Logging level: panic, fatal, error, warn, info, debug, trace (default "info")
       --maxIdleConns int        The maximum number of keep-alive connections (default 2)
