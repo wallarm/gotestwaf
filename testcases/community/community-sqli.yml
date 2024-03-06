@@ -8,6 +8,10 @@ payload:
   - /*!%55NiOn*/%20/*!%53eLEct*/+
   - -1945+/*!%55NiOn*/%20/*!%53eLEct*/+1,2,3,%27soy%20vulnerable%27,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19+--+
   - "a' UNION SELECT 1, NULL, NULL, table_name, column_name FROM information_schema.columns-- -"
+  - union%23foo*%2F*bar%0D%0Aselect%23foo%0D%0A
+  - ;SELECT-id-1.FROM`test`
+  - 27/**/%256fR/**/50%2521%253D22%253B%2523
+  - 1337&#x27;+or+1=1;--+
 encoder:
   - URL
 placeholder:
