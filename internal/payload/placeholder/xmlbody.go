@@ -14,7 +14,7 @@ var DefaultXMLBody = XMLBody{name: "XMLBody"}
 
 var _ Placeholder = (*XMLBody)(nil)
 
-func (p XMLBody) newConfig(_ map[any]any) (any, error) {
+func (p XMLBody) newConfig(map[any]any) (PlaceholderConfig, error) {
 	return nil, nil
 }
 
@@ -22,7 +22,7 @@ func (p XMLBody) GetName() string {
 	return p.name
 }
 
-func (p XMLBody) CreateRequest(requestURL, payload string, _ any) (*http.Request, error) {
+func (p XMLBody) CreateRequest(requestURL, payload string, _ PlaceholderConfig) (*http.Request, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err

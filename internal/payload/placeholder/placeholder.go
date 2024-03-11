@@ -3,6 +3,8 @@ package placeholder
 import (
 	"net/http"
 
+	"github.com/wallarm/gotestwaf/internal/helpers"
+
 	"github.com/pkg/errors"
 )
 
@@ -13,10 +15,14 @@ const (
 )
 
 type Placeholder interface {
-	newConfig(conf map[any]any) (any, error)
+	newConfig(conf map[any]any) (PlaceholderConfig, error)
 
 	GetName() string
-	CreateRequest(url, data string, config any) (*http.Request, error)
+	CreateRequest(url, data string, config PlaceholderConfig) (*http.Request, error)
+}
+
+type PlaceholderConfig interface {
+	helpers.Hash
 }
 
 var Placeholders map[string]Placeholder
@@ -43,7 +49,7 @@ func init() {
 	Placeholders[DefaultGraphQL.GetName()] = DefaultGraphQL
 }
 
-func GetPlaceholderConfig(name string, conf any) (any, error) {
+func GetPlaceholderConfig(name string, conf any) (PlaceholderConfig, error) {
 	ph, ok := Placeholders[name]
 	if !ok {
 		return nil, &UnknownPlaceholderError{name: name}
@@ -68,7 +74,7 @@ func GetPlaceholderConfig(name string, conf any) (any, error) {
 	return phConf, err
 }
 
-func Apply(url, data, placeholder string, config any) (*http.Request, error) {
+func Apply(url, data, placeholder string, config PlaceholderConfig) (*http.Request, error) {
 	ph, ok := Placeholders[placeholder]
 	if !ok {
 		return nil, &UnknownPlaceholderError{name: placeholder}

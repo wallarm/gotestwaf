@@ -12,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/wallarm/gotestwaf/internal/config"
 	"github.com/wallarm/gotestwaf/internal/helpers"
@@ -126,6 +127,16 @@ func parseFlags() (args []string, err error) {
 	// url flag must be set
 	if *urlParam == "" {
 		return nil, errors.New("--url flag is not set")
+	}
+
+	if !terminal.IsTerminal(int(os.Stdin.Fd())) {
+		if *noEmailReport == false && *email == "" {
+			return nil, errors.New(
+				"GoTestWAF is running in a non-interactive session. " +
+					"Please use the '-it' flag if you are running GTW in Docker or use the " +
+					"'--email' (or '--noEmailReport') and '--includePayloads' ('true' or 'false') options",
+			)
+		}
 	}
 
 	if *noEmailReport == false && *email != "" {

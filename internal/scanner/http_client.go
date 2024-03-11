@@ -108,14 +108,9 @@ func (c *HTTPClient) SendPayload(
 	payload string,
 	encoderName string,
 	placeholderName string,
-	placeholderConfig any,
-	debugHeaderValue string,
-) (
-	responseMsgHeader string,
-	responseBody string,
-	statusCode int,
-	err error,
-) {
+	placeholderConfig placeholder.PlaceholderConfig,
+	testHeaderValue string,
+) (responseMsgHeader string, responseBody string, statusCode int, err error) {
 	encodedPayload, err := encoder.Apply(encoderName, payload)
 	if err != nil {
 		return "", "", 0, errors.Wrap(err, "encoding payload")
@@ -144,8 +139,8 @@ func (c *HTTPClient) SendPayload(
 	}
 	req.Host = c.hostHeader
 
-	if debugHeaderValue != "" {
-		req.Header.Set(GTWDebugHeader, debugHeaderValue)
+	if testHeaderValue != "" {
+		req.Header.Set(GTWDebugHeader, testHeaderValue)
 	}
 
 	if c.followCookies && c.renewSession {

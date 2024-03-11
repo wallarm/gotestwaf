@@ -55,7 +55,7 @@ func printConsoleReportTable(
 
 	var buffer strings.Builder
 
-	fmt.Fprintf(&buffer, "Negative Tests:\n")
+	fmt.Fprintf(&buffer, "True-Positive Tests:\n")
 
 	// Negative cases summary table
 	table := tablewriter.NewWriter(&buffer)
@@ -64,7 +64,7 @@ func printConsoleReportTable(
 		table.SetColMinWidth(index, colMinWidth)
 	}
 
-	for _, row := range s.NegativeTests.SummaryTable {
+	for _, row := range s.TruePositiveTests.SummaryTable {
 		rowAppend := []string{
 			row.TestSet,
 			row.TestCase,
@@ -85,40 +85,40 @@ func printConsoleReportTable(
 	footerNegativeTests := []string{
 		fmt.Sprintf("Date:\n%s", reportTime.Format("2006-01-02")),
 		fmt.Sprintf("Project Name:\n%s", wafName),
-		fmt.Sprintf("True Negative Score:\n%.2f%%", s.NegativeTests.ResolvedBlockedRequestsPercentage),
+		fmt.Sprintf("True-Positive Score:\n%.2f%%", s.TruePositiveTests.ResolvedBlockedRequestsPercentage),
 		fmt.Sprintf("Blocked (Resolved):\n%d/%d (%.2f%%)",
-			s.NegativeTests.BlockedRequestsNumber,
-			s.NegativeTests.ResolvedRequestsNumber,
-			s.NegativeTests.ResolvedBlockedRequestsPercentage,
+			s.TruePositiveTests.BlockedRequestsNumber,
+			s.TruePositiveTests.ResolvedRequestsNumber,
+			s.TruePositiveTests.ResolvedBlockedRequestsPercentage,
 		),
 		fmt.Sprintf("Bypassed (Resolved):\n%d/%d (%.2f%%)",
-			s.NegativeTests.BypassedRequestsNumber,
-			s.NegativeTests.ResolvedRequestsNumber,
-			s.NegativeTests.ResolvedBypassedRequestsPercentage,
+			s.TruePositiveTests.BypassedRequestsNumber,
+			s.TruePositiveTests.ResolvedRequestsNumber,
+			s.TruePositiveTests.ResolvedBypassedRequestsPercentage,
 		),
 	}
 	if !ignoreUnresolved {
 		footerNegativeTests = append(footerNegativeTests,
 			fmt.Sprintf("Unresolved (Sent):\n%d/%d (%.2f%%)",
-				s.NegativeTests.UnresolvedRequestsNumber,
-				s.NegativeTests.AllRequestsNumber,
-				s.NegativeTests.UnresolvedRequestsPercentage,
+				s.TruePositiveTests.UnresolvedRequestsNumber,
+				s.TruePositiveTests.AllRequestsNumber,
+				s.TruePositiveTests.UnresolvedRequestsPercentage,
 			),
 		)
 	}
 	footerNegativeTests = append(footerNegativeTests,
-		fmt.Sprintf("Total Sent:\n%d", s.NegativeTests.AllRequestsNumber),
+		fmt.Sprintf("Total Sent:\n%d", s.TruePositiveTests.AllRequestsNumber),
 		fmt.Sprintf("Failed (Total):\n%d/%d (%.2f%%)",
-			s.NegativeTests.FailedRequestsNumber,
-			s.NegativeTests.AllRequestsNumber,
-			s.NegativeTests.FailedRequestsPercentage,
+			s.TruePositiveTests.FailedRequestsNumber,
+			s.TruePositiveTests.AllRequestsNumber,
+			s.TruePositiveTests.FailedRequestsPercentage,
 		),
 	)
 
 	table.SetFooter(footerNegativeTests)
 	table.Render()
 
-	fmt.Fprintf(&buffer, "\nPositive Tests:\n")
+	fmt.Fprintf(&buffer, "\nTrue-Negative Tests:\n")
 
 	// Positive cases summary table
 	posTable := tablewriter.NewWriter(&buffer)
@@ -127,7 +127,7 @@ func printConsoleReportTable(
 		posTable.SetColMinWidth(index, colMinWidth)
 	}
 
-	for _, row := range s.PositiveTests.SummaryTable {
+	for _, row := range s.TrueNegativeTests.SummaryTable {
 		rowAppend := []string{
 			row.TestSet,
 			row.TestCase,
@@ -148,33 +148,33 @@ func printConsoleReportTable(
 	footerPositiveTests := []string{
 		fmt.Sprintf("Date:\n%s", reportTime.Format("2006-01-02")),
 		fmt.Sprintf("Project Name:\n%s", wafName),
-		fmt.Sprintf("False Positive Score:\n%.2f%%", s.PositiveTests.ResolvedTrueRequestsPercentage),
+		fmt.Sprintf("True-Negative Score:\n%.2f%%", s.TrueNegativeTests.ResolvedTrueRequestsPercentage),
 		fmt.Sprintf("Blocked (Resolved):\n%d/%d (%.2f%%)",
-			s.PositiveTests.BlockedRequestsNumber,
-			s.PositiveTests.ResolvedRequestsNumber,
-			s.PositiveTests.ResolvedFalseRequestsPercentage,
+			s.TrueNegativeTests.BlockedRequestsNumber,
+			s.TrueNegativeTests.ResolvedRequestsNumber,
+			s.TrueNegativeTests.ResolvedFalseRequestsPercentage,
 		),
 		fmt.Sprintf("Bypassed (Resolved):\n%d/%d (%.2f%%)",
-			s.PositiveTests.BypassedRequestsNumber,
-			s.PositiveTests.ResolvedRequestsNumber,
-			s.PositiveTests.ResolvedTrueRequestsPercentage,
+			s.TrueNegativeTests.BypassedRequestsNumber,
+			s.TrueNegativeTests.ResolvedRequestsNumber,
+			s.TrueNegativeTests.ResolvedTrueRequestsPercentage,
 		),
 	}
 	if !ignoreUnresolved {
 		footerPositiveTests = append(footerPositiveTests,
 			fmt.Sprintf("Unresolved (Sent):\n%d/%d (%.2f%%)",
-				s.PositiveTests.UnresolvedRequestsNumber,
-				s.PositiveTests.AllRequestsNumber,
-				s.PositiveTests.UnresolvedRequestsPercentage,
+				s.TrueNegativeTests.UnresolvedRequestsNumber,
+				s.TrueNegativeTests.AllRequestsNumber,
+				s.TrueNegativeTests.UnresolvedRequestsPercentage,
 			),
 		)
 	}
 	footerPositiveTests = append(footerPositiveTests,
-		fmt.Sprintf("Total Sent:\n%d", s.PositiveTests.AllRequestsNumber),
+		fmt.Sprintf("Total Sent:\n%d", s.TrueNegativeTests.AllRequestsNumber),
 		fmt.Sprintf("Failed (Total):\n%d/%d (%.2f%%)",
-			s.PositiveTests.FailedRequestsNumber,
-			s.PositiveTests.AllRequestsNumber,
-			s.PositiveTests.FailedRequestsPercentage,
+			s.TrueNegativeTests.FailedRequestsNumber,
+			s.TrueNegativeTests.AllRequestsNumber,
+			s.TrueNegativeTests.FailedRequestsPercentage,
 		),
 	)
 
@@ -185,20 +185,20 @@ func printConsoleReportTable(
 
 	// summary table
 	sumTable := tablewriter.NewWriter(&buffer)
-	baseHeader = []string{"Type", "True-negative tests blocked", "True-positive tests passed", "Average"}
+	baseHeader = []string{"Type", "True-Positive tests blocked", "True-Negative tests passed", "Average"}
 	sumTable.SetHeader(baseHeader)
 	for index := range baseHeader {
 		sumTable.SetColMinWidth(index, 27)
 	}
 
 	row := []string{"API Security"}
-	if s.Score.ApiSec.TrueNegative != -1.0 {
-		row = append(row, fmt.Sprintf("%.2f%%", s.Score.ApiSec.TrueNegative))
+	if s.Score.ApiSec.TruePositive != -1.0 {
+		row = append(row, fmt.Sprintf("%.2f%%", s.Score.ApiSec.TruePositive))
 	} else {
 		row = append(row, "n/a")
 	}
-	if s.Score.ApiSec.TruePositive != -1.0 {
-		row = append(row, fmt.Sprintf("%.2f%%", s.Score.ApiSec.TruePositive))
+	if s.Score.ApiSec.TrueNegative != -1.0 {
+		row = append(row, fmt.Sprintf("%.2f%%", s.Score.ApiSec.TrueNegative))
 	} else {
 		row = append(row, "n/a")
 	}
@@ -210,13 +210,13 @@ func printConsoleReportTable(
 	sumTable.Append(row)
 
 	row = []string{"Application Security"}
-	if s.Score.AppSec.TrueNegative != -1.0 {
-		row = append(row, fmt.Sprintf("%.2f%%", s.Score.AppSec.TrueNegative))
+	if s.Score.AppSec.TruePositive != -1.0 {
+		row = append(row, fmt.Sprintf("%.2f%%", s.Score.AppSec.TruePositive))
 	} else {
 		row = append(row, "n/a")
 	}
-	if s.Score.AppSec.TruePositive != -1.0 {
-		row = append(row, fmt.Sprintf("%.2f%%", s.Score.AppSec.TruePositive))
+	if s.Score.AppSec.TrueNegative != -1.0 {
+		row = append(row, fmt.Sprintf("%.2f%%", s.Score.AppSec.TrueNegative))
 	} else {
 		row = append(row, "n/a")
 	}
@@ -256,22 +256,22 @@ func printConsoleReportJson(
 		Score:       s.Score.Average,
 	}
 
-	if len(s.NegativeTests.SummaryTable) != 0 {
-		report.NegativeTests = &testsInfo{
-			Score:           s.NegativeTests.ResolvedBlockedRequestsPercentage,
-			TotalSent:       s.NegativeTests.AllRequestsNumber,
-			ResolvedTests:   s.NegativeTests.ResolvedRequestsNumber,
-			BlockedTests:    s.NegativeTests.BlockedRequestsNumber,
-			BypassedTests:   s.NegativeTests.BypassedRequestsNumber,
-			UnresolvedTests: s.NegativeTests.UnresolvedRequestsNumber,
-			FailedTests:     s.NegativeTests.FailedRequestsNumber,
+	if len(s.TruePositiveTests.SummaryTable) != 0 {
+		report.TruePositiveTests = &testsInfo{
+			Score:           s.TruePositiveTests.ResolvedBlockedRequestsPercentage,
+			TotalSent:       s.TruePositiveTests.AllRequestsNumber,
+			ResolvedTests:   s.TruePositiveTests.ResolvedRequestsNumber,
+			BlockedTests:    s.TruePositiveTests.BlockedRequestsNumber,
+			BypassedTests:   s.TruePositiveTests.BypassedRequestsNumber,
+			UnresolvedTests: s.TruePositiveTests.UnresolvedRequestsNumber,
+			FailedTests:     s.TruePositiveTests.FailedRequestsNumber,
 			TestSets:        make(testSets),
 		}
-		for _, row := range s.NegativeTests.SummaryTable {
-			if report.NegativeTests.TestSets[row.TestSet] == nil {
-				report.NegativeTests.TestSets[row.TestSet] = make(testCases)
+		for _, row := range s.TruePositiveTests.SummaryTable {
+			if report.TruePositiveTests.TestSets[row.TestSet] == nil {
+				report.TruePositiveTests.TestSets[row.TestSet] = make(testCases)
 			}
-			report.NegativeTests.TestSets[row.TestSet][row.TestCase] = &testCaseInfo{
+			report.TruePositiveTests.TestSets[row.TestSet][row.TestCase] = &testCaseInfo{
 				Percentage: row.Percentage,
 				Sent:       row.Sent,
 				Blocked:    row.Blocked,
@@ -282,22 +282,22 @@ func printConsoleReportJson(
 		}
 	}
 
-	if len(s.PositiveTests.SummaryTable) != 0 {
-		report.PositiveTests = &testsInfo{
-			Score:           s.PositiveTests.ResolvedTrueRequestsPercentage,
-			TotalSent:       s.PositiveTests.AllRequestsNumber,
-			ResolvedTests:   s.PositiveTests.ResolvedRequestsNumber,
-			BlockedTests:    s.PositiveTests.BlockedRequestsNumber,
-			BypassedTests:   s.PositiveTests.BypassedRequestsNumber,
-			UnresolvedTests: s.PositiveTests.UnresolvedRequestsNumber,
-			FailedTests:     s.PositiveTests.FailedRequestsNumber,
+	if len(s.TrueNegativeTests.SummaryTable) != 0 {
+		report.TrueNegativeTests = &testsInfo{
+			Score:           s.TrueNegativeTests.ResolvedTrueRequestsPercentage,
+			TotalSent:       s.TrueNegativeTests.AllRequestsNumber,
+			ResolvedTests:   s.TrueNegativeTests.ResolvedRequestsNumber,
+			BlockedTests:    s.TrueNegativeTests.BlockedRequestsNumber,
+			BypassedTests:   s.TrueNegativeTests.BypassedRequestsNumber,
+			UnresolvedTests: s.TrueNegativeTests.UnresolvedRequestsNumber,
+			FailedTests:     s.TrueNegativeTests.FailedRequestsNumber,
 			TestSets:        make(testSets),
 		}
-		for _, row := range s.PositiveTests.SummaryTable {
-			if report.PositiveTests.TestSets[row.TestSet] == nil {
-				report.PositiveTests.TestSets[row.TestSet] = make(testCases)
+		for _, row := range s.TrueNegativeTests.SummaryTable {
+			if report.TrueNegativeTests.TestSets[row.TestSet] == nil {
+				report.TrueNegativeTests.TestSets[row.TestSet] = make(testCases)
 			}
-			report.PositiveTests.TestSets[row.TestSet][row.TestCase] = &testCaseInfo{
+			report.TrueNegativeTests.TestSets[row.TestSet][row.TestCase] = &testCaseInfo{
 				Percentage: row.Percentage,
 				Sent:       row.Sent,
 				Blocked:    row.Blocked,

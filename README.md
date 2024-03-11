@@ -182,12 +182,12 @@ To learn advanced configuration options, please use this [link](#configuration-o
 Check the evaluation results logged using the `STDOUT` and `STDERR` services. For example:
 
 ```
-INFO[0000] GoTestWAF started                             version=v0.3.1-184-gacbbd2d
-INFO[0000] Test cases loading started
-INFO[0000] Test cases loading finished
-INFO[0000] Test cases fingerprint                        fp=ba6e4eb2ac65ba17afa18b04d62af8b9
-INFO[0000] Try to identify WAF solution
-INFO[0000] WAF was not identified
+INFO[0000] GoTestWAF started                             version=v0.4.11-1-g8ccc316
+INFO[0000] Test cases loading started                   
+INFO[0000] Test cases loading finished                  
+INFO[0000] Test cases fingerprint                        fp=23c3ae919db5e6edcb62815de1a09fdf
+INFO[0000] Try to identify WAF solution                 
+INFO[0000] WAF was not identified                       
 INFO[0000] WAF pre-check                                 url="http://localhost:8080"
 INFO[0000] WAF pre-check                                 blocked=true code=403 status=done
 INFO[0000] WebSocket pre-check                           status=started url="ws://localhost:8080"
@@ -195,76 +195,76 @@ INFO[0000] WebSocket pre-check                           connection="not availab
 INFO[0000] gRPC pre-check                                status=started
 INFO[0000] gRPC pre-check                                connection="not available" status=done
 INFO[0000] Scanning started                              url="http://localhost:8080"
-INFO[0009] Scanning finished                             duration=9.104334843s
-Negative Tests:
-+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
-|       TEST SET        |       TEST CASE       |     PERCENTAGE, %     |        BLOCKED        |       BYPASSED        |      UNRESOLVED       |         SENT          |        FAILED         |
-+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
-| community             | community-128kb-rce   |                  0.00 |                     0 |                     0 |                     1 |                     1 |                     0 |
-| community             | community-128kb-sqli  |                  0.00 |                     0 |                     0 |                     1 |                     1 |                     0 |
-| community             | community-128kb-xss   |                  0.00 |                     0 |                     0 |                     1 |                     1 |                     0 |
-| community             | community-16kb-rce    |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
-| community             | community-16kb-sqli   |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
-| community             | community-16kb-xss    |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
-| community             | community-32kb-rce    |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
-| community             | community-32kb-sqli   |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
-| community             | community-32kb-xss    |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
-| community             | community-64kb-rce    |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
-| community             | community-64kb-sqli   |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
-| community             | community-64kb-xss    |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
-| community             | community-8kb-rce     |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
-| community             | community-8kb-sqli    |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
-| community             | community-8kb-xss     |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
-| community             | community-lfi         |                100.00 |                     8 |                     0 |                     0 |                     8 |                     0 |
-| community             | community-rce         |                 83.33 |                    10 |                     2 |                     0 |                    12 |                     0 |
-| community             | community-sqli        |                100.00 |                    32 |                     0 |                     0 |                    32 |                     0 |
-| community             | community-xss         |                 95.80 |                   502 |                    22 |                     0 |                   524 |                     0 |
-| community             | community-xxe         |                  0.00 |                     0 |                     2 |                     0 |                     2 |                     0 |
-| owasp                 | crlf                  |                 87.50 |                     7 |                     1 |                     0 |                     8 |                     0 |
-| owasp                 | ldap-injection        |                 12.50 |                     2 |                    14 |                     0 |                    16 |                     0 |
-| owasp                 | mail-injection        |                 12.50 |                     3 |                    21 |                     0 |                    24 |                     0 |
-| owasp                 | nosql-injection       |                  0.00 |                     0 |                    30 |                     0 |                    30 |                     0 |
-| owasp                 | path-traversal        |                 25.45 |                    28 |                    82 |                     0 |                   110 |                     0 |
-| owasp                 | rce                   |                 22.22 |                     4 |                    14 |                     0 |                    18 |                     0 |
-| owasp                 | rce-urlparam          |                 33.33 |                     3 |                     6 |                     0 |                     9 |                     0 |
-| owasp                 | shell-injection       |                 27.08 |                    13 |                    35 |                     0 |                    48 |                     0 |
-| owasp                 | sql-injection         |                 33.33 |                    24 |                    48 |                     0 |                    72 |                     0 |
-| owasp                 | ss-include            |                 37.50 |                    15 |                    25 |                     0 |                    40 |                     0 |
-| owasp                 | sst-injection         |                 18.75 |                    12 |                    52 |                     0 |                    64 |                     0 |
-| owasp                 | xml-injection         |                  0.00 |                     0 |                    12 |                     1 |                    13 |                     0 |
-| owasp                 | xss-scripting         |                 34.56 |                    47 |                    89 |                     0 |                   136 |                     0 |
-| owasp-api             | graphql               |                  0.00 |                     0 |                     6 |                     0 |                     6 |                     0 |
-| owasp-api             | graphql-post          |                 50.00 |                     2 |                     2 |                     0 |                     4 |                     0 |
-| owasp-api             | grpc                  |                  0.00 |                     0 |                     0 |                     0 |                     0 |                     0 |
-| owasp-api             | non-crud              |                100.00 |                     2 |                     0 |                     0 |                     2 |                     0 |
-| owasp-api             | rest                  |                100.00 |                     2 |                     0 |                     0 |                     2 |                     0 |
-| owasp-api             | soap                  |                100.00 |                     2 |                     0 |                     0 |                     2 |                     0 |
-+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
-|         DATE:         |     PROJECT NAME:     | TRUE NEGATIVE SCORE:  |  BLOCKED (RESOLVED):  | BYPASSED (RESOLVED):  |  UNRESOLVED (SENT):   |      TOTAL SENT:      |    FAILED (TOTAL):    |
-|      2022-10-04       |        GENERIC        |        61.19%         |   730/1193 (61.19%)   |   463/1193 (38.81%)   |    4/1197 (0.33%)     |         1197          |    0/1197 (0.00%)     |
-+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
+INFO[0025] Scanning finished                             duration=25.043996212s                                                                                                                          
+True-Positive Tests:
++-----------------------+-------------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
+|       TEST SET        |        TEST CASE        |     PERCENTAGE, %     |        BLOCKED        |       BYPASSED        |      UNRESOLVED       |         SENT          |        FAILED         |
++-----------------------+-------------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
+| community             | community-128kb-rce     |                  0.00 |                     0 |                     0 |                     1 |                     1 |                     0 |
+| community             | community-128kb-sqli    |                  0.00 |                     0 |                     0 |                     1 |                     1 |                     0 |
+| community             | community-128kb-xss     |                  0.00 |                     0 |                     0 |                     1 |                     1 |                     0 |
+| community             | community-16kb-rce      |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
+| community             | community-16kb-sqli     |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
+| community             | community-16kb-xss      |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
+| community             | community-32kb-rce      |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
+| community             | community-32kb-sqli     |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
+| community             | community-32kb-xss      |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
+| community             | community-64kb-rce      |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
+| community             | community-64kb-sqli     |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
+| community             | community-64kb-xss      |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
+| community             | community-8kb-rce       |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
+| community             | community-8kb-sqli      |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
+| community             | community-8kb-xss       |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
+| community             | community-lfi           |                100.00 |                     8 |                     0 |                     0 |                     8 |                     0 |
+| community             | community-lfi-multipart |                  0.00 |                     0 |                     0 |                     9 |                     9 |                     0 |
+| community             | community-rce           |                 83.33 |                    10 |                     2 |                     0 |                    12 |                     0 |
+| community             | community-sqli          |                100.00 |                    32 |                     0 |                     0 |                    32 |                     0 |
+| community             | community-user-agent    |                 70.00 |                     7 |                     3 |                     0 |                    10 |                     0 |
+| community             | community-xss           |                 95.80 |                   502 |                    22 |                     0 |                   524 |                     0 |
+| community             | community-xxe           |                  0.00 |                     0 |                     2 |                     0 |                     2 |                     0 |
+| owasp                 | crlf                    |                 77.78 |                     7 |                     2 |                     0 |                     9 |                     0 |
+| owasp                 | ldap-injection          |                  3.13 |                     2 |                    62 |                     0 |                    64 |                     0 |
+| owasp                 | mail-injection          |                 12.50 |                     3 |                    21 |                     0 |                    24 |                     0 |
+| owasp                 | nosql-injection         |                  0.00 |                     0 |                    70 |                     0 |                    70 |                     0 |
+| owasp                 | path-traversal          |                 24.77 |                    27 |                    82 |                     1 |                   110 |                     0 |
+| owasp                 | rce                     |                 33.33 |                    22 |                    44 |                     0 |                    66 |                     0 |
+| owasp                 | rce-urlparam            |                 33.33 |                     3 |                     6 |                     0 |                     9 |                     0 |
+| owasp                 | shell-injection         |                 27.08 |                    13 |                    35 |                     0 |                    48 |                     0 |
+| owasp                 | sql-injection           |                 24.36 |                    38 |                   118 |                     0 |                   156 |                     0 |
+| owasp                 | ss-include              |                 37.50 |                    15 |                    25 |                     0 |                    40 |                     0 |
+| owasp                 | sst-injection           |                 18.75 |                    12 |                    52 |                     0 |                    64 |                     0 |
+| owasp                 | xml-injection           |                  0.00 |                     0 |                    12 |                     1 |                    13 |                     0 |
+| owasp                 | xss-scripting           |                 33.20 |                   167 |                   336 |                     1 |                   504 |                     0 |
+| owasp-api             | graphql                 |                  0.00 |                     0 |                     6 |                     0 |                     6 |                     0 |
+| owasp-api             | graphql-post            |                 50.00 |                     2 |                     2 |                     0 |                     4 |                     0 |
+| owasp-api             | grpc                    |                  0.00 |                     0 |                     0 |                     0 |                     0 |                     0 |
+| owasp-api             | non-crud                |                100.00 |                     2 |                     0 |                     0 |                     2 |                     0 |
+| owasp-api             | rest                    |                 23.08 |                     3 |                    10 |                     0 |                    13 |                     0 |
+| owasp-api             | soap                    |                 23.08 |                     3 |                    10 |                     0 |                    13 |                     0 |
++-----------------------+-------------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
+|         DATE:         |      PROJECT NAME:      | TRUE-POSITIVE SCORE:  |  BLOCKED (RESOLVED):  | BYPASSED (RESOLVED):  |  UNRESOLVED (SENT):   |      TOTAL SENT:      |    FAILED (TOTAL):    |
+|      2024-02-08       |         GENERIC         |        49.12%         |   890/1812 (49.12%)   |   922/1812 (50.88%)   |    15/1827 (0.82%)    |         1827          |    0/1827 (0.00%)     |
++-----------------------+-------------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
 
-Positive Tests:
+True-Negative Tests:
 +-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
 |       TEST SET        |       TEST CASE       |     PERCENTAGE, %     |        BLOCKED        |       BYPASSED        |      UNRESOLVED       |         SENT          |        FAILED         |
 +-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
 | false-pos             | texts                 |                 85.65 |                    31 |                   185 |                     0 |                   216 |                     0 |
 +-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
-|         DATE:         |     PROJECT NAME:     | FALSE POSITIVE SCORE: |  BLOCKED (RESOLVED):  | BYPASSED (RESOLVED):  |  UNRESOLVED (SENT):   |      TOTAL SENT:      |    FAILED (TOTAL):    |
-|      2022-10-04       |        GENERIC        |        85.65%         |    31/216 (14.35%)    |   185/216 (85.65%)    |     0/216 (0.00%)     |          216          |     0/216 (0.00%)     |
+|         DATE:         |     PROJECT NAME:     | TRUE-NEGATIVE SCORE:  |  BLOCKED (RESOLVED):  | BYPASSED (RESOLVED):  |  UNRESOLVED (SENT):   |      TOTAL SENT:      |    FAILED (TOTAL):    |
+|      2024-02-08       |        GENERIC        |        85.65%         |    31/216 (14.35%)    |   185/216 (85.65%)    |     0/216 (0.00%)     |          216          |     0/216 (0.00%)     |
 +-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
 
 Summary:
 +-----------------------------+-----------------------------+-----------------------------+-----------------------------+
-|            TYPE             | TRUE-NEGATIVE TESTS BLOCKED | TRUE-POSITIVE TESTS PASSED  |           AVERAGE           |
+|            TYPE             | TRUE-POSITIVE TESTS BLOCKED | TRUE-NEGATIVE TESTS PASSED  |           AVERAGE           |
 +-----------------------------+-----------------------------+-----------------------------+-----------------------------+
-| API Security                | 50.00%                      | n/a                         | 50.00%                      |
-| Application Security        | 61.34%                      | 85.65%                      | 73.50%                      |
+| API Security                | 26.32%                      | n/a                         | 26.32%                      |
+| Application Security        | 49.61%                      | 85.65%                      | 67.63%                      |
 +-----------------------------+-----------------------------+-----------------------------+-----------------------------+
-|                                                                        SCORE            |           61.75%            |
+|                                                                        SCORE            |           46.97%            |
 +-----------------------------+-----------------------------+-----------------------------+-----------------------------+
-
-INFO[0015] Export full report                            filename=reports/waf-evaluation-report-2022-October-04-15-10-33.pdf
 ```
 
 The report file `waf-evaluation-report-<date>.pdf` is available in the `reports` folder of the user directory. You can also specify the directory to save the reports with the `reportPath` parameter and the name of the report file with the `reportName` parameter. To learn advanced configuration options, please use this [link](#configuration-options).
@@ -381,6 +381,7 @@ Options:
       --grpcPort uint16         gRPC port to check
       --idleConnTimeout int     The maximum amount of time a keep-alive connection will live (default 2)
       --ignoreUnresolved        If true, unresolved test cases will be considered as bypassed (affect score and results)
+      --includePayloads         If true, payloads will be included in HTML/PDF report
       --logFormat string        Set logging format: text, json (default "text")
       --logLevel string         Logging level: panic, fatal, error, warn, info, debug, trace (default "info")
       --maxIdleConns int        The maximum number of keep-alive connections (default 2)
@@ -478,10 +479,16 @@ Some supported OpenAPI features:
 
 Based on the described principle of operation, it is extremely important that the OpenAPI file correctly represents the implemented application API. Therefore, for example, you cannot use `default` to describe possible responses to queries.
 
-Example:
+Note: You need to forward volume with openapi spec to GoTestWAF container. 
 
 ```sh
-./gotestwaf --url https://example.com/v1 --openapiFile api.yaml
+-v ${PWD}/api.yaml:/app/api.yaml
+```
+
+Complete Docker Example:
+
+```sh
+docker run --rm --network="host" -it -v ${PWD}/reports:/app/reports -v ${PWD}/api.yaml:/app/api.yaml wallarm/gotestwaf --wafName your_waf_name --url=https://example.com/v1 --openapiFile api.yaml
 ```
 
 ## Running with OWASP Core Rule Set regression testing suite

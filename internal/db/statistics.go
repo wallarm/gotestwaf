@@ -12,7 +12,7 @@ type Statistics struct {
 
 	TestCasesFingerprint string
 
-	NegativeTests struct {
+	TruePositiveTests struct {
 		SummaryTable []*SummaryTableRow
 		Blocked      []*TestDetails
 		Bypasses     []*TestDetails
@@ -32,7 +32,7 @@ type Statistics struct {
 		FailedRequestsPercentage           float64
 	}
 
-	PositiveTests struct {
+	TrueNegativeTests struct {
 		SummaryTable  []*SummaryTableRow
 		FalsePositive []*TestDetails
 		TruePositive  []*TestDetails
@@ -54,14 +54,14 @@ type Statistics struct {
 
 	Score struct {
 		ApiSec struct {
-			TrueNegative float64
 			TruePositive float64
+			TrueNegative float64
 			Average      float64
 		}
 
 		AppSec struct {
-			TrueNegative float64
 			TruePositive float64
+			TrueNegative float64
 			Average      float64
 		}
 
@@ -208,60 +208,60 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 			// If positive set - move to another table (remove from general cases)
 			if isFalsePositive {
 				// False positive - blocked by the WAF (bad behavior, blockedRequests)
-				s.PositiveTests.BlockedRequestsNumber += blockedRequests
+				s.TrueNegativeTests.BlockedRequestsNumber += blockedRequests
 				// True positive - bypassed (good behavior, passedRequests)
-				s.PositiveTests.BypassedRequestsNumber += passedRequests
-				s.PositiveTests.UnresolvedRequestsNumber += unresolvedRequests
-				s.PositiveTests.FailedRequestsNumber += failedRequests
+				s.TrueNegativeTests.BypassedRequestsNumber += passedRequests
+				s.TrueNegativeTests.UnresolvedRequestsNumber += unresolvedRequests
+				s.TrueNegativeTests.FailedRequestsNumber += failedRequests
 
 				passedRequestsPercentage := CalculatePercentage(passedRequests, totalResolvedRequests)
 				row.Percentage = passedRequestsPercentage
 
-				s.PositiveTests.SummaryTable = append(s.PositiveTests.SummaryTable, row)
+				s.TrueNegativeTests.SummaryTable = append(s.TrueNegativeTests.SummaryTable, row)
 			} else {
-				s.NegativeTests.BlockedRequestsNumber += blockedRequests
-				s.NegativeTests.BypassedRequestsNumber += passedRequests
-				s.NegativeTests.UnresolvedRequestsNumber += unresolvedRequests
-				s.NegativeTests.FailedRequestsNumber += failedRequests
+				s.TruePositiveTests.BlockedRequestsNumber += blockedRequests
+				s.TruePositiveTests.BypassedRequestsNumber += passedRequests
+				s.TruePositiveTests.UnresolvedRequestsNumber += unresolvedRequests
+				s.TruePositiveTests.FailedRequestsNumber += failedRequests
 
 				blockedRequestsPercentage := CalculatePercentage(blockedRequests, totalResolvedRequests)
 				row.Percentage = blockedRequestsPercentage
 
-				s.NegativeTests.SummaryTable = append(s.NegativeTests.SummaryTable, row)
+				s.TruePositiveTests.SummaryTable = append(s.TruePositiveTests.SummaryTable, row)
 
 			}
 		}
 	}
 
 	// Number of all negative requests
-	s.NegativeTests.AllRequestsNumber = s.NegativeTests.BlockedRequestsNumber +
-		s.NegativeTests.BypassedRequestsNumber +
-		s.NegativeTests.UnresolvedRequestsNumber +
-		s.NegativeTests.FailedRequestsNumber
+	s.TruePositiveTests.AllRequestsNumber = s.TruePositiveTests.BlockedRequestsNumber +
+		s.TruePositiveTests.BypassedRequestsNumber +
+		s.TruePositiveTests.UnresolvedRequestsNumber +
+		s.TruePositiveTests.FailedRequestsNumber
 
 	// Number of negative resolved requests
-	s.NegativeTests.ResolvedRequestsNumber = s.NegativeTests.BlockedRequestsNumber +
-		s.NegativeTests.BypassedRequestsNumber
+	s.TruePositiveTests.ResolvedRequestsNumber = s.TruePositiveTests.BlockedRequestsNumber +
+		s.TruePositiveTests.BypassedRequestsNumber
 
 	// Number of all negative requests
-	s.PositiveTests.AllRequestsNumber = s.PositiveTests.BlockedRequestsNumber +
-		s.PositiveTests.BypassedRequestsNumber +
-		s.PositiveTests.UnresolvedRequestsNumber +
-		s.PositiveTests.FailedRequestsNumber
+	s.TrueNegativeTests.AllRequestsNumber = s.TrueNegativeTests.BlockedRequestsNumber +
+		s.TrueNegativeTests.BypassedRequestsNumber +
+		s.TrueNegativeTests.UnresolvedRequestsNumber +
+		s.TrueNegativeTests.FailedRequestsNumber
 
 	// Number of positive resolved requests
-	s.PositiveTests.ResolvedRequestsNumber = s.PositiveTests.BlockedRequestsNumber +
-		s.PositiveTests.BypassedRequestsNumber
+	s.TrueNegativeTests.ResolvedRequestsNumber = s.TrueNegativeTests.BlockedRequestsNumber +
+		s.TrueNegativeTests.BypassedRequestsNumber
 
-	s.NegativeTests.UnresolvedRequestsPercentage = CalculatePercentage(s.NegativeTests.UnresolvedRequestsNumber, s.NegativeTests.AllRequestsNumber)
-	s.NegativeTests.ResolvedBlockedRequestsPercentage = CalculatePercentage(s.NegativeTests.BlockedRequestsNumber, s.NegativeTests.ResolvedRequestsNumber)
-	s.NegativeTests.ResolvedBypassedRequestsPercentage = CalculatePercentage(s.NegativeTests.BypassedRequestsNumber, s.NegativeTests.ResolvedRequestsNumber)
-	s.NegativeTests.FailedRequestsPercentage = CalculatePercentage(s.NegativeTests.FailedRequestsNumber, s.NegativeTests.AllRequestsNumber)
+	s.TruePositiveTests.UnresolvedRequestsPercentage = CalculatePercentage(s.TruePositiveTests.UnresolvedRequestsNumber, s.TruePositiveTests.AllRequestsNumber)
+	s.TruePositiveTests.ResolvedBlockedRequestsPercentage = CalculatePercentage(s.TruePositiveTests.BlockedRequestsNumber, s.TruePositiveTests.ResolvedRequestsNumber)
+	s.TruePositiveTests.ResolvedBypassedRequestsPercentage = CalculatePercentage(s.TruePositiveTests.BypassedRequestsNumber, s.TruePositiveTests.ResolvedRequestsNumber)
+	s.TruePositiveTests.FailedRequestsPercentage = CalculatePercentage(s.TruePositiveTests.FailedRequestsNumber, s.TruePositiveTests.AllRequestsNumber)
 
-	s.PositiveTests.UnresolvedRequestsPercentage = CalculatePercentage(s.PositiveTests.UnresolvedRequestsNumber, s.PositiveTests.AllRequestsNumber)
-	s.PositiveTests.ResolvedFalseRequestsPercentage = CalculatePercentage(s.PositiveTests.BlockedRequestsNumber, s.PositiveTests.ResolvedRequestsNumber)
-	s.PositiveTests.ResolvedTrueRequestsPercentage = CalculatePercentage(s.PositiveTests.BypassedRequestsNumber, s.PositiveTests.ResolvedRequestsNumber)
-	s.PositiveTests.FailedRequestsPercentage = CalculatePercentage(s.PositiveTests.FailedRequestsNumber, s.PositiveTests.AllRequestsNumber)
+	s.TrueNegativeTests.UnresolvedRequestsPercentage = CalculatePercentage(s.TrueNegativeTests.UnresolvedRequestsNumber, s.TrueNegativeTests.AllRequestsNumber)
+	s.TrueNegativeTests.ResolvedFalseRequestsPercentage = CalculatePercentage(s.TrueNegativeTests.BlockedRequestsNumber, s.TrueNegativeTests.ResolvedRequestsNumber)
+	s.TrueNegativeTests.ResolvedTrueRequestsPercentage = CalculatePercentage(s.TrueNegativeTests.BypassedRequestsNumber, s.TrueNegativeTests.ResolvedRequestsNumber)
+	s.TrueNegativeTests.FailedRequestsPercentage = CalculatePercentage(s.TrueNegativeTests.FailedRequestsNumber, s.TrueNegativeTests.AllRequestsNumber)
 
 	for _, blockedTest := range db.blockedTests {
 		sort.Strings(blockedTest.AdditionalInfo)
@@ -278,9 +278,9 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 		}
 
 		if isFalsePositiveTest(blockedTest.Set) {
-			s.PositiveTests.FalsePositive = append(s.PositiveTests.FalsePositive, testDetails)
+			s.TrueNegativeTests.FalsePositive = append(s.TrueNegativeTests.FalsePositive, testDetails)
 		} else {
-			s.NegativeTests.Blocked = append(s.NegativeTests.Blocked, testDetails)
+			s.TruePositiveTests.Blocked = append(s.TruePositiveTests.Blocked, testDetails)
 		}
 	}
 
@@ -299,9 +299,9 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 		}
 
 		if isFalsePositiveTest(passedTest.Set) {
-			s.PositiveTests.TruePositive = append(s.PositiveTests.TruePositive, testDetails)
+			s.TrueNegativeTests.TruePositive = append(s.TrueNegativeTests.TruePositive, testDetails)
 		} else {
-			s.NegativeTests.Bypasses = append(s.NegativeTests.Bypasses, testDetails)
+			s.TruePositiveTests.Bypasses = append(s.TruePositiveTests.Bypasses, testDetails)
 		}
 	}
 
@@ -321,15 +321,15 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 
 		if ignoreUnresolved || nonBlockedAsPassed {
 			if isFalsePositiveTest(unresolvedTest.Set) {
-				s.PositiveTests.FalsePositive = append(s.PositiveTests.FalsePositive, testDetails)
+				s.TrueNegativeTests.FalsePositive = append(s.TrueNegativeTests.FalsePositive, testDetails)
 			} else {
-				s.NegativeTests.Bypasses = append(s.NegativeTests.Bypasses, testDetails)
+				s.TruePositiveTests.Bypasses = append(s.TruePositiveTests.Bypasses, testDetails)
 			}
 		} else {
 			if isFalsePositiveTest(unresolvedTest.Set) {
-				s.PositiveTests.Unresolved = append(s.PositiveTests.Unresolved, testDetails)
+				s.TrueNegativeTests.Unresolved = append(s.TrueNegativeTests.Unresolved, testDetails)
 			} else {
-				s.NegativeTests.Unresolved = append(s.NegativeTests.Unresolved, testDetails)
+				s.TruePositiveTests.Unresolved = append(s.TruePositiveTests.Unresolved, testDetails)
 			}
 		}
 	}
@@ -346,9 +346,9 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 		}
 
 		if isFalsePositiveTest(failedTest.Set) {
-			s.PositiveTests.Failed = append(s.PositiveTests.Failed, testDetails)
+			s.TrueNegativeTests.Failed = append(s.TrueNegativeTests.Failed, testDetails)
 		} else {
-			s.NegativeTests.Failed = append(s.NegativeTests.Failed, testDetails)
+			s.TruePositiveTests.Failed = append(s.TruePositiveTests.Failed, testDetails)
 		}
 	}
 
@@ -368,68 +368,68 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 		s.Paths = paths
 	}
 
-	var apiSecNegBlockedNum int
-	var apiSecNegNum int
-	var appSecNegBlockedNum int
-	var appSecNegNum int
+	var apiSecTruePosBlockedNum int
+	var apiSecTruePosNum int
+	var appSecTruePosBlockedNum int
+	var appSecTruePosNum int
 
-	for _, test := range s.NegativeTests.Blocked {
+	for _, test := range s.TruePositiveTests.Blocked {
 		if isApiTest(test.TestSet) {
-			apiSecNegNum++
-			apiSecNegBlockedNum++
+			apiSecTruePosNum++
+			apiSecTruePosBlockedNum++
 		} else {
-			appSecNegNum++
-			appSecNegBlockedNum++
+			appSecTruePosNum++
+			appSecTruePosBlockedNum++
 		}
 	}
-	for _, test := range s.NegativeTests.Bypasses {
+	for _, test := range s.TruePositiveTests.Bypasses {
 		if isApiTest(test.TestSet) {
-			apiSecNegNum++
+			apiSecTruePosNum++
 		} else {
-			appSecNegNum++
+			appSecTruePosNum++
 		}
 	}
 
-	var apiSecPosBypassNum int
-	var apiSecPosNum int
-	var appSecPosBypassNum int
-	var appSecPosNum int
+	var apiSecTrueNegBypassNum int
+	var apiSecTrueNegNum int
+	var appSecTrueNegBypassNum int
+	var appSecTrueNegNum int
 
-	for _, test := range s.PositiveTests.TruePositive {
+	for _, test := range s.TrueNegativeTests.TruePositive {
 		if isApiTest(test.TestSet) {
-			apiSecPosNum++
-			apiSecPosBypassNum++
+			apiSecTrueNegNum++
+			apiSecTrueNegBypassNum++
 		} else {
-			appSecPosNum++
-			appSecPosBypassNum++
+			appSecTrueNegNum++
+			appSecTrueNegBypassNum++
 		}
 	}
-	for _, test := range s.PositiveTests.FalsePositive {
+	for _, test := range s.TrueNegativeTests.FalsePositive {
 		if isApiTest(test.TestSet) {
-			apiSecPosNum++
+			apiSecTrueNegNum++
 		} else {
-			appSecPosNum++
+			appSecTrueNegNum++
 		}
 	}
 
 	var divider int
 	var sum float64
 
-	s.Score.ApiSec.TrueNegative = CalculatePercentage(apiSecNegBlockedNum, apiSecNegNum)
-	s.Score.ApiSec.TruePositive = CalculatePercentage(apiSecPosBypassNum, apiSecPosNum)
+	s.Score.ApiSec.TruePositive = CalculatePercentage(apiSecTruePosBlockedNum, apiSecTruePosNum)
+	s.Score.ApiSec.TrueNegative = CalculatePercentage(apiSecTrueNegBypassNum, apiSecTrueNegNum)
 
-	if apiSecNegNum != 0 {
-		divider++
-		sum += s.Score.ApiSec.TrueNegative
-	} else {
-		s.Score.ApiSec.TrueNegative = -1.0
-	}
-
-	if apiSecPosNum != 0 {
+	if apiSecTruePosNum != 0 {
 		divider++
 		sum += s.Score.ApiSec.TruePositive
 	} else {
 		s.Score.ApiSec.TruePositive = -1.0
+	}
+
+	if apiSecTrueNegNum != 0 {
+		divider++
+		sum += s.Score.ApiSec.TrueNegative
+	} else {
+		s.Score.ApiSec.TrueNegative = -1.0
 	}
 
 	if divider != 0 {
@@ -441,21 +441,21 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 	divider = 0
 	sum = 0.0
 
-	s.Score.AppSec.TrueNegative = CalculatePercentage(appSecNegBlockedNum, appSecNegNum)
-	s.Score.AppSec.TruePositive = CalculatePercentage(appSecPosBypassNum, appSecPosNum)
+	s.Score.AppSec.TruePositive = CalculatePercentage(appSecTruePosBlockedNum, appSecTruePosNum)
+	s.Score.AppSec.TrueNegative = CalculatePercentage(appSecTrueNegBypassNum, appSecTrueNegNum)
 
-	if appSecNegNum != 0 {
-		divider++
-		sum += s.Score.AppSec.TrueNegative
-	} else {
-		s.Score.AppSec.TrueNegative = -1.0
-	}
-
-	if appSecPosNum != 0 {
+	if appSecTruePosNum != 0 {
 		divider++
 		sum += s.Score.AppSec.TruePositive
 	} else {
 		s.Score.AppSec.TruePositive = -1.0
+	}
+
+	if appSecTrueNegNum != 0 {
+		divider++
+		sum += s.Score.AppSec.TrueNegative
+	} else {
+		s.Score.AppSec.TrueNegative = -1.0
 	}
 
 	if divider != 0 {

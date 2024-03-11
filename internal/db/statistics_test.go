@@ -165,30 +165,30 @@ func testPropertyNotPanics(db *DB, ignoreUnresolved, nonBlockedAsPassed bool) bo
 func testPropertyOnlyPositiveNumberValues(db *DB, ignoreUnresolved, nonBlockedAsPassed bool) bool {
 	stat := db.GetStatistics(ignoreUnresolved, nonBlockedAsPassed)
 
-	if stat.NegativeTests.AllRequestsNumber < 0 ||
-		stat.NegativeTests.BlockedRequestsNumber < 0 ||
-		stat.NegativeTests.BypassedRequestsNumber < 0 ||
-		stat.NegativeTests.UnresolvedRequestsNumber < 0 ||
-		stat.NegativeTests.FailedRequestsNumber < 0 ||
-		stat.NegativeTests.ResolvedRequestsNumber < 0 ||
-		stat.NegativeTests.UnresolvedRequestsPercentage < 0 ||
-		stat.NegativeTests.ResolvedBlockedRequestsPercentage < 0 ||
-		stat.NegativeTests.ResolvedBypassedRequestsPercentage < 0 ||
-		stat.NegativeTests.FailedRequestsPercentage < 0 ||
-		stat.PositiveTests.AllRequestsNumber < 0 ||
-		stat.PositiveTests.BlockedRequestsNumber < 0 ||
-		stat.PositiveTests.BypassedRequestsNumber < 0 ||
-		stat.PositiveTests.UnresolvedRequestsNumber < 0 ||
-		stat.PositiveTests.FailedRequestsNumber < 0 ||
-		stat.PositiveTests.ResolvedRequestsNumber < 0 ||
-		stat.PositiveTests.UnresolvedRequestsPercentage < 0 ||
-		stat.PositiveTests.ResolvedFalseRequestsPercentage < 0 ||
-		stat.PositiveTests.ResolvedTrueRequestsPercentage < 0 ||
-		stat.PositiveTests.FailedRequestsPercentage < 0 {
+	if stat.TruePositiveTests.AllRequestsNumber < 0 ||
+		stat.TruePositiveTests.BlockedRequestsNumber < 0 ||
+		stat.TruePositiveTests.BypassedRequestsNumber < 0 ||
+		stat.TruePositiveTests.UnresolvedRequestsNumber < 0 ||
+		stat.TruePositiveTests.FailedRequestsNumber < 0 ||
+		stat.TruePositiveTests.ResolvedRequestsNumber < 0 ||
+		stat.TruePositiveTests.UnresolvedRequestsPercentage < 0 ||
+		stat.TruePositiveTests.ResolvedBlockedRequestsPercentage < 0 ||
+		stat.TruePositiveTests.ResolvedBypassedRequestsPercentage < 0 ||
+		stat.TruePositiveTests.FailedRequestsPercentage < 0 ||
+		stat.TrueNegativeTests.AllRequestsNumber < 0 ||
+		stat.TrueNegativeTests.BlockedRequestsNumber < 0 ||
+		stat.TrueNegativeTests.BypassedRequestsNumber < 0 ||
+		stat.TrueNegativeTests.UnresolvedRequestsNumber < 0 ||
+		stat.TrueNegativeTests.FailedRequestsNumber < 0 ||
+		stat.TrueNegativeTests.ResolvedRequestsNumber < 0 ||
+		stat.TrueNegativeTests.UnresolvedRequestsPercentage < 0 ||
+		stat.TrueNegativeTests.ResolvedFalseRequestsPercentage < 0 ||
+		stat.TrueNegativeTests.ResolvedTrueRequestsPercentage < 0 ||
+		stat.TrueNegativeTests.FailedRequestsPercentage < 0 {
 		return false
 	}
 
-	summaryTablesRows := append(stat.NegativeTests.SummaryTable, stat.PositiveTests.SummaryTable...)
+	summaryTablesRows := append(stat.TruePositiveTests.SummaryTable, stat.TrueNegativeTests.SummaryTable...)
 	for _, row := range summaryTablesRows {
 		if row.Percentage < 0 ||
 			row.Sent < 0 ||
@@ -207,56 +207,56 @@ func testPropertyCorrectStatValues(db *DB, ignoreUnresolved, nonBlockedAsPassed 
 	stat := db.GetStatistics(ignoreUnresolved, nonBlockedAsPassed)
 
 	counters := make(map[string]map[string]int)
-	counters["negative"] = make(map[string]int)
-	counters["positive"] = make(map[string]int)
+	counters["true-positive"] = make(map[string]int)
+	counters["true-negative"] = make(map[string]int)
 
-	for _, row := range stat.NegativeTests.SummaryTable {
-		counters["negative"]["sent"] += row.Sent
-		counters["negative"]["blocked"] += row.Blocked
-		counters["negative"]["bypassed"] += row.Bypassed
-		counters["negative"]["unresolved"] += row.Unresolved
-		counters["negative"]["failed"] += row.Failed
+	for _, row := range stat.TruePositiveTests.SummaryTable {
+		counters["true-positive"]["sent"] += row.Sent
+		counters["true-positive"]["blocked"] += row.Blocked
+		counters["true-positive"]["bypassed"] += row.Bypassed
+		counters["true-positive"]["unresolved"] += row.Unresolved
+		counters["true-positive"]["failed"] += row.Failed
 	}
 
-	counters["negative"]["all"] = counters["negative"]["blocked"] +
-		counters["negative"]["bypassed"] +
-		counters["negative"]["unresolved"] +
-		counters["negative"]["failed"]
+	counters["true-positive"]["all"] = counters["true-positive"]["blocked"] +
+		counters["true-positive"]["bypassed"] +
+		counters["true-positive"]["unresolved"] +
+		counters["true-positive"]["failed"]
 
-	counters["negative"]["resolved"] = counters["negative"]["blocked"] +
-		counters["negative"]["bypassed"]
+	counters["true-positive"]["resolved"] = counters["true-positive"]["blocked"] +
+		counters["true-positive"]["bypassed"]
 
-	if counters["negative"]["all"] != stat.NegativeTests.AllRequestsNumber ||
-		counters["negative"]["blocked"] != stat.NegativeTests.BlockedRequestsNumber ||
-		counters["negative"]["bypassed"] != stat.NegativeTests.BypassedRequestsNumber ||
-		counters["negative"]["unresolved"] != stat.NegativeTests.UnresolvedRequestsNumber ||
-		counters["negative"]["failed"] != stat.NegativeTests.FailedRequestsNumber ||
-		counters["negative"]["resolved"] != stat.NegativeTests.ResolvedRequestsNumber {
+	if counters["true-positive"]["all"] != stat.TruePositiveTests.AllRequestsNumber ||
+		counters["true-positive"]["blocked"] != stat.TruePositiveTests.BlockedRequestsNumber ||
+		counters["true-positive"]["bypassed"] != stat.TruePositiveTests.BypassedRequestsNumber ||
+		counters["true-positive"]["unresolved"] != stat.TruePositiveTests.UnresolvedRequestsNumber ||
+		counters["true-positive"]["failed"] != stat.TruePositiveTests.FailedRequestsNumber ||
+		counters["true-positive"]["resolved"] != stat.TruePositiveTests.ResolvedRequestsNumber {
 		return false
 	}
 
-	for _, row := range stat.PositiveTests.SummaryTable {
-		counters["positive"]["sent"] += row.Sent
-		counters["positive"]["blocked"] += row.Blocked
-		counters["positive"]["bypassed"] += row.Bypassed
-		counters["positive"]["unresolved"] += row.Unresolved
-		counters["positive"]["failed"] += row.Failed
+	for _, row := range stat.TrueNegativeTests.SummaryTable {
+		counters["true-negative"]["sent"] += row.Sent
+		counters["true-negative"]["blocked"] += row.Blocked
+		counters["true-negative"]["bypassed"] += row.Bypassed
+		counters["true-negative"]["unresolved"] += row.Unresolved
+		counters["true-negative"]["failed"] += row.Failed
 	}
 
-	counters["positive"]["all"] = counters["positive"]["blocked"] +
-		counters["positive"]["bypassed"] +
-		counters["positive"]["unresolved"] +
-		counters["positive"]["failed"]
+	counters["true-negative"]["all"] = counters["true-negative"]["blocked"] +
+		counters["true-negative"]["bypassed"] +
+		counters["true-negative"]["unresolved"] +
+		counters["true-negative"]["failed"]
 
-	counters["positive"]["resolved"] = counters["positive"]["blocked"] +
-		counters["positive"]["bypassed"]
+	counters["true-negative"]["resolved"] = counters["true-negative"]["blocked"] +
+		counters["true-negative"]["bypassed"]
 
-	if counters["positive"]["all"] != stat.PositiveTests.AllRequestsNumber ||
-		counters["positive"]["blocked"] != stat.PositiveTests.BlockedRequestsNumber ||
-		counters["positive"]["bypassed"] != stat.PositiveTests.BypassedRequestsNumber ||
-		counters["positive"]["unresolved"] != stat.PositiveTests.UnresolvedRequestsNumber ||
-		counters["positive"]["failed"] != stat.PositiveTests.FailedRequestsNumber ||
-		counters["positive"]["resolved"] != stat.PositiveTests.ResolvedRequestsNumber {
+	if counters["true-negative"]["all"] != stat.TrueNegativeTests.AllRequestsNumber ||
+		counters["true-negative"]["blocked"] != stat.TrueNegativeTests.BlockedRequestsNumber ||
+		counters["true-negative"]["bypassed"] != stat.TrueNegativeTests.BypassedRequestsNumber ||
+		counters["true-negative"]["unresolved"] != stat.TrueNegativeTests.UnresolvedRequestsNumber ||
+		counters["true-negative"]["failed"] != stat.TrueNegativeTests.FailedRequestsNumber ||
+		counters["true-negative"]["resolved"] != stat.TrueNegativeTests.ResolvedRequestsNumber {
 		return false
 	}
 

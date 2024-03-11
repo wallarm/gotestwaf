@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>GoTestWaf report</title>
     <script src="https://go-echarts.github.io/go-echarts-assets/assets/echarts.min.js"></script>
+    <link href="https://iosevka-webfonts.github.io/iosevka/iosevka.css" rel="stylesheet" />
     <style>
         /*vars*/
         :root {
@@ -68,7 +69,8 @@
             color: var(--black);
         }
         .mono {
-            font-family: Iosevka, monospace;
+            font-family: Iosevka Web, monospace;
+            font-style: normal;
         }
         .title {
             font-size: 24px;
@@ -411,19 +413,19 @@
         <div class="grid">
             <div class="grid__head">
                 <div class="head__item">Type</div>
-                <div class="head__item">True-negative tests blocked</div>
-                <div class="head__item">True-positive tests passed</div>
+                <div class="head__item">True-positive tests blocked</div>
+                <div class="head__item">True-negative tests passed</div>
                 <div class="head__item">Grade</div>
             </div>
             <div class="grid__row">
                 <div class="row__item">API Security</div>
-                <div class="row__item row__item--{{.ApiSec.TrueNegative.CSSClassSuffix}}">
-                    <div class="row__item-grade row__item-grade--{{.ApiSec.TrueNegative.CSSClassSuffix}}">{{.ApiSec.TrueNegative.Mark}}</div>
-                    <div class="row__item-value">{{printf "%.1f%%" .ApiSec.TrueNegative.Percentage}}</div>
+                <div class="row__item row__item--{{.ApiSec.TruePositiveTestsGrade.CSSClassSuffix}}">
+                    <div class="row__item-grade row__item-grade--{{.ApiSec.TruePositiveTestsGrade.CSSClassSuffix}}">{{.ApiSec.TruePositiveTestsGrade.Mark}}</div>
+                    <div class="row__item-value">{{printf "%.1f%%" .ApiSec.TruePositiveTestsGrade.Percentage}}</div>
                 </div>
-                <div class="row__item row__item--{{.ApiSec.TruePositive.CSSClassSuffix}}">
-                    <div class="row__item-grade row__item-grade--{{.ApiSec.TruePositive.CSSClassSuffix}}">{{.ApiSec.TruePositive.Mark}}</div>
-                    <div class="row__item-value">{{printf "%.1f%%" .ApiSec.TruePositive.Percentage}}</div>
+                <div class="row__item row__item--{{.ApiSec.TrueNegativeTestsGrade.CSSClassSuffix}}">
+                    <div class="row__item-grade row__item-grade--{{.ApiSec.TrueNegativeTestsGrade.CSSClassSuffix}}">{{.ApiSec.TrueNegativeTestsGrade.Mark}}</div>
+                    <div class="row__item-value">{{printf "%.1f%%" .ApiSec.TrueNegativeTestsGrade.Percentage}}</div>
                 </div>
                 <div class="row__item row__item--{{.ApiSec.Grade.CSSClassSuffix}}">
                     <div class="row__item-grade row__item-grade--{{.ApiSec.Grade.CSSClassSuffix}}">{{.ApiSec.Grade.Mark}}</div>
@@ -432,13 +434,13 @@
             </div>
             <div class="grid__row">
                 <div class="row__item">Application Security</div>
-                <div class="row__item row__item--{{.AppSec.TrueNegative.CSSClassSuffix}}">
-                    <div class="row__item-grade row__item-grade--{{.AppSec.TrueNegative.CSSClassSuffix}}">{{.AppSec.TrueNegative.Mark}}</div>
-                    <div class="row__item-value">{{printf "%.1f%%" .AppSec.TrueNegative.Percentage}}</div>
+                <div class="row__item row__item--{{.AppSec.TruePositiveTestsGrade.CSSClassSuffix}}">
+                    <div class="row__item-grade row__item-grade--{{.AppSec.TruePositiveTestsGrade.CSSClassSuffix}}">{{.AppSec.TruePositiveTestsGrade.Mark}}</div>
+                    <div class="row__item-value">{{printf "%.1f%%" .AppSec.TruePositiveTestsGrade.Percentage}}</div>
                 </div>
-                <div class="row__item row__item--{{.AppSec.TruePositive.CSSClassSuffix}}">
-                    <div class="row__item-grade row__item-grade--{{.AppSec.TruePositive.CSSClassSuffix}}">{{.AppSec.TruePositive.Mark}}</div>
-                    <div class="row__item-value">{{printf "%.1f%%" .AppSec.TruePositive.Percentage}}</div>
+                <div class="row__item row__item--{{.AppSec.TrueNegativeTestsGrade.CSSClassSuffix}}">
+                    <div class="row__item-grade row__item-grade--{{.AppSec.TrueNegativeTestsGrade.CSSClassSuffix}}">{{.AppSec.TrueNegativeTestsGrade.Mark}}</div>
+                    <div class="row__item-value">{{printf "%.1f%%" .AppSec.TrueNegativeTestsGrade.Percentage}}</div>
                 </div>
                 <div class="row__item row__item--{{.AppSec.Grade.CSSClassSuffix}}">
                     <div class="row__item-grade row__item-grade--{{.AppSec.Grade.CSSClassSuffix}}">{{.AppSec.Grade.Mark}}</div>
@@ -488,6 +490,22 @@
                 </div>
                 {{end}}
 
+                <div class="grid__row">
+                    <div class="row__item"><a href="https://www.wallarm.com/request-demo">Wallarm</a></div>
+                    <div class="row__item row__item--{{.WallarmResult.ApiSec.CSSClassSuffix}}">
+                        <div class="row__item-grade row__item-grade--{{.WallarmResult.ApiSec.CSSClassSuffix}}">{{.WallarmResult.ApiSec.Mark}}</div>
+                        <div class="row__item-value">{{printf "%.1f%%" .WallarmResult.ApiSec.Percentage}}</div>
+                    </div>
+                    <div class="row__item row__item--{{.WallarmResult.AppSec.CSSClassSuffix}}">
+                        <div class="row__item-grade row__item-grade--{{.WallarmResult.AppSec.CSSClassSuffix}}">{{.WallarmResult.AppSec.Mark}}</div>
+                        <div class="row__item-value">{{printf "%.1f%%" .WallarmResult.AppSec.Percentage}}</div>
+                    </div>
+                    <div class="row__item row__item--{{.WallarmResult.OverallScore.CSSClassSuffix}}">
+                        <div class="row__item-grade row__item-grade--{{.WallarmResult.OverallScore.CSSClassSuffix}}">{{.WallarmResult.OverallScore.Mark}}</div>
+                        <div class="row__item-value">{{printf "%.1f%%" .WallarmResult.OverallScore.Percentage}}</div>
+                    </div>
+                </div>
+
                 <div class="grid__footer">
                     <div class="row__item">Your project</div>
                     <div class="row__item row__item--{{.ApiSec.Grade.CSSClassSuffix}}">
@@ -515,7 +533,66 @@
             <p>Number of unresolved requests: {{.UnresolvedRequestsNumber}}</p>
             {{end}}
             <p>Number of failed requests: {{.FailedRequestsNumber}}</p>
-            {{$length := len .NegativeTests.SummaryTable}}{{if ne $length 0}}
+            {{$length := len .TruePositiveTests.SummaryTable}}{{if ne $length 0}}
+            <h4 class="detail__sub-sub-title">True-positive tests</h4>
+            <div class="summary__grid">
+                <div class="summary__grid--head">
+                    <div class="summary__grid--head-item">Test set</div>
+                    <div class="summary__grid--head-item">Test case</div>
+                    <div class="summary__grid--head-item">Percentage</div>
+                    <div class="summary__grid--head-item">Blocked</div>
+                    <div class="summary__grid--head-item">Bypassed</div>
+                    {{if not .IgnoreUnresolved}}
+                    <div class="summary__grid--head-item">Unresolved</div>
+                    {{end}}
+                    <div class="summary__grid--head-item">Sent</div>
+                    <div class="summary__grid--head-item">Failed</div>
+                </div>
+                {{range $testSetName, $testSetSum := .TruePositiveTests.SummaryTable}}
+                    {{range $row := $testSetSum.TestCases}}
+                <div class="summary__grid--row">
+                    <div class="summary__grid--row-item">{{$row.TestSet}}</div>
+                    <div class="summary__grid--row-item">{{$row.TestCase}}</div>
+                    <div class="summary__grid--row-item">{{printf "%.2f%%" $row.Percentage}}</div>
+                    <div class="summary__grid--row-item">{{$row.Blocked}}</div>
+                    <div class="summary__grid--row-item">{{$row.Bypassed}}</div>
+                    {{if not $.IgnoreUnresolved}}
+                    <div class="summary__grid--row-item">{{$row.Unresolved}}</div>
+                    {{end}}
+                    <div class="summary__grid--row-item">{{$row.Sent}}</div>
+                    <div class="summary__grid--row-item">{{$row.Failed}}</div>
+                </div>
+                    {{end}}
+                    {{$length := len $.TruePositiveTests.SummaryTable}}{{if gt $length 1}}
+                <div class="summary__grid--row-sum">
+                    <div class="summary__grid--row-item">Summary for {{$testSetName}}</div>
+                    <div class="summary__grid--row-item">{{printf "%.2f%%" $testSetSum.Percentage}}</div>
+                    <div class="summary__grid--row-item">{{$testSetSum.Blocked}}</div>
+                    <div class="summary__grid--row-item">{{$testSetSum.Bypassed}}</div>
+                    {{if not $.IgnoreUnresolved}}
+                    <div class="summary__grid--row-item">{{$testSetSum.Unresolved}}</div>
+                    {{end}}
+                    <div class="summary__grid--row-item">{{$testSetSum.Sent}}</div>
+                    <div class="summary__grid--row-item">{{$testSetSum.Failed}}</div>
+                </div>
+                    {{end}}
+                {{end}}
+                {{$length := len .TruePositiveTests.SummaryTable}}{{if gt $length 1}}
+                <div class="summary__grid--row-sum">
+                    <div class="summary__grid--row-item">Summary for true-positive tests</div>
+                    <div class="summary__grid--row-item">{{printf "%.2f%%" .TruePositiveTests.Percentage}}</div>
+                    <div class="summary__grid--row-item">{{.TruePositiveTests.BlockedRequestsNumber}}</div>
+                    <div class="summary__grid--row-item">{{.TruePositiveTests.BypassedRequestsNumber}}</div>
+                    {{if not .IgnoreUnresolved}}
+                    <div class="summary__grid--row-item">{{.TruePositiveTests.UnresolvedRequestsNumber}}</div>
+                    {{end}}
+                    <div class="summary__grid--row-item">{{.TruePositiveTests.TotalSent}}</div>
+                    <div class="summary__grid--row-item">{{.TruePositiveTests.FailedRequestsNumber}}</div>
+                </div>
+                {{end}}
+            </div>
+            {{end}}
+            {{$length := len .TrueNegativeTests.SummaryTable}}{{if ne $length 0}}
             <h4 class="detail__sub-sub-title">True-negative tests</h4>
             <div class="summary__grid">
                 <div class="summary__grid--head">
@@ -530,7 +607,7 @@
                     <div class="summary__grid--head-item">Sent</div>
                     <div class="summary__grid--head-item">Failed</div>
                 </div>
-                {{range $testSetName, $testSetSum := .NegativeTests.SummaryTable}}
+                {{range $testSetName, $testSetSum := .TrueNegativeTests.SummaryTable}}
                     {{range $row := $testSetSum.TestCases}}
                 <div class="summary__grid--row">
                     <div class="summary__grid--row-item">{{$row.TestSet}}</div>
@@ -545,7 +622,7 @@
                     <div class="summary__grid--row-item">{{$row.Failed}}</div>
                 </div>
                     {{end}}
-                    {{$length := len $.NegativeTests.SummaryTable}}{{if gt $length 1}}
+                    {{$length := len $.TrueNegativeTests.SummaryTable}}{{if gt $length 1}}
                 <div class="summary__grid--row-sum">
                     <div class="summary__grid--row-item">Summary for {{$testSetName}}</div>
                     <div class="summary__grid--row-item">{{printf "%.2f%%" $testSetSum.Percentage}}</div>
@@ -559,76 +636,17 @@
                 </div>
                     {{end}}
                 {{end}}
-                {{$length := len .NegativeTests.SummaryTable}}{{if gt $length 1}}
-                <div class="summary__grid--row-sum">
-                    <div class="summary__grid--row-item">Summary for true-negative tests</div>
-                    <div class="summary__grid--row-item">{{printf "%.2f%%" .NegativeTests.Percentage}}</div>
-                    <div class="summary__grid--row-item">{{.NegativeTests.BlockedRequestsNumber}}</div>
-                    <div class="summary__grid--row-item">{{.NegativeTests.BypassedRequestsNumber}}</div>
-                    {{if not .IgnoreUnresolved}}
-                    <div class="summary__grid--row-item">{{.NegativeTests.UnresolvedRequestsNumber}}</div>
-                    {{end}}
-                    <div class="summary__grid--row-item">{{.NegativeTests.TotalSent}}</div>
-                    <div class="summary__grid--row-item">{{.NegativeTests.FailedRequestsNumber}}</div>
-                </div>
-                {{end}}
-            </div>
-            {{end}}
-            {{$length := len .PositiveTests.SummaryTable}}{{if ne $length 0}}
-            <h4 class="detail__sub-sub-title">False-positive tests</h4>
-            <div class="summary__grid">
-                <div class="summary__grid--head">
-                    <div class="summary__grid--head-item">Test set</div>
-                    <div class="summary__grid--head-item">Test case</div>
-                    <div class="summary__grid--head-item">Percentage</div>
-                    <div class="summary__grid--head-item">Blocked</div>
-                    <div class="summary__grid--head-item">Bypassed</div>
-                    {{if not .IgnoreUnresolved}}
-                    <div class="summary__grid--head-item">Unresolved</div>
-                    {{end}}
-                    <div class="summary__grid--head-item">Sent</div>
-                    <div class="summary__grid--head-item">Failed</div>
-                </div>
-                {{range $testSetName, $testSetSum := .PositiveTests.SummaryTable}}
-                    {{range $row := $testSetSum.TestCases}}
-                <div class="summary__grid--row">
-                    <div class="summary__grid--row-item">{{$row.TestSet}}</div>
-                    <div class="summary__grid--row-item">{{$row.TestCase}}</div>
-                    <div class="summary__grid--row-item">{{printf "%.2f%%" $row.Percentage}}</div>
-                    <div class="summary__grid--row-item">{{$row.Blocked}}</div>
-                    <div class="summary__grid--row-item">{{$row.Bypassed}}</div>
-                    {{if not $.IgnoreUnresolved}}
-                    <div class="summary__grid--row-item">{{$row.Unresolved}}</div>
-                    {{end}}
-                    <div class="summary__grid--row-item">{{$row.Sent}}</div>
-                    <div class="summary__grid--row-item">{{$row.Failed}}</div>
-                </div>
-                    {{end}}
-                    {{$length := len $.PositiveTests.SummaryTable}}{{if gt $length 1}}
-                <div class="summary__grid--row-sum">
-                    <div class="summary__grid--row-item">Summary for {{$testSetName}}</div>
-                    <div class="summary__grid--row-item">{{printf "%.2f%%" $testSetSum.Percentage}}</div>
-                    <div class="summary__grid--row-item">{{$testSetSum.Blocked}}</div>
-                    <div class="summary__grid--row-item">{{$testSetSum.Bypassed}}</div>
-                    {{if not $.IgnoreUnresolved}}
-                    <div class="summary__grid--row-item">{{$testSetSum.Unresolved}}</div>
-                    {{end}}
-                    <div class="summary__grid--row-item">{{$testSetSum.Sent}}</div>
-                    <div class="summary__grid--row-item">{{$testSetSum.Failed}}</div>
-                </div>
-                    {{end}}
-                {{end}}
-                {{$length := len .PositiveTests.SummaryTable}}{{if gt $length 1}}
+                {{$length := len .TrueNegativeTests.SummaryTable}}{{if gt $length 1}}
                 <div class="summary__grid--row-sum">
                     <div class="summary__grid--row-item">Summary for false-positive tests</div>
-                    <div class="summary__grid--row-item">{{printf "%.2f%%" .PositiveTests.Percentage}}</div>
-                    <div class="summary__grid--row-item">{{.PositiveTests.BlockedRequestsNumber}}</div>
-                    <div class="summary__grid--row-item">{{.PositiveTests.BypassedRequestsNumber}}</div>
+                    <div class="summary__grid--row-item">{{printf "%.2f%%" .TrueNegativeTests.Percentage}}</div>
+                    <div class="summary__grid--row-item">{{.TrueNegativeTests.BlockedRequestsNumber}}</div>
+                    <div class="summary__grid--row-item">{{.TrueNegativeTests.BypassedRequestsNumber}}</div>
                     {{if not .IgnoreUnresolved}}
-                    <div class="summary__grid--row-item">{{.PositiveTests.UnresolvedRequestsNumber}}</div>
+                    <div class="summary__grid--row-item">{{.TrueNegativeTests.UnresolvedRequestsNumber}}</div>
                     {{end}}
-                    <div class="summary__grid--row-item">{{.PositiveTests.TotalSent}}</div>
-                    <div class="summary__grid--row-item">{{.PositiveTests.FailedRequestsNumber}}</div>
+                    <div class="summary__grid--row-item">{{.TrueNegativeTests.TotalSent}}</div>
+                    <div class="summary__grid--row-item">{{.TrueNegativeTests.FailedRequestsNumber}}</div>
                 </div>
                 {{end}}
             </div>
@@ -641,10 +659,11 @@
             <p class="mono">{{$row.Method}} {{$row.Path}}</p>
             {{end}}
             {{end}}
-            <h3 class="detail__sub-title">False Positive Tests</h3>
-            <p>{{.PositiveTests.BlockedRequestsNumber}} false positive requests identified as blocked (failed, bad behavior)</p>
+            <h3 class="detail__sub-title">True Negative Tests</h3>
+            <p>{{.TrueNegativeTests.BypassedRequestsNumber}} true-negative requests identified as bypassed (test passed, good behavior)</p>
+            <p>{{.TrueNegativeTests.BlockedRequestsNumber}} true-negative requests identified as blocked (test failed, bad behavior)</p>
             {{if .IncludePayloads}}
-            {{if .PositiveTests.BlockedRequestsNumber}}
+            {{if .TrueNegativeTests.BlockedRequestsNumber}}
             <div class="positive__grid">
                 <div class="positive__grid--head">
                     <div class="positive__grid--head-item">Payload</div>
@@ -653,7 +672,7 @@
                     <div class="positive__grid--head-item">Placeholder</div>
                     <div class="positive__grid--head-item">Status</div>
                 </div>
-                {{range $payload, $codeMap := .PositiveTests.Blocked}}
+                {{range $payload, $codeMap := .TrueNegativeTests.Blocked}}
                     {{range $code, $testDetails := $codeMap}}
                         {{$encoders := MapKeysToString $testDetails.Encoders ", "}}
                         {{$placeholders := MapKeysToString $testDetails.Placeholders ", "}}
@@ -669,9 +688,9 @@
             </div>
             {{end}}
             {{end}}
-            <p>{{.PositiveTests.BypassedRequestsNumber}} false positive requests identified as bypassed (passed, good behavior)</p>
+            {{if .TrueNegativeTests.UnresolvedRequestsNumber}}
+            <p>{{.TrueNegativeTests.UnresolvedRequestsNumber}} true positive requests identified as unresolved</p>
             {{if .IncludePayloads}}
-            {{if .PositiveTests.BypassedRequestsNumber}}
             <div class="positive__grid">
                 <div class="positive__grid--head">
                     <div class="positive__grid--head-item">Payload</div>
@@ -680,7 +699,7 @@
                     <div class="positive__grid--head-item">Placeholder</div>
                     <div class="positive__grid--head-item">Status</div>
                 </div>
-                {{range $payload, $codeMap := .PositiveTests.Bypassed}}
+                {{range $payload, $codeMap := .TrueNegativeTests.Unresolved}}
                     {{range $code, $testDetails := $codeMap}}
                         {{$encoders := MapKeysToString $testDetails.Encoders ", "}}
                         {{$placeholders := MapKeysToString $testDetails.Placeholders ", "}}
@@ -696,35 +715,8 @@
             </div>
             {{end}}
             {{end}}
-            {{if .PositiveTests.UnresolvedRequestsNumber}}
-            <p>{{.PositiveTests.UnresolvedRequestsNumber}} true positive requests identified as unresolved</p>
-            {{if .IncludePayloads}}
-            <div class="positive__grid">
-                <div class="positive__grid--head">
-                    <div class="positive__grid--head-item">Payload</div>
-                    <div class="positive__grid--head-item">Test case</div>
-                    <div class="positive__grid--head-item">Encoder</div>
-                    <div class="positive__grid--head-item">Placeholder</div>
-                    <div class="positive__grid--head-item">Status</div>
-                </div>
-                {{range $payload, $codeMap := .PositiveTests.Unresolved}}
-                    {{range $code, $testDetails := $codeMap}}
-                        {{$encoders := MapKeysToString $testDetails.Encoders ", "}}
-                        {{$placeholders := MapKeysToString $testDetails.Placeholders ", "}}
-                <div class="positive__grid--row">
-                    <div class="positive__grid--row-item-payload mono">{{$payload}}</div>
-                    <div class="positive__grid--row-item">{{$testDetails.TestCase}}</div>
-                    <div class="positive__grid--row-item">{{$encoders}}</div>
-                    <div class="positive__grid--row-item">{{$placeholders}}</div>
-                    <div class="positive__grid--row-item">{{$code}}</div>
-                </div>
-                    {{end}}
-                {{end}}
-            </div>
-            {{end}}
-            {{end}}
-            {{if .PositiveTests.FailedRequestsNumber}}
-            <p>{{.PositiveTests.FailedRequestsNumber}} true positive requests are failed</p>
+            {{if .TrueNegativeTests.FailedRequestsNumber}}
+            <p>{{.TrueNegativeTests.FailedRequestsNumber}} true positive requests are failed</p>
             {{if .IncludePayloads}}
             <div class="positive__grid">
                 <div class="positive__grid--failed--head">
@@ -733,7 +725,7 @@
                     <div class="positive__grid--head-item">Encoder</div>
                     <div class="positive__grid--head-item">Placeholder</div>
                 </div>
-                {{range $row := .PositiveTests.Failed}}
+                {{range $row := .TrueNegativeTests.Failed}}
                 <div class="positive__grid--failed--row">
                     <div class="positive__grid--row-item-payload mono">{{$row.Payload}}</div>
                     <div class="positive__grid--row-item">{{$row.TestCase}}</div>
@@ -751,9 +743,9 @@
             {{end}}
             {{end}}
             <h3 class="detail__sub-title">Bypasses in Details</h3>
-            <p>{{.NegativeTests.BypassedRequestsNumber}} malicious requests have bypassed the security solution</p>
+            <p>{{.TruePositiveTests.BypassedRequestsNumber}} malicious requests have bypassed the security solution</p>
             {{if .IncludePayloads}}
-            {{if .NegativeTests.BypassedRequestsNumber}}
+            {{if .TruePositiveTests.BypassedRequestsNumber}}
             <div class="positive__grid">
                 <div class="positive__grid--head">
                     <div class="positive__grid--head-item">Payload</div>
@@ -762,7 +754,7 @@
                     <div class="positive__grid--head-item">Placeholder</div>
                     <div class="positive__grid--head-item">Status</div>
                 </div>
-                {{range $paths, $pathMap := .NegativeTests.Bypassed}}
+                {{range $paths, $pathMap := .TruePositiveTests.Bypassed}}
                     {{$length := len $paths}}
                     {{if ne $length 0}}
                         {{$splitPaths := StringsSplit $paths "\n"}}
@@ -788,9 +780,9 @@
             </div>
             {{end}}
             {{end}}
-            {{if .NegativeTests.UnresolvedRequestsNumber}}
+            {{if .TruePositiveTests.UnresolvedRequestsNumber}}
             <h3 class="detail__sub-title">Unresolved requests in Details</h3>
-            <p>{{.NegativeTests.UnresolvedRequestsNumber}} requests identified as blocked and passed or as not-blocked and not-passed</p>
+            <p>{{.TruePositiveTests.UnresolvedRequestsNumber}} requests identified as blocked and passed or as not-blocked and not-passed</p>
             {{if .IncludePayloads}}
             <div class="positive__grid">
                 <div class="positive__grid--head">
@@ -800,7 +792,7 @@
                     <div class="positive__grid--head-item">Placeholder</div>
                     <div class="positive__grid--head-item">Status</div>
                 </div>
-                {{range $payload, $codeMap := .NegativeTests.Unresolved}}
+                {{range $payload, $codeMap := .TruePositiveTests.Unresolved}}
                     {{range $code, $testDetails := $codeMap}}
                         {{$encoders := MapKeysToString $testDetails.Encoders ", "}}
                         {{$placeholders := MapKeysToString $testDetails.Placeholders ", "}}
@@ -816,9 +808,9 @@
             </div>
             {{end}}
             {{end}}
-            {{if .NegativeTests.FailedRequestsNumber}}
+            {{if .TruePositiveTests.FailedRequestsNumber}}
             <h3 class="detail__sub-title">Failed requests in Details</h3>
-            <p>{{.NegativeTests.FailedRequestsNumber}} requests are failed</p>
+            <p>{{.TruePositiveTests.FailedRequestsNumber}} requests are failed</p>
             {{if .IncludePayloads}}
             <div class="positive__grid">
                 <div class="positive__grid--failed--head">
@@ -827,7 +819,7 @@
                     <div class="positive__grid--head-item">Encoder</div>
                     <div class="positive__grid--head-item">Placeholder</div>
                 </div>
-                {{range $row := .NegativeTests.Failed}}
+                {{range $row := .TruePositiveTests.Failed}}
                 <div class="positive__grid--failed--row">
                     <div class="positive__grid--row-item-payload mono">{{$row.Payload}}</div>
                     <div class="positive__grid--row-item">{{$row.TestCase}}</div>

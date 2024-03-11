@@ -156,7 +156,7 @@ func GenerateTestCases() (testCases []*db.Case, testCasesMap *TestCasesMap) {
 
 	hash := sha256.New()
 
-	f := func(testSet string, payloads []string, encoder string, placeholderName string, placeholderConf any) {
+	f := func(testSet string, payloads []string, encoder string, placeholderName string, placeholderConf placeholder.PlaceholderConfig) {
 		name := fmt.Sprintf("%s-%s", placeholderName, encoder)
 		testCases = append(testCases, &db.Case{
 			Payloads: payloads,

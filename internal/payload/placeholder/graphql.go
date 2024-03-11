@@ -1,6 +1,7 @@
 package placeholder
 
 import (
+	"crypto/sha256"
 	"net/http"
 	"net/url"
 	"strings"
@@ -20,7 +21,7 @@ var DefaultGraphQL = GraphQL{name: "GraphQL"}
 
 var _ Placeholder = (*GraphQL)(nil)
 
-func (p GraphQL) newConfig(conf map[any]any) (any, error) {
+func (p GraphQL) newConfig(conf map[any]any) (PlaceholderConfig, error) {
 	result := &GraphQLConfig{}
 
 	method, ok := conf["method"]
@@ -54,7 +55,7 @@ func (p GraphQL) GetName() string {
 	return p.name
 }
 
-func (p GraphQL) CreateRequest(requestURL, payload string, config any) (*http.Request, error) {
+func (p GraphQL) CreateRequest(requestURL, payload string, config PlaceholderConfig) (*http.Request, error) {
 	conf, ok := config.(*GraphQLConfig)
 	if !ok {
 		return nil, &BadPlaceholderConfigError{
@@ -95,4 +96,10 @@ func (p GraphQL) CreateRequest(requestURL, payload string, config any) (*http.Re
 			err:  errors.Errorf("unknown HTTP method, expected GET or POST, got %T", conf.Method),
 		}
 	}
+}
+
+func (g *GraphQLConfig) Hash() []byte {
+	sha256sum := sha256.New()
+	sha256sum.Write([]byte(g.Method))
+	return sha256sum.Sum(nil)
 }

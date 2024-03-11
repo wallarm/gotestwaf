@@ -3,3 +3,4 @@
 gotestwaf
 main
 reports/*
+/modsec_stat_*.txt
