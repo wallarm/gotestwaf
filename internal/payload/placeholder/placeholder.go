@@ -46,6 +46,7 @@ func init() {
 	Placeholders[DefaultNonCRUDHeader.GetName()] = DefaultNonCRUDHeader
 	Placeholders[DefaultNonCRUDRequestBody.GetName()] = DefaultNonCRUDRequestBody
 	Placeholders[DefaultRawRequest.GetName()] = DefaultRawRequest
+	Placeholders[DefaultGraphQL.GetName()] = DefaultGraphQL
 }
 
 func GetPlaceholderConfig(name string, conf any) (PlaceholderConfig, error) {

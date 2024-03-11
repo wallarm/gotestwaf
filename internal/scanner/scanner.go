@@ -109,19 +109,43 @@ func (s *Scanner) CheckGRPCAvailability(ctx context.Context) {
 			"connection": "not available",
 		}).WithError(err).Infof("gRPC pre-check")
 	}
+
+	connection := "not available"
 	if available {
-		s.logger.WithFields(logrus.Fields{
-			"status":     "done",
-			"connection": "available",
-		}).Info("gRPC pre-check")
-	} else {
+		connection = "available"
+	}
+
+	s.logger.WithFields(logrus.Fields{
+		"status":     "done",
+		"connection": connection,
+	}).Info("gRPC pre-check")
+
+	s.db.IsGrpcAvailable = available
+}
+
+// CheckGraphQLAvailability checks if the GraphQL is available at the given URL.
+func (s *Scanner) CheckGraphQLAvailability(ctx context.Context) {
+	s.logger.WithField("status", "started").Info("GraphQL pre-check")
+
+	available, err := s.checkGraphQLAvailability(ctx)
+	if err != nil {
 		s.logger.WithFields(logrus.Fields{
 			"status":     "done",
 			"connection": "not available",
-		}).Info("gRPC pre-check")
+		}).WithError(err).Infof("GraphQL pre-check")
 	}
 
-	s.db.IsGrpcAvailable = available
+	connection := "not available"
+	if available {
+		connection = "available"
+	}
+
+	s.logger.WithFields(logrus.Fields{
+		"status":     "done",
+		"connection": connection,
+	}).Info("GraphQL pre-check")
+
+	s.db.IsGraphQLAvailable = available
 }
 
 // WAFBlockCheck checks if WAF exists and blocks malicious requests.
@@ -482,7 +506,8 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 		err           error
 	)
 
-	if w.placeholder.Name == placeholder.DefaultGRPC.GetName() {
+	switch w.placeholder.Name {
+	case placeholder.DefaultGRPC.GetName():
 		if !s.grpcConn.IsAvailable() {
 			return nil
 		}
@@ -496,6 +521,18 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 
 		_, _, _, _, err = s.updateDB(ctx, w, nil, nil, nil, nil, nil,
 			statusCode, nil, "", respBody, err, "", true)
+
+		return err
+
+	case placeholder.DefaultGraphQL.GetName():
+		if !s.httpClient.IsGraphQLAvailable() {
+			return nil
+		}
+
+		respMsgHeader, respBody, statusCode, err = s.httpClient.SendPayload(ctx, s.cfg.URL, w.payload, w.encoder, w.placeholder.Name, w.placeholder.Config, w.debugHeaderValue)
+
+		_, _, _, _, err = s.updateDB(ctx, w, nil, nil, nil, nil, nil,
+			statusCode, nil, respMsgHeader, respBody, err, "", false)
 
 		return err
 	}

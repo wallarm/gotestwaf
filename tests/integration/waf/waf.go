@@ -42,6 +42,7 @@ func New(errChan chan<- error, casesMap *config.TestCasesMap) *WAF {
 
 	mux := http.NewServeMux()
 	mux.Handle("/", waf)
+	mux.Handle("/graphql", waf)
 
 	waf.httpServer = &http.Server{
 		Addr:    fmt.Sprintf("localhost:%d", config.HTTPPort),
@@ -198,6 +199,9 @@ func (waf *WAF) httpRequestHandler(w http.ResponseWriter, r *http.Request) {
 		placeholderValue, err = getPayloadFromHeader(r)
 	case "NonCRUDRequestBody":
 		placeholderValue, err = getPayloadFromRequestBody(r)
+	case "GraphQL":
+		err = nil
+		placeholderValue = config.GraphQLConfigs[set].GetPayloadFunc(r)
 	default:
 		waf.errChan <- fmt.Errorf("unknown placeholder: %s", placeholder)
 	}

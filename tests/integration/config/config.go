@@ -97,6 +97,7 @@ func GetConfig() *config.Config {
 		URL:                fmt.Sprintf("http://localhost:%d", HTTPPort),
 		GRPCPort:           uint16(GRPCPort),
 		WebSocketURL:       fmt.Sprintf("ws://localhost:%d", HTTPPort),
+		GraphQLURL:         fmt.Sprintf("http://localhost:%d/graphql", HTTPPort),
 		HTTPHeaders:        nil,
 		TLSVerify:          false,
 		Proxy:              "",
@@ -138,6 +139,10 @@ func GenerateTestCases() (testCases []*db.Case, testCasesMap *TestCasesMap) {
 
 	for placeholderName := range placeholder.Placeholders {
 		if placeholderName == placeholder.DefaultRawRequest.GetName() {
+			continue
+		}
+
+		if placeholderName == placeholder.DefaultGraphQL.GetName() {
 			continue
 		}
 
@@ -194,6 +199,12 @@ func GenerateTestCases() (testCases []*db.Case, testCasesMap *TestCasesMap) {
 	for testSet, settings := range RawRequestConfigs {
 		for _, encoder := range encoders {
 			f(testSet, payloads, encoder, placeholder.DefaultRawRequest.GetName(), settings.Config)
+		}
+	}
+
+	for testSet, settings := range GraphQLConfigs {
+		for _, encoder := range encoders {
+			f(testSet, payloads, encoder, placeholder.DefaultGraphQL.GetName(), settings.Config)
 		}
 	}
 
