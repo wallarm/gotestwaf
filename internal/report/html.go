@@ -29,35 +29,35 @@ var (
 	comparisonTable = []*report.ComparisonTableRow{
 		{
 			Name:         "ModSecurity PARANOIA=1",
-			ApiSec:       computeGrade(57.89, 1),
-			AppSec:       computeGrade(73.76, 1),
-			OverallScore: computeGrade(65.83, 1),
+			ApiSec:       computeGrade(27.27, 1),
+			AppSec:       computeGrade(66.79, 1),
+			OverallScore: computeGrade(47.03, 1),
 		},
 		{
 			Name:         "ModSecurity PARANOIA=2",
-			ApiSec:       computeGrade(65.79, 1),
-			AppSec:       computeGrade(67.00, 1),
-			OverallScore: computeGrade(66.40, 1),
+			ApiSec:       computeGrade(40.91, 1),
+			AppSec:       computeGrade(58.23, 1),
+			OverallScore: computeGrade(49.57, 1),
 		},
 		{
 			Name:         "ModSecurity PARANOIA=3",
-			ApiSec:       computeGrade(92.11, 1),
-			AppSec:       computeGrade(56.17, 1),
-			OverallScore: computeGrade(74.14, 1),
+			ApiSec:       computeGrade(86.36, 1),
+			AppSec:       computeGrade(50.39, 1),
+			OverallScore: computeGrade(68.38, 1),
 		},
 		{
 			Name:         "ModSecurity PARANOIA=4",
 			ApiSec:       computeGrade(100.00, 1),
-			AppSec:       computeGrade(39.88, 1),
-			OverallScore: computeGrade(69.94, 1),
+			AppSec:       computeGrade(36.03, 1),
+			OverallScore: computeGrade(68.02, 1),
 		},
 	}
 
 	wallarmResult = &report.ComparisonTableRow{
 		Name:         "Wallarm",
 		ApiSec:       computeGrade(100, 1),
-		AppSec:       computeGrade(94.6, 1),
-		OverallScore: computeGrade(97.3, 1),
+		AppSec:       computeGrade(97.74, 1),
+		OverallScore: computeGrade(98.87, 1),
 	}
 )
 
