@@ -1,10 +1,8 @@
----
-payload:
-  - '<script>aaa</script>'
-  - '1e1 union select users from password'
 encoder:
-  - Plain
+- Plain
+payload:
+- <script>aaa</script>
+- 1e1 union select users from password
 placeholder:
-  - NonCRUDRequestBody
-type: "REST non-CRUD"
-...
+- NonCRUDRequestBody
+type: REST non-CRUD

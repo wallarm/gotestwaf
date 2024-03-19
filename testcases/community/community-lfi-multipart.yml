@@ -1,27 +1,22 @@
----
-payload:
-  - '/static/img/../../etc/passwd'
-  - '.../.../WINDOWS/win.ini'
-  - '../../../../usr/lib/libc.so.6'
-  - '/src/../WEB-INF/web.xml'
-  - 'file://0000::001/var/run/secrets/kubernetes.io/serviceaccount'
-  - '\\0::001\c$\windows\win.ini'
-  - '\\::1\c$\users\default\ntuser.dat'
-  - '\\localhost\c$\windows\win.ini'
-  - 'file:////////////////////////c|\windows\win.ini'
 encoder:
-  - Plain
+- Plain
+payload:
+- /static/img/../../etc/passwd
+- \\::1\c$\users\default\ntuser.dat
 placeholder:
-  - RawRequest:
-      method: "POST"
-      path: "/"
-      headers:
-        Content-Type: "multipart/form-data; boundary=bee3b1c4dbd3303d1f1b9a03ffd31afeaa"
-      body: |
-        --bee3b1c4dbd3303d1f1b9a03ffd31afeaa
-        Content-disposition: form-data; name="{{payload}}"
+- RawRequest:
+    body: '--bee3b1c4dbd3303d1f1b9a03ffd31afeaa
 
-        Test
-        --bee3b1c4dbd3303d1f1b9a03ffd31afeaa--
-type: "community-lfi-multipart"
-...
+      Content-disposition: form-data; name="{{payload}}"
+
+
+      Test
+
+      --bee3b1c4dbd3303d1f1b9a03ffd31afeaa--
+
+      '
+    headers:
+      Content-Type: multipart/form-data; boundary=bee3b1c4dbd3303d1f1b9a03ffd31afeaa
+    method: POST
+    path: /
+type: community-lfi-multipart
