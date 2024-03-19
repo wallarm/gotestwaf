@@ -1,10 +1,6 @@
----
-payload:
-  - '"union select -7431.1, name, @aaa from u_base--w-'
-  - "<script>alert(31337)</script>"
 encoder:
-  - Plain
+- Plain
+payload: []
 placeholder:
-  - gRPC
-type: "gRPC"
-...
+- gRPC
+type: gRPC

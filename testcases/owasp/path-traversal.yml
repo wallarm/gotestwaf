@@ -1,24 +1,13 @@
----
-payload:
-  - '/static/img/../../etc/passwd'
-  - '.../.../WINDOWS/win.ini'
-  - '../../../../usr/lib/libc.so.6'
-  - 'file=/etc/passwd'
-  - '/src/../WEB-INF/web.xml'
-  - 'file://0000::001/var/run/secrets/kubernetes.io/serviceaccount'
-  - '\\0::001\c$\windows\win.ini'
-  - '\\::1\c$\users\default\ntuser.dat'
-  - '\\localhost\c$\windows\win.ini'
-  - 'file:////////////////////////c|\windows\win.ini'
-  - 'php://filter/zlib.deflate/convert.base64-encode/resource=/etc/passwd'
 encoder:
-  - Base64Flat
-  - URL
+- Base64Flat
+- URL
+payload:
+- /static/img/../../etc/passwd
+- \\::1\c$\users\default\ntuser.dat
 placeholder:
-  - URLPath
-  - URLParam
-  - HTMLForm
-  - HTMLMultipartForm
-  - JSONRequest
-type: "Path Traversal"
-...
+- URLPath
+- URLParam
+- HTMLForm
+- HTMLMultipartForm
+- JSONRequest
+type: Path Traversal

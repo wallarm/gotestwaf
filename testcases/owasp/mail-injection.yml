@@ -1,15 +1,17 @@
----
-payload:
-  - "\r\nV100 CAPABILITY\r\nV101 FETCH 4791"
-  - "\r\nQUIT\r\n"
-  - "\nRCPT TO: test@evil.com\n"
 encoder:
-  - Base64Flat
-  - URL
+- Base64Flat
+- URL
+payload:
+- "\r\nV100 CAPABILITY\r\nV101 FETCH 4791"
+- "\r\nQUIT\r\n"
+- '
+
+  RCPT TO: test@evil.com
+
+  '
 placeholder:
-  - URLPath
-  - URLParam
-  - HTMLForm
-  - HTMLMultipartForm
-type: "Mail Injection"
-...
+- URLPath
+- URLParam
+- HTMLForm
+- HTMLMultipartForm
+type: Mail Injection
