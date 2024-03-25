@@ -76,7 +76,7 @@ func NewDetector(cfg *config.Config, dnsResolver *dnscache.Resolver) (*WAFDetect
 		client:     client,
 		headers:    configuredHeaders,
 		hostHeader: configuredHeaders["Host"],
-		target:     GetTargetURL(target),
+		target:     GetTargetURLStr(target),
 	}, nil
 }
 

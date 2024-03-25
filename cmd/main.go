@@ -139,6 +139,15 @@ func run(ctx context.Context, logger *logrus.Logger) error {
 		return errors.Wrap(err, "couldn't create scanner")
 	}
 
+	isJsReuqired, err := s.CheckIfJavaScriptRequired(ctx)
+	if err != nil {
+		return errors.Wrap(err, "couldn't check if JavaScript is required to interact with the endpoint")
+	}
+
+	if isJsReuqired {
+		return errors.New("JavaScript is required to interact with the endpoint")
+	}
+
 	err = s.WAFBlockCheck(ctx)
 	if err != nil {
 		return err

@@ -178,6 +178,8 @@ func (c *HTTPClient) SendPayload(
 func (c *HTTPClient) SendRequest(
 	req *http.Request,
 	testHeaderValue string,
+	followCookiesOverride *bool,
+	renewSessionOverride *bool,
 ) (
 	respHeaders http.Header,
 	responseMsgHeader string,
@@ -194,8 +196,18 @@ func (c *HTTPClient) SendRequest(
 		req.Header.Set(GTWDebugHeader, testHeaderValue)
 	}
 
-	if c.followCookies && c.renewSession {
-		cookies, err := c.getCookies(req.Context(), GetTargetURL(req.URL))
+	followCookies := c.followCookies
+	if followCookiesOverride != nil {
+		followCookies = *followCookiesOverride
+	}
+
+	renewSession := c.renewSession
+	if renewSessionOverride != nil {
+		renewSession = *renewSessionOverride
+	}
+
+	if followCookies && renewSession {
+		cookies, err := c.getCookies(req.Context(), GetTargetURLStr(req.URL))
 		if err != nil {
 			return nil, "", "", 0, errors.Wrap(err, "couldn't get cookies for malicious request")
 		}
@@ -222,7 +234,7 @@ func (c *HTTPClient) SendRequest(
 	}
 	statusCode = resp.StatusCode
 
-	if c.followCookies && !c.renewSession && c.client.Jar != nil {
+	if followCookies && !renewSession && c.client.Jar != nil {
 		c.client.Jar.SetCookies(req.URL, resp.Cookies())
 	}
 
@@ -280,7 +292,7 @@ func (c *HTTPClient) getCookies(ctx context.Context, targetURL string) ([]*http.
 	return nil, returnErr
 }
 
-func GetTargetURL(reqURL *url.URL) string {
+func GetTargetURL(reqURL *url.URL) *url.URL {
 	targetURL := *reqURL
 
 	targetURL.Path = ""
@@ -289,6 +301,12 @@ func GetTargetURL(reqURL *url.URL) string {
 	targetURL.RawQuery = ""
 	targetURL.Fragment = ""
 	targetURL.RawFragment = ""
+
+	return &targetURL
+}
+
+func GetTargetURLStr(reqURL *url.URL) string {
+	targetURL := GetTargetURL(reqURL)
 
 	return targetURL.String()
 }
