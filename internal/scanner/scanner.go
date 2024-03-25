@@ -8,6 +8,7 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"regexp"
@@ -37,6 +38,10 @@ const (
 	preCheckVector        = "<script>alert('union select password from users')</script>"
 	wsPreCheckReadTimeout = time.Second * 1
 )
+
+var jsChallengeErrorMsgs = []string{
+	"Enable JavaScript and cookies to continue",
+}
 
 type testWork struct {
 	setName          string
@@ -96,6 +101,34 @@ func New(
 		wsClient:          websocket.DefaultDialer,
 		enableDebugHeader: enableDebugHeader,
 	}, nil
+}
+
+func (s *Scanner) CheckIfJavaScriptRequired(ctx context.Context) (bool, error) {
+	fullUrl, _ := url.Parse(s.cfg.URL)
+	reducedUrl := GetTargetURLStr(fullUrl)
+
+	rawRequest, err := http.NewRequest("GET", reducedUrl, nil)
+	if err != nil {
+		return false, err
+	}
+	rawRequest = rawRequest.WithContext(ctx)
+
+	getRef := func(b bool) *bool {
+		return &b
+	}
+
+	_, _, body, _, err := s.httpClient.SendRequest(rawRequest, "", getRef(true), getRef(true))
+	if err != nil {
+		return false, err
+	}
+
+	for i := range jsChallengeErrorMsgs {
+		if strings.Contains(body, jsChallengeErrorMsgs[i]) {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 // CheckGRPCAvailability checks if the gRPC server is available at the given URL.
@@ -528,7 +561,7 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 			return errors.Wrap(err, "create request from template")
 		}
 
-		respHeaders, respMsgHeader, respBody, statusCode, err = s.httpClient.SendRequest(req, w.debugHeaderValue)
+		respHeaders, respMsgHeader, respBody, statusCode, err = s.httpClient.SendRequest(req, w.debugHeaderValue, nil, nil)
 
 		additionalInfo = fmt.Sprintf("%s %s", template.Method, template.Path)
 
