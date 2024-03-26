@@ -9,8 +9,6 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
-	"os"
-	"os/signal"
 	"regexp"
 	"strings"
 	"sync"
@@ -337,32 +335,11 @@ func (s *Scanner) Run(ctx context.Context) error {
 	// separately.
 	var requestsCounter uint64
 
-	userSignal := make(chan os.Signal, 1)
-	signal.Notify(userSignal, syscall.SIGUSR1)
-	defer func() {
-		signal.Stop(userSignal)
-		close(userSignal)
-	}()
-
-	go func() {
-		for {
-			select {
-			case _, ok := <-userSignal:
-				if !ok {
-					return
-				}
-
-				s.logger.
-					WithFields(logrus.Fields{
-						"sent":  atomic.LoadUint64(&requestsCounter),
-						"total": s.db.NumberOfTests,
-					}).Info("Testing status")
-
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
+	closeListener, err := s.listeningForPrintTestStatus(ctx, &requestsCounter)
+	if err != nil {
+		return err
+	}
+	defer closeListener()
 
 	for e := 0; e < gn; e++ {
 		go func() {
