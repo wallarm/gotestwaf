@@ -1,0 +1,19 @@
+---
+payload:
+  - "cmd=cat /etc/passwd"
+  - "cmd=127.0.0.1 && ls /etc"
+  - "cmd=${@print(md5(31337))}"
+encoder:
+  - Plain
+placeholder:
+  - RawRequest:
+      method: "POST"
+      path: "/clam.php"
+      headers:
+        User-Agent: "Mozilla/5.0"
+        Content-Type: "application/x-www-form-urlencoded"
+        Content-Encoding: "No Kill No Beep Beep"
+        Content-Encoding: "gzip"
+      body: "{{payload}}"
+type: "RawRequest test"
+...
