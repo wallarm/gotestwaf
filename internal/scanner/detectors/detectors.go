@@ -1,14 +1,12 @@
 package detectors
 
-import "net/http"
-
 // Detector contains names of WAF solution and vendor, and checks to detect that
 // solution by response.
 type Detector struct {
 	WAFName string
 	Vendor  string
 
-	Checks []Check
+	Check Check
 }
 
 func (d *Detector) GetWAFName() string {
@@ -19,14 +17,8 @@ func (d *Detector) GetVendor() string {
 	return d.Vendor
 }
 
-func (d *Detector) IsWAF(resp *http.Response) bool {
-	for _, check := range d.Checks {
-		if check(resp) {
-			return true
-		}
-	}
-
-	return false
+func (d *Detector) IsWAF(resps *Responses) bool {
+	return d.Check(resps)
 }
 
 // Detectors is the list of all available WAF detectors. The checks are performed
@@ -38,4 +30,13 @@ var Detectors = []*Detector{
 	// Imperva
 	Incapsula(),
 	SecureSphere(),
+
+	// F5 Networks
+	BigIPAppSecManager(),
+	BigIPLocalTrafficManager(),
+	BigIPApManager(),
+	FirePass(),
+	Trafficshield(),
+
+	ModSecurity(),
 }

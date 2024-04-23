@@ -1,5 +1,7 @@
 package config
 
+import "github.com/wallarm/gotestwaf/internal/scanner/detectors"
+
 type Config struct {
 	URL                   string            `mapstructure:"url"`
 	WebSocketURL          string            `mapstructure:"wsURL"`
@@ -37,4 +39,6 @@ type Config struct {
 	AddHeader             string            `mapstructure:"addHeader"`
 	AddDebugHeader        bool              `mapstructure:"addDebugHeader"`
 	OpenAPIFile           string            `mapstructure:"openapiFile"`
+
+	CheckBlockFunc detectors.Check
 }
