@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"reflect"
 	"testing"
+
+	"github.com/wallarm/gotestwaf/internal/scanner/types"
 )
 
 func TestRawRequestNewConfig(t *testing.T) {
@@ -65,7 +67,7 @@ func TestRawRequestNewConfig(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		conf, err := DefaultRawRequest.newConfig(test.conf)
+		conf, err := DefaultRawRequest.NewPlaceholderConfig(test.conf)
 		test.checkValue(conf, err)
 	}
 }
@@ -221,11 +223,16 @@ Knock knock.
 	}
 
 	for _, test := range tests {
-		req, err := DefaultRawRequest.CreateRequest(url, testPayload, test.conf)
+		req, err := DefaultRawRequest.CreateRequest(url, testPayload, test.conf, types.GoHTTPClient)
 		if err != nil {
 			t.Errorf("got an error: %s", err.Error())
 		}
 
-		test.checkValue(req)
+		r, ok := req.(*types.GoHTTPRequest)
+		if !ok {
+			t.Fatalf("bad request type: %T, expected %T", req, &types.GoHTTPRequest{})
+		}
+
+		test.checkValue(r.Req)
 	}
 }

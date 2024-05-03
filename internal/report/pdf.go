@@ -19,7 +19,9 @@ func printFullReportToPdf(
 		return errors.Wrap(err, "couldn't export report to HTML")
 	}
 
-	err = renderToPDF(ctx, tempFileName, reportFile)
+	tempFileURL := "file://" + tempFileName
+
+	err = renderToPDF(ctx, tempFileURL, reportFile)
 	if err != nil {
 		return errors.Wrap(err, "couldn't render HTML report to PDF")
 	}

@@ -1,15 +1,8 @@
-encoder:
-- Plain
 payload:
-- '{"query": "IntrospectionQuery{__schema {queryType { name }}"}'
-- '{"query": "query IntrospectionQuery {__schema {queryType { name }mutationType {
-  name }subscriptionType { name }types {...FullType}directives {namedescriptionlocationsargs
-  {...InputValue}}}}fragment FullType on __Type {kindnamedescriptionfields(includeDeprecated:
-  true) {namedescriptionargs {...InputValue}type {...TypeRef}isDeprecateddeprecationReason}inputFields
-  {...InputValue}interfaces {...TypeRef}enumValues(includeDeprecated: true) {namedescriptionisDeprecateddeprecationReason}possibleTypes
-  {...TypeRef}}fragment InputValue on __InputValue {namedescriptiontype { ...TypeRef
-  }defaultValue}fragment TypeRef on __Type {kindnameofType {kindnameofType {kindnameofType
-  {kindnameofType {kindnameofType {kindnameofType {kindnameofType {kindname}}}}}}}}"}'
+  - '{"query": "IntrospectionQuery{__schema {queryType { name }}"}'
+  - '{"query": "query IntrospectionQuery {__schema {queryType { name }mutationType { name }subscriptionType { name }types {...FullType}directives {namedescriptionlocationsargs {...InputValue}}}}fragment FullType on __Type {kindnamedescriptionfields(includeDeprecated: true) {namedescriptionargs {...InputValue}type {...TypeRef}isDeprecateddeprecationReason}inputFields {...InputValue}interfaces {...TypeRef}enumValues(includeDeprecated: true) {namedescriptionisDeprecateddeprecationReason}possibleTypes {...TypeRef}}fragment InputValue on __InputValue {namedescriptiontype { ...TypeRef }defaultValue}fragment TypeRef on __Type {kindnameofType {kindnameofType {kindnameofType {kindnameofType {kindnameofType {kindnameofType {kindnameofType {kindname}}}}}}}}"}'
+encoder:
+  - Plain
 placeholder:
-- JSONBody
+  - JSONBody
 type: GraphQL

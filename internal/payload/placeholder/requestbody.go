@@ -4,33 +4,37 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/wallarm/gotestwaf/internal/scanner/types"
 )
+
+var _ Placeholder = (*RequestBody)(nil)
+
+var DefaultRequestBody = &RequestBody{name: "RequestBody"}
 
 type RequestBody struct {
 	name string
 }
 
-var DefaultRequestBody = RequestBody{name: "RequestBody"}
-
-var _ Placeholder = (*RequestBody)(nil)
-
-func (p RequestBody) newConfig(map[any]any) (PlaceholderConfig, error) {
+func (p *RequestBody) NewPlaceholderConfig(map[any]any) (PlaceholderConfig, error) {
 	return nil, nil
 }
 
-func (p RequestBody) GetName() string {
+func (p *RequestBody) GetName() string {
 	return p.name
 }
 
-func (p RequestBody) CreateRequest(requestURL, payload string, _ PlaceholderConfig) (*http.Request, error) {
+func (p *RequestBody) CreateRequest(requestURL, payload string, config PlaceholderConfig, httpClientType types.HTTPClientType) (types.Request, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err
 	}
+
 	// check if we need to set Content-Length manually here
 	req, err := http.NewRequest("POST", reqURL.String(), strings.NewReader(payload))
 	if err != nil {
 		return nil, err
 	}
-	return req, nil
+
+	return &types.GoHTTPRequest{Req: req}, nil
 }

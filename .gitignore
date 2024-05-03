@@ -1,6 +1,6 @@
 .idea
 .DS_store
-gotestwaf
-main
-reports/*
+/gotestwaf
+/main
+/reports/*
 /modsec_stat_*.txt

@@ -1,6 +1,7 @@
 package scanner
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -18,7 +19,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/wallarm/gotestwaf/internal/scanner/detectors"
+	"github.com/wallarm/gotestwaf/internal/scanner/types"
 
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/getkin/kin-openapi/routers"
@@ -30,10 +31,14 @@ import (
 
 	"github.com/wallarm/gotestwaf/internal/config"
 	"github.com/wallarm/gotestwaf/internal/db"
-	"github.com/wallarm/gotestwaf/internal/dnscache"
+	"github.com/wallarm/gotestwaf/internal/helpers"
 	"github.com/wallarm/gotestwaf/internal/openapi"
+	p "github.com/wallarm/gotestwaf/internal/payload"
 	"github.com/wallarm/gotestwaf/internal/payload/encoder"
 	"github.com/wallarm/gotestwaf/internal/payload/placeholder"
+	"github.com/wallarm/gotestwaf/internal/scanner/clients"
+	"github.com/wallarm/gotestwaf/internal/scanner/waf_detector/detectors"
+	"github.com/wallarm/gotestwaf/pkg/dnscache"
 )
 
 const (
@@ -62,8 +67,8 @@ type Scanner struct {
 	cfg    *config.Config
 	db     *db.DB
 
-	httpClient *HTTPClient
-	grpcConn   *GRPCConn
+	httpClient *clients.GoHTTPClient
+	grpcConn   *clients.GRPCConn
 	wsClient   *websocket.Dialer
 
 	requestTemplates openapi.Templates
@@ -82,12 +87,12 @@ func New(
 	router routers.Router,
 	enableDebugHeader bool,
 ) (*Scanner, error) {
-	httpClient, err := NewHTTPClient(cfg, dnsResolver)
+	httpClient, err := clients.NewGoHTTPClient(cfg, dnsResolver)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't create HTTP client")
 	}
 
-	grpcConn, err := NewGRPCConn(cfg)
+	grpcConn, err := clients.NewGRPCConn(cfg)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't create gRPC client")
 	}
@@ -107,7 +112,7 @@ func New(
 
 func (s *Scanner) CheckIfJavaScriptRequired(ctx context.Context) (bool, error) {
 	fullUrl, _ := url.Parse(s.cfg.URL)
-	reducedUrl := GetTargetURLStr(fullUrl)
+	reducedUrl := helpers.GetTargetURLStr(fullUrl)
 
 	rawRequest, err := http.NewRequest("GET", reducedUrl, nil)
 	if err != nil {
@@ -115,16 +120,12 @@ func (s *Scanner) CheckIfJavaScriptRequired(ctx context.Context) (bool, error) {
 	}
 	rawRequest = rawRequest.WithContext(ctx)
 
-	getRef := func(b bool) *bool {
-		return &b
-	}
-
-	resp, _, _, body, _, err := s.httpClient.SendRequest(rawRequest, "", getRef(true), getRef(true))
+	resp, err := s.httpClient.SendRequest(ctx, &types.GoHTTPRequest{Req: rawRequest})
 	if err != nil {
 		return false, err
 	}
 
-	defer resp.Body.Close()
+	body := string(resp.GetContent())
 
 	for i := range jsChallengeErrorMsgs {
 		if strings.Contains(body, jsChallengeErrorMsgs[i]) {
@@ -203,15 +204,23 @@ func (s *Scanner) WAFBlockCheck(ctx context.Context) error {
 
 // preCheck sends given payload during the pre-check stage.
 func (s *Scanner) preCheck(ctx context.Context, payload string) (blocked bool, statusCode int, err error) {
-	resp, respMsgHeader, respBody, code, err := s.httpClient.SendPayload(ctx, s.cfg.URL, payload, "URL", "URLParam", nil, "")
+	pl := &p.PayloadInfo{
+		Payload:         payload,
+		EncoderName:     "URL",
+		PlaceholderName: "URLParam",
+	}
+
+	resp, err := s.httpClient.SendPayload(ctx, s.cfg.URL, pl)
 	if err != nil {
 		return false, 0, err
 	}
-	blocked, _, err = s.checkBlockedOrPassed(resp, respMsgHeader, respBody, code)
+
+	blocked, _, err = s.checkBlockedOrPassed(resp)
 	if err != nil {
 		return false, 0, err
 	}
-	return blocked, code, nil
+
+	return blocked, resp.GetStatusCode(), nil
 }
 
 // WAFwsBlockCheck checks if WebSocket exists and is protected by WAF.
@@ -405,10 +414,7 @@ func (s *Scanner) Run(ctx context.Context) error {
 // checkBlockedOrPassed checks the response status-code or request body using
 // a regular expression to determine if the request has been blocked or passed.
 func (s *Scanner) checkBlockedOrPassed(
-	resp *http.Response,
-	responseMsgHeader,
-	body string,
-	statusCode int,
+	resp types.Response,
 ) (blocked, passed bool, err error) {
 	if s.cfg.CheckBlockFunc != nil {
 		if s.cfg.CheckBlockFunc(&detectors.Responses{RespToAttack: resp}) {
@@ -416,27 +422,39 @@ func (s *Scanner) checkBlockedOrPassed(
 		}
 	}
 
+	var headers []string
+	for header, value := range resp.GetHeaders() {
+		headers = append(headers, fmt.Sprintf("%s: %s", header, value[0]))
+	}
+
+	body := resp.GetContent()
+	statusCode := resp.GetStatusCode()
+
 	if s.cfg.BlockRegex != "" {
-		response := body
-		if responseMsgHeader != "" {
-			response = responseMsgHeader + body
+		for _, header := range headers {
+			matched, _ := regexp.MatchString(s.cfg.BlockRegex, header)
+			if matched {
+				blocked = true
+			}
 		}
 
-		if response != "" {
-			matched, _ := regexp.MatchString(s.cfg.BlockRegex, response)
+		if blocked == false && body != nil && len(body) > 0 {
+			matched, _ := regexp.Match(s.cfg.BlockRegex, body)
 
 			blocked = matched
 		}
 	}
 
 	if s.cfg.PassRegex != "" {
-		response := body
-		if responseMsgHeader != "" {
-			response = responseMsgHeader + body
+		for _, header := range headers {
+			matched, _ := regexp.MatchString(s.cfg.PassRegex, header)
+			if matched {
+				passed = true
+			}
 		}
 
-		if response != "" {
-			matched, _ := regexp.MatchString(s.cfg.PassRegex, response)
+		if passed == false && body != nil && len(body) > 0 {
+			matched, _ := regexp.Match(s.cfg.PassRegex, body)
 
 			passed = matched
 		}
@@ -517,12 +535,10 @@ func (s *Scanner) produceTests(ctx context.Context, n int) <-chan *testWork {
 // placeholder.
 func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 	var (
-		resp          *http.Response
-		respHeaders   http.Header
-		respMsgHeader string
-		respBody      string
-		statusCode    int
-		err           error
+		resp       types.Response
+		respBody   string
+		statusCode int
+		err        error
 	)
 
 	if w.placeholder.Name == placeholder.DefaultGRPC.GetName() {
@@ -532,26 +548,33 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 
 		newCtx := ctx
 		if w.debugHeaderValue != "" {
-			newCtx = metadata.AppendToOutgoingContext(ctx, GTWDebugHeader, w.debugHeaderValue)
+			newCtx = metadata.AppendToOutgoingContext(ctx, clients.GTWDebugHeader, w.debugHeaderValue)
 		}
 
 		respBody, statusCode, err = s.grpcConn.Send(newCtx, w.encoder, w.payload)
 
-		_, _, _, _, err = s.updateDB(ctx, w, nil, nil, nil, nil, nil, nil,
-			statusCode, nil, "", respBody, err, "", true)
+		resp = &types.ResponseMeta{
+			StatusCode: statusCode,
+			Content:    []byte(respBody),
+		}
+
+		_, _, _, _, err = s.updateDB(ctx, w, nil, nil, nil, nil, nil, resp, err, "", true)
 
 		return err
 	}
 
 	if s.requestTemplates == nil {
-		resp, respMsgHeader, respBody, statusCode, err = s.httpClient.SendPayload(ctx, s.cfg.URL, w.payload, w.encoder, w.placeholder.Name, w.placeholder.Config, w.debugHeaderValue)
-
-		if resp != nil {
-			defer resp.Body.Close()
+		pl := &p.PayloadInfo{
+			Payload:           w.payload,
+			EncoderName:       w.encoder,
+			PlaceholderName:   w.placeholder.Name,
+			PlaceholderConfig: w.placeholder.Config,
+			DebugHeaderValue:  w.debugHeaderValue,
 		}
 
-		_, _, _, _, err = s.updateDB(ctx, w, nil, nil, nil, nil, nil, resp,
-			statusCode, nil, respMsgHeader, respBody, err, "", false)
+		resp, err = s.httpClient.SendPayload(ctx, s.cfg.URL, pl)
+
+		_, _, _, _, err = s.updateDB(ctx, w, nil, nil, nil, nil, nil, resp, err, "", false)
 
 		return err
 	}
@@ -575,15 +598,13 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 			return errors.Wrap(err, "create request from template")
 		}
 
-		resp, respHeaders, respMsgHeader, respBody, statusCode, err = s.httpClient.SendRequest(req, w.debugHeaderValue, nil, nil)
+		resp, err = s.httpClient.SendRequest(ctx, &types.GoHTTPRequest{Req: req})
 
 		additionalInfo = fmt.Sprintf("%s %s", template.Method, template.Path)
 
 		passedTest, blockedTest, unresolvedTest, failedTest, err =
 			s.updateDB(ctx, w, passedTest, blockedTest, unresolvedTest, failedTest,
-				req, resp, statusCode, respHeaders, respMsgHeader, respBody, err, additionalInfo, false)
-
-		resp.Body.Close()
+				req, resp, err, additionalInfo, false)
 
 		s.db.AddToScannedPaths(template.Method, template.Path)
 
@@ -604,11 +625,7 @@ func (s *Scanner) updateDB(
 	unresolvedTest *db.Info,
 	failedTest *db.Info,
 	req *http.Request,
-	resp *http.Response,
-	respStatusCode int,
-	respHeaders http.Header,
-	respMsgHeader string,
-	respBody string,
+	resp types.Response,
 	sendErr error,
 	additionalInfo string,
 	isGRPC bool,
@@ -624,7 +641,7 @@ func (s *Scanner) updateDB(
 	updUnresolvedTest = unresolvedTest
 	updFailedTest = failedTest
 
-	info := w.toInfo(respStatusCode)
+	info := w.toInfo(resp.GetStatusCode())
 
 	var blockedByReset bool
 	if sendErr != nil {
@@ -661,7 +678,7 @@ func (s *Scanner) updateDB(
 	if blockedByReset {
 		blocked = true
 	} else {
-		blocked, passed, err = s.checkBlockedOrPassed(resp, respMsgHeader, respBody, respStatusCode)
+		blocked, passed, err = s.checkBlockedOrPassed(resp)
 		if err != nil {
 			return nil, nil, nil, nil,
 				errors.Wrap(err, "failed to check blocking")
@@ -695,9 +712,9 @@ func (s *Scanner) updateDB(
 
 		responseValidationInput := &openapi3filter.ResponseValidationInput{
 			RequestValidationInput: inputReuqestValidation,
-			Status:                 respStatusCode,
-			Header:                 respHeaders,
-			Body:                   io.NopCloser(strings.NewReader(respBody)),
+			Status:                 resp.GetStatusCode(),
+			Header:                 resp.GetHeaders(),
+			Body:                   io.NopCloser(bytes.NewReader(resp.GetContent())),
 			Options: &openapi3filter.Options{
 				IncludeResponseStatus: true,
 			},

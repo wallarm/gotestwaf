@@ -6,26 +6,30 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/wallarm/gotestwaf/internal/scanner/types"
+
 	"github.com/wallarm/gotestwaf/internal/payload/encoder"
 )
+
+const jsonRequestPayloadWrapper = "{\"test\":true, \"%s\": \"%s\"}"
+
+var _ Placeholder = (*JSONRequest)(nil)
+
+var DefaultJSONRequest = &JSONRequest{name: "JSONRequest"}
 
 type JSONRequest struct {
 	name string
 }
 
-var DefaultJSONRequest = JSONRequest{name: "JSONRequest"}
-
-var _ Placeholder = (*JSONRequest)(nil)
-
-func (p JSONRequest) newConfig(map[any]any) (PlaceholderConfig, error) {
+func (p *JSONRequest) NewPlaceholderConfig(map[any]any) (PlaceholderConfig, error) {
 	return nil, nil
 }
 
-func (p JSONRequest) GetName() string {
+func (p *JSONRequest) GetName() string {
 	return p.name
 }
 
-func (p JSONRequest) CreateRequest(requestURL, payload string, _ PlaceholderConfig) (*http.Request, error) {
+func (p *JSONRequest) CreateRequest(requestURL, payload string, config PlaceholderConfig, httpClientType types.HTTPClientType) (types.Request, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err
@@ -35,15 +39,20 @@ func (p JSONRequest) CreateRequest(requestURL, payload string, _ PlaceholderConf
 	if err != nil {
 		return nil, err
 	}
+
 	encodedPayload, err := encoder.Apply("JSUnicode", payload)
 	if err != nil {
 		return nil, err
 	}
-	jsonPayload := fmt.Sprintf("{\"test\":true, \"%s\": \"%s\"}", param, encodedPayload)
+
+	jsonPayload := fmt.Sprintf(jsonRequestPayloadWrapper, param, encodedPayload)
+
 	req, err := http.NewRequest("POST", reqURL.String(), strings.NewReader(jsonPayload))
 	if err != nil {
 		return nil, err
 	}
+
 	req.Header.Add("Content-Type", "application/json")
-	return req, nil
+
+	return &types.GoHTTPRequest{Req: req}, nil
 }

@@ -1,6 +1,8 @@
 package config
 
-import "github.com/wallarm/gotestwaf/internal/scanner/detectors"
+import (
+	"github.com/wallarm/gotestwaf/internal/scanner/waf_detector/detectors"
+)
 
 type Config struct {
 	URL                   string            `mapstructure:"url"`

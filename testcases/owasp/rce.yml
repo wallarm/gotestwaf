@@ -1,12 +1,12 @@
-encoder:
-- URL
-- Plain
 payload:
-- ax--exec=`id`--remote=origin
-- ; cat /et'c/pa'ss'wd
-- cmd=127.0.0.1 && ls /etc
+  - "ax--exec=`id`--remote=origin"
+  - "; cat /et'c/pa'ss'wd"
+  - "cmd=127.0.0.1 && ls /etc"
+encoder:
+  - URL
+  - Plain
 placeholder:
-- URLPath
-- JSONRequest
-- Header
+  - URLPath
+  - JSONRequest
+  - Header
 type: RCE

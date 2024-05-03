@@ -4,25 +4,27 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/wallarm/gotestwaf/internal/scanner/types"
 )
+
+var _ Placeholder = (*JSONBody)(nil)
+
+var DefaultJSONBody = &JSONBody{name: "JSONBody"}
 
 type JSONBody struct {
 	name string
 }
 
-var DefaultJSONBody = JSONBody{name: "JSONBody"}
-
-var _ Placeholder = (*JSONBody)(nil)
-
-func (p JSONBody) newConfig(map[any]any) (PlaceholderConfig, error) {
+func (p *JSONBody) NewPlaceholderConfig(map[any]any) (PlaceholderConfig, error) {
 	return nil, nil
 }
 
-func (p JSONBody) GetName() string {
+func (p *JSONBody) GetName() string {
 	return p.name
 }
 
-func (p JSONBody) CreateRequest(requestURL, payload string, _ PlaceholderConfig) (*http.Request, error) {
+func (p *JSONBody) CreateRequest(requestURL, payload string, config PlaceholderConfig, httpClientType types.HTTPClientType) (types.Request, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err
@@ -35,5 +37,5 @@ func (p JSONBody) CreateRequest(requestURL, payload string, _ PlaceholderConfig)
 
 	req.Header.Add("Content-Type", "application/json")
 
-	return req, nil
+	return &types.GoHTTPRequest{Req: req}, nil
 }

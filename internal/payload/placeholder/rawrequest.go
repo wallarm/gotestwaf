@@ -6,8 +6,15 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/wallarm/gotestwaf/internal/scanner/types"
+
 	"github.com/pkg/errors"
 )
+
+var _ Placeholder = (*RawRequest)(nil)
+var _ PlaceholderConfig = (*RawRequestConfig)(nil)
+
+var DefaultRawRequest = &RawRequest{name: "RawRequest"}
 
 type RawRequest struct {
 	name string
@@ -20,12 +27,7 @@ type RawRequestConfig struct {
 	Body    string
 }
 
-var DefaultRawRequest = RawRequest{name: "RawRequest"}
-
-var _ Placeholder = (*RawRequest)(nil)
-var _ PlaceholderConfig = (*RawRequestConfig)(nil)
-
-func (p RawRequest) newConfig(conf map[any]any) (PlaceholderConfig, error) {
+func (p *RawRequest) NewPlaceholderConfig(conf map[any]any) (PlaceholderConfig, error) {
 	result := &RawRequestConfig{}
 
 	method, ok := conf["method"]
@@ -100,13 +102,13 @@ func (p RawRequest) newConfig(conf map[any]any) (PlaceholderConfig, error) {
 	return result, nil
 }
 
-func (p RawRequest) GetName() string {
+func (p *RawRequest) GetName() string {
 	return p.name
 }
 
 // CreateRequest creates a new request from config.
 // config must be a RawRequestConfig struct.
-func (p RawRequest) CreateRequest(requestURL, payload string, config PlaceholderConfig) (*http.Request, error) {
+func (p *RawRequest) CreateRequest(requestURL, payload string, config PlaceholderConfig, httpClientType types.HTTPClientType) (types.Request, error) {
 	conf, ok := config.(*RawRequestConfig)
 	if !ok {
 		return nil, &BadPlaceholderConfigError{
@@ -141,7 +143,7 @@ func (p RawRequest) CreateRequest(requestURL, payload string, config Placeholder
 		req.Header.Add(k, strings.ReplaceAll(v, payloadPlaceholder, payload))
 	}
 
-	return req, nil
+	return &types.GoHTTPRequest{Req: req}, nil
 }
 
 func (r *RawRequestConfig) Hash() []byte {

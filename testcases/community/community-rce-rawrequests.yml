@@ -1,4 +1,3 @@
----
 payload:
   - "cmd=cat /etc/passwd"
   - "cmd=127.0.0.1 && ls /etc"
@@ -16,4 +15,3 @@ placeholder:
         Content-Encoding: "gzip"
       body: "{{payload}}"
 type: "RawRequest test"
-...

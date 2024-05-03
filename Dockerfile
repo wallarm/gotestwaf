@@ -1,14 +1,19 @@
 # syntax=docker/dockerfile:1
 
 # Build Stage ==================================================================
-FROM golang:1.19-alpine AS build
+FROM golang:1.22-alpine AS build
 
 RUN apk --no-cache add git
 
 WORKDIR /app
-COPY . .
 
-RUN go build -o gotestwaf -ldflags "-X github.com/wallarm/gotestwaf/internal/version.Version=$(git describe --tags)" ./cmd/
+COPY ./go.mod ./go.sum ./
+RUN go mod download
+
+COPY . .
+RUN go build -o gotestwaf \
+    -ldflags "-X github.com/wallarm/gotestwaf/internal/version.Version=$(git describe --tags)" \
+    ./cmd/gotestwaf
 
 
 # Main Stage ===================================================================

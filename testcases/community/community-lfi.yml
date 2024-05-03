@@ -1,9 +1,11 @@
+payload:
+  - '%C0%AE%C0%AE%C0%AF%C0%AE%C0%AE%C0%AFetc%C0%AFpasswd'
+  - file:///etc/./passwd
 encoder:
-- URL
-payload: []
+  - URL
 placeholder:
-- URLParam
-- HTMLForm
-- HTMLMultipartForm
-- JSONRequest
+  - URLParam
+  - HTMLForm
+  - HTMLMultipartForm
+  - JSONRequest
 type: LFI

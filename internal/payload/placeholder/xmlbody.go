@@ -4,25 +4,27 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/wallarm/gotestwaf/internal/scanner/types"
 )
+
+var _ Placeholder = (*XMLBody)(nil)
+
+var DefaultXMLBody = &XMLBody{name: "XMLBody"}
 
 type XMLBody struct {
 	name string
 }
 
-var DefaultXMLBody = XMLBody{name: "XMLBody"}
-
-var _ Placeholder = (*XMLBody)(nil)
-
-func (p XMLBody) newConfig(map[any]any) (PlaceholderConfig, error) {
+func (p *XMLBody) NewPlaceholderConfig(map[any]any) (PlaceholderConfig, error) {
 	return nil, nil
 }
 
-func (p XMLBody) GetName() string {
+func (p *XMLBody) GetName() string {
 	return p.name
 }
 
-func (p XMLBody) CreateRequest(requestURL, payload string, _ PlaceholderConfig) (*http.Request, error) {
+func (p *XMLBody) CreateRequest(requestURL, payload string, config PlaceholderConfig, httpClientType types.HTTPClientType) (types.Request, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err
@@ -35,5 +37,5 @@ func (p XMLBody) CreateRequest(requestURL, payload string, _ PlaceholderConfig) 
 
 	req.Header.Add("Content-Type", "text/xml")
 
-	return req, nil
+	return &types.GoHTTPRequest{Req: req}, nil
 }

@@ -1,13 +1,13 @@
-encoder:
-- Base64Flat
-- URL
 payload:
-- /static/img/../../etc/passwd
-- \\::1\c$\users\default\ntuser.dat
+  - /static/img/../../etc/passwd
+  - \\::1\c$\users\default\ntuser.dat
+encoder:
+  - Base64Flat
+  - URL
 placeholder:
-- URLPath
-- URLParam
-- HTMLForm
-- HTMLMultipartForm
-- JSONRequest
+  - URLPath
+  - URLParam
+  - HTMLForm
+  - HTMLMultipartForm
+  - JSONRequest
 type: Path Traversal

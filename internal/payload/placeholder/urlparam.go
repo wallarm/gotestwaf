@@ -4,25 +4,27 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/wallarm/gotestwaf/internal/scanner/types"
 )
+
+var _ Placeholder = (*URLParam)(nil)
+
+var DefaultURLParam = &URLParam{name: "URLParam"}
 
 type URLParam struct {
 	name string
 }
 
-var DefaultURLParam = URLParam{name: "URLParam"}
-
-var _ Placeholder = (*URLParam)(nil)
-
-func (p URLParam) newConfig(map[any]any) (PlaceholderConfig, error) {
+func (p *URLParam) NewPlaceholderConfig(map[any]any) (PlaceholderConfig, error) {
 	return nil, nil
 }
 
-func (p URLParam) GetName() string {
+func (p *URLParam) GetName() string {
 	return p.name
 }
 
-func (p URLParam) CreateRequest(requestURL, payload string, _ PlaceholderConfig) (*http.Request, error) {
+func (p *URLParam) CreateRequest(requestURL, payload string, config PlaceholderConfig, httpClientType types.HTTPClientType) (types.Request, error) {
 	param, err := RandomHex(Seed)
 	if err != nil {
 		return nil, err
@@ -55,5 +57,6 @@ func (p URLParam) CreateRequest(requestURL, payload string, _ PlaceholderConfig)
 	if err != nil {
 		return nil, err
 	}
-	return req, err
+
+	return &types.GoHTTPRequest{Req: req}, err
 }

@@ -5,25 +5,27 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
+
+	"github.com/wallarm/gotestwaf/internal/scanner/types"
 )
+
+var _ Placeholder = (*HTMLMultipartForm)(nil)
+
+var DefaultHTMLMultipartForm = &HTMLMultipartForm{name: "HTMLMultipartForm"}
 
 type HTMLMultipartForm struct {
 	name string
 }
 
-var DefaultHTMLMultipartForm = HTMLMultipartForm{name: "HTMLMultipartForm"}
-
-var _ Placeholder = (*HTMLMultipartForm)(nil)
-
-func (p HTMLMultipartForm) newConfig(map[any]any) (PlaceholderConfig, error) {
+func (p *HTMLMultipartForm) NewPlaceholderConfig(map[any]any) (PlaceholderConfig, error) {
 	return nil, nil
 }
 
-func (p HTMLMultipartForm) GetName() string {
+func (p *HTMLMultipartForm) GetName() string {
 	return p.name
 }
 
-func (p HTMLMultipartForm) CreateRequest(requestURL, payload string, _ PlaceholderConfig) (*http.Request, error) {
+func (p *HTMLMultipartForm) CreateRequest(requestURL, payload string, config PlaceholderConfig, httpClientType types.HTTPClientType) (types.Request, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err
@@ -56,5 +58,5 @@ func (p HTMLMultipartForm) CreateRequest(requestURL, payload string, _ Placehold
 
 	req.Header.Add("Content-Type", writer.FormDataContentType())
 
-	return req, nil
+	return &types.GoHTTPRequest{Req: req}, nil
 }

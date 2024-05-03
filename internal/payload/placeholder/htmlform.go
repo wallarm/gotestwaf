@@ -4,25 +4,27 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/wallarm/gotestwaf/internal/scanner/types"
 )
+
+var _ Placeholder = (*HTMLForm)(nil)
+
+var DefaultHTMLForm = &HTMLForm{name: "HTMLForm"}
 
 type HTMLForm struct {
 	name string
 }
 
-var DefaultHTMLForm = HTMLForm{name: "HTMLForm"}
-
-var _ Placeholder = (*HTMLForm)(nil)
-
-func (p HTMLForm) newConfig(map[any]any) (PlaceholderConfig, error) {
+func (p *HTMLForm) NewPlaceholderConfig(map[any]any) (PlaceholderConfig, error) {
 	return nil, nil
 }
 
-func (p HTMLForm) GetName() string {
+func (p *HTMLForm) GetName() string {
 	return p.name
 }
 
-func (p HTMLForm) CreateRequest(requestURL, payload string, _ PlaceholderConfig) (*http.Request, error) {
+func (p *HTMLForm) CreateRequest(requestURL, payload string, config PlaceholderConfig, httpClientType types.HTTPClientType) (types.Request, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err
@@ -41,5 +43,5 @@ func (p HTMLForm) CreateRequest(requestURL, payload string, _ PlaceholderConfig)
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
-	return req, nil
+	return &types.GoHTTPRequest{Req: req}, nil
 }

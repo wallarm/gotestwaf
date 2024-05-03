@@ -70,10 +70,6 @@ Since the format of the YAML string is required for payloads, they must be [enco
     * XMLBody
     * URLParam
     * URLPath
-    * NonCrudUrlPath
-    * NonCrudUrlParam
-    * NonCRUDHeader
-    * NonCRUDRequestBody
     * RawRequest
 
     The `RawRequest` placeholder will allow you to do an arbitrary HTTP request. The payload is substituted by replacing the string `{{payload}}` in the URL path, Headers or body. Fields of `RawRequest` placeholder:

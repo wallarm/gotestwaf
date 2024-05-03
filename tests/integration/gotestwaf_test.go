@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/wallarm/gotestwaf/internal/dnscache"
+
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
@@ -76,7 +78,7 @@ func runGoTestWAF(ctx context.Context, testCases []*db.Case) error {
 		return errors.Wrap(err, "couldn't create test cases DB")
 	}
 
-	dnsCache, err := scanner.NewDNSCache(logger)
+	dnsCache, err := dnscache.NewDNSCache(logger)
 	if err != nil {
 		return errors.Wrap(err, "couldn't create DNS cache")
 	}

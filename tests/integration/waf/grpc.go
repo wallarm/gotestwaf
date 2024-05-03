@@ -9,12 +9,13 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/wallarm/gotestwaf/internal/scanner/clients"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	gtw_grpc "github.com/wallarm/gotestwaf/internal/payload/placeholder/grpc"
-	"github.com/wallarm/gotestwaf/internal/scanner"
 	"github.com/wallarm/gotestwaf/tests/integration/config"
 )
 
@@ -31,7 +32,7 @@ func (s *grpcServer) Foo(ctx context.Context, in *gtw_grpc.Request) (*gtw_grpc.R
 		s.errChan <- errors.New("metadata not found")
 	}
 
-	headerValue := md.Get(scanner.GTWDebugHeader)
+	headerValue := md.Get(clients.GTWDebugHeader)
 	if len(headerValue) < 1 {
 		s.errChan <- errors.New("couldn't get X-GoTestWAF-Test header value")
 	}
