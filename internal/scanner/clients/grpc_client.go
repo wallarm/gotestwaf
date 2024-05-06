@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
-	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -21,8 +20,10 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/wallarm/gotestwaf/internal/config"
-	"github.com/wallarm/gotestwaf/internal/payload/encoder"
+	"github.com/wallarm/gotestwaf/internal/helpers"
+	"github.com/wallarm/gotestwaf/internal/payload"
 	grpcPlaceholder "github.com/wallarm/gotestwaf/internal/payload/placeholder/grpc"
+	"github.com/wallarm/gotestwaf/internal/scanner/types"
 )
 
 const (
@@ -31,7 +32,9 @@ const (
 	grpcServerDetectionTimeout = 3 * time.Second
 )
 
-type GRPCConn struct {
+var _ GRPCClient = (*GrpcClient)(nil)
+
+type GrpcClient struct {
 	host           string
 	transportCreds credentials.TransportCredentials
 	tlsConf        *tls.Config
@@ -41,15 +44,15 @@ type GRPCConn struct {
 	isAvailable bool
 }
 
-func NewGRPCConn(cfg *config.Config) (*GRPCConn, error) {
-	g := &GRPCConn{isAvailable: true}
+func NewGrpcClient(cfg *config.Config) (*GrpcClient, error) {
+	g := &GrpcClient{isAvailable: true}
 
 	if cfg.GRPCPort == 0 {
 		g.isAvailable = false
 		return g, nil
 	}
 
-	isTLS, host, err := tlsAndHostFromUrl(cfg.URL, cfg.GRPCPort)
+	isTLS, host, err := helpers.HostPortFromUrl(cfg.URL, cfg.GRPCPort)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +67,7 @@ func NewGRPCConn(cfg *config.Config) (*GRPCConn, error) {
 	return g, nil
 }
 
-func (g *GRPCConn) httpTest(ctx context.Context) (bool, error) {
+func (g *GrpcClient) httpTest(ctx context.Context) (bool, error) {
 	var http2transport *http2.Transport
 	var scheme string
 
@@ -119,7 +122,7 @@ func (g *GRPCConn) httpTest(ctx context.Context) (bool, error) {
 	return false, nil
 }
 
-func (g *GRPCConn) healthCheckTest(ctx context.Context) (bool, error) {
+func (g *GrpcClient) healthCheckTest(ctx context.Context) (bool, error) {
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, grpcServerDetectionTimeout)
 	defer cancel()
 
@@ -151,7 +154,7 @@ func (g *GRPCConn) healthCheckTest(ctx context.Context) (bool, error) {
 	return false, nil
 }
 
-func (g *GRPCConn) CheckAvailability(ctx context.Context) (bool, error) {
+func (g *GrpcClient) CheckAvailability(ctx context.Context) (bool, error) {
 	if !g.isAvailable {
 		return false, nil
 	}
@@ -175,14 +178,18 @@ func (g *GRPCConn) CheckAvailability(ctx context.Context) (bool, error) {
 	return ok, nil
 }
 
-func (g *GRPCConn) Send(ctx context.Context, encoderName, payload string) (body string, statusCode int, err error) {
+func (g *GrpcClient) IsAvailable() bool {
+	return g.isAvailable
+}
+
+func (g *GrpcClient) SendPayload(ctx context.Context, payloadInfo *payload.PayloadInfo) (types.Response, error) {
 	if !g.isAvailable {
-		return "", 0, nil
+		return nil, nil
 	}
 
-	encodedPayload, err := encoder.Apply(encoderName, payload)
+	encodedPayload, err := payloadInfo.GetEncodedPayload()
 	if err != nil {
-		return "", 0, errors.Wrap(err, "encoding payload")
+		return nil, errors.Wrap(err, "encoding payload")
 	}
 
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, grpcServerDetectionTimeout)
@@ -199,13 +206,17 @@ func (g *GRPCConn) Send(ctx context.Context, encoderName, payload string) (body 
 			conn, err = grpc.DialContext(ctxWithTimeout, g.host, grpc.WithTransportCredentials(g.transportCreds), grpc.WithBlock())
 		}
 		if err != nil {
-			return "", 0, errors.Wrap(err, "sending gRPC request")
+			return nil, errors.Wrap(err, "sending gRPC request")
 		}
 
 		g.conn = conn
 	}
 
 	client := grpcPlaceholder.NewServiceFooBarClient(g.conn)
+
+	response := &types.ResponseMeta{
+		StatusCode: 200,
+	}
 
 	resp, err := client.Foo(ctx, &grpcPlaceholder.Request{Value: encodedPayload})
 	if err != nil {
@@ -214,84 +225,55 @@ func (g *GRPCConn) Send(ctx context.Context, encoderName, payload string) (body 
 		// gRPC status code converting to HTTP status code
 		switch st.Code() {
 		case codes.OK:
-			statusCode = 200
+			response.StatusCode = 200
 		case codes.Canceled:
-			statusCode = 499
+			response.StatusCode = 499
 		case codes.Unknown:
-			statusCode = 500
+			response.StatusCode = 500
 		case codes.InvalidArgument:
-			statusCode = 400
+			response.StatusCode = 400
 		case codes.DeadlineExceeded:
-			statusCode = 504
+			response.StatusCode = 504
 		case codes.NotFound:
-			statusCode = 404
+			response.StatusCode = 404
 		case codes.AlreadyExists:
-			statusCode = 409
+			response.StatusCode = 409
 		case codes.PermissionDenied:
-			statusCode = 403
+			response.StatusCode = 403
 		case codes.ResourceExhausted:
-			statusCode = 429
+			response.StatusCode = 429
 		case codes.FailedPrecondition:
-			statusCode = 400
+			response.StatusCode = 400
 		case codes.Aborted:
-			statusCode = 409
+			response.StatusCode = 409
 		case codes.OutOfRange:
-			statusCode = 400
+			response.StatusCode = 400
 		case codes.Unimplemented:
-			statusCode = 501
+			response.StatusCode = 501
 		case codes.Internal:
-			statusCode = 500
+			response.StatusCode = 500
 		case codes.Unavailable:
-			statusCode = 503
+			response.StatusCode = 503
 		case codes.DataLoss:
-			statusCode = 500
+			response.StatusCode = 500
 		case codes.Unauthenticated:
-			statusCode = 401
+			response.StatusCode = 401
 		default:
-			statusCode = 500
+			response.StatusCode = 500
 		}
 
-		return "", statusCode, nil
+		return response, nil
 	}
 
-	return resp.GetValue(), 200, nil
+	response.Content = []byte(resp.GetValue())
+
+	return response, nil
 }
 
-func (g *GRPCConn) IsAvailable() bool {
-	return g.isAvailable
-}
-
-func (g *GRPCConn) Close() error {
+func (g *GrpcClient) Close() error {
 	if g.conn == nil {
 		return nil
 	}
 
 	return g.conn.Close()
-}
-
-// returns isTLS, URL host:port, error
-func tlsAndHostFromUrl(wafURL string, port uint16) (bool, string, error) {
-	isTLS := false
-
-	urlParse, err := url.Parse(wafURL)
-	if err != nil {
-		return isTLS, "", err
-	}
-
-	host, _, err := net.SplitHostPort(urlParse.Host)
-	if err != nil {
-		if strings.Contains(err.Error(), "port") {
-			host = urlParse.Host
-		} else {
-			return false, "", err
-		}
-	}
-
-	host = net.JoinHostPort(host, fmt.Sprintf("%d", port))
-
-	if urlParse.Scheme == "https" {
-		isTLS = true
-	}
-
-	return isTLS, host, nil
 }

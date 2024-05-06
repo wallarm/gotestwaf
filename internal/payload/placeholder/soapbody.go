@@ -45,6 +45,17 @@ func (p *SOAPBody) GetName() string {
 }
 
 func (p *SOAPBody) CreateRequest(requestURL, payload string, config PlaceholderConfig, httpClientType types.HTTPClientType) (types.Request, error) {
+	switch httpClientType {
+	case types.GoHTTPClient:
+		return p.prepareGoHTTPClientRequest(requestURL, payload, config)
+	case types.ChromeHTTPClient:
+		return p.prepareChromeHTTPClientRequest(requestURL, payload, config)
+	default:
+		return nil, types.NewUnknownHTTPClientError(httpClientType)
+	}
+}
+
+func (p *SOAPBody) prepareGoHTTPClientRequest(requestURL, payload string, config PlaceholderConfig) (*types.GoHTTPRequest, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err
@@ -72,4 +83,8 @@ func (p *SOAPBody) CreateRequest(requestURL, payload string, config PlaceholderC
 	req.Header.Add("Content-Type", "text/xml")
 
 	return &types.GoHTTPRequest{Req: req}, nil
+}
+
+func (p *SOAPBody) prepareChromeHTTPClientRequest(requestURL, payload string, config PlaceholderConfig) (*types.ChromeDPTasks, error) {
+	return nil, nil
 }

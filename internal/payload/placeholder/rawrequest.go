@@ -109,6 +109,17 @@ func (p *RawRequest) GetName() string {
 // CreateRequest creates a new request from config.
 // config must be a RawRequestConfig struct.
 func (p *RawRequest) CreateRequest(requestURL, payload string, config PlaceholderConfig, httpClientType types.HTTPClientType) (types.Request, error) {
+	switch httpClientType {
+	case types.GoHTTPClient:
+		return p.prepareGoHTTPClientRequest(requestURL, payload, config)
+	case types.ChromeHTTPClient:
+		return p.prepareChromeHTTPClientRequest(requestURL, payload, config)
+	default:
+		return nil, types.NewUnknownHTTPClientError(httpClientType)
+	}
+}
+
+func (p *RawRequest) prepareGoHTTPClientRequest(requestURL, payload string, config PlaceholderConfig) (*types.GoHTTPRequest, error) {
 	conf, ok := config.(*RawRequestConfig)
 	if !ok {
 		return nil, &BadPlaceholderConfigError{
@@ -144,6 +155,10 @@ func (p *RawRequest) CreateRequest(requestURL, payload string, config Placeholde
 	}
 
 	return &types.GoHTTPRequest{Req: req}, nil
+}
+
+func (p *RawRequest) prepareChromeHTTPClientRequest(requestURL, payload string, config PlaceholderConfig) (*types.ChromeDPTasks, error) {
+	return nil, nil
 }
 
 func (r *RawRequestConfig) Hash() []byte {

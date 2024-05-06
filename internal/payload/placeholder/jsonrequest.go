@@ -30,6 +30,17 @@ func (p *JSONRequest) GetName() string {
 }
 
 func (p *JSONRequest) CreateRequest(requestURL, payload string, config PlaceholderConfig, httpClientType types.HTTPClientType) (types.Request, error) {
+	switch httpClientType {
+	case types.GoHTTPClient:
+		return p.prepareGoHTTPClientRequest(requestURL, payload, config)
+	case types.ChromeHTTPClient:
+		return p.prepareChromeHTTPClientRequest(requestURL, payload, config)
+	default:
+		return nil, types.NewUnknownHTTPClientError(httpClientType)
+	}
+}
+
+func (p *JSONRequest) prepareGoHTTPClientRequest(requestURL, payload string, config PlaceholderConfig) (*types.GoHTTPRequest, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err
@@ -55,4 +66,8 @@ func (p *JSONRequest) CreateRequest(requestURL, payload string, config Placehold
 	req.Header.Add("Content-Type", "application/json")
 
 	return &types.GoHTTPRequest{Req: req}, nil
+}
+
+func (p *JSONRequest) prepareChromeHTTPClientRequest(requestURL, payload string, config PlaceholderConfig) (*types.ChromeDPTasks, error) {
+	return nil, nil
 }

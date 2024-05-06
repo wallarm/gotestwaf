@@ -68,7 +68,7 @@ type Scanner struct {
 	db     *db.DB
 
 	httpClient *clients.GoHTTPClient
-	grpcConn   *clients.GRPCConn
+	grpcConn   clients.GRPCClient
 	wsClient   *websocket.Dialer
 
 	requestTemplates openapi.Templates
@@ -92,7 +92,7 @@ func New(
 		return nil, errors.Wrap(err, "couldn't create HTTP client")
 	}
 
-	grpcConn, err := clients.NewGRPCConn(cfg)
+	grpcConn, err := clients.NewGrpcClient(cfg)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't create gRPC client")
 	}
@@ -535,10 +535,8 @@ func (s *Scanner) produceTests(ctx context.Context, n int) <-chan *testWork {
 // placeholder.
 func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 	var (
-		resp       types.Response
-		respBody   string
-		statusCode int
-		err        error
+		resp types.Response
+		err  error
 	)
 
 	if w.placeholder.Name == placeholder.DefaultGRPC.GetName() {
@@ -551,12 +549,12 @@ func (s *Scanner) scanURL(ctx context.Context, w *testWork) error {
 			newCtx = metadata.AppendToOutgoingContext(ctx, clients.GTWDebugHeader, w.debugHeaderValue)
 		}
 
-		respBody, statusCode, err = s.grpcConn.Send(newCtx, w.encoder, w.payload)
-
-		resp = &types.ResponseMeta{
-			StatusCode: statusCode,
-			Content:    []byte(respBody),
+		pl := &p.PayloadInfo{
+			Payload:     w.payload,
+			EncoderName: w.encoder,
 		}
+
+		resp, err = s.grpcConn.SendPayload(newCtx, pl)
 
 		_, _, _, _, err = s.updateDB(ctx, w, nil, nil, nil, nil, nil, resp, err, "", true)
 

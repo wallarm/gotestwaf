@@ -78,7 +78,11 @@ func GetPlaceholderConfig(name string, conf any) (PlaceholderConfig, error) {
 	return phConf, err
 }
 
-func Apply(url, data, placeholder string, config PlaceholderConfig, httpClientType types.HTTPClientType) (types.Request, error) {
+func Apply(
+	url, data, placeholder string,
+	config PlaceholderConfig,
+	httpClientType types.HTTPClientType,
+) (types.Request, error) {
 	ph, ok := Placeholders[placeholder]
 	if !ok {
 		return nil, &UnknownPlaceholderError{name: placeholder}

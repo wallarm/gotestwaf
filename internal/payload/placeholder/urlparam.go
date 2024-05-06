@@ -25,6 +25,17 @@ func (p *URLParam) GetName() string {
 }
 
 func (p *URLParam) CreateRequest(requestURL, payload string, config PlaceholderConfig, httpClientType types.HTTPClientType) (types.Request, error) {
+	switch httpClientType {
+	case types.GoHTTPClient:
+		return p.prepareGoHTTPClientRequest(requestURL, payload, config)
+	case types.ChromeHTTPClient:
+		return p.prepareChromeHTTPClientRequest(requestURL, payload, config)
+	default:
+		return nil, types.NewUnknownHTTPClientError(httpClientType)
+	}
+}
+
+func (p *URLParam) prepareGoHTTPClientRequest(requestURL, payload string, config PlaceholderConfig) (*types.GoHTTPRequest, error) {
 	param, err := RandomHex(Seed)
 	if err != nil {
 		return nil, err
@@ -59,4 +70,8 @@ func (p *URLParam) CreateRequest(requestURL, payload string, config PlaceholderC
 	}
 
 	return &types.GoHTTPRequest{Req: req}, err
+}
+
+func (p *URLParam) prepareChromeHTTPClientRequest(requestURL, payload string, config PlaceholderConfig) (*types.ChromeDPTasks, error) {
+	return nil, nil
 }

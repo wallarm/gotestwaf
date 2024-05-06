@@ -25,6 +25,17 @@ func (p *HTMLForm) GetName() string {
 }
 
 func (p *HTMLForm) CreateRequest(requestURL, payload string, config PlaceholderConfig, httpClientType types.HTTPClientType) (types.Request, error) {
+	switch httpClientType {
+	case types.GoHTTPClient:
+		return p.prepareGoHTTPClientRequest(requestURL, payload, config)
+	case types.ChromeHTTPClient:
+		return p.prepareChromeHTTPClientRequest(requestURL, payload, config)
+	default:
+		return nil, types.NewUnknownHTTPClientError(httpClientType)
+	}
+}
+
+func (p *HTMLForm) prepareGoHTTPClientRequest(requestURL, payload string, config PlaceholderConfig) (*types.GoHTTPRequest, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err
@@ -44,4 +55,8 @@ func (p *HTMLForm) CreateRequest(requestURL, payload string, config PlaceholderC
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	return &types.GoHTTPRequest{Req: req}, nil
+}
+
+func (p *HTMLForm) prepareChromeHTTPClientRequest(requestURL, payload string, config PlaceholderConfig) (*types.ChromeDPTasks, error) {
+	return nil, nil
 }

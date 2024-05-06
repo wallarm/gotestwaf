@@ -18,12 +18,23 @@ type PayloadInfo struct {
 	DebugHeaderValue string
 }
 
+// GetEncodedPayload encodes the payload using the specified encoder and
+// returns the encoded payload.
+func (p *PayloadInfo) GetEncodedPayload() (string, error) {
+	encodedPayload, err := encoder.Apply(p.EncoderName, p.Payload)
+	if err != nil {
+		return "", errors.Wrap(err, "couldn't encode payload")
+	}
+
+	return encodedPayload, nil
+}
+
 // GetRequest generates a request based on the payload information, target URL,
 // and client type.
 func (p *PayloadInfo) GetRequest(targetURL string, clientType types.HTTPClientType) (types.Request, error) {
-	encodedPayload, err := encoder.Apply(p.EncoderName, p.Payload)
+	encodedPayload, err := p.GetEncodedPayload()
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't encode payload")
+		return nil, err
 	}
 
 	request, err := placeholder.Apply(
