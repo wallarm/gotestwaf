@@ -25,19 +25,28 @@ const (
 )
 
 type WAFDetector struct {
-	client     *http.Client
-	headers    map[string]string
-	hostHeader string
-	target     string
+	clientSettings *ClientSettings
+	headers        map[string]string
+	hostHeader     string
+	target         string
+}
+
+type ClientSettings struct {
+	dnsResolver         *dnscache.Resolver
+	insecureSkipVerify  bool
+	idleConnTimeout     time.Duration
+	maxIdleConns        int
+	maxIdleConnsPerHost int
+	proxyURL            *url.URL
 }
 
 func NewDetector(cfg *config.Config, dnsResolver *dnscache.Resolver) (*WAFDetector, error) {
-	tr := &http.Transport{
-		DialContext:         dnscache.DialFunc(dnsResolver, nil),
-		TLSClientConfig:     &tls.Config{InsecureSkipVerify: !cfg.TLSVerify},
-		IdleConnTimeout:     time.Duration(cfg.IdleConnTimeout) * time.Second,
-		MaxIdleConns:        cfg.MaxIdleConns,
-		MaxIdleConnsPerHost: cfg.MaxIdleConns, // net.http hardcodes DefaultMaxIdleConnsPerHost to 2!
+	clientSettings := &ClientSettings{
+		dnsResolver:         dnsResolver,
+		insecureSkipVerify:  !cfg.TLSVerify,
+		idleConnTimeout:     time.Duration(cfg.IdleConnTimeout) * time.Second,
+		maxIdleConns:        cfg.MaxIdleConns,
+		maxIdleConnsPerHost: cfg.MaxIdleConns,
 	}
 
 	if cfg.Proxy != "" {
@@ -46,17 +55,7 @@ func NewDetector(cfg *config.Config, dnsResolver *dnscache.Resolver) (*WAFDetect
 			return nil, errors.Wrap(err, "couldn't parse proxy URL")
 		}
 
-		tr.Proxy = http.ProxyURL(proxyURL)
-	}
-
-	jar, err := cookiejar.New(nil)
-	if err != nil {
-		return nil, errors.Wrap(err, "couldn't create cookie jar")
-	}
-
-	client := &http.Client{
-		Transport: tr,
-		Jar:       jar,
+		clientSettings.proxyURL = proxyURL
 	}
 
 	target, err := url.Parse(cfg.URL)
@@ -73,15 +72,66 @@ func NewDetector(cfg *config.Config, dnsResolver *dnscache.Resolver) (*WAFDetect
 	}
 
 	return &WAFDetector{
-		client:     client,
-		headers:    configuredHeaders,
-		hostHeader: configuredHeaders["Host"],
-		target:     GetTargetURLStr(target),
+		clientSettings: clientSettings,
+		headers:        configuredHeaders,
+		hostHeader:     configuredHeaders["Host"],
+		target:         GetTargetURLStr(target),
 	}, nil
 }
 
-// doRequest sends HTTP-request with malicious payload to trigger WAF.
+func (w *WAFDetector) getHttpClient() (*http.Client, error) {
+	tr := &http.Transport{
+		DialContext:         dnscache.DialFunc(w.clientSettings.dnsResolver, nil),
+		TLSClientConfig:     &tls.Config{InsecureSkipVerify: w.clientSettings.insecureSkipVerify},
+		IdleConnTimeout:     w.clientSettings.idleConnTimeout,
+		MaxIdleConns:        w.clientSettings.maxIdleConns,
+		MaxIdleConnsPerHost: w.clientSettings.maxIdleConns, // net.http hardcodes DefaultMaxIdleConnsPerHost to 2!
+	}
+
+	if w.clientSettings.proxyURL != nil {
+		tr.Proxy = http.ProxyURL(w.clientSettings.proxyURL)
+	}
+
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't create cookie jar")
+	}
+
+	client := &http.Client{
+		Transport: tr,
+		Jar:       jar,
+	}
+
+	return client, nil
+}
+
+// doRequest sends HTTP-request without malicious payload to trigger WAF.
 func (w *WAFDetector) doRequest(ctx context.Context) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, w.target, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't create request")
+	}
+
+	for header, value := range w.headers {
+		req.Header.Set(header, value)
+	}
+	req.Host = w.hostHeader
+
+	client, err := w.getHttpClient()
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't create HTTP client")
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to sent request")
+	}
+
+	return resp, nil
+}
+
+// doMaliciousRequest sends HTTP-request with malicious payload to trigger WAF.
+func (w *WAFDetector) doMaliciousRequest(ctx context.Context) (*http.Response, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, w.target, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't create request")
@@ -101,7 +151,12 @@ func (w *WAFDetector) doRequest(ctx context.Context) (*http.Response, error) {
 	}
 	req.Host = w.hostHeader
 
-	resp, err := w.client.Do(req)
+	client, err := w.getHttpClient()
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't create HTTP client")
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to sent request")
 	}
@@ -111,19 +166,31 @@ func (w *WAFDetector) doRequest(ctx context.Context) (*http.Response, error) {
 
 // DetectWAF performs WAF identification. Returns WAF name and vendor after
 // the first positive match.
-func (w *WAFDetector) DetectWAF(ctx context.Context) (name, vendor string, err error) {
+func (w *WAFDetector) DetectWAF(ctx context.Context) (name, vendor string, checkFunc detectors.Check, err error) {
 	resp, err := w.doRequest(ctx)
 	if err != nil {
-		return "", "", errors.Wrap(err, "couldn't identify WAF")
+		return "", "", nil, errors.Wrap(err, "couldn't perform request without attack")
 	}
 
 	defer resp.Body.Close()
 
+	respToAttack, err := w.doMaliciousRequest(ctx)
+	if err != nil {
+		return "", "", nil, errors.Wrap(err, "couldn't perform request with attack")
+	}
+
+	defer respToAttack.Body.Close()
+
+	resps := &detectors.Responses{
+		Resp:         resp,
+		RespToAttack: respToAttack,
+	}
+
 	for _, d := range detectors.Detectors {
-		if d.IsWAF(resp) {
-			return d.WAFName, d.Vendor, nil
+		if d.IsWAF(resps) {
+			return d.WAFName, d.Vendor, d.Check, nil
 		}
 	}
 
-	return "", "", nil
+	return "", "", nil, nil
 }

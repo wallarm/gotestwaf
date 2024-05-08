@@ -115,7 +115,7 @@ func run(ctx context.Context, logger *logrus.Logger) error {
 
 		logger.Info("Try to identify WAF solution")
 
-		name, vendor, err := detector.DetectWAF(ctx)
+		name, vendor, checkFunc, err := detector.DetectWAF(ctx)
 		if err != nil {
 			return errors.Wrap(err, "couldn't detect")
 		}
@@ -126,6 +126,7 @@ func run(ctx context.Context, logger *logrus.Logger) error {
 				"vendor":   vendor,
 			}).Info("WAF was identified. Force enabling `--followCookies' and `--renewSession' options")
 
+			cfg.CheckBlockFunc = checkFunc
 			cfg.FollowCookies = true
 			cfg.RenewSession = true
 			cfg.WAFName = fmt.Sprintf("%s (%s)", name, vendor)

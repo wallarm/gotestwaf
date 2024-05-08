@@ -6,9 +6,10 @@ func KonaSiteDefender() *Detector {
 		Vendor:  "Akamai",
 	}
 
-	d.Checks = []Check{
-		CheckHeader("Server", "AkamaiGHost"),
-	}
+	d.Check = Or(
+		CheckHeader("Server", "AkamaiGHost", false),
+		CheckHeader("Server", "AkamaiGHost", true),
+	)
 
 	return d
 }
