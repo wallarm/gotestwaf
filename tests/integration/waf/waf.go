@@ -14,7 +14,6 @@ import (
 
 	"github.com/wallarm/gotestwaf/internal/scanner/clients"
 
-	"github.com/gorilla/websocket"
 	"google.golang.org/grpc"
 
 	pb "github.com/wallarm/gotestwaf/internal/payload/placeholder/grpc"
@@ -22,11 +21,6 @@ import (
 )
 
 var _ http.Handler = &WAF{}
-
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-}
 
 type WAF struct {
 	errChan    chan<- error
@@ -94,29 +88,6 @@ func (waf *WAF) Shutdown() error {
 }
 
 func (waf *WAF) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	upgrade := false
-	for _, header := range r.Header["Upgrade"] {
-		if header == "websocket" {
-			upgrade = true
-			break
-		}
-	}
-
-	if upgrade == false {
-		waf.httpRequestHandler(w, r)
-		return
-	}
-
-	ws, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		waf.errChan <- fmt.Errorf("couldn't upgrage http connection to ws: %v", err)
-		return
-	}
-
-	waf.websocketRequestHandler(ws)
-}
-
-func (waf *WAF) httpRequestHandler(w http.ResponseWriter, r *http.Request) {
 	caseHash := r.Header.Get(clients.GTWDebugHeader)
 	if caseHash == "" {
 		waf.errChan <- errors.New("couldn't get X-GoTestWAF-Test header value")
@@ -246,29 +217,5 @@ func (waf *WAF) httpRequestHandler(w http.ResponseWriter, r *http.Request) {
 
 	if caseHash != restoredCaseHash {
 		waf.errChan <- fmt.Errorf("case hash mismatched: %s != %s", caseHash, restoredCaseHash)
-	}
-}
-
-func (waf *WAF) websocketRequestHandler(conn *websocket.Conn) {
-	for {
-		_, msg, err := conn.ReadMessage()
-		if err != nil {
-			if websocket.IsCloseError(err, websocket.CloseAbnormalClosure) {
-				return
-			}
-			waf.errChan <- fmt.Errorf("couldn't read message from websocket: %v", err)
-			return
-		}
-
-		if matched, _ := regexp.MatchString("alert", string(msg)); matched {
-			conn.Close()
-			return
-		}
-
-		err = conn.WriteMessage(websocket.TextMessage, []byte("OK"))
-		if err != nil {
-			waf.errChan <- fmt.Errorf("couldn't send message to websocket: %v", err)
-			return
-		}
 	}
 }

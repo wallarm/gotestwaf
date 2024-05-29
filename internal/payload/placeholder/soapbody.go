@@ -2,9 +2,13 @@ package placeholder
 
 import (
 	"fmt"
+	"html/template"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/chromedp/chromedp"
+	"github.com/wallarm/gotestwaf/internal/scanner/clients/chrome/helpers"
 
 	"github.com/wallarm/gotestwaf/internal/scanner/types"
 
@@ -45,17 +49,6 @@ func (p *SOAPBody) GetName() string {
 }
 
 func (p *SOAPBody) CreateRequest(requestURL, payload string, config PlaceholderConfig, httpClientType types.HTTPClientType) (types.Request, error) {
-	switch httpClientType {
-	case types.GoHTTPClient:
-		return p.prepareGoHTTPClientRequest(requestURL, payload, config)
-	case types.ChromeHTTPClient:
-		return p.prepareChromeHTTPClientRequest(requestURL, payload, config)
-	default:
-		return nil, types.NewUnknownHTTPClientError(httpClientType)
-	}
-}
-
-func (p *SOAPBody) prepareGoHTTPClientRequest(requestURL, payload string, config PlaceholderConfig) (*types.GoHTTPRequest, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err
@@ -75,16 +68,47 @@ func (p *SOAPBody) prepareGoHTTPClientRequest(requestURL, payload string, config
 
 	soapPayload := fmt.Sprintf(soapBodyPayloadWrapper, param, encodedPayload, param)
 
-	req, err := http.NewRequest("POST", reqURL.String(), strings.NewReader(soapPayload))
+	switch httpClientType {
+	case types.GoHTTPClient:
+		return p.prepareGoHTTPClientRequest(reqURL.String(), soapPayload, config)
+	case types.ChromeHTTPClient:
+		return p.prepareChromeHTTPClientRequest(reqURL.String(), soapPayload, config)
+	default:
+		return nil, types.NewUnknownHTTPClientError(httpClientType)
+	}
+}
+
+func (p *SOAPBody) prepareGoHTTPClientRequest(requestURL, payload string, config PlaceholderConfig) (*types.GoHTTPRequest, error) {
+	req, err := http.NewRequest(http.MethodPost, requestURL, strings.NewReader(payload))
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add("SOAPAction", "\"http://schemas.xmlsoap.org/soap/actor/next\"")
+
+	req.Header.Add("SOAPAction", `"http://schemas.xmlsoap.org/soap/actor/next"`)
 	req.Header.Add("Content-Type", "text/xml")
 
 	return &types.GoHTTPRequest{Req: req}, nil
 }
 
 func (p *SOAPBody) prepareChromeHTTPClientRequest(requestURL, payload string, config PlaceholderConfig) (*types.ChromeDPTasks, error) {
-	return nil, nil
+	reqOptions := &helpers.RequestOptions{
+		Method: http.MethodPost,
+		Headers: map[string]string{
+			"SOAPAction":   `"http://schemas.xmlsoap.org/soap/actor/next"`,
+			"Content-Type": "text/xml",
+		},
+		Body: fmt.Sprintf(`"%s"`, template.JSEscaper(payload)),
+	}
+
+	task, responseMeta, err := helpers.GetFetchRequest(requestURL, reqOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	tasks := &types.ChromeDPTasks{
+		Tasks:        chromedp.Tasks{task},
+		ResponseMeta: responseMeta,
+	}
+
+	return tasks, nil
 }

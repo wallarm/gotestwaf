@@ -4,6 +4,9 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/chromedp/chromedp"
+	"github.com/wallarm/gotestwaf/internal/scanner/clients/chrome/helpers"
+
 	"github.com/wallarm/gotestwaf/internal/scanner/types"
 )
 
@@ -24,17 +27,6 @@ func (p *URLPath) GetName() string {
 }
 
 func (p *URLPath) CreateRequest(requestURL, payload string, config PlaceholderConfig, httpClientType types.HTTPClientType) (types.Request, error) {
-	switch httpClientType {
-	case types.GoHTTPClient:
-		return p.prepareGoHTTPClientRequest(requestURL, payload, config)
-	case types.ChromeHTTPClient:
-		return p.prepareChromeHTTPClientRequest(requestURL, payload, config)
-	default:
-		return nil, types.NewUnknownHTTPClientError(httpClientType)
-	}
-}
-
-func (p *URLPath) prepareGoHTTPClientRequest(requestURL, payload string, config PlaceholderConfig) (*types.GoHTTPRequest, error) {
 	reqURL, err := url.Parse(requestURL)
 	if err != nil {
 		return nil, err
@@ -47,9 +39,21 @@ func (p *URLPath) prepareGoHTTPClientRequest(requestURL, payload string, config 
 			break
 		}
 	}
+
 	urlWithPayload += "/" + payload
 
-	req, err := http.NewRequest("GET", urlWithPayload, nil)
+	switch httpClientType {
+	case types.GoHTTPClient:
+		return p.prepareGoHTTPClientRequest(urlWithPayload, payload, config)
+	case types.ChromeHTTPClient:
+		return p.prepareChromeHTTPClientRequest(urlWithPayload, payload, config)
+	default:
+		return nil, types.NewUnknownHTTPClientError(httpClientType)
+	}
+}
+
+func (p *URLPath) prepareGoHTTPClientRequest(requestURL, payload string, config PlaceholderConfig) (*types.GoHTTPRequest, error) {
+	req, err := http.NewRequest(http.MethodGet, requestURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -58,5 +62,19 @@ func (p *URLPath) prepareGoHTTPClientRequest(requestURL, payload string, config 
 }
 
 func (p *URLPath) prepareChromeHTTPClientRequest(requestURL, payload string, config PlaceholderConfig) (*types.ChromeDPTasks, error) {
-	return nil, nil
+	reqOptions := &helpers.RequestOptions{
+		Method: http.MethodGet,
+	}
+
+	task, responseMeta, err := helpers.GetFetchRequest(requestURL, reqOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	tasks := &types.ChromeDPTasks{
+		Tasks:        chromedp.Tasks{task},
+		ResponseMeta: responseMeta,
+	}
+
+	return tasks, nil
 }

@@ -54,16 +54,16 @@ func TestRawRequestNewConfig(t *testing.T) {
 	}{
 		{conf: map[any]any{}, checkValue: checkErr},
 		{conf: map[any]any{"method": 0}, checkValue: checkErr},
-		{conf: map[any]any{"method": "POST", "path": 0}, checkValue: checkErr},
-		{conf: map[any]any{"method": "POST", "path": "/", "headers": 0}, checkValue: checkErr},
-		{conf: map[any]any{"method": "POST", "path": "/", "headers": map[any]any{0: 0}}, checkValue: checkErr},
-		{conf: map[any]any{"method": "POST", "path": "/", "headers": map[any]any{"X-Test": 0}}, checkValue: checkErr},
-		{conf: map[any]any{"method": "POST", "path": "/"}, checkValue: checkValue(&conf.Method, getRef("POST"))},
+		{conf: map[any]any{"method": http.MethodPost, "path": 0}, checkValue: checkErr},
+		{conf: map[any]any{"method": http.MethodPost, "path": "/", "headers": 0}, checkValue: checkErr},
+		{conf: map[any]any{"method": http.MethodPost, "path": "/", "headers": map[any]any{0: 0}}, checkValue: checkErr},
+		{conf: map[any]any{"method": http.MethodPost, "path": "/", "headers": map[any]any{"X-Test": 0}}, checkValue: checkErr},
+		{conf: map[any]any{"method": http.MethodPost, "path": "/"}, checkValue: checkValue(&conf.Method, getRef(http.MethodPost))},
 		{conf: map[any]any{"method": "abcd", "path": "/"}, checkValue: checkValue(&conf.Method, getRef("abcd"))},
-		{conf: map[any]any{"method": "POST"}, checkValue: checkValue(&conf.Path, getRef("/"))},
-		{conf: map[any]any{"method": "POST", "path": "/abcd/{{payload}}"}, checkValue: checkValue(&conf.Path, getRef("/abcd/{{payload}}"))},
-		{conf: map[any]any{"method": "POST", "headers": map[any]any{"X-Test": "Test Header {{payload}}"}}, checkValue: checkValue(&conf.Headers, &map[string]string{"X-Test": "Test Header {{payload}}"})},
-		{conf: map[any]any{"method": "POST", "body": "Test {{payload}}"}, checkValue: checkValue(&conf.Body, getRef("Test {{payload}}"))},
+		{conf: map[any]any{"method": http.MethodPost}, checkValue: checkValue(&conf.Path, getRef("/"))},
+		{conf: map[any]any{"method": http.MethodPost, "path": "/abcd/{{payload}}"}, checkValue: checkValue(&conf.Path, getRef("/abcd/{{payload}}"))},
+		{conf: map[any]any{"method": http.MethodPost, "headers": map[any]any{"X-Test": "Test Header {{payload}}"}}, checkValue: checkValue(&conf.Headers, &map[string]string{"X-Test": "Test Header {{payload}}"})},
+		{conf: map[any]any{"method": http.MethodPost, "body": "Test {{payload}}"}, checkValue: checkValue(&conf.Body, getRef("Test {{payload}}"))},
 	}
 
 	for _, test := range tests {
@@ -86,13 +86,13 @@ func TestRawRequest(t *testing.T) {
 	}{
 		{
 			conf: &RawRequestConfig{
-				Method:  "POST",
+				Method:  http.MethodPost,
 				Path:    "/",
 				Headers: make(map[string]string),
 			},
 			checkValue: func(r *http.Request) {
 				got := r.Method
-				expected := "POST"
+				expected := http.MethodPost
 
 				if !(got == expected) {
 					t.Errorf("test failed, got %s, expected %s", got, expected)
@@ -116,7 +116,7 @@ func TestRawRequest(t *testing.T) {
 		},
 		{
 			conf: &RawRequestConfig{
-				Method:  "POST",
+				Method:  http.MethodPost,
 				Path:    "/{{payload}}",
 				Headers: make(map[string]string),
 			},
@@ -131,7 +131,7 @@ func TestRawRequest(t *testing.T) {
 		},
 		{
 			conf: &RawRequestConfig{
-				Method:  "GET",
+				Method:  http.MethodGet,
 				Path:    "/test?a={{payload}}",
 				Headers: make(map[string]string),
 			},
@@ -146,7 +146,7 @@ func TestRawRequest(t *testing.T) {
 		},
 		{
 			conf: &RawRequestConfig{
-				Method: "GET",
+				Method: http.MethodGet,
 				Path:   "/",
 				Headers: map[string]string{
 					"X-Test-Header": "Test Header {{payload}}",
@@ -163,7 +163,7 @@ func TestRawRequest(t *testing.T) {
 		},
 		{
 			conf: &RawRequestConfig{
-				Method:  "POST",
+				Method:  http.MethodPost,
 				Path:    "/",
 				Headers: make(map[string]string),
 				Body:    "Test body {{payload}}",
@@ -182,7 +182,7 @@ func TestRawRequest(t *testing.T) {
 		},
 		{
 			conf: &RawRequestConfig{
-				Method: "POST",
+				Method: http.MethodPost,
 				Path:   "/",
 				Headers: map[string]string{
 					"Content-Type": "multipart/form-data; boundary=boundary",

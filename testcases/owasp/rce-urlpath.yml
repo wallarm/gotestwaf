@@ -3,8 +3,7 @@ payload:
   - "; cat /et'c/pa'ss'wd"
   - "cmd=127.0.0.1 && ls /etc"
 encoder:
-  - Plain
+  - URL
 placeholder:
-  - JSONRequest
-  - Header
+  - URLPath
 type: RCE

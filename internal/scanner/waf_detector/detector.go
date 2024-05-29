@@ -9,11 +9,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/wallarm/gotestwaf/internal/scanner/types"
 
 	"github.com/pkg/errors"
 
 	"github.com/wallarm/gotestwaf/internal/config"
+	dns_cache "github.com/wallarm/gotestwaf/internal/dnscache"
 	"github.com/wallarm/gotestwaf/internal/helpers"
 	"github.com/wallarm/gotestwaf/internal/scanner/waf_detector/detectors"
 	"github.com/wallarm/gotestwaf/pkg/dnscache"
@@ -43,14 +46,20 @@ type ClientSettings struct {
 	proxyURL            *url.URL
 }
 
-func NewWAFDetector(cfg *config.Config, dnsResolver *dnscache.Resolver) (*WAFDetector, error) {
+func NewWAFDetector(logger *logrus.Logger, cfg *config.Config) (*WAFDetector, error) {
 	clientSettings := &ClientSettings{
-		dnsResolver:         dnsResolver,
 		insecureSkipVerify:  !cfg.TLSVerify,
 		idleConnTimeout:     time.Duration(cfg.IdleConnTimeout) * time.Second,
 		maxIdleConns:        cfg.MaxIdleConns,
 		maxIdleConnsPerHost: cfg.MaxIdleConns,
 	}
+
+	dnsCache, err := dns_cache.NewDNSCache(logger)
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't create DNS cache")
+	}
+
+	clientSettings.dnsResolver = dnsCache
 
 	if cfg.Proxy != "" {
 		proxyURL, err := url.Parse(cfg.Proxy)

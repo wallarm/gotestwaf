@@ -4,6 +4,9 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/chromedp/chromedp"
+	"github.com/wallarm/gotestwaf/internal/scanner/clients/chrome/helpers"
+
 	"github.com/wallarm/gotestwaf/internal/scanner/types"
 )
 
@@ -26,23 +29,23 @@ func (p *UserAgent) GetName() string {
 }
 
 func (p *UserAgent) CreateRequest(requestURL, payload string, config PlaceholderConfig, httpClientType types.HTTPClientType) (types.Request, error) {
+	reqURL, err := url.Parse(requestURL)
+	if err != nil {
+		return nil, err
+	}
+
 	switch httpClientType {
 	case types.GoHTTPClient:
-		return p.prepareGoHTTPClientRequest(requestURL, payload, config)
+		return p.prepareGoHTTPClientRequest(reqURL.String(), payload, config)
 	case types.ChromeHTTPClient:
-		return p.prepareChromeHTTPClientRequest(requestURL, payload, config)
+		return p.prepareChromeHTTPClientRequest(reqURL.String(), payload, config)
 	default:
 		return nil, types.NewUnknownHTTPClientError(httpClientType)
 	}
 }
 
 func (p *UserAgent) prepareGoHTTPClientRequest(requestURL, payload string, config PlaceholderConfig) (*types.GoHTTPRequest, error) {
-	reqURL, err := url.Parse(requestURL)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("GET", reqURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, requestURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -53,5 +56,22 @@ func (p *UserAgent) prepareGoHTTPClientRequest(requestURL, payload string, confi
 }
 
 func (p *UserAgent) prepareChromeHTTPClientRequest(requestURL, payload string, config PlaceholderConfig) (*types.ChromeDPTasks, error) {
-	return nil, nil
+	reqOptions := &helpers.RequestOptions{
+		Method: http.MethodGet,
+		Headers: map[string]string{
+			UAHeader: payload,
+		},
+	}
+
+	task, responseMeta, err := helpers.GetFetchRequest(requestURL, reqOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	tasks := &types.ChromeDPTasks{
+		Tasks:        chromedp.Tasks{task},
+		ResponseMeta: responseMeta,
+	}
+
+	return tasks, nil
 }

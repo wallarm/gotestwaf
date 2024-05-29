@@ -19,13 +19,18 @@ type Request interface {
 // GoHTTPRequest is a type wrapper for the *http.Request.
 type GoHTTPRequest struct {
 	Req *http.Request
+
+	DebugHeaderValue string
 }
 
-func (r GoHTTPRequest) IsRequest() {}
+func (r *GoHTTPRequest) IsRequest() {}
 
 // ChromeDPTasks is a type wrapper for the chromedp.Tasks.
 type ChromeDPTasks struct {
 	Tasks chromedp.Tasks
+
+	ResponseMeta     *ResponseMeta
+	DebugHeaderValue string
 }
 
-func (r ChromeDPTasks) IsRequest() {}
+func (r *ChromeDPTasks) IsRequest() {}

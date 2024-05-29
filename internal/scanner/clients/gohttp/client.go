@@ -1,4 +1,4 @@
-package clients
+package gohttp
 
 import (
 	"bytes"
@@ -14,8 +14,10 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/wallarm/gotestwaf/internal/config"
+	"github.com/wallarm/gotestwaf/internal/helpers"
 	"github.com/wallarm/gotestwaf/internal/payload"
 	"github.com/wallarm/gotestwaf/internal/payload/placeholder"
+	"github.com/wallarm/gotestwaf/internal/scanner/clients"
 	"github.com/wallarm/gotestwaf/internal/scanner/types"
 	"github.com/wallarm/gotestwaf/pkg/dnscache"
 )
@@ -26,9 +28,9 @@ const (
 
 var redirectFunc func(req *http.Request, via []*http.Request) error
 
-var _ HTTPClient = (*GoHTTPClient)(nil)
+var _ clients.HTTPClient = (*Client)(nil)
 
-type GoHTTPClient struct {
+type Client struct {
 	client     *http.Client
 	headers    map[string]string
 	hostHeader string
@@ -37,13 +39,16 @@ type GoHTTPClient struct {
 	renewSession  bool
 }
 
-func NewGoHTTPClient(cfg *config.Config, dnsResolver *dnscache.Resolver) (*GoHTTPClient, error) {
+func NewClient(cfg *config.Config, dnsResolver *dnscache.Resolver) (*Client, error) {
 	tr := &http.Transport{
-		DialContext:         dnscache.DialFunc(dnsResolver, nil),
 		TLSClientConfig:     &tls.Config{InsecureSkipVerify: !cfg.TLSVerify},
 		IdleConnTimeout:     time.Duration(cfg.IdleConnTimeout) * time.Second,
 		MaxIdleConns:        cfg.MaxIdleConns,
 		MaxIdleConnsPerHost: cfg.MaxIdleConns, // net.http hardcodes DefaultMaxIdleConnsPerHost to 2!
+	}
+
+	if dnsResolver != nil {
+		tr.DialContext = dnscache.DialFunc(dnsResolver, nil)
 	}
 
 	if cfg.Proxy != "" {
@@ -83,7 +88,7 @@ func NewGoHTTPClient(cfg *config.Config, dnsResolver *dnscache.Resolver) (*GoHTT
 		client.Jar = jar
 	}
 
-	configuredHeaders := cfg.HTTPHeaders
+	configuredHeaders := helpers.DeepCopyMap(cfg.HTTPHeaders)
 	customHeader := strings.SplitN(cfg.AddHeader, ":", 2)
 	if len(customHeader) > 1 {
 		header := strings.TrimSpace(customHeader[0])
@@ -91,7 +96,7 @@ func NewGoHTTPClient(cfg *config.Config, dnsResolver *dnscache.Resolver) (*GoHTT
 		configuredHeaders[header] = value
 	}
 
-	return &GoHTTPClient{
+	return &Client{
 		client:        client,
 		headers:       configuredHeaders,
 		hostHeader:    configuredHeaders["Host"],
@@ -100,7 +105,7 @@ func NewGoHTTPClient(cfg *config.Config, dnsResolver *dnscache.Resolver) (*GoHTT
 	}, nil
 }
 
-func (c *GoHTTPClient) SendPayload(
+func (c *Client) SendPayload(
 	ctx context.Context,
 	targetURL string,
 	payloadInfo *payload.PayloadInfo,
@@ -134,7 +139,7 @@ func (c *GoHTTPClient) SendPayload(
 	req.Host = c.hostHeader
 
 	if payloadInfo.DebugHeaderValue != "" {
-		req.Header.Set(GTWDebugHeader, payloadInfo.DebugHeaderValue)
+		req.Header.Set(clients.GTWDebugHeader, payloadInfo.DebugHeaderValue)
 	}
 
 	if c.followCookies && c.renewSession {
@@ -181,41 +186,33 @@ func (c *GoHTTPClient) SendPayload(
 	return response, nil
 }
 
-func (c *GoHTTPClient) SendRequest(ctx context.Context, req types.Request) (types.Response, error) {
-	//followCookies := c.followCookies
-	//if followCookiesOverride != nil {
-	//	followCookies = *followCookiesOverride
-	//}
-
-	//renewSession := c.renewSession
-	//if renewSessionOverride != nil {
-	//	renewSession = *renewSessionOverride
-	//}
-
-	//if followCookies && renewSession {
-	//	cookies, err := c.getCookies(req.Context(), helpers.GetTargetURLStr(req.URL))
-	//	if err != nil {
-	//		return nil, nil, "", "", 0, errors.Wrap(err, "couldn't get cookies for malicious request")
-	//	}
-	//
-	//	for _, cookie := range cookies {
-	//		req.AddCookie(cookie)
-	//	}
-	//}
-
+func (c *Client) SendRequest(ctx context.Context, req types.Request) (types.Response, error) {
 	r, ok := req.(*types.GoHTTPRequest)
 	if !ok {
 		return nil, errors.Errorf("bad request type: %T, expected %T", req, &types.GoHTTPRequest{})
 	}
 
-	//for header, value := range c.headers {
-	//	req.Header.Set(header, value)
-	//}
-	//req.Host = c.hostHeader
-	//
-	//if testHeaderValue != "" {
-	//	req.Header.Set(GTWDebugHeader, testHeaderValue)
-	//}
+	r.Req = r.Req.WithContext(ctx)
+
+	if c.followCookies && c.renewSession {
+		cookies, err := c.getCookies(ctx, helpers.GetTargetURLStr(r.Req.URL))
+		if err != nil {
+			return nil, errors.Wrap(err, "couldn't get cookies for malicious request")
+		}
+
+		for _, cookie := range cookies {
+			r.Req.AddCookie(cookie)
+		}
+	}
+
+	for header, value := range c.headers {
+		r.Req.Header.Set(header, value)
+	}
+	r.Req.Host = c.hostHeader
+
+	if r.DebugHeaderValue != "" {
+		r.Req.Header.Set(clients.GTWDebugHeader, r.DebugHeaderValue)
+	}
 
 	resp, err := c.client.Do(r.Req)
 	if err != nil {
@@ -230,10 +227,6 @@ func (c *GoHTTPClient) SendRequest(ctx context.Context, req types.Request) (type
 	}
 
 	statusCode := resp.StatusCode
-
-	//if followCookies && !renewSession && c.client.Jar != nil {
-	//	c.client.Jar.SetCookies(req.URL, resp.Cookies())
-	//}
 
 	if c.followCookies && !c.renewSession && c.client.Jar != nil {
 		c.client.Jar.SetCookies(r.Req.URL, resp.Cookies())
@@ -252,7 +245,7 @@ func (c *GoHTTPClient) SendRequest(ctx context.Context, req types.Request) (type
 	return response, nil
 }
 
-func (c *GoHTTPClient) getCookies(ctx context.Context, targetURL string) ([]*http.Cookie, error) {
+func (c *Client) getCookies(ctx context.Context, targetURL string) ([]*http.Cookie, error) {
 	tr, ok := c.client.Transport.(*http.Transport)
 	if !ok {
 		return nil, errors.New("couldn't copy transport settings of the main HTTP to get cookies")

@@ -48,5 +48,12 @@ func (p *PayloadInfo) GetRequest(targetURL string, clientType types.HTTPClientTy
 		return nil, errors.Wrap(err, "couldn't apply placeholder")
 	}
 
+	switch r := request.(type) {
+	case *types.GoHTTPRequest:
+		r.DebugHeaderValue = p.DebugHeaderValue
+	case *types.ChromeDPTasks:
+		r.DebugHeaderValue = p.DebugHeaderValue
+	}
+
 	return request, nil
 }

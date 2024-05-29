@@ -1,4 +1,4 @@
-package clients
+package grpc
 
 import (
 	"bytes"
@@ -10,6 +10,10 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"google.golang.org/grpc/credentials/insecure"
+
+	"github.com/wallarm/gotestwaf/internal/scanner/clients"
 
 	"github.com/pkg/errors"
 	"golang.org/x/net/http2"
@@ -32,9 +36,9 @@ const (
 	grpcServerDetectionTimeout = 3 * time.Second
 )
 
-var _ GRPCClient = (*GrpcClient)(nil)
+var _ clients.GRPCClient = (*Client)(nil)
 
-type GrpcClient struct {
+type Client struct {
 	host           string
 	transportCreds credentials.TransportCredentials
 	tlsConf        *tls.Config
@@ -44,8 +48,8 @@ type GrpcClient struct {
 	isAvailable bool
 }
 
-func NewGrpcClient(cfg *config.Config) (*GrpcClient, error) {
-	g := &GrpcClient{isAvailable: true}
+func NewClient(cfg *config.Config) (*Client, error) {
+	g := &Client{isAvailable: true}
 
 	if cfg.GRPCPort == 0 {
 		g.isAvailable = false
@@ -62,16 +66,18 @@ func NewGrpcClient(cfg *config.Config) (*GrpcClient, error) {
 	if isTLS {
 		g.tlsConf = &tls.Config{InsecureSkipVerify: !cfg.TLSVerify}
 		g.transportCreds = credentials.NewTLS(g.tlsConf)
+	} else {
+		g.transportCreds = insecure.NewCredentials()
 	}
 
 	return g, nil
 }
 
-func (g *GrpcClient) httpTest(ctx context.Context) (bool, error) {
+func (c *Client) httpTest(ctx context.Context) (bool, error) {
 	var http2transport *http2.Transport
 	var scheme string
 
-	if g.tlsConf == nil {
+	if c.tlsConf == nil {
 		http2transport = &http2.Transport{
 			AllowHTTP: true,
 			DialTLSContext: func(ctx context.Context, network string, addr string, cfg *tls.Config) (net.Conn, error) {
@@ -83,7 +89,7 @@ func (g *GrpcClient) httpTest(ctx context.Context) (bool, error) {
 		scheme = "http"
 	} else {
 		http2transport = &http2.Transport{
-			TLSClientConfig:    g.tlsConf,
+			TLSClientConfig:    c.tlsConf,
 			DisableCompression: true,
 		}
 
@@ -96,7 +102,7 @@ func (g *GrpcClient) httpTest(ctx context.Context) (bool, error) {
 		Method: "POST",
 		URL: &url.URL{
 			Scheme: scheme,
-			Host:   g.host,
+			Host:   c.host,
 			Path:   "/",
 		},
 		Header: http.Header{},
@@ -122,20 +128,11 @@ func (g *GrpcClient) httpTest(ctx context.Context) (bool, error) {
 	return false, nil
 }
 
-func (g *GrpcClient) healthCheckTest(ctx context.Context) (bool, error) {
+func (c *Client) healthCheckTest(ctx context.Context) (bool, error) {
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, grpcServerDetectionTimeout)
 	defer cancel()
 
-	var (
-		conn *grpc.ClientConn
-		err  error
-	)
-
-	if g.transportCreds == nil {
-		conn, err = grpc.DialContext(ctxWithTimeout, g.host, grpc.WithInsecure(), grpc.WithBlock())
-	} else {
-		conn, err = grpc.DialContext(ctxWithTimeout, g.host, grpc.WithTransportCredentials(g.transportCreds), grpc.WithBlock())
-	}
+	conn, err := grpc.DialContext(ctxWithTimeout, c.host, grpc.WithTransportCredentials(c.transportCreds), grpc.WithBlock())
 
 	if err != nil {
 		return false, errors.Wrap(err, "sending gRPC request")
@@ -154,36 +151,36 @@ func (g *GrpcClient) healthCheckTest(ctx context.Context) (bool, error) {
 	return false, nil
 }
 
-func (g *GrpcClient) CheckAvailability(ctx context.Context) (bool, error) {
-	if !g.isAvailable {
+func (c *Client) CheckAvailability(ctx context.Context) (bool, error) {
+	if !c.isAvailable {
 		return false, nil
 	}
 
-	ok, err := g.httpTest(ctx)
+	ok, err := c.httpTest(ctx)
 	if err != nil {
-		g.isAvailable = false
+		c.isAvailable = false
 		return false, errors.Wrap(err, "checking gRPC availability via HTTP test")
 	}
 
 	if ok {
-		ok, err = g.healthCheckTest(ctx)
+		ok, err = c.healthCheckTest(ctx)
 		if err != nil {
-			g.isAvailable = false
+			c.isAvailable = false
 			return false, errors.Wrap(err, "checking gRPC availability via gRPC health check")
 		}
 	}
 
-	g.isAvailable = ok
+	c.isAvailable = ok
 
 	return ok, nil
 }
 
-func (g *GrpcClient) IsAvailable() bool {
-	return g.isAvailable
+func (c *Client) IsAvailable() bool {
+	return c.isAvailable
 }
 
-func (g *GrpcClient) SendPayload(ctx context.Context, payloadInfo *payload.PayloadInfo) (types.Response, error) {
-	if !g.isAvailable {
+func (c *Client) SendPayload(ctx context.Context, payloadInfo *payload.PayloadInfo) (types.Response, error) {
+	if !c.isAvailable {
 		return nil, nil
 	}
 
@@ -196,23 +193,14 @@ func (g *GrpcClient) SendPayload(ctx context.Context, payloadInfo *payload.Paylo
 	defer cancel()
 
 	// Set up a connection to the server.
-	if g.conn == nil {
-		var conn *grpc.ClientConn
-
-		switch g.transportCreds {
-		case nil:
-			conn, err = grpc.DialContext(ctxWithTimeout, g.host, grpc.WithInsecure(), grpc.WithBlock())
-		default:
-			conn, err = grpc.DialContext(ctxWithTimeout, g.host, grpc.WithTransportCredentials(g.transportCreds), grpc.WithBlock())
-		}
+	if c.conn == nil {
+		c.conn, err = grpc.DialContext(ctxWithTimeout, c.host, grpc.WithTransportCredentials(c.transportCreds), grpc.WithBlock())
 		if err != nil {
 			return nil, errors.Wrap(err, "sending gRPC request")
 		}
-
-		g.conn = conn
 	}
 
-	client := grpcPlaceholder.NewServiceFooBarClient(g.conn)
+	client := grpcPlaceholder.NewServiceFooBarClient(c.conn)
 
 	response := &types.ResponseMeta{
 		StatusCode: 200,
@@ -270,10 +258,10 @@ func (g *GrpcClient) SendPayload(ctx context.Context, payloadInfo *payload.Paylo
 	return response, nil
 }
 
-func (g *GrpcClient) Close() error {
-	if g.conn == nil {
+func (c *Client) Close() error {
+	if c.conn == nil {
 		return nil
 	}
 
-	return g.conn.Close()
+	return c.conn.Close()
 }

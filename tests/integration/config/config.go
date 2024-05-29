@@ -96,7 +96,6 @@ func GetConfig() *config.Config {
 	return &config.Config{
 		URL:                fmt.Sprintf("http://localhost:%d", HTTPPort),
 		GRPCPort:           uint16(GRPCPort),
-		WebSocketURL:       fmt.Sprintf("ws://localhost:%d", HTTPPort),
 		HTTPHeaders:        nil,
 		TLSVerify:          false,
 		Proxy:              "",

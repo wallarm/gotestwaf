@@ -33,17 +33,17 @@ var Placeholders map[string]Placeholder
 var placeholders = []Placeholder{
 	DefaultGRPC,
 	DefaultHeader,
-	DefaultUserAgent,
 	DefaultHTMLForm,
 	DefaultHTMLMultipartForm,
 	DefaultJSONBody,
 	DefaultJSONRequest,
+	DefaultRawRequest,
 	DefaultRequestBody,
 	DefaultSOAPBody,
 	DefaultURLParam,
 	DefaultURLPath,
+	DefaultUserAgent,
 	DefaultXMLBody,
-	DefaultRawRequest,
 }
 
 func init() {

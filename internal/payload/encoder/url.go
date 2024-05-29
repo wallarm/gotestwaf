@@ -17,5 +17,5 @@ func (enc *URLEncoder) GetName() string {
 }
 
 func (enc *URLEncoder) Encode(data string) (string, error) {
-	return url.QueryEscape(data), nil
+	return url.PathEscape(data), nil
 }

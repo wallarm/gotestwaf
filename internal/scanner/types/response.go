@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"net/http"
 	"strings"
@@ -14,13 +15,19 @@ var _ Response = (*ResponseMeta)(nil)
 type Response interface {
 	// GetStatusCode returns response status code.
 	GetStatusCode() int
+
 	// GetReason return response status message
 	// corresponding to the HTTP status code.
 	GetReason() string
+
 	// GetHeaders returns response headers.
 	GetHeaders() http.Header
+
 	// GetContent returns response content body.
 	GetContent() []byte
+
+	// GetError returns any error that occurred during the request processing.
+	GetError() error
 }
 
 // GoHTTPResponse is a wrapper that provides implementation of the Response
@@ -56,13 +63,18 @@ func (r *GoHTTPResponse) GetContent() []byte {
 	return body
 }
 
-// ResponseMeta
-// TODO: add documentation, refer to GoHTTPClient and ChromeHTTPClient
+func (r *GoHTTPResponse) GetError() error {
+	return nil
+}
+
+// ResponseMeta provides implementation information about response performed with
+// Chrome HTTP client
 type ResponseMeta struct {
 	StatusCode   int
 	StatusReason string
 	Headers      http.Header
 	Content      []byte
+	Error        string
 }
 
 func (r *ResponseMeta) GetStatusCode() int {
@@ -79,4 +91,12 @@ func (r *ResponseMeta) GetHeaders() http.Header {
 
 func (r *ResponseMeta) GetContent() []byte {
 	return r.Content
+}
+
+func (r *ResponseMeta) GetError() error {
+	if r.Error != "" {
+		return errors.New(r.Error)
+	}
+
+	return nil
 }

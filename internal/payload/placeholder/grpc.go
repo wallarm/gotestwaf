@@ -1,6 +1,8 @@
 package placeholder
 
 import (
+	"errors"
+
 	"github.com/wallarm/gotestwaf/internal/scanner/types"
 )
 
@@ -21,5 +23,5 @@ func (enc *GRPC) GetName() string {
 }
 
 func (enc *GRPC) CreateRequest(string, string, PlaceholderConfig, types.HTTPClientType) (types.Request, error) {
-	return nil, nil
+	return nil, errors.New("not implemented")
 }

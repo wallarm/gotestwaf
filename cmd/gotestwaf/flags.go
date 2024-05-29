@@ -34,8 +34,7 @@ const (
 	jsonLogFormat = "json"
 
 	cliDescription = `GoTestWAF is a tool for API and OWASP attack simulation that supports a
-wide range of API protocols including REST, GraphQL, gRPC, WebSockets,
-SOAP, XMLRPC, and others.
+wide range of API protocols including REST, GraphQL, gRPC, SOAP, XMLRPC, and others.
 Homepage: https://github.com/wallarm/gotestwaf
 
 Usage: %s [OPTIONS] --url <URL>
@@ -67,21 +66,44 @@ func parseFlags() (args []string, err error) {
 
 	flag.Usage = usage
 
+	// General parameters
 	flag.StringVar(&configPath, "configPath", defaultConfigPath, "Path to the config file")
 	flag.BoolVar(&quiet, "quiet", false, "If true, disable verbose logging")
 	logLvl := flag.String("logLevel", "info", "Logging level: panic, fatal, error, warn, info, debug, trace")
 	flag.StringVar(&logFormat, "logFormat", textLogFormat, "Set logging format: text, json")
+	showVersion := flag.Bool("version", false, "Show GoTestWAF version and exit")
 
+	// Target settings
 	urlParam := flag.String("url", "", "URL to check")
-	wsURL := flag.String("wsURL", "", "WebSocket URL to check")
 	flag.Uint16("grpcPort", 0, "gRPC port to check")
-	flag.String("proxy", "", "Proxy URL to use")
+	openapiFile := flag.String("openapiFile", "", "Path to openAPI file")
+
+	// Test cases settings
+	flag.String("testCase", "", "If set then only this test case will be run")
+	flag.String("testCasesPath", testCasesPath, "Path to a folder with test cases")
+	flag.String("testSet", "", "If set then only this test set's cases will be run")
+
+	// HTTP client settings
+	httpClient := flag.String("httpClient", "chrome", "Which HTTP client use to send requests: chrome, gohttp")
 	flag.Bool("tlsVerify", false, "If true, the received TLS certificate will be verified")
-	flag.Int("maxIdleConns", 2, "The maximum number of keep-alive connections")
-	flag.Int("maxRedirects", 50, "The maximum number of handling redirects")
-	flag.Int("idleConnTimeout", 2, "The maximum amount of time a keep-alive connection will live")
-	flag.Bool("followCookies", false, "If true, use cookies sent by the server. May work only with --maxIdleConns=1")
-	flag.Bool("renewSession", false, "Renew cookies before each test. Should be used with --followCookies flag")
+	flag.String("proxy", "", "Proxy URL to use")
+	flag.String("addHeader", "", "An HTTP header to add to requests")
+	flag.Bool("addDebugHeader", false, "Add header with a hash of the test information in each request")
+
+	// GoHTTP client only settings
+	flag.Int("maxIdleConns", 2, "The maximum number of keep-alive connections (gohttp only)")
+	flag.Int("maxRedirects", 50, "The maximum number of handling redirects (gohttp only)")
+	flag.Int("idleConnTimeout", 2, "The maximum amount of time a keep-alive connection will live (gohttp only)")
+	flag.Bool("followCookies", false, "If true, use cookies sent by the server. May work only with --maxIdleConns=1 (gohttp only)")
+	flag.Bool("renewSession", false, "Renew cookies before each test. Should be used with --followCookies flag (gohttp only)")
+
+	// Performance settings
+	flag.Int("workers", 5, "The number of workers to scan")
+	flag.Int("sendDelay", 400, "Delay in ms between requests")
+	flag.Int("randomDelay", 400, "Random delay in ms in addition to the delay between requests")
+
+	// Analysis settings
+	flag.Bool("skipWAFBlockCheck", false, "If true, WAF detection tests will be skipped")
 	flag.Bool("skipWAFIdentification", false, "Skip WAF identification")
 	flag.IntSlice("blockStatusCodes", []int{403}, "HTTP status code that WAF uses while blocking requests")
 	flag.IntSlice("passStatusCodes", []int{200, 404}, "HTTP response status code that WAF uses while passing requests")
@@ -91,26 +113,18 @@ func parseFlags() (args []string, err error) {
 		"Regex to a detect normal (not blocked) web page with the same HTTP status code as a blocked request")
 	flag.Bool("nonBlockedAsPassed", false,
 		"If true, count requests that weren't blocked as passed. If false, requests that don't satisfy to PassStatusCodes/PassRegExp as blocked")
-	flag.Int("workers", 5, "The number of workers to scan")
-	flag.Int("sendDelay", 400, "Delay in ms between requests")
-	flag.Int("randomDelay", 400, "Random delay in ms in addition to the delay between requests")
-	flag.String("testCase", "", "If set then only this test case will be run")
-	flag.String("testSet", "", "If set then only this test set's cases will be run")
+	flag.Bool("ignoreUnresolved", false, "If true, unresolved test cases will be considered as bypassed (affect score and results)")
+	flag.Bool("blockConnReset", false, "If true, connection resets will be considered as block")
+
+	// Report settings
+	flag.String("wafName", wafName, "Name of the WAF product")
+	flag.Bool("includePayloads", false, "If true, payloads will be included in HTML/PDF report")
 	flag.String("reportPath", reportPath, "A directory to store reports")
 	reportName := flag.String("reportName", defaultReportName, "Report file name. Supports `time' package template format")
 	flag.String("reportFormat", "pdf", "Export report to one of the following formats: none, pdf, html, json")
-	flag.Bool("includePayloads", false, "If true, payloads will be included in HTML/PDF report")
 	noEmailReport := flag.Bool("noEmailReport", false, "Save report locally")
 	email := flag.String("email", "", "E-mail to which the report will be sent")
-	flag.String("testCasesPath", testCasesPath, "Path to a folder with test cases")
-	flag.String("wafName", wafName, "Name of the WAF product")
-	flag.Bool("ignoreUnresolved", false, "If true, unresolved test cases will be considered as bypassed (affect score and results)")
-	flag.Bool("blockConnReset", false, "If true, connection resets will be considered as block")
-	flag.Bool("skipWAFBlockCheck", false, "If true, WAF detection tests will be skipped")
-	flag.String("addHeader", "", "An HTTP header to add to requests")
-	flag.Bool("addDebugHeader", false, "Add header with a hash of the test information in each request")
-	flag.String("openapiFile", "", "Path to openAPI file")
-	showVersion := flag.Bool("version", false, "Show GoTestWAF version and exit")
+
 	flag.Parse()
 
 	if len(os.Args) == 1 {
@@ -165,16 +179,10 @@ func parseFlags() (args []string, err error) {
 
 	*urlParam = validURL.String()
 
-	// format WebSocket URL from given HTTP URL
-	if *wsURL == "" {
-		wsScheme := "ws"
-		if validURL.Scheme == "https" {
-			wsScheme = "wss"
-		}
-		validURL.Scheme = wsScheme
-		validURL.Path = ""
-
-		*wsURL = validURL.String()
+	// Force GoHTTP to be used as the HTTP client
+	// when scanning against the OpenAPI spec.
+	if openapiFile != nil && len(*openapiFile) > 0 {
+		*httpClient = "gohttp"
 	}
 
 	if *blockRegex != "" {
