@@ -1,7 +1,7 @@
 # GoTestWAF [![Black Hat Arsenal USA 2022](https://img.shields.io/badge/Black%20Hat%20Arsenal-USA%202022-blue)](https://www.blackhat.com/us-22/arsenal/schedule/index.html#gotestwaf---well-known-open-source-waf-tester-now-supports-api-security-hacking-27986)
 
 GoTestWAF is a tool for API and OWASP attack simulation that supports a wide range of API protocols including
-REST, GraphQL, gRPC, WebSockets, SOAP, XMLRPC, and others.
+REST, GraphQL, gRPC, SOAP, XMLRPC, and others.
 
 It was designed to evaluate web application security solutions, such as API security proxies, Web Application Firewalls,
 IPS, API gateways, and others.
@@ -26,7 +26,6 @@ The results of the security solution evaluation are recorded in the report file 
 Default conditions for request generation are defined in the `testcases` folder in the YAML files of the following format:
 
 ```yaml
----
 payload:
   - '"union select -7431.1, name, @aaa from u_base--w-'
   - "'or 123.22=123.22"
@@ -40,8 +39,7 @@ placeholder:
   - UrlParam
   - JSUnicode
   - Header
-type: "SQL Injection"
-...
+type: SQL Injection
 ```
 
 * `payload` is a malicious attack sample (e.g XSS payload like ```<script>alert(111)</script>``` or something more sophisticated).
@@ -86,7 +84,6 @@ Since the format of the YAML string is required for payloads, they must be [enco
     Example:
     
     ```yaml
-    ---
     payload:
       - test
     encoder:
@@ -109,8 +106,7 @@ Since the format of the YAML string is required for payloads, they must be [enco
             Knock knock.
             {{payload}}
             --boundary--
-    type: "RawRequest test"
-    ...
+    type: RawRequest test
     ```
 
 * `type` is a name of entire group of the payloads in file. It can be arbitrary, but should reflect the type of attacks in the file.
@@ -372,15 +368,16 @@ Options:
       --blockStatusCodes ints   HTTP status code that WAF uses while blocking requests (default [403])
       --configPath string       Path to the config file (default "config.yaml")
       --email string            E-mail to which the report will be sent
-      --followCookies           If true, use cookies sent by the server. May work only with --maxIdleConns=1
+      --followCookies           If true, use cookies sent by the server. May work only with --maxIdleConns=1 (gohttp only)
       --grpcPort uint16         gRPC port to check
-      --idleConnTimeout int     The maximum amount of time a keep-alive connection will live (default 2)
+      --httpClient string       Which HTTP client use to send requests: chrome, gohttp (default "chrome")
+      --idleConnTimeout int     The maximum amount of time a keep-alive connection will live (gohttp only) (default 2)
       --ignoreUnresolved        If true, unresolved test cases will be considered as bypassed (affect score and results)
       --includePayloads         If true, payloads will be included in HTML/PDF report
       --logFormat string        Set logging format: text, json (default "text")
       --logLevel string         Logging level: panic, fatal, error, warn, info, debug, trace (default "info")
-      --maxIdleConns int        The maximum number of keep-alive connections (default 2)
-      --maxRedirects int        The maximum number of handling redirects (default 50)
+      --maxIdleConns int        The maximum number of keep-alive connections (gohttp only) (default 2)
+      --maxRedirects int        The maximum number of handling redirects (gohttp only) (default 50)
       --noEmailReport           Save report locally
       --nonBlockedAsPassed      If true, count requests that weren't blocked as passed. If false, requests that don't satisfy to PassStatusCodes/PassRegExp as blocked
       --openapiFile string      Path to openAPI file
@@ -389,7 +386,7 @@ Options:
       --proxy string            Proxy URL to use
       --quiet                   If true, disable verbose logging
       --randomDelay int         Random delay in ms in addition to the delay between requests (default 400)
-      --renewSession            Renew cookies before each test. Should be used with --followCookies flag
+      --renewSession            Renew cookies before each test. Should be used with --followCookies flag (gohttp only)
       --reportFormat string     Export report to one of the following formats: none, pdf, html, json (default "pdf")
       --reportName string       Report file name. Supports `time' package template format (default "waf-evaluation-report-2006-January-02-15-04-05")
       --reportPath string       A directory to store reports (default "reports")
@@ -404,7 +401,6 @@ Options:
       --version                 Show GoTestWAF version and exit
       --wafName string          Name of the WAF product (default "generic")
       --workers int             The number of workers to scan (default 5)
-      --wsURL string            WebSocket URL to check
 ```
 
 The listed options can be passed to GoTestWAF as follows:
