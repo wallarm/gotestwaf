@@ -94,34 +94,64 @@ func PickUpTestPorts() error {
 
 func GetConfig() *config.Config {
 	return &config.Config{
-		URL:                fmt.Sprintf("http://localhost:%d", HTTPPort),
-		GRPCPort:           uint16(GRPCPort),
-		HTTPHeaders:        nil,
-		TLSVerify:          false,
-		Proxy:              "",
-		MaxIdleConns:       2,
-		MaxRedirects:       50,
-		IdleConnTimeout:    2,
-		FollowCookies:      false,
-		RenewSession:       false,
-		BlockStatusCodes:   []int{403},
-		PassStatusCodes:    []int{200, 404},
-		BlockRegex:         "",
-		PassRegex:          "",
-		NonBlockedAsPassed: false,
-		Workers:            runtime.NumCPU(),
-		RandomDelay:        400,
-		SendDelay:          200,
-		ReportPath:         path.Join(os.TempDir(), "reports"),
-		TestCase:           "",
-		TestCasesPath:      "",
-		TestSet:            "",
-		WAFName:            "test-waf",
-		IgnoreUnresolved:   false,
-		BlockConnReset:     false,
-		SkipWAFBlockCheck:  false,
-		AddHeader:          "",
-		AddDebugHeader:     true,
+		// Target settings
+		URL:         fmt.Sprintf("http://localhost:%d", HTTPPort),
+		GRPCPort:    uint16(GRPCPort),
+		OpenAPIFile: "",
+
+		// Test cases settings
+		TestCase:      "",
+		TestCasesPath: "",
+		TestSet:       "",
+
+		// HTTP client settings
+		HTTPClient:     "gohttp",
+		TLSVerify:      false,
+		Proxy:          "",
+		AddHeader:      "",
+		AddDebugHeader: true,
+
+		// GoHTTP client only settings
+		MaxIdleConns:    2,
+		MaxRedirects:    50,
+		IdleConnTimeout: 2,
+		FollowCookies:   false,
+		RenewSession:    false,
+
+		// Performance settings
+		Workers:     runtime.NumCPU(),
+		RandomDelay: 400,
+		SendDelay:   200,
+
+		// Analysis settings
+		SkipWAFBlockCheck:     false,
+		SkipWAFIdentification: true,
+		BlockStatusCodes:      []int{403},
+		PassStatusCodes:       []int{200, 404},
+		BlockRegex:            "",
+		PassRegex:             "",
+		NonBlockedAsPassed:    false,
+		IgnoreUnresolved:      false,
+		BlockConnReset:        false,
+
+		// Report settings
+		WAFName:         "test-waf",
+		IncludePayloads: false,
+		ReportPath:      path.Join(os.TempDir(), "reports"),
+		ReportName:      "test",
+		ReportFormat:    "",
+		NoEmailReport:   true,
+		Email:           "",
+
+		// config.yaml
+		HTTPHeaders: nil,
+
+		// Other settings
+		LogLevel: "debug",
+
+		CheckBlockFunc: nil,
+
+		Args: nil,
 	}
 }
 
