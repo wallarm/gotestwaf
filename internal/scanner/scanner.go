@@ -497,10 +497,7 @@ func (s *Scanner) sendPayload(ctx context.Context, pc *payloadConfig) error {
 	var err error
 
 	if pc.placeholder.Name == placeholder.DefaultGRPC.GetName() {
-		err = s.sendGrpcRequest(ctx, pc)
-		if err != nil {
-			return err
-		}
+		return s.sendGrpcRequest(ctx, pc)
 	}
 
 	if s.requestTemplates != nil {

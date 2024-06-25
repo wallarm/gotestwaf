@@ -1,6 +1,8 @@
 package payload
 
 import (
+	"fmt"
+
 	"github.com/pkg/errors"
 
 	"github.com/wallarm/gotestwaf/internal/payload/encoder"
@@ -45,7 +47,7 @@ func (p *PayloadInfo) GetRequest(targetURL string, clientType types.HTTPClientTy
 		clientType,
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't apply placeholder")
+		return nil, errors.Wrap(err, fmt.Sprintf("couldn't apply placeholder %s", p.PlaceholderName))
 	}
 
 	switch r := request.(type) {
