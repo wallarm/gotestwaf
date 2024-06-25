@@ -57,6 +57,9 @@ type Config struct {
 	// config.yaml
 	HTTPHeaders map[string]string `mapstructure:"headers"`
 
+	// Other settings
+	LogLevel string `mapstructure:"logLevel"`
+
 	CheckBlockFunc detectors.Check
 
 	Args []string

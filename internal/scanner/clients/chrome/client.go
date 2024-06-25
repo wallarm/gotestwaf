@@ -10,6 +10,7 @@ import (
 	"github.com/chromedp/chromedp"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/wallarm/gotestwaf/internal/config"
 	"github.com/wallarm/gotestwaf/internal/helpers"
@@ -28,12 +29,19 @@ var DefaultChromeDPExecAllocatorOptions = append(
 
 type Client struct {
 	execAllocatorOptions []chromedp.ExecAllocatorOption
+	disableLogs          bool
 
 	headers map[string]string
 }
 
 func NewClient(cfg *config.Config) (*Client, error) {
 	execAllocatorOptions := DefaultChromeDPExecAllocatorOptions[:]
+
+	disableLogs := false
+	logLevel, _ := logrus.ParseLevel(cfg.LogLevel)
+	if logLevel < logrus.DebugLevel {
+		disableLogs = true
+	}
 
 	if cfg.Proxy != "" {
 		execAllocatorOptions = append(
@@ -71,6 +79,7 @@ func NewClient(cfg *config.Config) (*Client, error) {
 
 	c := &Client{
 		execAllocatorOptions: execAllocatorOptions,
+		disableLogs:          disableLogs,
 		headers:              configuredHeaders,
 	}
 
@@ -96,8 +105,18 @@ func (c *Client) SendPayload(
 	allocCtx, allocCtxCancel := chromedp.NewExecAllocator(ctx, c.execAllocatorOptions...)
 	defer allocCtxCancel()
 
+	var logOptions []chromedp.ContextOption
+	if c.disableLogs {
+		logOptions = append(
+			logOptions,
+			chromedp.WithLogf(discardLogs),
+			chromedp.WithDebugf(discardLogs),
+			chromedp.WithErrorf(discardLogs),
+		)
+	}
+
 	// Create a new Chrome context
-	chromeCtx, chromeCtxCancel := chromedp.NewContext(allocCtx)
+	chromeCtx, chromeCtxCancel := chromedp.NewContext(allocCtx, logOptions...)
 	defer chromeCtxCancel()
 
 	headers := make(network.Headers)
@@ -170,8 +189,18 @@ func (c *Client) SendRequest(
 	allocCtx, allocCtxCancel := chromedp.NewExecAllocator(ctx, c.execAllocatorOptions...)
 	defer allocCtxCancel()
 
+	var logOptions []chromedp.ContextOption
+	if c.disableLogs {
+		logOptions = append(
+			logOptions,
+			chromedp.WithLogf(discardLogs),
+			chromedp.WithDebugf(discardLogs),
+			chromedp.WithErrorf(discardLogs),
+		)
+	}
+
 	// Create a new Chrome context
-	chromeCtx, chromeCtxCancel := chromedp.NewContext(allocCtx)
+	chromeCtx, chromeCtxCancel := chromedp.NewContext(allocCtx, logOptions...)
 	defer chromeCtxCancel()
 
 	headers := make(network.Headers)
@@ -270,3 +299,7 @@ forLoop:
 
 	return latestResponse, nil
 }
+
+// discardLogs serves as a no-op logging function for chromedp
+// to suppress all internal logging output.
+func discardLogs(string, ...interface{}) {}
