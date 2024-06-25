@@ -1,6 +1,6 @@
 module github.com/wallarm/gotestwaf
 
-go 1.19
+go 1.22
 
 require (
 	github.com/chromedp/cdproto v0.0.0-20240501202034-ef67d660e9fd
@@ -9,7 +9,6 @@ require (
 	github.com/getkin/kin-openapi v0.114.0
 	github.com/go-echarts/go-echarts/v2 v2.2.5
 	github.com/go-playground/validator/v10 v10.11.2
-	github.com/gorilla/websocket v1.5.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/leanovate/gopter v0.2.9
 	github.com/mcnijman/go-emailaddress v1.1.0
