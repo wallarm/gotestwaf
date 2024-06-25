@@ -8,7 +8,6 @@ import (
 	"net/http"
 
 	"github.com/chromedp/cdproto/runtime"
-
 	"github.com/chromedp/chromedp"
 	"github.com/pkg/errors"
 
@@ -19,6 +18,8 @@ import (
 // return the response details.
 const jsCodeTemplate = `
 const f = async function() {
+	let err = null;
+
 	const response = await fetch(
 		'{{.URL}}',
 		{
@@ -26,11 +27,15 @@ const f = async function() {
 			{{if .Headers}}headers: {{.Headers}},{{end}}
 			{{if .Body}}body: {{.Body}}{{end}}
 		}
-	).catch(err => {
-		return {
-			Error: err.message,
+	).catch(e => {
+		err = {
+			Error: e.message,
 		};
 	});
+
+	if (err) {
+		return err;
+	}
 
 	const headers = {};
 	response.headers.forEach((value, key) => {

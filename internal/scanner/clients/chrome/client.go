@@ -20,7 +20,11 @@ import (
 
 var _ clients.HTTPClient = (*Client)(nil)
 
-var DefaultChromeDPExecAllocatorOptions = chromedp.DefaultExecAllocatorOptions[:]
+var DefaultChromeDPExecAllocatorOptions = append(
+	chromedp.DefaultExecAllocatorOptions[:],
+	// Disable the CORS policy constraints
+	chromedp.Flag("disable-web-security", true),
+)
 
 type Client struct {
 	execAllocatorOptions []chromedp.ExecAllocatorOption
