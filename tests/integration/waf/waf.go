@@ -27,41 +27,46 @@ type WAF struct {
 	casesMap   *config.TestCasesMap
 	httpServer *http.Server
 	grpcServer *grpc.Server
+
+	httpPort int
+	grpcPort int
 }
 
-func New(errChan chan<- error, casesMap *config.TestCasesMap) *WAF {
+func New(errChan chan<- error, casesMap *config.TestCasesMap, httpPort int, grpcPort int) *WAF {
 	waf := &WAF{
 		errChan:  errChan,
 		casesMap: casesMap,
+		httpPort: httpPort,
+		grpcPort: grpcPort,
 	}
 
 	mux := http.NewServeMux()
 	mux.Handle("/", waf)
 
 	waf.httpServer = &http.Server{
-		Addr:    fmt.Sprintf("localhost:%d", config.HTTPPort),
+		Addr:    fmt.Sprintf("localhost:%d", httpPort),
 		Handler: mux,
 	}
 
-	grpcServer := &grpcServer{
+	grpcSrv := &grpcServer{
 		errChan:  errChan,
 		casesMap: casesMap,
 	}
 
 	waf.grpcServer = grpc.NewServer()
-	pb.RegisterServiceFooBarServer(waf.grpcServer, grpcServer)
+	pb.RegisterServiceFooBarServer(waf.grpcServer, grpcSrv)
 
 	return waf
 }
 
 func (waf *WAF) Run() {
 	go func() {
-		conn, err := net.DialTimeout("tcp", fmt.Sprintf("localhost:%d", config.HTTPPort), time.Second)
+		conn, err := net.DialTimeout("tcp", fmt.Sprintf("localhost:%d", waf.httpPort), time.Second)
 		if err == nil {
 			if conn != nil {
 				conn.Close()
 			}
-			waf.errChan <- fmt.Errorf("port %d is already in use", config.HTTPPort)
+			waf.errChan <- fmt.Errorf("port %d is already in use", waf.httpPort)
 		}
 
 		err = waf.httpServer.ListenAndServe()
@@ -71,7 +76,7 @@ func (waf *WAF) Run() {
 	}()
 
 	go func() {
-		lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", config.GRPCPort))
+		lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", waf.grpcPort))
 		if err != nil {
 			waf.errChan <- fmt.Errorf("failed to listen for grpc connections: %v", err)
 		}
@@ -88,14 +93,30 @@ func (waf *WAF) Shutdown() error {
 }
 
 func (waf *WAF) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	clientInfo := r.Header.Get("client")
+	if clientInfo == "" {
+		waf.errChan <- errors.New("couldn't get client info header value")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	caseHash := r.Header.Get(clients.GTWDebugHeader)
 	if caseHash == "" {
+		if clientInfo == "chrome" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
 		waf.errChan <- errors.New("couldn't get X-GoTestWAF-Test header value")
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
 	payloadInfo, ok := waf.casesMap.CheckTestCaseAvailability(caseHash)
 	if !ok {
 		waf.errChan <- fmt.Errorf("received unknown case hash: %s", caseHash)
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
 	payloadInfoValues := strings.Split(payloadInfo, ",")
@@ -115,6 +136,8 @@ func (waf *WAF) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		if len(kv) < 2 {
 			waf.errChan <- errors.New("couldn't parse header value")
+			w.WriteHeader(http.StatusBadRequest)
+			return
 		} else {
 			testCaseParameters[strings.TrimSpace(kv[0])] = strings.TrimSpace(kv[1])
 		}
@@ -122,26 +145,29 @@ func (waf *WAF) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if set, ok = testCaseParameters["set"]; !ok {
 		waf.errChan <- errors.New("couldn't get `set` parameter of test case")
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
 	if name, ok = testCaseParameters["name"]; !ok {
 		waf.errChan <- errors.New("couldn't get `name` parameter of test case")
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
 	if placeholder, ok = testCaseParameters["placeholder"]; !ok {
 		waf.errChan <- errors.New("couldn't get `placeholder` parameter of test case")
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
 	if encoder, ok = testCaseParameters["encoder"]; !ok {
 		waf.errChan <- errors.New("couldn't get `encoder` parameter of test case")
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
 	switch placeholder {
-	case "RawRequest":
-		err = nil
-		placeholderValue = config.RawRequestConfigs[set].GetPayloadFunc(r)
-	case "UserAgent":
-		placeholderValue, err = getPayloadFromUAHeader(r)
 	case "Header":
 		placeholderValue, err = getPayloadFromHeader(r)
 	case "HTMLForm":
@@ -152,6 +178,9 @@ func (waf *WAF) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		placeholderValue, err = getPayloadFromJSONBody(r)
 	case "JSONRequest":
 		placeholderValue, err = getPayloadFromJSONRequest(r)
+	case "RawRequest":
+		err = nil
+		placeholderValue = config.RawRequestConfigs[set].GetPayloadFunc(r)
 	case "RequestBody":
 		placeholderValue, err = getPayloadFromRequestBody(r)
 	case "SOAPBody":
@@ -160,22 +189,20 @@ func (waf *WAF) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		placeholderValue, err = getPayloadFromURLParam(r)
 	case "URLPath":
 		placeholderValue, err = getPayloadFromURLPath(r)
+	case "UserAgent":
+		placeholderValue, err = getPayloadFromUAHeader(r)
 	case "XMLBody":
 		placeholderValue, err = getPayloadFromXMLBody(r)
-	case "NonCrudUrlParam":
-		placeholderValue, err = getPayloadFromURLParam(r)
-	case "NonCrudUrlPath":
-		placeholderValue, err = getPayloadFromURLPath(r)
-	case "NonCRUDHeader":
-		placeholderValue, err = getPayloadFromHeader(r)
-	case "NonCRUDRequestBody":
-		placeholderValue, err = getPayloadFromRequestBody(r)
 	default:
 		waf.errChan <- fmt.Errorf("unknown placeholder: %s", placeholder)
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
 	if err != nil {
-		waf.errChan <- fmt.Errorf("couldn't get encoded payload value: %v", err)
+		waf.errChan <- fmt.Errorf("couldn't get encoded payload value: %v, payload info: %s", err, payloadInfo)
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
 	switch encoder {
@@ -185,18 +212,22 @@ func (waf *WAF) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		value, err = decodeBase64(placeholderValue)
 	case "JSUnicode":
 		value, err = decodeJSUnicode(placeholderValue)
-	case "URL":
-		value, err = decodeURL(placeholderValue)
 	case "Plain":
 		value, err = decodePlain(placeholderValue)
+	case "URL":
+		value, err = decodeURL(placeholderValue)
 	case "XMLEntity":
 		value, err = decodeXMLEntity(placeholderValue)
 	default:
 		waf.errChan <- fmt.Errorf("unknown encoder: %s", encoder)
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
 	if err != nil {
-		waf.errChan <- fmt.Errorf("couldn't decode payload: %v", err)
+		waf.errChan <- fmt.Errorf("couldn't decode payload: %v, payload info: %s", err, payloadInfo)
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
 	if matched, _ := regexp.MatchString("bypassed", value); matched {
@@ -217,5 +248,6 @@ func (waf *WAF) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if caseHash != restoredCaseHash {
 		waf.errChan <- fmt.Errorf("case hash mismatched: %s != %s", caseHash, restoredCaseHash)
+		return
 	}
 }

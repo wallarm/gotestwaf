@@ -1,6 +1,7 @@
 package placeholder
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/url"
 	"strings"
@@ -55,7 +56,7 @@ func (p *URLParam) CreateRequest(requestURL, payload string, config PlaceholderC
 		return nil, err
 	}
 
-	urlWithPayload += param + "=" + payload
+	urlWithPayload += param + "="
 
 	switch httpClientType {
 	case types.GoHTTPClient:
@@ -68,6 +69,8 @@ func (p *URLParam) CreateRequest(requestURL, payload string, config PlaceholderC
 }
 
 func (p *URLParam) prepareGoHTTPClientRequest(requestURL, payload string, config PlaceholderConfig) (*types.GoHTTPRequest, error) {
+	requestURL += payload
+
 	req, err := http.NewRequest(http.MethodGet, requestURL, nil)
 	if err != nil {
 		return nil, err
@@ -77,6 +80,15 @@ func (p *URLParam) prepareGoHTTPClientRequest(requestURL, payload string, config
 }
 
 func (p *URLParam) prepareChromeHTTPClientRequest(requestURL, payload string, config PlaceholderConfig) (*types.ChromeDPTasks, error) {
+	jsEncodedPayload, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	jsEncodedPayloadStr := strings.Trim(string(jsEncodedPayload), "\"")
+
+	requestURL += jsEncodedPayloadStr
+
 	reqOptions := &helpers.RequestOptions{
 		Method: http.MethodGet,
 	}

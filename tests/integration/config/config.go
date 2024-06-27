@@ -13,14 +13,23 @@ import (
 
 	"github.com/wallarm/gotestwaf/internal/config"
 	"github.com/wallarm/gotestwaf/internal/db"
-	"github.com/wallarm/gotestwaf/internal/payload/encoder"
 	"github.com/wallarm/gotestwaf/internal/payload/placeholder"
 )
 
-var (
-	HTTPPort int
-	GRPCPort int
-)
+var placeholdersEncodersMap = map[string][]string{
+	"gRPC":              {"Base64", "Base64Flat", "JSUnicode", "Plain", "URL", "XMLEntity"},
+	"Header":            {"Base64", "Base64Flat", "JSUnicode", "Plain", "URL", "XMLEntity"},
+	"HTMLForm":          {"Base64", "Base64Flat", "Plain", "URL"},
+	"HTMLMultipartForm": {"Base64", "Base64Flat", "Plain", "URL"},
+	"JSONBody":          {"Base64", "Base64Flat", "JSUnicode", "Plain", "URL", "XMLEntity"},
+	"JSONRequest":       {"Plain"},
+	"RequestBody":       {"Base64", "Base64Flat", "JSUnicode", "Plain", "URL", "XMLEntity"},
+	"SOAPBody":          {"Base64", "Base64Flat", "JSUnicode", "Plain", "URL", "XMLEntity"},
+	"URLParam":          {"Base64", "Base64Flat", "Plain", "URL"},
+	"URLPath":           {"Base64", "Base64Flat", "Plain", "URL"},
+	"UserAgent":         {"Base64", "Base64Flat", "JSUnicode", "Plain", "URL", "XMLEntity"},
+	"XMLBody":           {"Base64", "Base64Flat", "XMLEntity"},
+}
 
 type TestCasesMap struct {
 	sync.Mutex
@@ -75,28 +84,25 @@ func getFreePort() (int, error) {
 	return l.Addr().(*net.TCPAddr).Port, nil
 }
 
-func PickUpTestPorts() error {
-	httpPort, err := getFreePort()
+func PickUpTestPorts() (httpPort, grpcPort int, err error) {
+	httpPort, err = getFreePort()
 	if err != nil {
-		return err
+		return 0, 0, err
 	}
 
-	grpcPort, err := getFreePort()
+	grpcPort, err = getFreePort()
 	if err != nil {
-		return err
+		return 0, 0, err
 	}
 
-	HTTPPort = httpPort
-	GRPCPort = grpcPort
-
-	return nil
+	return
 }
 
-func GetConfig() *config.Config {
+func getConfig(httpPort int, grpcPort int) *config.Config {
 	return &config.Config{
 		// Target settings
-		URL:         fmt.Sprintf("http://localhost:%d", HTTPPort),
-		GRPCPort:    uint16(GRPCPort),
+		URL:         fmt.Sprintf("http://localhost:%d", httpPort),
+		GRPCPort:    uint16(grpcPort),
 		OpenAPIFile: "",
 
 		// Test cases settings
@@ -105,7 +111,7 @@ func GetConfig() *config.Config {
 		TestSet:       "",
 
 		// HTTP client settings
-		HTTPClient:     "gohttp",
+		HTTPClient:     "", // will be changed to 'gohttp' or 'chrome'
 		TLSVerify:      false,
 		Proxy:          "",
 		AddHeader:      "",
@@ -144,7 +150,7 @@ func GetConfig() *config.Config {
 		Email:           "",
 
 		// config.yaml
-		HTTPHeaders: nil,
+		HTTPHeaders: map[string]string{},
 
 		// Other settings
 		LogLevel: "debug",
@@ -155,23 +161,27 @@ func GetConfig() *config.Config {
 	}
 }
 
+func GetConfigWithGoHTTPClient(httpPort int, grpcPort int) *config.Config {
+	cfg := getConfig(httpPort, grpcPort)
+
+	cfg.HTTPClient = "gohttp"
+	cfg.HTTPHeaders["client"] = "gohttp"
+
+	return cfg
+}
+
+func GetConfigWithChromeClient(httpPort int, grpcPort int) *config.Config {
+	cfg := getConfig(httpPort, grpcPort)
+
+	cfg.HTTPClient = "chrome"
+	cfg.HTTPHeaders["client"] = "chrome"
+
+	return cfg
+}
+
 func GenerateTestCases() (testCases []*db.Case, testCasesMap *TestCasesMap) {
-	var encoders []string
-	var placeholders []string
 	testCasesMap = new(TestCasesMap)
 	testCasesMap.m = make(map[string]string)
-
-	for encoderName, _ := range encoder.Encoders {
-		encoders = append(encoders, encoderName)
-	}
-
-	for placeholderName := range placeholder.Placeholders {
-		if placeholderName == placeholder.DefaultRawRequest.GetName() {
-			continue
-		}
-
-		placeholders = append(placeholders, placeholderName)
-	}
 
 	testSets := []string{"test-set1", "test-set2", "test-set3"}
 	payloads := []string{"bypassed", "blocked", "unresolved"}
@@ -213,7 +223,7 @@ func GenerateTestCases() (testCases []*db.Case, testCasesMap *TestCasesMap) {
 	}
 
 	for _, testSet := range testSets {
-		for _, placeholder := range placeholders {
+		for placeholder, encoders := range placeholdersEncodersMap {
 			for _, encoder := range encoders {
 				f(testSet, payloads, encoder, placeholder, nil)
 			}
@@ -221,7 +231,7 @@ func GenerateTestCases() (testCases []*db.Case, testCasesMap *TestCasesMap) {
 	}
 
 	for testSet, settings := range RawRequestConfigs {
-		for _, encoder := range encoders {
+		for _, encoder := range settings.Encoders {
 			f(testSet, payloads, encoder, placeholder.DefaultRawRequest.GetName(), settings.Config)
 		}
 	}

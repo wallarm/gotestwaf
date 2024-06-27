@@ -1,8 +1,10 @@
 package placeholder
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/chromedp/chromedp"
 	"github.com/wallarm/gotestwaf/internal/scanner/clients/chrome/helpers"
@@ -40,7 +42,7 @@ func (p *URLPath) CreateRequest(requestURL, payload string, config PlaceholderCo
 		}
 	}
 
-	urlWithPayload += "/" + payload
+	urlWithPayload += "/"
 
 	switch httpClientType {
 	case types.GoHTTPClient:
@@ -53,6 +55,8 @@ func (p *URLPath) CreateRequest(requestURL, payload string, config PlaceholderCo
 }
 
 func (p *URLPath) prepareGoHTTPClientRequest(requestURL, payload string, config PlaceholderConfig) (*types.GoHTTPRequest, error) {
+	requestURL += payload
+
 	req, err := http.NewRequest(http.MethodGet, requestURL, nil)
 	if err != nil {
 		return nil, err
@@ -62,6 +66,15 @@ func (p *URLPath) prepareGoHTTPClientRequest(requestURL, payload string, config 
 }
 
 func (p *URLPath) prepareChromeHTTPClientRequest(requestURL, payload string, config PlaceholderConfig) (*types.ChromeDPTasks, error) {
+	jsEncodedPayload, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	jsEncodedPayloadStr := strings.Trim(string(jsEncodedPayload), "\"")
+
+	requestURL += jsEncodedPayloadStr
+
 	reqOptions := &helpers.RequestOptions{
 		Method: http.MethodGet,
 	}

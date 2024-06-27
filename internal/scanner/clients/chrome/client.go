@@ -128,22 +128,37 @@ func (c *Client) SendPayload(
 		headers[k] = v
 	}
 
-	if payloadInfo.DebugHeaderValue != "" {
-		headers[clients.GTWDebugHeader] = payloadInfo.DebugHeaderValue
-	}
-
-	tasks := chromedp.Tasks{chromedp.Navigate(targetURL)}
-	if len(headers) > 0 {
-		tasks = append(chromedp.Tasks{network.SetExtraHTTPHeaders(headers)}, tasks...)
-	}
-	tasks = append(tasks, r.Tasks...)
-
 	var wg sync.WaitGroup
 	errorChan := make(chan error, 10)
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+
+		// Get home page
+		tasks := chromedp.Tasks{chromedp.Navigate(targetURL)}
+		if len(headers) > 0 {
+			tasks = append(chromedp.Tasks{network.SetExtraHTTPHeaders(headers)}, tasks...)
+		}
+
+		if err := chromedp.Run(chromeCtx, tasks); err != nil {
+			errorChan <- errors.Wrap(err, "failed to execute Chrome tasks")
+		}
+
+		// Perform request with payload
+		if payloadInfo.DebugHeaderValue != "" {
+			headers[clients.GTWDebugHeader] = payloadInfo.DebugHeaderValue
+		}
+
+		for k, v := range r.UserAgentHeader {
+			headers[k] = v
+		}
+
+		tasks = chromedp.Tasks{}
+		if len(headers) > 0 {
+			tasks = chromedp.Tasks{network.SetExtraHTTPHeaders(headers)}
+		}
+		tasks = append(tasks, r.Tasks...)
 
 		if err := chromedp.Run(chromeCtx, tasks); err != nil {
 			errorChan <- errors.Wrap(err, "failed to execute Chrome tasks")

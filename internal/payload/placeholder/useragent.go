@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/chromedp"
 	"github.com/wallarm/gotestwaf/internal/scanner/clients/chrome/helpers"
 
@@ -58,9 +59,6 @@ func (p *UserAgent) prepareGoHTTPClientRequest(requestURL, payload string, confi
 func (p *UserAgent) prepareChromeHTTPClientRequest(requestURL, payload string, config PlaceholderConfig) (*types.ChromeDPTasks, error) {
 	reqOptions := &helpers.RequestOptions{
 		Method: http.MethodGet,
-		Headers: map[string]string{
-			UAHeader: payload,
-		},
 	}
 
 	task, responseMeta, err := helpers.GetFetchRequest(requestURL, reqOptions)
@@ -69,8 +67,9 @@ func (p *UserAgent) prepareChromeHTTPClientRequest(requestURL, payload string, c
 	}
 
 	tasks := &types.ChromeDPTasks{
-		Tasks:        chromedp.Tasks{task},
-		ResponseMeta: responseMeta,
+		Tasks:           chromedp.Tasks{task},
+		UserAgentHeader: network.Headers{UAHeader: payload, "Test": "test"},
+		ResponseMeta:    responseMeta,
 	}
 
 	return tasks, nil

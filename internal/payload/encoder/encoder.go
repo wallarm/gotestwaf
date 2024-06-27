@@ -11,8 +11,8 @@ var encoders = []Encoder{
 	DefaultBase64Encoder,
 	DefaultBase64FlatEncoder,
 	DefaultJSUnicodeEncoder,
-	DefaultURLEncoder,
 	DefaultPlainEncoder,
+	DefaultURLEncoder,
 	DefaultXMLEntityEncoder,
 }
 

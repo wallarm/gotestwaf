@@ -3,6 +3,7 @@ package types
 import (
 	"net/http"
 
+	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/chromedp"
 )
 
@@ -28,6 +29,8 @@ func (r *GoHTTPRequest) IsRequest() {}
 // ChromeDPTasks is a type wrapper for the chromedp.Tasks.
 type ChromeDPTasks struct {
 	Tasks chromedp.Tasks
+
+	UserAgentHeader network.Headers
 
 	ResponseMeta     *ResponseMeta
 	DebugHeaderValue string
