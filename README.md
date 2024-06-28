@@ -370,7 +370,7 @@ Options:
       --email string            E-mail to which the report will be sent
       --followCookies           If true, use cookies sent by the server. May work only with --maxIdleConns=1 (gohttp only)
       --grpcPort uint16         gRPC port to check
-      --httpClient string       Which HTTP client use to send requests: chrome, gohttp (default "chrome")
+      --httpClient string       Which HTTP client use to send requests: chrome, gohttp (default "gohttp")
       --idleConnTimeout int     The maximum amount of time a keep-alive connection will live (gohttp only) (default 2)
       --ignoreUnresolved        If true, unresolved test cases will be considered as bypassed (affect score and results)
       --includePayloads         If true, payloads will be included in HTML/PDF report

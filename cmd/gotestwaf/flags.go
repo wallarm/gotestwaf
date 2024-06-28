@@ -84,7 +84,7 @@ func parseFlags() (args []string, err error) {
 	flag.String("testSet", "", "If set then only this test set's cases will be run")
 
 	// HTTP client settings
-	httpClient := flag.String("httpClient", "chrome", "Which HTTP client use to send requests: chrome, gohttp")
+	httpClient := flag.String("httpClient", "gohttp", "Which HTTP client use to send requests: chrome, gohttp")
 	flag.Bool("tlsVerify", false, "If true, the received TLS certificate will be verified")
 	flag.String("proxy", "", "Proxy URL to use")
 	flag.String("addHeader", "", "An HTTP header to add to requests")
