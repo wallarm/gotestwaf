@@ -10,22 +10,26 @@ import (
 
 var RawRequestConfigs = map[string]*struct {
 	Config         *placeholder.RawRequestConfig
+	Encoders       []string
 	GetPayloadFunc func(r *http.Request) string
 }{
 	"rawrequest-set1": {
-		Config: &placeholder.RawRequestConfig{Method: "POST", Path: "/{{payload}}", Headers: map[string]string{}, Body: ""},
+		Config:   &placeholder.RawRequestConfig{Method: "POST", Path: "/{{payload}}", Headers: map[string]string{}, Body: ""},
+		Encoders: []string{"Base64", "Base64Flat", "URL"},
 		GetPayloadFunc: func(r *http.Request) string {
 			return strings.TrimPrefix(r.URL.Path, "/")
 		},
 	},
 	"rawrequest-set2": {
-		Config: &placeholder.RawRequestConfig{Method: "POST", Path: "/", Headers: map[string]string{"X-Test": "{{payload}}"}, Body: ""},
+		Config:   &placeholder.RawRequestConfig{Method: "POST", Path: "/", Headers: map[string]string{"X-Test": "{{payload}}"}, Body: ""},
+		Encoders: []string{"Base64", "Base64Flat", "JSUnicode", "Plain", "URL", "XMLEntity"},
 		GetPayloadFunc: func(r *http.Request) string {
 			return r.Header.Get("X-Test")
 		},
 	},
 	"rawrequest-set3": {
-		Config: &placeholder.RawRequestConfig{Method: "POST", Path: "/", Headers: map[string]string{}, Body: "{{payload}}"},
+		Config:   &placeholder.RawRequestConfig{Method: "POST", Path: "/", Headers: map[string]string{}, Body: "{{payload}}"},
+		Encoders: []string{"Base64", "Base64Flat", "JSUnicode", "Plain", "URL", "XMLEntity"},
 		GetPayloadFunc: func(r *http.Request) string {
 			defer r.Body.Close()
 			b, _ := io.ReadAll(r.Body)

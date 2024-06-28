@@ -1,13 +1,13 @@
-encoder:
-- Plain
 payload:
-- <script>aaa</script>
-- 1e1 union select users from password
-- '''-alert(1)//'
-- confirm.call(null,1)
-- alert.call(%20, "XSS");
-- 123) AND 12=12 AND JSON_DEPTH('{}') != 2521
-- alert.apply(null, [1])
+  - '<script>aaa</script>'
+  - '1e1 union select users from password'
+  - "\'-alert(1)//"
+  - 'confirm.call(null,1)'
+  - 'alert.call(%20, "XSS");'
+  - "123) AND 12=12 AND JSON_DEPTH('{}') != 2521"
+  - "alert.apply(null, [1])"
+encoder:
+  - Plain
 placeholder:
-- JSONRequest
+  - JSONRequest
 type: REST

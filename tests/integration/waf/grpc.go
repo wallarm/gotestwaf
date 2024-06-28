@@ -9,12 +9,13 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/wallarm/gotestwaf/internal/scanner/clients"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	gtw_grpc "github.com/wallarm/gotestwaf/internal/payload/placeholder/grpc"
-	"github.com/wallarm/gotestwaf/internal/scanner"
 	"github.com/wallarm/gotestwaf/tests/integration/config"
 )
 
@@ -29,11 +30,13 @@ func (s *grpcServer) Foo(ctx context.Context, in *gtw_grpc.Request) (*gtw_grpc.R
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		s.errChan <- errors.New("metadata not found")
+		return nil, status.New(codes.InvalidArgument, "").Err()
 	}
 
-	headerValue := md.Get(scanner.GTWDebugHeader)
+	headerValue := md.Get(clients.GTWDebugHeader)
 	if len(headerValue) < 1 {
 		s.errChan <- errors.New("couldn't get X-GoTestWAF-Test header value")
+		return nil, status.New(codes.InvalidArgument, "").Err()
 	}
 
 	caseHash := headerValue[0]
@@ -41,6 +44,7 @@ func (s *grpcServer) Foo(ctx context.Context, in *gtw_grpc.Request) (*gtw_grpc.R
 	payloadInfo, ok := s.casesMap.CheckTestCaseAvailability(caseHash)
 	if !ok {
 		s.errChan <- fmt.Errorf("received unknown case hash: %s", caseHash)
+		return nil, status.New(codes.InvalidArgument, "").Err()
 	}
 
 	payloadInfoValues := strings.Split(payloadInfo, ",")
@@ -60,6 +64,7 @@ func (s *grpcServer) Foo(ctx context.Context, in *gtw_grpc.Request) (*gtw_grpc.R
 
 		if len(kv) < 2 {
 			s.errChan <- errors.New("couldn't parse header value")
+			return nil, status.New(codes.InvalidArgument, "").Err()
 		} else {
 			testCaseParameters[strings.TrimSpace(kv[0])] = strings.TrimSpace(kv[1])
 		}
@@ -67,18 +72,22 @@ func (s *grpcServer) Foo(ctx context.Context, in *gtw_grpc.Request) (*gtw_grpc.R
 
 	if set, ok = testCaseParameters["set"]; !ok {
 		s.errChan <- errors.New("couldn't get `set` parameter of test case")
+		return nil, status.New(codes.InvalidArgument, "").Err()
 	}
 
 	if name, ok = testCaseParameters["name"]; !ok {
 		s.errChan <- errors.New("couldn't get `name` parameter of test case")
+		return nil, status.New(codes.InvalidArgument, "").Err()
 	}
 
 	if placeholder, ok = testCaseParameters["placeholder"]; !ok {
 		s.errChan <- errors.New("couldn't get `placeholder` parameter of test case")
+		return nil, status.New(codes.InvalidArgument, "").Err()
 	}
 
 	if encoder, ok = testCaseParameters["encoder"]; !ok {
 		s.errChan <- errors.New("couldn't get `encoder` parameter of test case")
+		return nil, status.New(codes.InvalidArgument, "").Err()
 	}
 
 	placeholderValue = in.GetValue()
@@ -98,6 +107,7 @@ func (s *grpcServer) Foo(ctx context.Context, in *gtw_grpc.Request) (*gtw_grpc.R
 		value, err = decodeXMLEntity(placeholderValue)
 	default:
 		s.errChan <- fmt.Errorf("unknown encoder: %s", encoder)
+		return nil, status.New(codes.InvalidArgument, "").Err()
 	}
 
 	if err != nil {
@@ -114,6 +124,7 @@ func (s *grpcServer) Foo(ctx context.Context, in *gtw_grpc.Request) (*gtw_grpc.R
 
 	if caseHash != restoredCaseHash {
 		s.errChan <- fmt.Errorf("case hash mismatched: %s != %s", caseHash, restoredCaseHash)
+		return nil, status.New(codes.InvalidArgument, "").Err()
 	}
 
 	if matched, _ := regexp.MatchString("bypassed", value); matched {

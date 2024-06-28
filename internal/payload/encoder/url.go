@@ -4,18 +4,18 @@ import (
 	"net/url"
 )
 
+var _ Encoder = (*URLEncoder)(nil)
+
+var DefaultURLEncoder = &URLEncoder{name: "URL"}
+
 type URLEncoder struct {
 	name string
 }
 
-var DefaultURLEncoder = URLEncoder{name: "URL"}
-
-var _ Encoder = (*URLEncoder)(nil)
-
-func (enc URLEncoder) GetName() string {
+func (enc *URLEncoder) GetName() string {
 	return enc.name
 }
 
-func (enc URLEncoder) Encode(data string) (string, error) {
-	return url.QueryEscape(data), nil
+func (enc *URLEncoder) Encode(data string) (string, error) {
+	return url.PathEscape(data), nil
 }

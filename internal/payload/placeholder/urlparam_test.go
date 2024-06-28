@@ -3,6 +3,8 @@ package placeholder
 import (
 	"regexp"
 	"testing"
+
+	"github.com/wallarm/gotestwaf/internal/scanner/types"
 )
 
 func TestURLParam(t *testing.T) {
@@ -32,12 +34,17 @@ func TestURLParam(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		req, err := DefaultURLParam.CreateRequest(test.requestURL, test.payload, nil)
+		req, err := DefaultURLParam.CreateRequest(test.requestURL, test.payload, nil, types.GoHTTPClient)
 		if err != nil {
 			t.Fatalf("got an error while testing: %v", err)
 		}
 
-		reqURL := req.URL.String()
+		r, ok := req.(*types.GoHTTPRequest)
+		if !ok {
+			t.Fatalf("bad request type: %T, expected %T", req, &types.GoHTTPRequest{})
+		}
+
+		reqURL := r.Req.URL.String()
 		matched, err := regexp.MatchString(test.reqURLregexp, reqURL)
 		if err != nil {
 			t.Fatalf("got an error while testing: %v", err)

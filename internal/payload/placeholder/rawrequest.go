@@ -2,12 +2,25 @@ package placeholder
 
 import (
 	"crypto/sha256"
+	"fmt"
+	"html/template"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
+
+	"github.com/chromedp/chromedp"
+	"github.com/wallarm/gotestwaf/internal/scanner/clients/chrome/helpers"
+
+	"github.com/wallarm/gotestwaf/internal/scanner/types"
 
 	"github.com/pkg/errors"
 )
+
+var _ Placeholder = (*RawRequest)(nil)
+var _ PlaceholderConfig = (*RawRequestConfig)(nil)
+
+var DefaultRawRequest = &RawRequest{name: "RawRequest"}
 
 type RawRequest struct {
 	name string
@@ -20,12 +33,7 @@ type RawRequestConfig struct {
 	Body    string
 }
 
-var DefaultRawRequest = RawRequest{name: "RawRequest"}
-
-var _ Placeholder = (*RawRequest)(nil)
-var _ PlaceholderConfig = (*RawRequestConfig)(nil)
-
-func (p RawRequest) newConfig(conf map[any]any) (PlaceholderConfig, error) {
+func (p *RawRequest) NewPlaceholderConfig(conf map[any]any) (PlaceholderConfig, error) {
 	result := &RawRequestConfig{}
 
 	method, ok := conf["method"]
@@ -100,13 +108,13 @@ func (p RawRequest) newConfig(conf map[any]any) (PlaceholderConfig, error) {
 	return result, nil
 }
 
-func (p RawRequest) GetName() string {
+func (p *RawRequest) GetName() string {
 	return p.name
 }
 
 // CreateRequest creates a new request from config.
 // config must be a RawRequestConfig struct.
-func (p RawRequest) CreateRequest(requestURL, payload string, config PlaceholderConfig) (*http.Request, error) {
+func (p *RawRequest) CreateRequest(requestURL, payload string, config PlaceholderConfig, httpClientType types.HTTPClientType) (types.Request, error) {
 	conf, ok := config.(*RawRequestConfig)
 	if !ok {
 		return nil, &BadPlaceholderConfigError{
@@ -125,23 +133,61 @@ func (p RawRequest) CreateRequest(requestURL, payload string, config Placeholder
 		requestURL += conf.Path
 	}
 
-	requestURL = strings.ReplaceAll(requestURL, payloadPlaceholder, payload)
+	requestURL = strings.ReplaceAll(requestURL, payloadPlaceholder, url.PathEscape(payload))
 
+	switch httpClientType {
+	case types.GoHTTPClient:
+		return p.prepareGoHTTPClientRequest(requestURL, payload, conf)
+	case types.ChromeHTTPClient:
+		return p.prepareChromeHTTPClientRequest(requestURL, payload, conf)
+	default:
+		return nil, types.NewUnknownHTTPClientError(httpClientType)
+	}
+}
+
+func (p *RawRequest) prepareGoHTTPClientRequest(requestURL, payload string, config *RawRequestConfig) (*types.GoHTTPRequest, error) {
 	var bodyReader io.Reader
-	body := strings.ReplaceAll(conf.Body, payloadPlaceholder, payload)
+	body := strings.ReplaceAll(config.Body, payloadPlaceholder, payload)
 	if len(body) != 0 {
 		bodyReader = strings.NewReader(body)
 	}
 
-	req, err := http.NewRequest(conf.Method, requestURL, bodyReader)
+	req, err := http.NewRequest(config.Method, requestURL, bodyReader)
 	if err != nil {
 		return nil, err
 	}
-	for k, v := range conf.Headers {
+	for k, v := range config.Headers {
 		req.Header.Add(k, strings.ReplaceAll(v, payloadPlaceholder, payload))
 	}
 
-	return req, nil
+	return &types.GoHTTPRequest{Req: req}, nil
+}
+
+func (p *RawRequest) prepareChromeHTTPClientRequest(requestURL, payload string, config *RawRequestConfig) (*types.ChromeDPTasks, error) {
+	headers := make(map[string]string)
+	for k, v := range config.Headers {
+		headers[k] = strings.ReplaceAll(v, payloadPlaceholder, payload)
+	}
+
+	body := fmt.Sprintf(`"%s"`, template.JSEscaper(strings.ReplaceAll(config.Body, payloadPlaceholder, payload)))
+
+	reqOptions := &helpers.RequestOptions{
+		Method:  config.Method,
+		Headers: headers,
+		Body:    body,
+	}
+
+	task, responseMeta, err := helpers.GetFetchRequest(requestURL, reqOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	tasks := &types.ChromeDPTasks{
+		Tasks:        chromedp.Tasks{task},
+		ResponseMeta: responseMeta,
+	}
+
+	return tasks, nil
 }
 
 func (r *RawRequestConfig) Hash() []byte {

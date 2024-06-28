@@ -3,8 +3,9 @@ package db
 import (
 	"crypto/sha256"
 
-	"github.com/wallarm/gotestwaf/internal/helpers"
 	"github.com/wallarm/gotestwaf/internal/payload/placeholder"
+
+	"github.com/wallarm/gotestwaf/internal/helpers"
 )
 
 type Info struct {

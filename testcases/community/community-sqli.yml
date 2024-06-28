@@ -1,12 +1,12 @@
-encoder:
-- URL
 payload:
-- (select%20group_concat(table_name,0x3a,column_name,0x5c6e)%20from%20information_schema.columns%20where%20table_schema=database())
-- /*!%55NiOn*/%20/*!%53eLEct*/+
-- -1945+/*!%55NiOn*/%20/*!%53eLEct*/+1,2,3,%27soy%20vulnerable%27,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19+--+
+  - (select%20group_concat(table_name,0x3a,column_name,0x5c6e)%20from%20information_schema.columns%20where%20table_schema=database())
+  - /*!%55NiOn*/%20/*!%53eLEct*/+
+  - -1945+/*!%55NiOn*/%20/*!%53eLEct*/+1,2,3,%27soy%20vulnerable%27,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19+--+
+encoder:
+  - URL
 placeholder:
-- URLParam
-- HTMLForm
-- HTMLMultipartForm
-- JSONRequest
+  - URLParam
+  - HTMLForm
+  - HTMLMultipartForm
+  - JSONRequest
 type: SQL Injection

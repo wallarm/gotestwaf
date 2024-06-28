@@ -1,22 +1,18 @@
-encoder:
-- Plain
 payload:
-- /static/img/../../etc/passwd
-- \\::1\c$\users\default\ntuser.dat
+  - /static/img/../../etc/passwd
+  - \\::1\c$\users\default\ntuser.dat
+encoder:
+  - Plain
 placeholder:
-- RawRequest:
-    body: '--bee3b1c4dbd3303d1f1b9a03ffd31afeaa
+  - RawRequest:
+      method: POST
+      path: /
+      headers:
+        Content-Type: "multipart/form-data; boundary=bee3b1c4dbd3303d1f1b9a03ffd31afeaa"
+      body: |
+        --bee3b1c4dbd3303d1f1b9a03ffd31afeaa
+        Content-disposition: form-data; name="{{payload}}"
 
-      Content-disposition: form-data; name="{{payload}}"
-
-
-      Test
-
-      --bee3b1c4dbd3303d1f1b9a03ffd31afeaa--
-
-      '
-    headers:
-      Content-Type: multipart/form-data; boundary=bee3b1c4dbd3303d1f1b9a03ffd31afeaa
-    method: POST
-    path: /
-type: community-lfi-multipart
+        Test
+        --bee3b1c4dbd3303d1f1b9a03ffd31afeaa--
+type: "community-lfi-multipart"

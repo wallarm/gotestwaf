@@ -4,7 +4,9 @@ gotestwaf:
 	DOCKER_BUILDKIT=1 docker build --force-rm -t gotestwaf .
 
 gotestwaf_bin:
-	go build -o gotestwaf -ldflags "-X github.com/wallarm/gotestwaf/internal/version.Version=$(GOTESTWAF_VERSION)" ./cmd
+	go build -o gotestwaf \
+		-ldflags "-X github.com/wallarm/gotestwaf/internal/version.Version=$(GOTESTWAF_VERSION)" \
+		./cmd/gotestwaf
 
 modsec:
 	docker pull mendhak/http-https-echo:31

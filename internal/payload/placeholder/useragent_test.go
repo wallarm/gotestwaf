@@ -1,6 +1,10 @@
 package placeholder
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/wallarm/gotestwaf/internal/scanner/types"
+)
 
 func TestUserAgent(t *testing.T) {
 	const testUrl = "https://example.com"
@@ -15,12 +19,17 @@ func TestUserAgent(t *testing.T) {
 	}
 
 	for _, testUA := range tests {
-		req, err := DefaultUserAgent.CreateRequest(testUrl, testUA, nil)
+		req, err := DefaultUserAgent.CreateRequest(testUrl, testUA, nil, types.GoHTTPClient)
 		if err != nil {
 			t.Fatalf("got an error while testing: %v", err)
 		}
 
-		if reqUA := req.UserAgent(); reqUA != testUA {
+		r, ok := req.(*types.GoHTTPRequest)
+		if !ok {
+			t.Fatalf("bad request type: %T, expected %T", req, &types.GoHTTPRequest{})
+		}
+
+		if reqUA := r.Req.UserAgent(); reqUA != testUA {
 			t.Fatalf("got %s, want %s", reqUA, testUA)
 		}
 	}

@@ -7,19 +7,19 @@ import (
 	"golang.org/x/text/transform"
 )
 
+var _ Encoder = (*JSUnicodeEncoder)(nil)
+
+var DefaultJSUnicodeEncoder = &JSUnicodeEncoder{name: "JSUnicode"}
+
 type JSUnicodeEncoder struct {
 	name string
 }
 
-var DefaultJSUnicodeEncoder = JSUnicodeEncoder{name: "JSUnicode"}
-
-var _ Encoder = (*JSUnicodeEncoder)(nil)
-
-func (enc JSUnicodeEncoder) GetName() string {
+func (enc *JSUnicodeEncoder) GetName() string {
 	return enc.name
 }
 
-func (enc JSUnicodeEncoder) Encode(data string) (string, error) {
+func (enc *JSUnicodeEncoder) Encode(data string) (string, error) {
 	encoder := unicode.UTF16(unicode.BigEndian, unicode.IgnoreBOM).NewEncoder()
 	utf16beStr, _, err := transform.Bytes(encoder, []byte(data))
 	if err != nil {
