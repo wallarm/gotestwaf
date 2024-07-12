@@ -6,26 +6,26 @@ import (
 	"strings"
 )
 
+const (
+	Base64EncoderNormalMode = iota
+	Base64EncoderFlatMode
+)
+
+var _ Encoder = (*Base64Encoder)(nil)
+
+var DefaultBase64Encoder = &Base64Encoder{name: "Base64", mode: Base64EncoderNormalMode}
+var DefaultBase64FlatEncoder = &Base64Encoder{name: "Base64Flat", mode: Base64EncoderFlatMode}
+
 type Base64Encoder struct {
 	name string
 	mode uint8
 }
 
-const (
-	Base64EncoderNormalMode = 1
-	Base64EncoderFlatMode   = 2
-)
-
-var DefaultBase64Encoder = Base64Encoder{name: "Base64", mode: Base64EncoderNormalMode}
-var DefaultBase64FlatEncoder = Base64Encoder{name: "Base64Flat", mode: Base64EncoderFlatMode}
-
-var _ Encoder = (*Base64Encoder)(nil)
-
-func (enc Base64Encoder) GetName() string {
+func (enc *Base64Encoder) GetName() string {
 	return enc.name
 }
 
-func (enc Base64Encoder) Encode(data string) (string, error) {
+func (enc *Base64Encoder) Encode(data string) (string, error) {
 	switch enc.mode {
 	case Base64EncoderNormalMode:
 		res := base64.StdEncoding.EncodeToString([]byte(data))

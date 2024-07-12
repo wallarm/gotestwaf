@@ -1,8 +1,12 @@
-encoder:
-- Plain
 payload:
-- <script>aaa</script>
-- 1e1 union select users from password
+  - '<script>aaa</script>'
+  - '1e1 union select users from password'
+encoder:
+  - Plain
 placeholder:
-- NonCRUDRequestBody
+  - RawRequest:
+      method: "CUST"
+      path: "/"
+      body: |
+        {{payload}}
 type: REST non-CRUD

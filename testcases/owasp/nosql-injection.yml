@@ -1,16 +1,16 @@
-encoder:
-- Base64Flat
-- URL
 payload:
-- db.injection.insert({success:1});
-- 'true, $where: ''99 == 88'''
-- ''', $or: [ {}, { ''order'':''order'
-- ;var date = new Date(); do{curDate = new Date();}while(curDate-date
-- 0;var date=new Date(); do{curDate = new Date();}while(curDate-date<10000)
+  - 'db.injection.insert({success:1});'
+  - "true, $where: '99 == 88'"
+  - "', $or: [ {}, { 'order':'order"
+  - ";var date = new Date(); do{curDate = new Date();}while(curDate-date"
+  - "0;var date=new Date(); do{curDate = new Date();}while(curDate-date<10000)"
+encoder:
+  - Base64Flat
+  - URL
 placeholder:
-- URLPath
-- URLParam
-- HTMLForm
-- HTMLMultipartForm
-- JSONRequest
+  - URLPath
+  - URLParam
+  - HTMLForm
+  - HTMLMultipartForm
+  - JSONRequest
 type: NoSQL Injection

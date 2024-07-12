@@ -9,26 +9,41 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
+	"github.com/wallarm/gotestwaf/internal/config"
 	"github.com/wallarm/gotestwaf/internal/db"
 	"github.com/wallarm/gotestwaf/internal/report"
 	"github.com/wallarm/gotestwaf/internal/scanner"
-	"github.com/wallarm/gotestwaf/tests/integration/waf"
-
 	test_config "github.com/wallarm/gotestwaf/tests/integration/config"
+	"github.com/wallarm/gotestwaf/tests/integration/waf"
 )
 
 func TestGoTestWAF(t *testing.T) {
+	t.Run("GoHTTP client", func(t *testing.T) {
+		httpPort, grpcPort, err := test_config.PickUpTestPorts()
+		if err != nil {
+			t.Fatalf("could not pick up test ports: %s", err)
+		}
+
+		runGoTestWAFTest(t, test_config.GetConfigWithGoHTTPClient(httpPort, grpcPort), httpPort, grpcPort)
+	})
+
+	t.Run("Chrome client", func(t *testing.T) {
+		httpPort, grpcPort, err := test_config.PickUpTestPorts()
+		if err != nil {
+			t.Fatalf("could not pick up test ports: %s", err)
+		}
+
+		runGoTestWAFTest(t, test_config.GetConfigWithChromeClient(httpPort, grpcPort), httpPort, grpcPort)
+	})
+}
+
+func runGoTestWAFTest(t *testing.T, cfg *config.Config, httpPort int, grpcPort int) {
 	done := make(chan bool)
 	errChan := make(chan error)
 
-	err := test_config.PickUpTestPorts()
-	if err != nil {
-		t.Fatalf("couldn't pickup two tcp ports for testing: %s", err)
-	}
-
 	testCases, allTestCases := test_config.GenerateTestCases()
 
-	w := waf.New(errChan, allTestCases)
+	w := waf.New(errChan, allTestCases, httpPort, grpcPort)
 
 	w.Run()
 
@@ -43,7 +58,7 @@ func TestGoTestWAF(t *testing.T) {
 	})
 
 	go func() {
-		err := runGoTestWAF(ctx, testCases)
+		err := runGoTestWAF(ctx, cfg, testCases)
 		if err != nil {
 			errChan <- err
 		} else {
@@ -65,23 +80,16 @@ func TestGoTestWAF(t *testing.T) {
 	}
 }
 
-func runGoTestWAF(ctx context.Context, testCases []*db.Case) error {
+func runGoTestWAF(ctx context.Context, cfg *config.Config, testCases []*db.Case) error {
 	logger := logrus.New()
 	logger.SetLevel(logrus.InfoLevel)
-
-	cfg := test_config.GetConfig()
 
 	db, err := db.NewDB(testCases)
 	if err != nil {
 		return errors.Wrap(err, "couldn't create test cases DB")
 	}
 
-	dnsCache, err := scanner.NewDNSCache(logger)
-	if err != nil {
-		return errors.Wrap(err, "couldn't create DNS cache")
-	}
-
-	s, err := scanner.New(logger, cfg, db, dnsCache, nil, nil, cfg.AddDebugHeader)
+	s, err := scanner.New(logger, cfg, db, nil, nil, cfg.AddDebugHeader)
 	if err != nil {
 		return errors.Wrap(err, "couldn't create scanner")
 	}

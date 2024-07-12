@@ -1,11 +1,10 @@
 package placeholder
 
 import (
-	"net/http"
+	"github.com/pkg/errors"
 
 	"github.com/wallarm/gotestwaf/internal/helpers"
-
-	"github.com/pkg/errors"
+	"github.com/wallarm/gotestwaf/internal/scanner/types"
 )
 
 const (
@@ -15,10 +14,14 @@ const (
 )
 
 type Placeholder interface {
-	newConfig(conf map[any]any) (PlaceholderConfig, error)
+	NewPlaceholderConfig(conf map[any]any) (PlaceholderConfig, error)
 
 	GetName() string
-	CreateRequest(url, data string, config PlaceholderConfig) (*http.Request, error)
+	CreateRequest(
+		requestURL, payload string,
+		config PlaceholderConfig,
+		httpClientType types.HTTPClientType,
+	) (types.Request, error)
 }
 
 type PlaceholderConfig interface {
@@ -27,25 +30,27 @@ type PlaceholderConfig interface {
 
 var Placeholders map[string]Placeholder
 
+var placeholders = []Placeholder{
+	DefaultGRPC,
+	DefaultHeader,
+	DefaultHTMLForm,
+	DefaultHTMLMultipartForm,
+	DefaultJSONBody,
+	DefaultJSONRequest,
+	DefaultRawRequest,
+	DefaultRequestBody,
+	DefaultSOAPBody,
+	DefaultURLParam,
+	DefaultURLPath,
+	DefaultUserAgent,
+	DefaultXMLBody,
+}
+
 func init() {
 	Placeholders = make(map[string]Placeholder)
-	Placeholders[DefaultGRPC.GetName()] = DefaultGRPC
-	Placeholders[DefaultHeader.GetName()] = DefaultHeader
-	Placeholders[DefaultUserAgent.GetName()] = DefaultUserAgent
-	Placeholders[DefaultHTMLForm.GetName()] = DefaultHTMLForm
-	Placeholders[DefaultHTMLMultipartForm.GetName()] = DefaultHTMLMultipartForm
-	Placeholders[DefaultJSONBody.GetName()] = DefaultJSONBody
-	Placeholders[DefaultJSONRequest.GetName()] = DefaultJSONRequest
-	Placeholders[DefaultRequestBody.GetName()] = DefaultRequestBody
-	Placeholders[DefaultSOAPBody.GetName()] = DefaultSOAPBody
-	Placeholders[DefaultURLParam.GetName()] = DefaultURLParam
-	Placeholders[DefaultURLPath.GetName()] = DefaultURLPath
-	Placeholders[DefaultXMLBody.GetName()] = DefaultXMLBody
-	Placeholders[DefaultNonCrudUrlPath.GetName()] = DefaultNonCrudUrlPath
-	Placeholders[DefaultNonCrudUrlParam.GetName()] = DefaultNonCrudUrlParam
-	Placeholders[DefaultNonCRUDHeader.GetName()] = DefaultNonCRUDHeader
-	Placeholders[DefaultNonCRUDRequestBody.GetName()] = DefaultNonCRUDRequestBody
-	Placeholders[DefaultRawRequest.GetName()] = DefaultRawRequest
+	for _, placeholder := range placeholders {
+		Placeholders[placeholder.GetName()] = placeholder
+	}
 }
 
 func GetPlaceholderConfig(name string, conf any) (PlaceholderConfig, error) {
@@ -62,7 +67,7 @@ func GetPlaceholderConfig(name string, conf any) (PlaceholderConfig, error) {
 		}
 	}
 
-	phConf, err := ph.newConfig(phConfMap)
+	phConf, err := ph.NewPlaceholderConfig(phConfMap)
 	if err != nil {
 		return nil, &BadPlaceholderConfigError{
 			name: name,
@@ -73,13 +78,17 @@ func GetPlaceholderConfig(name string, conf any) (PlaceholderConfig, error) {
 	return phConf, err
 }
 
-func Apply(url, data, placeholder string, config PlaceholderConfig) (*http.Request, error) {
+func Apply(
+	url, data, placeholder string,
+	config PlaceholderConfig,
+	httpClientType types.HTTPClientType,
+) (types.Request, error) {
 	ph, ok := Placeholders[placeholder]
 	if !ok {
 		return nil, &UnknownPlaceholderError{name: placeholder}
 	}
 
-	req, err := ph.CreateRequest(url, data, config)
+	req, err := ph.CreateRequest(url, data, config, httpClientType)
 	if err != nil {
 		return nil, err
 	}

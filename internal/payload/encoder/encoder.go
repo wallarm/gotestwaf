@@ -7,20 +7,32 @@ type Encoder interface {
 
 var Encoders map[string]Encoder
 
+var encoders = []Encoder{
+	DefaultBase64Encoder,
+	DefaultBase64FlatEncoder,
+	DefaultJSUnicodeEncoder,
+	DefaultPlainEncoder,
+	DefaultURLEncoder,
+	DefaultXMLEntityEncoder,
+}
+
 func init() {
 	Encoders = make(map[string]Encoder)
-	Encoders[DefaultBase64Encoder.GetName()] = DefaultBase64Encoder
-	Encoders[DefaultBase64FlatEncoder.GetName()] = DefaultBase64FlatEncoder
-	Encoders[DefaultJSUnicodeEncoder.GetName()] = DefaultJSUnicodeEncoder
-	Encoders[DefaultURLEncoder.GetName()] = DefaultURLEncoder
-	Encoders[DefaultPlainEncoder.GetName()] = DefaultPlainEncoder
-	Encoders[DefaultXMLEntityEncoder.GetName()] = DefaultXMLEntityEncoder
+	for _, encoder := range encoders {
+		Encoders[encoder.GetName()] = encoder
+	}
 }
 
 func Apply(encoderName, data string) (string, error) {
-	ret, err := Encoders[encoderName].Encode(data)
+	en, ok := Encoders[encoderName]
+	if !ok {
+		return "", &UnknownEncoderError{name: encoderName}
+	}
+
+	ret, err := en.Encode(data)
 	if err != nil {
 		return "", err
 	}
+
 	return ret, nil
 }
