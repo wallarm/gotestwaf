@@ -31,6 +31,7 @@ type PlaceholderConfig interface {
 var Placeholders map[string]Placeholder
 
 var placeholders = []Placeholder{
+	DefaultGraphQL,
 	DefaultGRPC,
 	DefaultHeader,
 	DefaultHTMLForm,

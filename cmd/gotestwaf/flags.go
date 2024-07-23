@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -76,6 +75,7 @@ func parseFlags() (args []string, err error) {
 	// Target settings
 	urlParam := flag.String("url", "", "URL to check")
 	flag.Uint16("grpcPort", 0, "gRPC port to check")
+	graphqlURL := flag.String("graphqlURL", "", "GraphQL URL to check")
 	openapiFile := flag.String("openapiFile", "", "Path to openAPI file")
 
 	// Test cases settings
@@ -170,14 +170,18 @@ func parseFlags() (args []string, err error) {
 		return nil, fmt.Errorf("unknown logging format: %s", logFormat)
 	}
 
-	validURL, err := url.Parse(*urlParam)
-	if err != nil ||
-		(validURL.Scheme != "http" && validURL.Scheme != "https") ||
-		validURL.Host == "" {
-		return nil, errors.New("URL is not valid")
+	validURL, err := validateURL(*urlParam, httpProto)
+	if err != nil {
+		return nil, errors.Wrap(err, "URL is not valid")
 	}
-
 	*urlParam = validURL.String()
+
+	// format GraphQL URL from given HTTP URL
+	gqlValidURL, err := checkOrCraftProtocolURL(*graphqlURL, *urlParam, graphqlProto)
+	if err != nil {
+		return nil, errors.Wrap(err, "graphqlURL is not valid")
+	}
+	*graphqlURL = gqlValidURL.String()
 
 	// Force GoHTTP to be used as the HTTP client
 	// when scanning against the OpenAPI spec.

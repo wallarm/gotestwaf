@@ -18,6 +18,20 @@ type HTTPClient interface {
 	SendRequest(ctx context.Context, req types.Request) (types.Response, error)
 }
 
+// GraphQLClient is an interface that defines methods for sending
+// GraphQL payloads by HTTP protocol.
+type GraphQLClient interface {
+	// CheckAvailability checks availability of endpoint which is able to
+	// process GraphQL protocol messages.
+	CheckAvailability(ctx context.Context) (bool, error)
+
+	// IsAvailable returns status of endpoint availability.
+	IsAvailable() bool
+
+	// SendPayload sends a payload to the specified target URL.
+	SendPayload(ctx context.Context, payloadInfo *payload.PayloadInfo) (types.Response, error)
+}
+
 // GRPCClient is an interface that defines methods for sending
 // payloads by gRPC protocol.
 type GRPCClient interface {

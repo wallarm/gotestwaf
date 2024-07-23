@@ -4,7 +4,6 @@ payload:
 encoder:
   - URL
 placeholder:
-  - URLParam
-  - HTMLForm
-  - HTMLMultipartForm
+  - GraphQL:
+      method: "GET"
 type: GraphQL

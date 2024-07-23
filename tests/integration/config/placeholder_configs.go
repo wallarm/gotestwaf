@@ -8,6 +8,29 @@ import (
 	"github.com/wallarm/gotestwaf/internal/payload/placeholder"
 )
 
+var GraphQLConfigs = map[string]*struct {
+	Config         *placeholder.GraphQLConfig
+	Encoders       []string
+	GetPayloadFunc func(r *http.Request) string
+}{
+	"graphql-set1": {
+		Config:   &placeholder.GraphQLConfig{Method: "GET"},
+		Encoders: []string{"URL"},
+		GetPayloadFunc: func(r *http.Request) string {
+			return r.URL.Query().Get("query")
+		},
+	},
+	"rawrequest-set2": {
+		Config:   &placeholder.GraphQLConfig{Method: "POST"},
+		Encoders: []string{"Plain"},
+		GetPayloadFunc: func(r *http.Request) string {
+			defer r.Body.Close()
+			b, _ := io.ReadAll(r.Body)
+			return string(b)
+		},
+	},
+}
+
 var RawRequestConfigs = map[string]*struct {
 	Config         *placeholder.RawRequestConfig
 	Encoders       []string
