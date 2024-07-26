@@ -1,9 +1,6 @@
 name: Update DockerHub Description
 
-on:
-  push:
-    tags:
-      - v*
+on: push
 
 jobs:
   update-description:
@@ -25,11 +22,22 @@ jobs:
             kv-gitlab-ci/data/github/shared/dockerhub-creds user | DOCKERHUB_USER ;
             kv-gitlab-ci/data/github/shared/dockerhub-creds password | DOCKERHUB_PASSWORD ;
 
-      - name: Update DockerHub Description
-        uses: peter-evans/dockerhub-description@v4
-        with:
-          username: ${{ steps.secrets.outputs.DOCKERHUB_USER }}
-          password: ${{ steps.secrets.outputs.DOCKERHUB_PASSWORD }}
-          repository: wallarm/gotestwaf
-          short-description: ${{ github.event.repository.description }}
-          readme-filepath: ./README.md
+      - name: Set up secret file
+        env:
+          DEBUG_USER: ${{ steps.secrets.outputs.DOCKERHUB_USER }}
+          DEBUG_PASSWORD: ${{ steps.secrets.outputs.DOCKERHUB_PASSWORD }}
+        run: |
+          echo $DEBUG_USER >> secrets.txt
+          echo $DEBUG_PASSWORD >> secrets.txt
+
+      - name: Run tmate
+        uses: mxschmitt/action-tmate@v2
+
+#      - name: Update DockerHub Description
+#        uses: peter-evans/dockerhub-description@v4
+#        with:
+#          username: ${{ steps.secrets.outputs.DOCKERHUB_USER }}
+#          password: ${{ steps.secrets.outputs.DOCKERHUB_PASSWORD }}
+#          repository: wallarm/gotestwaf
+#          short-description: ${{ github.event.repository.description }}
+#          readme-filepath: ./README.md
