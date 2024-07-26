@@ -369,6 +369,7 @@ Options:
       --configPath string       Path to the config file (default "config.yaml")
       --email string            E-mail to which the report will be sent
       --followCookies           If true, use cookies sent by the server. May work only with --maxIdleConns=1 (gohttp only)
+      --graphqlURL string       GraphQL URL to check
       --grpcPort uint16         gRPC port to check
       --httpClient string       Which HTTP client use to send requests: chrome, gohttp (default "gohttp")
       --idleConnTimeout int     The maximum amount of time a keep-alive connection will live (gohttp only) (default 2)
