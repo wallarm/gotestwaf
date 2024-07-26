@@ -166,6 +166,7 @@ func run(ctx context.Context, cfg *config.Config, logger *logrus.Logger) error {
 	}
 
 	s.CheckGRPCAvailability(ctx)
+	s.CheckGraphQLAvailability(ctx)
 
 	err = s.Run(ctx)
 	if err != nil {

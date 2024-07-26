@@ -14,14 +14,14 @@ type GRPC struct {
 	name string
 }
 
-func (enc *GRPC) NewPlaceholderConfig(map[any]any) (PlaceholderConfig, error) {
+func (p *GRPC) NewPlaceholderConfig(map[any]any) (PlaceholderConfig, error) {
 	return nil, nil
 }
 
-func (enc *GRPC) GetName() string {
-	return enc.name
+func (p *GRPC) GetName() string {
+	return p.name
 }
 
-func (enc *GRPC) CreateRequest(string, string, PlaceholderConfig, types.HTTPClientType) (types.Request, error) {
+func (p *GRPC) CreateRequest(string, string, PlaceholderConfig, types.HTTPClientType) (types.Request, error) {
 	return nil, errors.New("not implemented")
 }

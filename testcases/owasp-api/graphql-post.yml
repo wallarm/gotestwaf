@@ -4,5 +4,6 @@ payload:
 encoder:
   - Plain
 placeholder:
-  - JSONBody
+  - GraphQL:
+      method: "POST"
 type: GraphQL

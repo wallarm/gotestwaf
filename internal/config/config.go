@@ -8,6 +8,7 @@ type Config struct {
 	// Target settings
 	URL         string `mapstructure:"url"`
 	GRPCPort    uint16 `mapstructure:"grpcPort"`
+	GraphQLURL  string `mapstructure:"graphqlURL"`
 	OpenAPIFile string `mapstructure:"openapiFile"`
 
 	// Test cases settings

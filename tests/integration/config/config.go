@@ -103,6 +103,7 @@ func getConfig(httpPort int, grpcPort int) *config.Config {
 		// Target settings
 		URL:         fmt.Sprintf("http://localhost:%d", httpPort),
 		GRPCPort:    uint16(grpcPort),
+		GraphQLURL:  fmt.Sprintf("http://localhost:%d/graphql", httpPort),
 		OpenAPIFile: "",
 
 		// Test cases settings
@@ -233,6 +234,12 @@ func GenerateTestCases() (testCases []*db.Case, testCasesMap *TestCasesMap) {
 	for testSet, settings := range RawRequestConfigs {
 		for _, encoder := range settings.Encoders {
 			f(testSet, payloads, encoder, placeholder.DefaultRawRequest.GetName(), settings.Config)
+		}
+	}
+
+	for testSet, settings := range GraphQLConfigs {
+		for _, encoder := range settings.Encoders {
+			f(testSet, payloads, encoder, placeholder.DefaultGraphQL.GetName(), settings.Config)
 		}
 	}
 

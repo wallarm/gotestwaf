@@ -42,6 +42,7 @@ func New(errChan chan<- error, casesMap *config.TestCasesMap, httpPort int, grpc
 
 	mux := http.NewServeMux()
 	mux.Handle("/", waf)
+	mux.Handle("/graphql", waf)
 
 	waf.httpServer = &http.Server{
 		Addr:    fmt.Sprintf("localhost:%d", httpPort),
@@ -94,7 +95,7 @@ func (waf *WAF) Shutdown() error {
 
 func (waf *WAF) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	clientInfo := r.Header.Get("client")
-	if clientInfo == "" {
+	if clientInfo == "" && !strings.Contains(strings.ToLower(r.URL.String()), "graphql") {
 		waf.errChan <- errors.New("couldn't get client info header value")
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -168,6 +169,9 @@ func (waf *WAF) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch placeholder {
+	case "GraphQL":
+		err = nil
+		placeholderValue = config.GraphQLConfigs[set].GetPayloadFunc(r)
 	case "Header":
 		placeholderValue, err = getPayloadFromHeader(r)
 	case "HTMLForm":

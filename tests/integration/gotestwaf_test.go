@@ -71,6 +71,7 @@ func runGoTestWAFTest(t *testing.T, cfg *config.Config, httpPort int, grpcPort i
 		if err != nil {
 			cancel()
 			t.Fatalf("got an error during the test: %v", err)
+			return
 		}
 	case <-done:
 		if allTestCases.CountTestCases() != 0 {
@@ -93,6 +94,9 @@ func runGoTestWAF(ctx context.Context, cfg *config.Config, testCases []*db.Case)
 	if err != nil {
 		return errors.Wrap(err, "couldn't create scanner")
 	}
+
+	//s.CheckGRPCAvailability(ctx)
+	//s.CheckGraphQLAvailability(ctx)
 
 	err = s.Run(ctx)
 	if err != nil {

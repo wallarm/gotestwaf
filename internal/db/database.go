@@ -23,7 +23,8 @@ type DB struct {
 	NumberOfTests uint
 	Hash          string
 
-	IsGrpcAvailable bool
+	IsGrpcAvailable    bool
+	IsGraphQLAvailable bool
 }
 
 func NewDB(tests []*Case) (*DB, error) {

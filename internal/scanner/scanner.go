@@ -19,6 +19,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/wallarm/gotestwaf/internal/scanner/clients/graphql"
+
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/getkin/kin-openapi/routers"
 	"github.com/pkg/errors"
@@ -77,8 +79,9 @@ type Scanner struct {
 	cfg    *config.Config
 	db     *db.DB
 
-	httpClient clients.HTTPClient
-	grpcConn   clients.GRPCClient
+	httpClient    clients.HTTPClient
+	grpcConn      clients.GRPCClient
+	graphqlClient clients.GraphQLClient
 
 	requestTemplates openapi.Templates
 	router           routers.Router
@@ -97,18 +100,18 @@ func New(
 ) (*Scanner, error) {
 	var (
 		httpClient clients.HTTPClient
+		dnsCache   *dnscache.Resolver
 		err        error
 	)
+
+	dnsCache, err = dns_cache.NewDNSCache(logger)
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't create DNS cache")
+	}
+
 	if cfg.HTTPClient == "chrome" {
 		httpClient, err = chrome.NewClient(cfg)
 	} else {
-		var dnsCache *dnscache.Resolver
-
-		dnsCache, err = dns_cache.NewDNSCache(logger)
-		if err != nil {
-			return nil, errors.Wrap(err, "couldn't create DNS cache")
-		}
-
 		httpClient, err = gohttp.NewClient(cfg, dnsCache)
 	}
 	if err != nil {
@@ -120,12 +123,18 @@ func New(
 		return nil, errors.Wrap(err, "couldn't create gRPC client")
 	}
 
+	graphqlClient, err := graphql.NewClient(cfg, dnsCache)
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't create GraphQL client")
+	}
+
 	return &Scanner{
 		logger:            logger,
 		cfg:               cfg,
 		db:                db,
 		httpClient:        httpClient,
 		grpcConn:          grpcConn,
+		graphqlClient:     graphqlClient,
 		requestTemplates:  requestTemplates,
 		router:            router,
 		enableDebugHeader: enableDebugHeader,
@@ -179,19 +188,43 @@ func (s *Scanner) CheckGRPCAvailability(ctx context.Context) {
 		}).WithError(err).Infof("gRPC pre-check")
 	}
 
+	connection := "not available"
 	if available {
-		s.logger.WithFields(logrus.Fields{
-			"status":     "done",
-			"connection": "available",
-		}).Info("gRPC pre-check")
-	} else {
+		connection = "available"
+	}
+
+	s.logger.WithFields(logrus.Fields{
+		"status":     "done",
+		"connection": connection,
+	}).Info("gRPC pre-check")
+
+	s.db.IsGrpcAvailable = available
+}
+
+// CheckGraphQLAvailability checks if the GraphQL is available at the given URL.
+func (s *Scanner) CheckGraphQLAvailability(ctx context.Context) {
+	s.logger.WithField("status", "started").Info("GraphQL pre-check")
+
+	available, err := s.graphqlClient.CheckAvailability(ctx)
+	if err != nil {
 		s.logger.WithFields(logrus.Fields{
 			"status":     "done",
 			"connection": "not available",
-		}).Info("gRPC pre-check")
+		}).WithError(err).Infof("GraphQL pre-check")
 	}
 
 	s.db.IsGrpcAvailable = available
+	connection := "not available"
+	if available {
+		connection = "available"
+	}
+
+	s.logger.WithFields(logrus.Fields{
+		"status":     "done",
+		"connection": connection,
+	}).Info("GraphQL pre-check")
+
+	s.db.IsGraphQLAvailable = available
 }
 
 // WAFBlockCheck checks if WAF exists and blocks malicious requests.
@@ -500,6 +533,10 @@ func (s *Scanner) sendPayload(ctx context.Context, pc *payloadConfig) error {
 		return s.sendGrpcRequest(ctx, pc)
 	}
 
+	if pc.placeholder.Name == placeholder.DefaultGraphQL.GetName() {
+		return s.sendGraphQLRequest(ctx, pc)
+	}
+
 	if s.requestTemplates != nil {
 		err = s.sendOpenAPIRequests(ctx, pc)
 		if err != nil {
@@ -535,6 +572,36 @@ func (s *Scanner) sendGrpcRequest(ctx context.Context, pc *payloadConfig) error 
 	resp, err := s.grpcConn.SendPayload(newCtx, pl)
 
 	err = s.updateDB(ctx, pc, &testStatus{}, nil, resp, err, "", true)
+
+	return err
+}
+
+// sendGraphQLRequest sends a GraphQL request with the provided payload configuration.
+// It checks the availability of the GraphQL endpoint before sending request.
+func (s *Scanner) sendGraphQLRequest(ctx context.Context, pc *payloadConfig) error {
+	if !s.graphqlClient.IsAvailable() {
+		return nil
+	}
+
+	var (
+		resp types.Response
+		err  error
+	)
+
+	pl := &p.PayloadInfo{
+		Payload:           pc.payload,
+		EncoderName:       pc.encoder,
+		PlaceholderName:   pc.placeholder.Name,
+		PlaceholderConfig: pc.placeholder.Config,
+		DebugHeaderValue:  pc.debugHeaderValue,
+	}
+
+	resp, err = s.graphqlClient.SendPayload(ctx, pl)
+	if err == nil && resp != nil {
+		err = resp.GetError()
+	}
+
+	err = s.updateDB(ctx, pc, &testStatus{}, nil, resp, err, "", false)
 
 	return err
 }
