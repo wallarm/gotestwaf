@@ -10,10 +10,10 @@ jobs:
     runs-on: self-hosted-amd64-1cpu
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Import secrets
-        uses: hashicorp/vault-action@v2
+        uses: hashicorp/vault-action@v3
         id: secrets
         with:
           exportEnv: false
@@ -26,7 +26,7 @@ jobs:
             kv-gitlab-ci/data/github/shared/dockerhub-creds password | DOCKERHUB_PASSWORD ;
 
       - name: Update DockerHub Description
-        uses: peter-evans/dockerhub-description@v3
+        uses: peter-evans/dockerhub-description@v4
         with:
           username: ${{ steps.secrets.outputs.DOCKERHUB_USER }}
           password: ${{ steps.secrets.outputs.DOCKERHUB_PASSWORD }}
