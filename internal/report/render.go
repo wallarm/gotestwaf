@@ -22,9 +22,7 @@ import (
 
 var chromeDPExecAllocatorOptions = append(
 	chromedp.DefaultExecAllocatorOptions[:],
-	// Disable the CORS policy constraints
 	chromedp.Flag("no-zygote", true),
-	chromedp.Flag("single-process", true),
 	chromedp.Flag("no-sandbox", true),
 	chromedp.Flag("disable-gpu", true),
 	chromedp.Flag("run-all-compositor-stages-before-draw", true),
