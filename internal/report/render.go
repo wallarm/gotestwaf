@@ -9,9 +9,31 @@ import (
 	"github.com/pkg/errors"
 )
 
+// chromium-browser \
+// --headless \
+// --no-zygote \
+// --single-process \
+// --no-sandbox \
+// --disable-gpu \
+// --run-all-compositor-stages-before-draw \
+// --no-pdf-header-footer \
+// --print-to-pdf=test.pdf \
+// report.html
+
+var chromeDPExecAllocatorOptions = append(
+	chromedp.DefaultExecAllocatorOptions[:],
+	chromedp.Flag("no-zygote", true),
+	chromedp.Flag("no-sandbox", true),
+	chromedp.Flag("disable-gpu", true),
+	chromedp.Flag("run-all-compositor-stages-before-draw", true),
+)
+
 func renderToPDF(ctx context.Context, fileToRenderURL string, pathToResultPDF string) error {
-	chromeCtx, cancel := chromedp.NewContext(ctx)
-	defer cancel()
+	allocCtx, allocCtxCancel := chromedp.NewExecAllocator(ctx, chromeDPExecAllocatorOptions...)
+	defer allocCtxCancel()
+
+	chromeCtx, chromeCtxCancel := chromedp.NewContext(allocCtx)
+	defer chromeCtxCancel()
 
 	var buf []byte
 

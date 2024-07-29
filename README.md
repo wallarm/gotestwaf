@@ -404,24 +404,7 @@ Options:
       --workers int             The number of workers to scan (default 5)
 ```
 
-The listed options can be passed to GoTestWAF as follows:
-
-* If running the GoTestWAF Docker container, pass the configuration options in the `docker run` command after the Docker image name.
-
-    For example, to run GoTestWAF with WebSocket check, you can specify the WebSocket URL via the `wsURL` option:
-
-    ```sh
-    docker run --rm --network="host" -it -v ${PWD}/reports:/app/reports \
-        wallarm/gotestwaf --url=http://127.0.0.1:8080/ --wsURL=ws://127.0.0.1:8080/api/ws
-    ```
-
-* If running GoTestWAF with `go run`, pass the configuration options and its values as the parameters for the main script.
-
-    For example, to run GoTestWAF with WebSocket check, you can specify the WebSocket URL via the `wsURL` option:
-
-    ```sh
-    go run ./cmd --url=http://127.0.0.1:8080/ --wsURL=ws://127.0.0.1:8080/api/ws
-    ```
+GoTestWAF supports two HTTP clients for performing requests, selectable via the `--httpClient` option. The default client is the standard Golang HTTP client. The second option is Chrome, which can be used with the `--httpClient=chrome` CLI argument. Note that on Linux systems, you must add the `--cap-add=SYS_ADMIN` argument to the Docker arguments to run GoTestWAF with Chrome as the request performer.
 
 ### Report name
 
