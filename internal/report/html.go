@@ -61,18 +61,18 @@ var (
 	}
 )
 
-func computeGrade(value float64, all int) *report.Grade {
+func getGrade(grade float64, na bool) *report.Grade {
 	g := &report.Grade{
 		Percentage:     0.0,
 		Mark:           naMark,
 		CSSClassSuffix: "na",
 	}
 
-	if all == 0 {
+	if na {
 		return g
 	}
 
-	g.Percentage = value / float64(all)
+	g.Percentage = grade
 	if g.Percentage <= 1 {
 		g.Percentage *= 100
 	}
@@ -122,6 +122,14 @@ func computeGrade(value float64, all int) *report.Grade {
 	return g
 }
 
+func computeGrade(value float64, all int) *report.Grade {
+	if all == 0 {
+		return getGrade(0.0, true)
+	}
+
+	return getGrade(value/float64(all), false)
+}
+
 // truncatePayload replaces the middle part of the payload if
 // it is longer than maxUntruncatedPayloadLength.
 func truncatePayload(payload string) string {
@@ -162,90 +170,43 @@ func prepareHTMLFullReport(
 		WallarmResult:    wallarmResult,
 	}
 
-	var apiSecNegBlockedNum int
-	var apiSecNegNum int
-	var appSecNegBlockedNum int
-	var appSecNegNum int
-
-	for _, test := range s.TruePositiveTests.Blocked {
-		if isApiTest(test.TestSet) {
-			apiSecNegNum++
-			apiSecNegBlockedNum++
-		} else {
-			appSecNegNum++
-			appSecNegBlockedNum++
-		}
-	}
-	for _, test := range s.TruePositiveTests.Bypasses {
-		if isApiTest(test.TestSet) {
-			apiSecNegNum++
-		} else {
-			appSecNegNum++
-		}
+	if s.Score.ApiSec.TruePositive < 0 {
+		data.ApiSec.TruePositiveTestsGrade = getGrade(0.0, true)
+	} else {
+		data.ApiSec.TruePositiveTestsGrade = getGrade(s.Score.ApiSec.TruePositive, false)
 	}
 
-	var apiSecPosBypassNum int
-	var apiSecPosNum int
-	var appSecPosBypassNum int
-	var appSecPosNum int
-
-	for _, test := range s.TrueNegativeTests.TruePositive {
-		if isApiTest(test.TestSet) {
-			apiSecPosNum++
-			apiSecPosBypassNum++
-		} else {
-			appSecPosNum++
-			appSecPosBypassNum++
-		}
-	}
-	for _, test := range s.TrueNegativeTests.FalsePositive {
-		if isApiTest(test.TestSet) {
-			apiSecPosNum++
-		} else {
-			appSecPosNum++
-		}
+	if s.Score.ApiSec.TrueNegative < 0 {
+		data.ApiSec.TrueNegativeTestsGrade = getGrade(0.0, true)
+	} else {
+		data.ApiSec.TrueNegativeTestsGrade = getGrade(s.Score.ApiSec.TrueNegative, false)
 	}
 
-	divider := 0
-	data.ApiSec.TruePositiveTestsGrade = computeGrade(float64(apiSecNegBlockedNum), apiSecNegNum)
-	data.ApiSec.TrueNegativeTestsGrade = computeGrade(float64(apiSecPosBypassNum), apiSecPosNum)
-	if data.ApiSec.TruePositiveTestsGrade.Mark != naMark {
-		divider++
+	if s.Score.ApiSec.Average < 0 {
+		data.ApiSec.Grade = getGrade(0.0, true)
+	} else {
+		data.ApiSec.Grade = getGrade(s.Score.ApiSec.Average, false)
 	}
-	if data.ApiSec.TrueNegativeTestsGrade.Mark != naMark {
-		divider++
-	}
-	data.ApiSec.Grade = computeGrade(
-		data.ApiSec.TruePositiveTestsGrade.Percentage+
-			data.ApiSec.TrueNegativeTestsGrade.Percentage,
-		divider,
-	)
 
-	divider = 0
+	if s.Score.AppSec.TruePositive < 0 {
+		data.AppSec.TruePositiveTestsGrade = getGrade(0.0, true)
+	} else {
+		data.AppSec.TruePositiveTestsGrade = getGrade(s.Score.AppSec.TruePositive, false)
+	}
 
-	data.AppSec.TruePositiveTestsGrade = computeGrade(float64(appSecNegBlockedNum), appSecNegNum)
-	data.AppSec.TrueNegativeTestsGrade = computeGrade(float64(appSecPosBypassNum), appSecPosNum)
-	if data.AppSec.TruePositiveTestsGrade.Mark != naMark {
-		divider++
+	if s.Score.AppSec.TrueNegative < 0 {
+		data.AppSec.TrueNegativeTestsGrade = getGrade(0.0, true)
+	} else {
+		data.AppSec.TrueNegativeTestsGrade = getGrade(s.Score.AppSec.TrueNegative, false)
 	}
-	if data.AppSec.TrueNegativeTestsGrade.Mark != naMark {
-		divider++
-	}
-	data.AppSec.Grade = computeGrade(
-		data.AppSec.TruePositiveTestsGrade.Percentage+
-			data.AppSec.TrueNegativeTestsGrade.Percentage,
-		divider,
-	)
 
-	divider = 0
-	if data.ApiSec.Grade.Mark != naMark {
-		divider++
+	if s.Score.AppSec.Average < 0 {
+		data.AppSec.Grade = getGrade(0.0, true)
+	} else {
+		data.AppSec.Grade = getGrade(s.Score.AppSec.Average, false)
 	}
-	if data.AppSec.Grade.Mark != naMark {
-		divider++
-	}
-	data.Overall = computeGrade(
-		data.ApiSec.Grade.Percentage+data.AppSec.Grade.Percentage, divider)
+
+	data.Overall = getGrade(s.Score.Average, false)
 
 	apiIndicators, apiItems, appIndicators, appItems := generateChartData(s)
 
@@ -362,7 +323,7 @@ func prepareHTMLFullReport(
 
 		// map[payload]map[statusCode]*testDetails
 		posBlocked := make(map[string]map[int]*report.TestDetails)
-		for _, d := range s.TrueNegativeTests.FalsePositive {
+		for _, d := range s.TrueNegativeTests.Blocked {
 			payload := truncatePayload(d.Payload)
 
 			if _, ok := posBlocked[payload]; !ok {
@@ -384,7 +345,7 @@ func prepareHTMLFullReport(
 
 		// map[payload]map[statusCode]*testDetails
 		posBypassed := make(map[string]map[int]*report.TestDetails)
-		for _, d := range s.TrueNegativeTests.TruePositive {
+		for _, d := range s.TrueNegativeTests.Bypasses {
 			payload := truncatePayload(d.Payload)
 
 			if _, ok := posBypassed[payload]; !ok {

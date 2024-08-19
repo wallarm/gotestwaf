@@ -33,11 +33,11 @@ type Statistics struct {
 	}
 
 	TrueNegativeTests struct {
-		SummaryTable  []*SummaryTableRow
-		FalsePositive []*TestDetails
-		TruePositive  []*TestDetails
-		Unresolved    []*TestDetails
-		Failed        []*FailedDetails
+		SummaryTable []*SummaryTableRow
+		Blocked      []*TestDetails
+		Bypasses     []*TestDetails
+		Unresolved   []*TestDetails
+		Failed       []*FailedDetails
 
 		AllRequestsNumber        int
 		BlockedRequestsNumber    int
@@ -278,7 +278,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 		}
 
 		if isFalsePositiveTest(blockedTest.Set) {
-			s.TrueNegativeTests.FalsePositive = append(s.TrueNegativeTests.FalsePositive, testDetails)
+			s.TrueNegativeTests.Blocked = append(s.TrueNegativeTests.Blocked, testDetails)
 		} else {
 			s.TruePositiveTests.Blocked = append(s.TruePositiveTests.Blocked, testDetails)
 		}
@@ -299,7 +299,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 		}
 
 		if isFalsePositiveTest(passedTest.Set) {
-			s.TrueNegativeTests.TruePositive = append(s.TrueNegativeTests.TruePositive, testDetails)
+			s.TrueNegativeTests.Bypasses = append(s.TrueNegativeTests.Bypasses, testDetails)
 		} else {
 			s.TruePositiveTests.Bypasses = append(s.TruePositiveTests.Bypasses, testDetails)
 		}
@@ -321,7 +321,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 
 		if ignoreUnresolved || nonBlockedAsPassed {
 			if isFalsePositiveTest(unresolvedTest.Set) {
-				s.TrueNegativeTests.FalsePositive = append(s.TrueNegativeTests.FalsePositive, testDetails)
+				s.TrueNegativeTests.Blocked = append(s.TrueNegativeTests.Blocked, testDetails)
 			} else {
 				s.TruePositiveTests.Bypasses = append(s.TruePositiveTests.Bypasses, testDetails)
 			}
@@ -395,7 +395,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 	var appSecTrueNegBypassNum int
 	var appSecTrueNegNum int
 
-	for _, test := range s.TrueNegativeTests.TruePositive {
+	for _, test := range s.TrueNegativeTests.Bypasses {
 		if isApiTest(test.TestSet) {
 			apiSecTrueNegNum++
 			apiSecTrueNegBypassNum++
@@ -404,7 +404,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 			appSecTrueNegBypassNum++
 		}
 	}
-	for _, test := range s.TrueNegativeTests.FalsePositive {
+	for _, test := range s.TrueNegativeTests.Blocked {
 		if isApiTest(test.TestSet) {
 			apiSecTrueNegNum++
 		} else {
@@ -433,7 +433,12 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 	}
 
 	if divider != 0 {
-		s.Score.ApiSec.Average = Round(sum / float64(divider))
+		// If all malicious request were passed then grade is 0.
+		if apiSecTruePosBlockedNum == 0 {
+			s.Score.ApiSec.Average = 0.0
+		} else {
+			s.Score.ApiSec.Average = Round(sum / float64(divider))
+		}
 	} else {
 		s.Score.ApiSec.Average = -1.0
 	}
@@ -459,7 +464,12 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 	}
 
 	if divider != 0 {
-		s.Score.AppSec.Average = Round(sum / float64(divider))
+		// If all malicious request were passed then grade is 0.
+		if appSecTruePosBlockedNum == 0 {
+			s.Score.AppSec.Average = 0.0
+		} else {
+			s.Score.AppSec.Average = Round(sum / float64(divider))
+		}
 	} else {
 		s.Score.AppSec.Average = -1.0
 	}

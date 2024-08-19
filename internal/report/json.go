@@ -197,7 +197,7 @@ func printFullReportToJson(
 
 	report.TrueNegativeTestsPayloads = &testPayloads{}
 
-	for _, blocked := range s.TrueNegativeTests.FalsePositive {
+	for _, blocked := range s.TrueNegativeTests.Blocked {
 		blockedDetails := &payloadDetails{
 			Payload:               blocked.Payload,
 			TestSet:               blocked.TestSet,
