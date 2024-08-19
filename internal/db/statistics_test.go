@@ -489,3 +489,162 @@ func BoolGenerator(b bool) gopter.Gen {
 		return gopter.NewGenResult(b, gopter.NoShrinker)
 	}
 }
+
+func TestStatisticsCalculation(t *testing.T) {
+	testCases := []struct {
+		apiSecTruePosBypassesNum int
+		apiSecTruePosBlockedNum  int
+
+		apiSecTrueNegBypassesNum int
+		apiSecTrueNegBlockedNum  int
+
+		appSecTruePosBypassesNum int
+		appSecTruePosBlockedNum  int
+
+		appSecTrueNegBypassesNum int
+		appSecTrueNegBlockedNum  int
+	}{
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{rand.Int()%500 + 1, rand.Int()%500 + 1, rand.Int()%500 + 1, rand.Int()%500 + 1, rand.Int()%500 + 1, rand.Int()%500 + 1, rand.Int()%500 + 1, rand.Int()%500 + 1},
+		{rand.Int()%500 + 1, 0, 0, 0, 0, 0, 0, 0},
+		{0, rand.Int()%500 + 1, 0, 0, 0, 0, 0, 0},
+		{rand.Int()%500 + 1, rand.Int()%500 + 1, 0, 0, 0, 0, 0, 0},
+		{0, 0, rand.Int()%500 + 1, 0, 0, 0, 0, 0},
+		{0, 0, 0, rand.Int()%500 + 1, 0, 0, 0, 0},
+		{0, 0, rand.Int()%500 + 1, rand.Int()%500 + 1, 0, 0, 0, 0},
+		{0, 0, 0, 0, rand.Int()%500 + 1, 0, 0, 0},
+		{0, 0, 0, 0, 0, rand.Int()%500 + 1, 0, 0},
+		{0, 0, 0, 0, rand.Int()%500 + 1, rand.Int()%500 + 1, 0, 0},
+		{0, 0, 0, 0, 0, 0, rand.Int()%500 + 1, 0},
+		{0, 0, 0, 0, 0, 0, 0, rand.Int()%500 + 1},
+		{0, 0, 0, 0, 0, 0, rand.Int()%500 + 1, rand.Int()%500 + 1},
+	}
+
+	cases := []*Case{
+		{Set: ""},
+		{Set: "false"},
+		{Set: "api"},
+		{Set: "api-false"},
+	}
+
+	for _, tc := range testCases {
+		db, err := NewDB(cases)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for i := 0; i < tc.apiSecTruePosBypassesNum; i++ {
+			db.UpdatePassedTests(&Info{Set: "api"})
+		}
+		for i := 0; i < tc.apiSecTruePosBlockedNum; i++ {
+			db.UpdateBlockedTests(&Info{Set: "api"})
+		}
+
+		for i := 0; i < tc.apiSecTrueNegBypassesNum; i++ {
+			db.UpdatePassedTests(&Info{Set: "api-false"})
+		}
+		for i := 0; i < tc.apiSecTrueNegBlockedNum; i++ {
+			db.UpdateBlockedTests(&Info{Set: "api-false"})
+		}
+
+		for i := 0; i < tc.appSecTruePosBypassesNum; i++ {
+			db.UpdatePassedTests(&Info{})
+		}
+		for i := 0; i < tc.appSecTruePosBlockedNum; i++ {
+			db.UpdateBlockedTests(&Info{})
+		}
+
+		for i := 0; i < tc.appSecTrueNegBypassesNum; i++ {
+			db.UpdatePassedTests(&Info{Set: "false"})
+		}
+		for i := 0; i < tc.appSecTrueNegBlockedNum; i++ {
+			db.UpdateBlockedTests(&Info{Set: "false"})
+		}
+
+		stat := db.GetStatistics(false, false)
+
+		sum := 0.0
+		div := 0
+
+		apiSecTruePosNum := tc.apiSecTruePosBypassesNum + tc.apiSecTruePosBlockedNum
+		apiSecTruePosPercentage := CalculatePercentage(tc.apiSecTruePosBlockedNum, apiSecTruePosNum)
+		if apiSecTruePosNum == 0 {
+			apiSecTruePosPercentage = -1.0
+		} else {
+			div++
+			sum += apiSecTruePosPercentage
+		}
+
+		apiSecTrueNegNum := tc.apiSecTrueNegBypassesNum + tc.apiSecTrueNegBlockedNum
+		apiSecTrueNegPercentage := CalculatePercentage(tc.apiSecTrueNegBypassesNum, apiSecTrueNegNum)
+		if apiSecTrueNegNum == 0 {
+			apiSecTrueNegPercentage = -1.0
+		} else {
+			div++
+			sum += apiSecTrueNegPercentage
+		}
+
+		apiSecAverage := 0.0
+		if div == 0 {
+			apiSecAverage = -1.0
+		} else {
+			if tc.apiSecTruePosBlockedNum != 0 {
+				apiSecAverage = Round(sum / float64(div))
+			}
+		}
+
+		if stat.Score.ApiSec.TruePositive != apiSecTruePosPercentage {
+			t.Fatalf("ApiSec.TruePositive: want %#v, got %#v", apiSecTruePosPercentage, stat.Score.ApiSec.TruePositive)
+		}
+
+		if stat.Score.ApiSec.TrueNegative != apiSecTrueNegPercentage {
+			t.Fatalf("ApiSec.TrueNegative: want %#v, got %#v", apiSecTrueNegPercentage, stat.Score.ApiSec.TrueNegative)
+		}
+
+		if stat.Score.ApiSec.Average != apiSecAverage {
+			t.Fatalf("ApiSec.Average: want %#v, got %#v", apiSecAverage, stat.Score.ApiSec.Average)
+		}
+
+		sum = 0.0
+		div = 0
+
+		appSecTruePosNum := tc.appSecTruePosBypassesNum + tc.appSecTruePosBlockedNum
+		appSecTruePosPercentage := CalculatePercentage(tc.appSecTruePosBlockedNum, appSecTruePosNum)
+		if appSecTruePosNum == 0 {
+			appSecTruePosPercentage = -1.0
+		} else {
+			div++
+			sum += appSecTruePosPercentage
+		}
+
+		appSecTrueNegNum := tc.appSecTrueNegBypassesNum + tc.appSecTrueNegBlockedNum
+		appSecTrueNegPercentage := CalculatePercentage(tc.appSecTrueNegBypassesNum, appSecTrueNegNum)
+		if appSecTrueNegNum == 0 {
+			appSecTrueNegPercentage = -1.0
+		} else {
+			div++
+			sum += appSecTrueNegPercentage
+		}
+
+		appSecAverage := 0.0
+		if div == 0 {
+			appSecAverage = -1.0
+		} else {
+			if tc.appSecTruePosBlockedNum != 0 {
+				appSecAverage = Round(sum / float64(div))
+			}
+		}
+
+		if stat.Score.AppSec.TruePositive != appSecTruePosPercentage {
+			t.Fatalf("AppSec.TruePositive: want %#v, got %#v", appSecTruePosPercentage, stat.Score.AppSec.TruePositive)
+		}
+
+		if stat.Score.AppSec.TrueNegative != appSecTrueNegPercentage {
+			t.Fatalf("AppSec.TrueNegative: want %#v, got %#v", appSecTrueNegPercentage, stat.Score.AppSec.TrueNegative)
+		}
+
+		if stat.Score.AppSec.Average != appSecAverage {
+			t.Fatalf("AppSec.Average: want %#v, got %#v", appSecAverage, stat.Score.AppSec.Average)
+		}
+	}
+}
