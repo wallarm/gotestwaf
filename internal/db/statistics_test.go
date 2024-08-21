@@ -182,8 +182,8 @@ func testPropertyOnlyPositiveNumberValues(db *DB, ignoreUnresolved, nonBlockedAs
 		stat.TrueNegativeTests.FailedRequestsNumber < 0 ||
 		stat.TrueNegativeTests.ResolvedRequestsNumber < 0 ||
 		stat.TrueNegativeTests.UnresolvedRequestsPercentage < 0 ||
-		stat.TrueNegativeTests.ResolvedFalseRequestsPercentage < 0 ||
-		stat.TrueNegativeTests.ResolvedTrueRequestsPercentage < 0 ||
+		stat.TrueNegativeTests.ResolvedBlockedRequestsPercentage < 0 ||
+		stat.TrueNegativeTests.ResolvedBypassedRequestsPercentage < 0 ||
 		stat.TrueNegativeTests.FailedRequestsPercentage < 0 {
 		return false
 	}

@@ -402,7 +402,7 @@ func prepareHTMLFullReport(
 	data.TruePositiveTests.UnresolvedRequestsNumber = s.TruePositiveTests.UnresolvedRequestsNumber
 	data.TruePositiveTests.FailedRequestsNumber = s.TruePositiveTests.FailedRequestsNumber
 
-	data.TrueNegativeTests.Percentage = s.TrueNegativeTests.ResolvedTrueRequestsPercentage
+	data.TrueNegativeTests.Percentage = s.TrueNegativeTests.ResolvedBypassedRequestsPercentage
 	data.TrueNegativeTests.TotalSent = s.TrueNegativeTests.AllRequestsNumber
 	data.TrueNegativeTests.BlockedRequestsNumber = s.TrueNegativeTests.BlockedRequestsNumber
 	data.TrueNegativeTests.BypassedRequestsNumber = s.TrueNegativeTests.BypassedRequestsNumber

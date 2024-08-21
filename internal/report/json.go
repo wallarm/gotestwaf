@@ -126,7 +126,7 @@ func printFullReportToJson(
 
 	if len(s.TrueNegativeTests.SummaryTable) != 0 {
 		report.Summary.TrueNegativeTests = &testsInfo{
-			Score:           s.TrueNegativeTests.ResolvedTrueRequestsPercentage,
+			Score:           s.TrueNegativeTests.ResolvedBypassedRequestsPercentage,
 			TotalSent:       s.TrueNegativeTests.AllRequestsNumber,
 			ResolvedTests:   s.TrueNegativeTests.ResolvedRequestsNumber,
 			BlockedTests:    s.TrueNegativeTests.BlockedRequestsNumber,

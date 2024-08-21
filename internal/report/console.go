@@ -148,16 +148,16 @@ func printConsoleReportTable(
 	footerPositiveTests := []string{
 		fmt.Sprintf("Date:\n%s", reportTime.Format("2006-01-02")),
 		fmt.Sprintf("Project Name:\n%s", wafName),
-		fmt.Sprintf("True-Negative Score:\n%.2f%%", s.TrueNegativeTests.ResolvedTrueRequestsPercentage),
+		fmt.Sprintf("True-Negative Score:\n%.2f%%", s.TrueNegativeTests.ResolvedBypassedRequestsPercentage),
 		fmt.Sprintf("Blocked (Resolved):\n%d/%d (%.2f%%)",
 			s.TrueNegativeTests.BlockedRequestsNumber,
 			s.TrueNegativeTests.ResolvedRequestsNumber,
-			s.TrueNegativeTests.ResolvedFalseRequestsPercentage,
+			s.TrueNegativeTests.ResolvedBlockedRequestsPercentage,
 		),
 		fmt.Sprintf("Bypassed (Resolved):\n%d/%d (%.2f%%)",
 			s.TrueNegativeTests.BypassedRequestsNumber,
 			s.TrueNegativeTests.ResolvedRequestsNumber,
-			s.TrueNegativeTests.ResolvedTrueRequestsPercentage,
+			s.TrueNegativeTests.ResolvedBypassedRequestsPercentage,
 		),
 	}
 	if !ignoreUnresolved {
@@ -284,7 +284,7 @@ func printConsoleReportJson(
 
 	if len(s.TrueNegativeTests.SummaryTable) != 0 {
 		report.TrueNegativeTests = &testsInfo{
-			Score:           s.TrueNegativeTests.ResolvedTrueRequestsPercentage,
+			Score:           s.TrueNegativeTests.ResolvedBypassedRequestsPercentage,
 			TotalSent:       s.TrueNegativeTests.AllRequestsNumber,
 			ResolvedTests:   s.TrueNegativeTests.ResolvedRequestsNumber,
 			BlockedTests:    s.TrueNegativeTests.BlockedRequestsNumber,
