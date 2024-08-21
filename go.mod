@@ -3,8 +3,8 @@ module github.com/wallarm/gotestwaf
 go 1.22
 
 require (
-	github.com/chromedp/cdproto v0.0.0-20240501202034-ef67d660e9fd
-	github.com/chromedp/chromedp v0.9.5
+	github.com/chromedp/cdproto v0.0.0-20240810084448-b931b754e476
+	github.com/chromedp/chromedp v0.10.0
 	github.com/clbanning/mxj v1.8.4
 	github.com/getkin/kin-openapi v0.114.0
 	github.com/go-echarts/go-echarts/v2 v2.2.5
@@ -55,7 +55,7 @@ require (
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
-	golang.org/x/sys v0.22.0 // indirect
+	golang.org/x/sys v0.24.0 // indirect
 	golang.org/x/term v0.22.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20231030173426-d783a09b4405 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
