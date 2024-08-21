@@ -12,61 +12,34 @@ type Statistics struct {
 
 	TestCasesFingerprint string
 
-	TruePositiveTests struct {
-		SummaryTable []*SummaryTableRow
-		Blocked      []*TestDetails
-		Bypasses     []*TestDetails
-		Unresolved   []*TestDetails
-		Failed       []*FailedDetails
-
-		AllRequestsNumber        int
-		BlockedRequestsNumber    int
-		BypassedRequestsNumber   int
-		UnresolvedRequestsNumber int
-		FailedRequestsNumber     int
-		ResolvedRequestsNumber   int
-
-		UnresolvedRequestsPercentage       float64
-		ResolvedBlockedRequestsPercentage  float64
-		ResolvedBypassedRequestsPercentage float64
-		FailedRequestsPercentage           float64
-	}
-
-	TrueNegativeTests struct {
-		SummaryTable  []*SummaryTableRow
-		FalsePositive []*TestDetails
-		TruePositive  []*TestDetails
-		Unresolved    []*TestDetails
-		Failed        []*FailedDetails
-
-		AllRequestsNumber        int
-		BlockedRequestsNumber    int
-		BypassedRequestsNumber   int
-		UnresolvedRequestsNumber int
-		FailedRequestsNumber     int
-		ResolvedRequestsNumber   int
-
-		UnresolvedRequestsPercentage    float64
-		ResolvedFalseRequestsPercentage float64
-		ResolvedTrueRequestsPercentage  float64
-		FailedRequestsPercentage        float64
-	}
+	TruePositiveTests TestsSummary
+	TrueNegativeTests TestsSummary
 
 	Score struct {
-		ApiSec struct {
-			TruePositive float64
-			TrueNegative float64
-			Average      float64
-		}
-
-		AppSec struct {
-			TruePositive float64
-			TrueNegative float64
-			Average      float64
-		}
-
+		ApiSec  Score
+		AppSec  Score
 		Average float64
 	}
+}
+
+type TestsSummary struct {
+	SummaryTable []*SummaryTableRow
+	Blocked      []*TestDetails
+	Bypasses     []*TestDetails
+	Unresolved   []*TestDetails
+	Failed       []*FailedDetails
+
+	AllRequestsNumber        int
+	BlockedRequestsNumber    int
+	BypassedRequestsNumber   int
+	UnresolvedRequestsNumber int
+	FailedRequestsNumber     int
+	ResolvedRequestsNumber   int
+
+	UnresolvedRequestsPercentage       float64
+	ResolvedBlockedRequestsPercentage  float64
+	ResolvedBypassedRequestsPercentage float64
+	FailedRequestsPercentage           float64
 }
 
 type SummaryTableRow struct {
@@ -99,6 +72,12 @@ type FailedDetails struct {
 	Placeholder string   `json:"placeholder" validate:"required,printascii"`
 	Reason      []string `json:"reason" validate:"omitempty,dive,required"`
 	Type        string   `json:"type" validate:"omitempty"`
+}
+
+type Score struct {
+	TruePositive float64
+	TrueNegative float64
+	Average      float64
 }
 
 type Path struct {
@@ -233,35 +212,8 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 		}
 	}
 
-	// Number of all negative requests
-	s.TruePositiveTests.AllRequestsNumber = s.TruePositiveTests.BlockedRequestsNumber +
-		s.TruePositiveTests.BypassedRequestsNumber +
-		s.TruePositiveTests.UnresolvedRequestsNumber +
-		s.TruePositiveTests.FailedRequestsNumber
-
-	// Number of negative resolved requests
-	s.TruePositiveTests.ResolvedRequestsNumber = s.TruePositiveTests.BlockedRequestsNumber +
-		s.TruePositiveTests.BypassedRequestsNumber
-
-	// Number of all negative requests
-	s.TrueNegativeTests.AllRequestsNumber = s.TrueNegativeTests.BlockedRequestsNumber +
-		s.TrueNegativeTests.BypassedRequestsNumber +
-		s.TrueNegativeTests.UnresolvedRequestsNumber +
-		s.TrueNegativeTests.FailedRequestsNumber
-
-	// Number of positive resolved requests
-	s.TrueNegativeTests.ResolvedRequestsNumber = s.TrueNegativeTests.BlockedRequestsNumber +
-		s.TrueNegativeTests.BypassedRequestsNumber
-
-	s.TruePositiveTests.UnresolvedRequestsPercentage = CalculatePercentage(s.TruePositiveTests.UnresolvedRequestsNumber, s.TruePositiveTests.AllRequestsNumber)
-	s.TruePositiveTests.ResolvedBlockedRequestsPercentage = CalculatePercentage(s.TruePositiveTests.BlockedRequestsNumber, s.TruePositiveTests.ResolvedRequestsNumber)
-	s.TruePositiveTests.ResolvedBypassedRequestsPercentage = CalculatePercentage(s.TruePositiveTests.BypassedRequestsNumber, s.TruePositiveTests.ResolvedRequestsNumber)
-	s.TruePositiveTests.FailedRequestsPercentage = CalculatePercentage(s.TruePositiveTests.FailedRequestsNumber, s.TruePositiveTests.AllRequestsNumber)
-
-	s.TrueNegativeTests.UnresolvedRequestsPercentage = CalculatePercentage(s.TrueNegativeTests.UnresolvedRequestsNumber, s.TrueNegativeTests.AllRequestsNumber)
-	s.TrueNegativeTests.ResolvedFalseRequestsPercentage = CalculatePercentage(s.TrueNegativeTests.BlockedRequestsNumber, s.TrueNegativeTests.ResolvedRequestsNumber)
-	s.TrueNegativeTests.ResolvedTrueRequestsPercentage = CalculatePercentage(s.TrueNegativeTests.BypassedRequestsNumber, s.TrueNegativeTests.ResolvedRequestsNumber)
-	s.TrueNegativeTests.FailedRequestsPercentage = CalculatePercentage(s.TrueNegativeTests.FailedRequestsNumber, s.TrueNegativeTests.AllRequestsNumber)
+	calculateTestsSummaryStat(&s.TruePositiveTests)
+	calculateTestsSummaryStat(&s.TrueNegativeTests)
 
 	for _, blockedTest := range db.blockedTests {
 		sort.Strings(blockedTest.AdditionalInfo)
@@ -278,7 +230,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 		}
 
 		if isFalsePositiveTest(blockedTest.Set) {
-			s.TrueNegativeTests.FalsePositive = append(s.TrueNegativeTests.FalsePositive, testDetails)
+			s.TrueNegativeTests.Blocked = append(s.TrueNegativeTests.Blocked, testDetails)
 		} else {
 			s.TruePositiveTests.Blocked = append(s.TruePositiveTests.Blocked, testDetails)
 		}
@@ -299,7 +251,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 		}
 
 		if isFalsePositiveTest(passedTest.Set) {
-			s.TrueNegativeTests.TruePositive = append(s.TrueNegativeTests.TruePositive, testDetails)
+			s.TrueNegativeTests.Bypasses = append(s.TrueNegativeTests.Bypasses, testDetails)
 		} else {
 			s.TruePositiveTests.Bypasses = append(s.TruePositiveTests.Bypasses, testDetails)
 		}
@@ -321,7 +273,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 
 		if ignoreUnresolved || nonBlockedAsPassed {
 			if isFalsePositiveTest(unresolvedTest.Set) {
-				s.TrueNegativeTests.FalsePositive = append(s.TrueNegativeTests.FalsePositive, testDetails)
+				s.TrueNegativeTests.Blocked = append(s.TrueNegativeTests.Blocked, testDetails)
 			} else {
 				s.TruePositiveTests.Bypasses = append(s.TruePositiveTests.Bypasses, testDetails)
 			}
@@ -395,7 +347,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 	var appSecTrueNegBypassNum int
 	var appSecTrueNegNum int
 
-	for _, test := range s.TrueNegativeTests.TruePositive {
+	for _, test := range s.TrueNegativeTests.Bypasses {
 		if isApiTest(test.TestSet) {
 			apiSecTrueNegNum++
 			apiSecTrueNegBypassNum++
@@ -404,7 +356,7 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 			appSecTrueNegBypassNum++
 		}
 	}
-	for _, test := range s.TrueNegativeTests.FalsePositive {
+	for _, test := range s.TrueNegativeTests.Blocked {
 		if isApiTest(test.TestSet) {
 			apiSecTrueNegNum++
 		} else {
@@ -412,60 +364,11 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 		}
 	}
 
+	calculateScorePercentage(&s.Score.ApiSec, apiSecTruePosBlockedNum, apiSecTruePosNum, apiSecTrueNegBypassNum, apiSecTrueNegNum)
+	calculateScorePercentage(&s.Score.AppSec, appSecTruePosBlockedNum, appSecTruePosNum, appSecTrueNegBypassNum, appSecTrueNegNum)
+
 	var divider int
 	var sum float64
-
-	s.Score.ApiSec.TruePositive = CalculatePercentage(apiSecTruePosBlockedNum, apiSecTruePosNum)
-	s.Score.ApiSec.TrueNegative = CalculatePercentage(apiSecTrueNegBypassNum, apiSecTrueNegNum)
-
-	if apiSecTruePosNum != 0 {
-		divider++
-		sum += s.Score.ApiSec.TruePositive
-	} else {
-		s.Score.ApiSec.TruePositive = -1.0
-	}
-
-	if apiSecTrueNegNum != 0 {
-		divider++
-		sum += s.Score.ApiSec.TrueNegative
-	} else {
-		s.Score.ApiSec.TrueNegative = -1.0
-	}
-
-	if divider != 0 {
-		s.Score.ApiSec.Average = Round(sum / float64(divider))
-	} else {
-		s.Score.ApiSec.Average = -1.0
-	}
-
-	divider = 0
-	sum = 0.0
-
-	s.Score.AppSec.TruePositive = CalculatePercentage(appSecTruePosBlockedNum, appSecTruePosNum)
-	s.Score.AppSec.TrueNegative = CalculatePercentage(appSecTrueNegBypassNum, appSecTrueNegNum)
-
-	if appSecTruePosNum != 0 {
-		divider++
-		sum += s.Score.AppSec.TruePositive
-	} else {
-		s.Score.AppSec.TruePositive = -1.0
-	}
-
-	if appSecTrueNegNum != 0 {
-		divider++
-		sum += s.Score.AppSec.TrueNegative
-	} else {
-		s.Score.AppSec.TrueNegative = -1.0
-	}
-
-	if divider != 0 {
-		s.Score.AppSec.Average = Round(sum / float64(divider))
-	} else {
-		s.Score.AppSec.Average = -1.0
-	}
-
-	divider = 0
-	sum = 0.0
 
 	if s.Score.ApiSec.Average != -1.0 {
 		divider++
@@ -483,4 +386,54 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 	}
 
 	return s
+}
+
+func calculateTestsSummaryStat(s *TestsSummary) {
+	s.AllRequestsNumber = s.BlockedRequestsNumber +
+		s.BypassedRequestsNumber +
+		s.UnresolvedRequestsNumber +
+		s.FailedRequestsNumber
+
+	s.ResolvedRequestsNumber = s.BlockedRequestsNumber +
+		s.BypassedRequestsNumber
+
+	s.UnresolvedRequestsPercentage = CalculatePercentage(s.UnresolvedRequestsNumber, s.AllRequestsNumber)
+	s.ResolvedBlockedRequestsPercentage = CalculatePercentage(s.BlockedRequestsNumber, s.ResolvedRequestsNumber)
+	s.ResolvedBypassedRequestsPercentage = CalculatePercentage(s.BypassedRequestsNumber, s.ResolvedRequestsNumber)
+	s.FailedRequestsPercentage = CalculatePercentage(s.FailedRequestsNumber, s.AllRequestsNumber)
+}
+
+func calculateScorePercentage(s *Score, truePosBlockedNum, truePosNum, trueNegBypassNum, trueNegNum int) {
+	var (
+		divider int
+		sum     float64
+	)
+
+	s.TruePositive = CalculatePercentage(truePosBlockedNum, truePosNum)
+	s.TrueNegative = CalculatePercentage(trueNegBypassNum, trueNegNum)
+
+	if truePosNum != 0 {
+		divider++
+		sum += s.TruePositive
+	} else {
+		s.TruePositive = -1.0
+	}
+
+	if trueNegNum != 0 {
+		divider++
+		sum += s.TrueNegative
+	} else {
+		s.TrueNegative = -1.0
+	}
+
+	if divider != 0 {
+		// If all malicious request were passed then grade is 0.
+		if truePosBlockedNum == 0 {
+			s.Average = 0.0
+		} else {
+			s.Average = Round(sum / float64(divider))
+		}
+	} else {
+		s.Average = -1.0
+	}
 }
