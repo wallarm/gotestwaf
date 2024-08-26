@@ -165,22 +165,22 @@ func testPropertyNotPanics(db *DB, ignoreUnresolved, nonBlockedAsPassed bool) bo
 func testPropertyOnlyPositiveNumberValues(db *DB, ignoreUnresolved, nonBlockedAsPassed bool) bool {
 	stat := db.GetStatistics(ignoreUnresolved, nonBlockedAsPassed)
 
-	if stat.TruePositiveTests.AllRequestsNumber < 0 ||
-		stat.TruePositiveTests.BlockedRequestsNumber < 0 ||
-		stat.TruePositiveTests.BypassedRequestsNumber < 0 ||
-		stat.TruePositiveTests.UnresolvedRequestsNumber < 0 ||
-		stat.TruePositiveTests.FailedRequestsNumber < 0 ||
-		stat.TruePositiveTests.ResolvedRequestsNumber < 0 ||
+	if stat.TruePositiveTests.ReqStats.AllRequestsNumber < 0 ||
+		stat.TruePositiveTests.ReqStats.BlockedRequestsNumber < 0 ||
+		stat.TruePositiveTests.ReqStats.BypassedRequestsNumber < 0 ||
+		stat.TruePositiveTests.ReqStats.UnresolvedRequestsNumber < 0 ||
+		stat.TruePositiveTests.ReqStats.FailedRequestsNumber < 0 ||
+		stat.TruePositiveTests.ReqStats.ResolvedRequestsNumber < 0 ||
 		stat.TruePositiveTests.UnresolvedRequestsPercentage < 0 ||
 		stat.TruePositiveTests.ResolvedBlockedRequestsPercentage < 0 ||
 		stat.TruePositiveTests.ResolvedBypassedRequestsPercentage < 0 ||
 		stat.TruePositiveTests.FailedRequestsPercentage < 0 ||
-		stat.TrueNegativeTests.AllRequestsNumber < 0 ||
-		stat.TrueNegativeTests.BlockedRequestsNumber < 0 ||
-		stat.TrueNegativeTests.BypassedRequestsNumber < 0 ||
-		stat.TrueNegativeTests.UnresolvedRequestsNumber < 0 ||
-		stat.TrueNegativeTests.FailedRequestsNumber < 0 ||
-		stat.TrueNegativeTests.ResolvedRequestsNumber < 0 ||
+		stat.TrueNegativeTests.ReqStats.AllRequestsNumber < 0 ||
+		stat.TrueNegativeTests.ReqStats.BlockedRequestsNumber < 0 ||
+		stat.TrueNegativeTests.ReqStats.BypassedRequestsNumber < 0 ||
+		stat.TrueNegativeTests.ReqStats.UnresolvedRequestsNumber < 0 ||
+		stat.TrueNegativeTests.ReqStats.FailedRequestsNumber < 0 ||
+		stat.TrueNegativeTests.ReqStats.ResolvedRequestsNumber < 0 ||
 		stat.TrueNegativeTests.UnresolvedRequestsPercentage < 0 ||
 		stat.TrueNegativeTests.ResolvedBlockedRequestsPercentage < 0 ||
 		stat.TrueNegativeTests.ResolvedBypassedRequestsPercentage < 0 ||
@@ -226,12 +226,12 @@ func testPropertyCorrectStatValues(db *DB, ignoreUnresolved, nonBlockedAsPassed 
 	counters["true-positive"]["resolved"] = counters["true-positive"]["blocked"] +
 		counters["true-positive"]["bypassed"]
 
-	if counters["true-positive"]["all"] != stat.TruePositiveTests.AllRequestsNumber ||
-		counters["true-positive"]["blocked"] != stat.TruePositiveTests.BlockedRequestsNumber ||
-		counters["true-positive"]["bypassed"] != stat.TruePositiveTests.BypassedRequestsNumber ||
-		counters["true-positive"]["unresolved"] != stat.TruePositiveTests.UnresolvedRequestsNumber ||
-		counters["true-positive"]["failed"] != stat.TruePositiveTests.FailedRequestsNumber ||
-		counters["true-positive"]["resolved"] != stat.TruePositiveTests.ResolvedRequestsNumber {
+	if counters["true-positive"]["all"] != stat.TruePositiveTests.ReqStats.AllRequestsNumber ||
+		counters["true-positive"]["blocked"] != stat.TruePositiveTests.ReqStats.BlockedRequestsNumber ||
+		counters["true-positive"]["bypassed"] != stat.TruePositiveTests.ReqStats.BypassedRequestsNumber ||
+		counters["true-positive"]["unresolved"] != stat.TruePositiveTests.ReqStats.UnresolvedRequestsNumber ||
+		counters["true-positive"]["failed"] != stat.TruePositiveTests.ReqStats.FailedRequestsNumber ||
+		counters["true-positive"]["resolved"] != stat.TruePositiveTests.ReqStats.ResolvedRequestsNumber {
 		return false
 	}
 
@@ -251,12 +251,12 @@ func testPropertyCorrectStatValues(db *DB, ignoreUnresolved, nonBlockedAsPassed 
 	counters["true-negative"]["resolved"] = counters["true-negative"]["blocked"] +
 		counters["true-negative"]["bypassed"]
 
-	if counters["true-negative"]["all"] != stat.TrueNegativeTests.AllRequestsNumber ||
-		counters["true-negative"]["blocked"] != stat.TrueNegativeTests.BlockedRequestsNumber ||
-		counters["true-negative"]["bypassed"] != stat.TrueNegativeTests.BypassedRequestsNumber ||
-		counters["true-negative"]["unresolved"] != stat.TrueNegativeTests.UnresolvedRequestsNumber ||
-		counters["true-negative"]["failed"] != stat.TrueNegativeTests.FailedRequestsNumber ||
-		counters["true-negative"]["resolved"] != stat.TrueNegativeTests.ResolvedRequestsNumber {
+	if counters["true-negative"]["all"] != stat.TrueNegativeTests.ReqStats.AllRequestsNumber ||
+		counters["true-negative"]["blocked"] != stat.TrueNegativeTests.ReqStats.BlockedRequestsNumber ||
+		counters["true-negative"]["bypassed"] != stat.TrueNegativeTests.ReqStats.BypassedRequestsNumber ||
+		counters["true-negative"]["unresolved"] != stat.TrueNegativeTests.ReqStats.UnresolvedRequestsNumber ||
+		counters["true-negative"]["failed"] != stat.TrueNegativeTests.ReqStats.FailedRequestsNumber ||
+		counters["true-negative"]["resolved"] != stat.TrueNegativeTests.ReqStats.ResolvedRequestsNumber {
 		return false
 	}
 
@@ -592,6 +592,8 @@ func TestStatisticsCalculation(t *testing.T) {
 				apiSecAverage = Round(sum / float64(div))
 			}
 		}
+
+		fmt.Println(tc)
 
 		if stat.Score.ApiSec.TruePositive != apiSecTruePosPercentage {
 			t.Fatalf("ApiSec.TruePositive: want %#v, got %#v", apiSecTruePosPercentage, stat.Score.ApiSec.TruePositive)

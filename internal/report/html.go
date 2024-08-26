@@ -396,18 +396,18 @@ func prepareHTMLFullReport(
 	data.ScannedPaths = s.Paths
 
 	data.TruePositiveTests.Percentage = s.TruePositiveTests.ResolvedBlockedRequestsPercentage
-	data.TruePositiveTests.TotalSent = s.TruePositiveTests.AllRequestsNumber
-	data.TruePositiveTests.BlockedRequestsNumber = s.TruePositiveTests.BlockedRequestsNumber
-	data.TruePositiveTests.BypassedRequestsNumber = s.TruePositiveTests.BypassedRequestsNumber
-	data.TruePositiveTests.UnresolvedRequestsNumber = s.TruePositiveTests.UnresolvedRequestsNumber
-	data.TruePositiveTests.FailedRequestsNumber = s.TruePositiveTests.FailedRequestsNumber
+	data.TruePositiveTests.TotalSent = s.TruePositiveTests.ReqStats.AllRequestsNumber
+	data.TruePositiveTests.BlockedRequestsNumber = s.TruePositiveTests.ReqStats.BlockedRequestsNumber
+	data.TruePositiveTests.BypassedRequestsNumber = s.TruePositiveTests.ReqStats.BypassedRequestsNumber
+	data.TruePositiveTests.UnresolvedRequestsNumber = s.TruePositiveTests.ReqStats.UnresolvedRequestsNumber
+	data.TruePositiveTests.FailedRequestsNumber = s.TruePositiveTests.ReqStats.FailedRequestsNumber
 
 	data.TrueNegativeTests.Percentage = s.TrueNegativeTests.ResolvedBypassedRequestsPercentage
-	data.TrueNegativeTests.TotalSent = s.TrueNegativeTests.AllRequestsNumber
-	data.TrueNegativeTests.BlockedRequestsNumber = s.TrueNegativeTests.BlockedRequestsNumber
-	data.TrueNegativeTests.BypassedRequestsNumber = s.TrueNegativeTests.BypassedRequestsNumber
-	data.TrueNegativeTests.UnresolvedRequestsNumber = s.TrueNegativeTests.UnresolvedRequestsNumber
-	data.TrueNegativeTests.FailedRequestsNumber = s.TrueNegativeTests.FailedRequestsNumber
+	data.TrueNegativeTests.TotalSent = s.TrueNegativeTests.ReqStats.AllRequestsNumber
+	data.TrueNegativeTests.BlockedRequestsNumber = s.TrueNegativeTests.ReqStats.BlockedRequestsNumber
+	data.TrueNegativeTests.BypassedRequestsNumber = s.TrueNegativeTests.ReqStats.BypassedRequestsNumber
+	data.TrueNegativeTests.UnresolvedRequestsNumber = s.TrueNegativeTests.ReqStats.UnresolvedRequestsNumber
+	data.TrueNegativeTests.FailedRequestsNumber = s.TrueNegativeTests.ReqStats.FailedRequestsNumber
 
 	data.TotalSent = data.TruePositiveTests.TotalSent + data.TrueNegativeTests.TotalSent
 	data.BlockedRequestsNumber = data.TruePositiveTests.BlockedRequestsNumber + data.TrueNegativeTests.BlockedRequestsNumber

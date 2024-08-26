@@ -29,12 +29,9 @@ type TestsSummary struct {
 	Unresolved   []*TestDetails
 	Failed       []*FailedDetails
 
-	AllRequestsNumber        int
-	BlockedRequestsNumber    int
-	BypassedRequestsNumber   int
-	UnresolvedRequestsNumber int
-	FailedRequestsNumber     int
-	ResolvedRequestsNumber   int
+	ReqStats       RequestStats
+	ApiSecReqStats RequestStats
+	AppSecReqStats RequestStats
 
 	UnresolvedRequestsPercentage       float64
 	ResolvedBlockedRequestsPercentage  float64
@@ -72,6 +69,15 @@ type FailedDetails struct {
 	Placeholder string   `json:"placeholder" validate:"required,printascii"`
 	Reason      []string `json:"reason" validate:"omitempty,dive,required"`
 	Type        string   `json:"type" validate:"omitempty"`
+}
+
+type RequestStats struct {
+	AllRequestsNumber        int
+	BlockedRequestsNumber    int
+	BypassedRequestsNumber   int
+	UnresolvedRequestsNumber int
+	FailedRequestsNumber     int
+	ResolvedRequestsNumber   int
 }
 
 type Score struct {
@@ -187,33 +193,29 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 			// If positive set - move to another table (remove from general cases)
 			if isFalsePositive {
 				// False positive - blocked by the WAF (bad behavior, blockedRequests)
-				s.TrueNegativeTests.BlockedRequestsNumber += blockedRequests
+				s.TrueNegativeTests.ReqStats.BlockedRequestsNumber += blockedRequests
 				// True positive - bypassed (good behavior, passedRequests)
-				s.TrueNegativeTests.BypassedRequestsNumber += passedRequests
-				s.TrueNegativeTests.UnresolvedRequestsNumber += unresolvedRequests
-				s.TrueNegativeTests.FailedRequestsNumber += failedRequests
+				s.TrueNegativeTests.ReqStats.BypassedRequestsNumber += passedRequests
+				s.TrueNegativeTests.ReqStats.UnresolvedRequestsNumber += unresolvedRequests
+				s.TrueNegativeTests.ReqStats.FailedRequestsNumber += failedRequests
 
 				passedRequestsPercentage := CalculatePercentage(passedRequests, totalResolvedRequests)
 				row.Percentage = passedRequestsPercentage
 
 				s.TrueNegativeTests.SummaryTable = append(s.TrueNegativeTests.SummaryTable, row)
 			} else {
-				s.TruePositiveTests.BlockedRequestsNumber += blockedRequests
-				s.TruePositiveTests.BypassedRequestsNumber += passedRequests
-				s.TruePositiveTests.UnresolvedRequestsNumber += unresolvedRequests
-				s.TruePositiveTests.FailedRequestsNumber += failedRequests
+				s.TruePositiveTests.ReqStats.BlockedRequestsNumber += blockedRequests
+				s.TruePositiveTests.ReqStats.BypassedRequestsNumber += passedRequests
+				s.TruePositiveTests.ReqStats.UnresolvedRequestsNumber += unresolvedRequests
+				s.TruePositiveTests.ReqStats.FailedRequestsNumber += failedRequests
 
 				blockedRequestsPercentage := CalculatePercentage(blockedRequests, totalResolvedRequests)
 				row.Percentage = blockedRequestsPercentage
 
 				s.TruePositiveTests.SummaryTable = append(s.TruePositiveTests.SummaryTable, row)
-
 			}
 		}
 	}
-
-	calculateTestsSummaryStat(&s.TruePositiveTests)
-	calculateTestsSummaryStat(&s.TrueNegativeTests)
 
 	for _, blockedTest := range db.blockedTests {
 		sort.Strings(blockedTest.AdditionalInfo)
@@ -231,8 +233,20 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 
 		if isFalsePositiveTest(blockedTest.Set) {
 			s.TrueNegativeTests.Blocked = append(s.TrueNegativeTests.Blocked, testDetails)
+
+			if isApiTest(blockedTest.Set) {
+				s.TrueNegativeTests.ApiSecReqStats.BlockedRequestsNumber += 1
+			} else {
+				s.TrueNegativeTests.AppSecReqStats.BlockedRequestsNumber += 1
+			}
 		} else {
 			s.TruePositiveTests.Blocked = append(s.TruePositiveTests.Blocked, testDetails)
+
+			if isApiTest(blockedTest.Set) {
+				s.TruePositiveTests.ApiSecReqStats.BlockedRequestsNumber += 1
+			} else {
+				s.TruePositiveTests.AppSecReqStats.BlockedRequestsNumber += 1
+			}
 		}
 	}
 
@@ -252,8 +266,20 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 
 		if isFalsePositiveTest(passedTest.Set) {
 			s.TrueNegativeTests.Bypasses = append(s.TrueNegativeTests.Bypasses, testDetails)
+
+			if isApiTest(passedTest.Set) {
+				s.TrueNegativeTests.ApiSecReqStats.BypassedRequestsNumber += 1
+			} else {
+				s.TrueNegativeTests.AppSecReqStats.BypassedRequestsNumber += 1
+			}
 		} else {
 			s.TruePositiveTests.Bypasses = append(s.TruePositiveTests.Bypasses, testDetails)
+
+			if isApiTest(passedTest.Set) {
+				s.TruePositiveTests.ApiSecReqStats.BypassedRequestsNumber += 1
+			} else {
+				s.TruePositiveTests.AppSecReqStats.BypassedRequestsNumber += 1
+			}
 		}
 	}
 
@@ -274,14 +300,38 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 		if ignoreUnresolved || nonBlockedAsPassed {
 			if isFalsePositiveTest(unresolvedTest.Set) {
 				s.TrueNegativeTests.Blocked = append(s.TrueNegativeTests.Blocked, testDetails)
+
+				if isApiTest(unresolvedTest.Set) {
+					s.TrueNegativeTests.ApiSecReqStats.BlockedRequestsNumber += 1
+				} else {
+					s.TrueNegativeTests.AppSecReqStats.BlockedRequestsNumber += 1
+				}
 			} else {
 				s.TruePositiveTests.Bypasses = append(s.TruePositiveTests.Bypasses, testDetails)
+
+				if isApiTest(unresolvedTest.Set) {
+					s.TruePositiveTests.ApiSecReqStats.BypassedRequestsNumber += 1
+				} else {
+					s.TruePositiveTests.AppSecReqStats.BypassedRequestsNumber += 1
+				}
 			}
 		} else {
 			if isFalsePositiveTest(unresolvedTest.Set) {
 				s.TrueNegativeTests.Unresolved = append(s.TrueNegativeTests.Unresolved, testDetails)
+
+				if isApiTest(unresolvedTest.Set) {
+					s.TrueNegativeTests.ApiSecReqStats.UnresolvedRequestsNumber += 1
+				} else {
+					s.TrueNegativeTests.AppSecReqStats.UnresolvedRequestsNumber += 1
+				}
 			} else {
 				s.TruePositiveTests.Unresolved = append(s.TruePositiveTests.Unresolved, testDetails)
+
+				if isApiTest(unresolvedTest.Set) {
+					s.TruePositiveTests.ApiSecReqStats.UnresolvedRequestsNumber += 1
+				} else {
+					s.TruePositiveTests.AppSecReqStats.UnresolvedRequestsNumber += 1
+				}
 			}
 		}
 	}
@@ -299,8 +349,20 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 
 		if isFalsePositiveTest(failedTest.Set) {
 			s.TrueNegativeTests.Failed = append(s.TrueNegativeTests.Failed, testDetails)
+
+			if isApiTest(failedTest.Set) {
+				s.TrueNegativeTests.ApiSecReqStats.FailedRequestsNumber += 1
+			} else {
+				s.TrueNegativeTests.AppSecReqStats.FailedRequestsNumber += 1
+			}
 		} else {
 			s.TruePositiveTests.Failed = append(s.TruePositiveTests.Failed, testDetails)
+
+			if isApiTest(failedTest.Set) {
+				s.TruePositiveTests.ApiSecReqStats.FailedRequestsNumber += 1
+			} else {
+				s.TruePositiveTests.AppSecReqStats.FailedRequestsNumber += 1
+			}
 		}
 	}
 
@@ -320,52 +382,23 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 		s.Paths = paths
 	}
 
-	var apiSecTruePosBlockedNum int
-	var apiSecTruePosNum int
-	var appSecTruePosBlockedNum int
-	var appSecTruePosNum int
+	calculateTestsSummaryStat(&s.TruePositiveTests)
+	calculateTestsSummaryStat(&s.TrueNegativeTests)
 
-	for _, test := range s.TruePositiveTests.Blocked {
-		if isApiTest(test.TestSet) {
-			apiSecTruePosNum++
-			apiSecTruePosBlockedNum++
-		} else {
-			appSecTruePosNum++
-			appSecTruePosBlockedNum++
-		}
-	}
-	for _, test := range s.TruePositiveTests.Bypasses {
-		if isApiTest(test.TestSet) {
-			apiSecTruePosNum++
-		} else {
-			appSecTruePosNum++
-		}
-	}
-
-	var apiSecTrueNegBypassNum int
-	var apiSecTrueNegNum int
-	var appSecTrueNegBypassNum int
-	var appSecTrueNegNum int
-
-	for _, test := range s.TrueNegativeTests.Bypasses {
-		if isApiTest(test.TestSet) {
-			apiSecTrueNegNum++
-			apiSecTrueNegBypassNum++
-		} else {
-			appSecTrueNegNum++
-			appSecTrueNegBypassNum++
-		}
-	}
-	for _, test := range s.TrueNegativeTests.Blocked {
-		if isApiTest(test.TestSet) {
-			apiSecTrueNegNum++
-		} else {
-			appSecTrueNegNum++
-		}
-	}
-
-	calculateScorePercentage(&s.Score.ApiSec, apiSecTruePosBlockedNum, apiSecTruePosNum, apiSecTrueNegBypassNum, apiSecTrueNegNum)
-	calculateScorePercentage(&s.Score.AppSec, appSecTruePosBlockedNum, appSecTruePosNum, appSecTrueNegBypassNum, appSecTrueNegNum)
+	calculateScorePercentage(
+		&s.Score.ApiSec,
+		s.TruePositiveTests.ApiSecReqStats.BlockedRequestsNumber,
+		s.TruePositiveTests.ApiSecReqStats.ResolvedRequestsNumber,
+		s.TrueNegativeTests.ApiSecReqStats.BypassedRequestsNumber,
+		s.TrueNegativeTests.ApiSecReqStats.ResolvedRequestsNumber,
+	)
+	calculateScorePercentage(
+		&s.Score.AppSec,
+		s.TruePositiveTests.AppSecReqStats.BlockedRequestsNumber,
+		s.TruePositiveTests.AppSecReqStats.ResolvedRequestsNumber,
+		s.TrueNegativeTests.AppSecReqStats.BypassedRequestsNumber,
+		s.TrueNegativeTests.AppSecReqStats.ResolvedRequestsNumber,
+	)
 
 	var divider int
 	var sum float64
@@ -389,18 +422,37 @@ func (db *DB) GetStatistics(ignoreUnresolved, nonBlockedAsPassed bool) *Statisti
 }
 
 func calculateTestsSummaryStat(s *TestsSummary) {
-	s.AllRequestsNumber = s.BlockedRequestsNumber +
-		s.BypassedRequestsNumber +
-		s.UnresolvedRequestsNumber +
-		s.FailedRequestsNumber
+	// All requests stat
+	s.ReqStats.AllRequestsNumber = s.ReqStats.BlockedRequestsNumber +
+		s.ReqStats.BypassedRequestsNumber +
+		s.ReqStats.UnresolvedRequestsNumber +
+		s.ReqStats.FailedRequestsNumber
 
-	s.ResolvedRequestsNumber = s.BlockedRequestsNumber +
-		s.BypassedRequestsNumber
+	s.ReqStats.ResolvedRequestsNumber = s.ReqStats.BlockedRequestsNumber +
+		s.ReqStats.BypassedRequestsNumber
 
-	s.UnresolvedRequestsPercentage = CalculatePercentage(s.UnresolvedRequestsNumber, s.AllRequestsNumber)
-	s.ResolvedBlockedRequestsPercentage = CalculatePercentage(s.BlockedRequestsNumber, s.ResolvedRequestsNumber)
-	s.ResolvedBypassedRequestsPercentage = CalculatePercentage(s.BypassedRequestsNumber, s.ResolvedRequestsNumber)
-	s.FailedRequestsPercentage = CalculatePercentage(s.FailedRequestsNumber, s.AllRequestsNumber)
+	// ApiSec requests stat
+	s.ApiSecReqStats.AllRequestsNumber = s.ApiSecReqStats.BlockedRequestsNumber +
+		s.ApiSecReqStats.BypassedRequestsNumber +
+		s.ApiSecReqStats.UnresolvedRequestsNumber +
+		s.ApiSecReqStats.FailedRequestsNumber
+
+	s.ApiSecReqStats.ResolvedRequestsNumber = s.ApiSecReqStats.BlockedRequestsNumber +
+		s.ApiSecReqStats.BypassedRequestsNumber
+
+	// AppSec requests stat
+	s.AppSecReqStats.AllRequestsNumber = s.AppSecReqStats.BlockedRequestsNumber +
+		s.AppSecReqStats.BypassedRequestsNumber +
+		s.AppSecReqStats.UnresolvedRequestsNumber +
+		s.AppSecReqStats.FailedRequestsNumber
+
+	s.AppSecReqStats.ResolvedRequestsNumber = s.AppSecReqStats.BlockedRequestsNumber +
+		s.AppSecReqStats.BypassedRequestsNumber
+
+	s.UnresolvedRequestsPercentage = CalculatePercentage(s.ReqStats.UnresolvedRequestsNumber, s.ReqStats.AllRequestsNumber)
+	s.ResolvedBlockedRequestsPercentage = CalculatePercentage(s.ReqStats.BlockedRequestsNumber, s.ReqStats.ResolvedRequestsNumber)
+	s.ResolvedBypassedRequestsPercentage = CalculatePercentage(s.ReqStats.BypassedRequestsNumber, s.ReqStats.ResolvedRequestsNumber)
+	s.FailedRequestsPercentage = CalculatePercentage(s.ReqStats.FailedRequestsNumber, s.ReqStats.AllRequestsNumber)
 }
 
 func calculateScorePercentage(s *Score, truePosBlockedNum, truePosNum, trueNegBypassNum, trueNegNum int) {
