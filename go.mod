@@ -1,6 +1,6 @@
 module github.com/wallarm/gotestwaf
 
-go 1.22
+go 1.23
 
 require (
 	github.com/chromedp/cdproto v0.0.0-20240810084448-b931b754e476
