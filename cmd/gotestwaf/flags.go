@@ -147,7 +147,7 @@ func parseFlags() (args []string, err error) {
 	flag.Bool("includePayloads", false, "If true, payloads will be included in HTML/PDF report")
 	flag.String("reportPath", reportPath, "A directory to store reports")
 	reportName := flag.String("reportName", defaultReportName, "Report file name. Supports `time' package template format")
-	reportFormat := flag.StringSlice("reportFormat", []string{report.PdfFormat}, "Export report to one of the following formats: "+strings.Join(report.ReportFormats, ", "))
+	reportFormat := flag.StringSlice("reportFormat", []string{report.PdfFormat}, "Export report in the following formats: "+strings.Join(report.ReportFormats, ", "))
 	noEmailReport := flag.Bool("noEmailReport", false, "Save report locally")
 	email := flag.String("email", "", "E-mail to which the report will be sent")
 
