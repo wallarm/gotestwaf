@@ -228,7 +228,10 @@ func run(ctx context.Context, cfg *config.Config, logger *logrus.Logger) error {
 		return errors.Wrap(err, "couldn't export full report")
 	}
 
-	logger.WithField("filenames", strings.Join(reportFiles, ",")).Infof("Export full report")
+	for _, file := range reportFiles {
+		reportExt := strings.ToUpper(strings.Trim(filepath.Ext(file), "."))
+		logger.WithField("filename", file).Infof("Export %s full report", reportExt)
+	}
 
 	payloadFiles := filepath.Join(cfg.ReportPath, reportName+".csv")
 	err = db.ExportPayloads(payloadFiles)
