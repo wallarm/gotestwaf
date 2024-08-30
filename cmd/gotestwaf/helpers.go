@@ -65,3 +65,19 @@ func checkOrCraftProtocolURL(rawURL string, validHttpURL string, protocol string
 
 	return validURL, nil
 }
+
+func validateHttpClient(httpClient string) error {
+	if _, ok := httpClientsSet[httpClient]; !ok {
+		return fmt.Errorf("invalid HTTP client: %s", httpClient)
+	}
+
+	return nil
+}
+
+func validateLogFormat(logFormat string) error {
+	if _, ok := logFormatsSet[logFormat]; !ok {
+		return fmt.Errorf("invalid log format: %s", logFormat)
+	}
+
+	return nil
+}

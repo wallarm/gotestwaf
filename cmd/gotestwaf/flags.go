@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/hashicorp/go-multierror"
@@ -16,7 +18,34 @@ import (
 
 	"github.com/wallarm/gotestwaf/internal/config"
 	"github.com/wallarm/gotestwaf/internal/helpers"
+	"github.com/wallarm/gotestwaf/internal/report"
 	"github.com/wallarm/gotestwaf/internal/version"
+)
+
+const (
+	textLogFormat = "text"
+	jsonLogFormat = "json"
+)
+
+var (
+	logFormatsSet = map[string]any{
+		textLogFormat: nil,
+		jsonLogFormat: nil,
+	}
+	logFormats = slices.Collect(maps.Keys(logFormatsSet))
+)
+
+const (
+	chromeClient = "chrome"
+	gohttpClient = "gohttp"
+)
+
+var (
+	httpClientsSet = map[string]any{
+		chromeClient: nil,
+		gohttpClient: nil,
+	}
+	httpClients = slices.Collect(maps.Keys(httpClientsSet))
 )
 
 const (
@@ -28,11 +57,9 @@ const (
 	defaultConfigPath    = "config.yaml"
 
 	wafName = "generic"
+)
 
-	textLogFormat = "text"
-	jsonLogFormat = "json"
-
-	cliDescription = `GoTestWAF is a tool for API and OWASP attack simulation that supports a
+const cliDescription = `GoTestWAF is a tool for API and OWASP attack simulation that supports a
 wide range of API protocols including REST, GraphQL, gRPC, SOAP, XMLRPC, and others.
 Homepage: https://github.com/wallarm/gotestwaf
 
@@ -40,7 +67,6 @@ Usage: %s [OPTIONS] --url <URL>
 
 Options:
 `
-)
 
 var (
 	configPath string
@@ -69,7 +95,7 @@ func parseFlags() (args []string, err error) {
 	flag.StringVar(&configPath, "configPath", defaultConfigPath, "Path to the config file")
 	flag.BoolVar(&quiet, "quiet", false, "If true, disable verbose logging")
 	logLvl := flag.String("logLevel", "info", "Logging level: panic, fatal, error, warn, info, debug, trace")
-	flag.StringVar(&logFormat, "logFormat", textLogFormat, "Set logging format: text, json")
+	flag.StringVar(&logFormat, "logFormat", textLogFormat, "Set logging format: "+strings.Join(logFormats, ", "))
 	showVersion := flag.Bool("version", false, "Show GoTestWAF version and exit")
 
 	// Target settings
@@ -84,7 +110,7 @@ func parseFlags() (args []string, err error) {
 	flag.String("testSet", "", "If set then only this test set's cases will be run")
 
 	// HTTP client settings
-	httpClient := flag.String("httpClient", "gohttp", "Which HTTP client use to send requests: chrome, gohttp")
+	httpClient := flag.String("httpClient", gohttpClient, "Which HTTP client use to send requests: "+strings.Join(httpClients, ", "))
 	flag.Bool("tlsVerify", false, "If true, the received TLS certificate will be verified")
 	flag.String("proxy", "", "Proxy URL to use")
 	flag.String("addHeader", "", "An HTTP header to add to requests")
@@ -121,7 +147,7 @@ func parseFlags() (args []string, err error) {
 	flag.Bool("includePayloads", false, "If true, payloads will be included in HTML/PDF report")
 	flag.String("reportPath", reportPath, "A directory to store reports")
 	reportName := flag.String("reportName", defaultReportName, "Report file name. Supports `time' package template format")
-	flag.String("reportFormat", "pdf", "Export report to one of the following formats: none, pdf, html, json")
+	reportFormat := flag.StringSlice("reportFormat", []string{report.PdfFormat}, "Export report in the following formats: "+strings.Join(report.ReportFormats, ", "))
 	noEmailReport := flag.Bool("noEmailReport", false, "Save report locally")
 	email := flag.String("email", "", "E-mail to which the report will be sent")
 
@@ -166,8 +192,16 @@ func parseFlags() (args []string, err error) {
 	}
 	logLevel = logrusLogLvl
 
-	if logFormat != textLogFormat && logFormat != jsonLogFormat {
-		return nil, fmt.Errorf("unknown logging format: %s", logFormat)
+	if err = validateLogFormat(logFormat); err != nil {
+		return nil, err
+	}
+
+	if err = validateHttpClient(*httpClient); err != nil {
+		return nil, err
+	}
+
+	if err = report.ValidateReportFormat(*reportFormat); err != nil {
+		return nil, err
 	}
 
 	validURL, err := validateURL(*urlParam, httpProto)
@@ -259,6 +293,11 @@ func normalizeArgs() ([]string, error) {
 				value = `"` + value + `"`
 			}
 
+			arg = fmt.Sprintf("--%s=%s", f.Name, value)
+
+		case "stringSlice":
+			// remove square brackets: [pdf,json] -> pdf,json
+			value = strings.Trim(f.Value.String(), "[]")
 			arg = fmt.Sprintf("--%s=%s", f.Name, value)
 
 		case "bool":

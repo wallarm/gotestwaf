@@ -192,12 +192,12 @@ func run(ctx context.Context, cfg *config.Config, logger *logrus.Logger) error {
 		return err
 	}
 
-	if cfg.ReportFormat == report.NoneFormat {
+	if report.IsNoneReportFormat(cfg.ReportFormat) {
 		return nil
 	}
 
 	includePayloads := cfg.IncludePayloads
-	if cfg.ReportFormat == report.HtmlFormat || cfg.ReportFormat == report.PdfFormat {
+	if report.IsPdfOrHtmlReportFormat(cfg.ReportFormat) {
 		askForPayloads := true
 
 		// If the cfg.IncludePayloads is already explicitly set by the user OR
@@ -219,7 +219,7 @@ func run(ctx context.Context, cfg *config.Config, logger *logrus.Logger) error {
 		}
 	}
 
-	reportFile, err = report.ExportFullReport(
+	reportFiles, err := report.ExportFullReport(
 		ctx, stat, reportFile,
 		reportTime, cfg.WAFName, cfg.URL, cfg.OpenAPIFile, cfg.Args,
 		cfg.IgnoreUnresolved, includePayloads, cfg.ReportFormat,
@@ -228,7 +228,10 @@ func run(ctx context.Context, cfg *config.Config, logger *logrus.Logger) error {
 		return errors.Wrap(err, "couldn't export full report")
 	}
 
-	logger.WithField("filename", reportFile).Infof("Export full report")
+	for _, file := range reportFiles {
+		reportExt := strings.ToUpper(strings.Trim(filepath.Ext(file), "."))
+		logger.WithField("filename", file).Infof("Export %s full report", reportExt)
+	}
 
 	payloadFiles := filepath.Join(cfg.ReportPath, reportName+".csv")
 	err = db.ExportPayloads(payloadFiles)

@@ -146,7 +146,7 @@ func getConfig(httpPort int, grpcPort int) *config.Config {
 		IncludePayloads: false,
 		ReportPath:      path.Join(os.TempDir(), "reports"),
 		ReportName:      "test",
-		ReportFormat:    "",
+		ReportFormat:    []string{""},
 		NoEmailReport:   true,
 		Email:           "",
 

@@ -47,13 +47,13 @@ type Config struct {
 	BlockConnReset        bool   `mapstructure:"blockConnReset"`
 
 	// Report settings
-	WAFName         string `mapstructure:"wafName"`
-	IncludePayloads bool   `mapstructure:"includePayloads"`
-	ReportPath      string `mapstructure:"reportPath"`
-	ReportName      string `mapstructure:"reportName"`
-	ReportFormat    string `mapstructure:"reportFormat"`
-	NoEmailReport   bool   `mapstructure:"noEmailReport"`
-	Email           string `mapstructure:"email"`
+	WAFName         string   `mapstructure:"wafName"`
+	IncludePayloads bool     `mapstructure:"includePayloads"`
+	ReportPath      string   `mapstructure:"reportPath"`
+	ReportName      string   `mapstructure:"reportName"`
+	ReportFormat    []string `mapstructure:"reportFormat"`
+	NoEmailReport   bool     `mapstructure:"noEmailReport"`
+	Email           string   `mapstructure:"email"`
 
 	// config.yaml
 	HTTPHeaders map[string]string `mapstructure:"headers"`
