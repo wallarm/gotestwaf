@@ -150,6 +150,7 @@ func parseFlags() (args []string, err error) {
 	reportFormat := flag.StringSlice("reportFormat", []string{report.PdfFormat}, "Export report in the following formats: "+strings.Join(report.ReportFormats, ", "))
 	noEmailReport := flag.Bool("noEmailReport", false, "Save report locally")
 	email := flag.String("email", "", "E-mail to which the report will be sent")
+	flag.Bool("reportHideArgs", false, "If true, GoTestWAF CLI arguments will not be displayed in the report")
 
 	flag.Parse()
 

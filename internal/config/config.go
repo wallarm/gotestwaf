@@ -54,6 +54,7 @@ type Config struct {
 	ReportFormat    []string `mapstructure:"reportFormat"`
 	NoEmailReport   bool     `mapstructure:"noEmailReport"`
 	Email           string   `mapstructure:"email"`
+	ReportHideArgs  bool     `mapstructure:"reportHideArgs"`
 
 	// config.yaml
 	HTTPHeaders map[string]string `mapstructure:"headers"`

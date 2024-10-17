@@ -61,7 +61,10 @@ func main() {
 		logger.WithError(err).Error("couldn't load config")
 		os.Exit(1)
 	}
-	cfg.Args = args
+
+	if !cfg.ReportHideArgs {
+		cfg.Args = args
+	}
 
 	if err := run(ctx, cfg, logger); err != nil {
 		logger.WithError(err).Error("caught error in main function")
