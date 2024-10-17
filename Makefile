@@ -1,4 +1,4 @@
-GOTESTWAF_VERSION := $(shell git describe)
+GOTESTWAF_VERSION := $(shell git describe --tags)
 
 gotestwaf:
 	DOCKER_BUILDKIT=1 docker build --force-rm -t gotestwaf .
