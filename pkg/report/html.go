@@ -26,7 +26,7 @@ type HtmlReport struct {
 	GtwVersion     string   `json:"gtw_version" validate:"required,gtw_version"`
 	TestCasesFP    string   `json:"test_cases_fp" validate:"required,fp"`
 	OpenApiFile    string   `json:"open_api_file" validate:"omitempty,printascii,max=512"`
-	Args           []string `json:"args" validate:"required,max=50,dive,args,max=200"`
+	Args           []string `json:"args" validate:"omitempty,max=50,dive,args,max=200"`
 
 	ApiSecChartData struct {
 		Indicators []string       `json:"indicators" validate:"omitempty,max=100,dive,indicator"`
