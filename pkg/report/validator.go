@@ -73,6 +73,11 @@ func validateIndicator(fl validator.FieldLevel) bool {
 
 func validateArgs(fl validator.FieldLevel) bool {
 	args := fl.Field().String()
+
+	if len(args) == 0 {
+		return true
+	}
+
 	result := argsRegex.MatchString(args)
 
 	return result

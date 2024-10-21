@@ -399,10 +399,12 @@
                         <span class="row__content">{{.OpenApiFile}}</span>
                         <br>
                         {{end}}
+                        {{$length := len $.Args}}{{if ne $length 0}}
                         <span class="row__name">Used arguments</span>
                         :
                         <span class="row__args mono">{{StringsJoin .Args " "}}</span>
                         <br>
+                        {{end}}
                     </div>
                 </div>
                 <!--<div class="desc__text">

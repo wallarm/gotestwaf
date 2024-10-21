@@ -93,7 +93,7 @@ func parseFlags() (args []string, err error) {
 
 	// General parameters
 	flag.StringVar(&configPath, "configPath", defaultConfigPath, "Path to the config file")
-	flag.BoolVar(&quiet, "quiet", false, "If true, disable verbose logging")
+	flag.BoolVar(&quiet, "quiet", false, "If present, disable verbose logging")
 	logLvl := flag.String("logLevel", "info", "Logging level: panic, fatal, error, warn, info, debug, trace")
 	flag.StringVar(&logFormat, "logFormat", textLogFormat, "Set logging format: "+strings.Join(logFormats, ", "))
 	showVersion := flag.Bool("version", false, "Show GoTestWAF version and exit")
@@ -111,7 +111,7 @@ func parseFlags() (args []string, err error) {
 
 	// HTTP client settings
 	httpClient := flag.String("httpClient", gohttpClient, "Which HTTP client use to send requests: "+strings.Join(httpClients, ", "))
-	flag.Bool("tlsVerify", false, "If true, the received TLS certificate will be verified")
+	flag.Bool("tlsVerify", false, "If present, the received TLS certificate will be verified")
 	flag.String("proxy", "", "Proxy URL to use")
 	flag.String("addHeader", "", "An HTTP header to add to requests")
 	flag.Bool("addDebugHeader", false, "Add header with a hash of the test information in each request")
@@ -120,7 +120,7 @@ func parseFlags() (args []string, err error) {
 	flag.Int("maxIdleConns", 2, "The maximum number of keep-alive connections (gohttp only)")
 	flag.Int("maxRedirects", 50, "The maximum number of handling redirects (gohttp only)")
 	flag.Int("idleConnTimeout", 2, "The maximum amount of time a keep-alive connection will live (gohttp only)")
-	flag.Bool("followCookies", false, "If true, use cookies sent by the server. May work only with --maxIdleConns=1 (gohttp only)")
+	flag.Bool("followCookies", false, "If present, use cookies sent by the server. May work only with --maxIdleConns=1 (gohttp only)")
 	flag.Bool("renewSession", false, "Renew cookies before each test. Should be used with --followCookies flag (gohttp only)")
 
 	// Performance settings
@@ -129,7 +129,7 @@ func parseFlags() (args []string, err error) {
 	flag.Int("randomDelay", 400, "Random delay in ms in addition to the delay between requests")
 
 	// Analysis settings
-	flag.Bool("skipWAFBlockCheck", false, "If true, WAF detection tests will be skipped")
+	flag.Bool("skipWAFBlockCheck", false, "If present, WAF detection tests will be skipped")
 	flag.Bool("skipWAFIdentification", false, "Skip WAF identification")
 	flag.IntSlice("blockStatusCodes", []int{403}, "HTTP status code that WAF uses while blocking requests")
 	flag.IntSlice("passStatusCodes", []int{200, 404}, "HTTP response status code that WAF uses while passing requests")
@@ -138,18 +138,19 @@ func parseFlags() (args []string, err error) {
 	passRegex := flag.String("passRegex", "",
 		"Regex to a detect normal (not blocked) web page with the same HTTP status code as a blocked request")
 	flag.Bool("nonBlockedAsPassed", false,
-		"If true, count requests that weren't blocked as passed. If false, requests that don't satisfy to PassStatusCodes/PassRegExp as blocked")
-	flag.Bool("ignoreUnresolved", false, "If true, unresolved test cases will be considered as bypassed (affect score and results)")
-	flag.Bool("blockConnReset", false, "If true, connection resets will be considered as block")
+		"If present, count requests that weren't blocked as passed. If false, requests that don't satisfy to PassStatusCodes/PassRegExp as blocked")
+	flag.Bool("ignoreUnresolved", false, "If present, unresolved test cases will be considered as bypassed (affect score and results)")
+	flag.Bool("blockConnReset", false, "If present, connection resets will be considered as block")
 
 	// Report settings
 	flag.String("wafName", wafName, "Name of the WAF product")
-	flag.Bool("includePayloads", false, "If true, payloads will be included in HTML/PDF report")
+	flag.Bool("includePayloads", false, "If present, payloads will be included in HTML/PDF report")
 	flag.String("reportPath", reportPath, "A directory to store reports")
 	reportName := flag.String("reportName", defaultReportName, "Report file name. Supports `time' package template format")
 	reportFormat := flag.StringSlice("reportFormat", []string{report.PdfFormat}, "Export report in the following formats: "+strings.Join(report.ReportFormats, ", "))
 	noEmailReport := flag.Bool("noEmailReport", false, "Save report locally")
 	email := flag.String("email", "", "E-mail to which the report will be sent")
+	flag.Bool("hideArgsInReport", false, "If present, GoTestWAF CLI arguments will not be displayed in the report")
 
 	flag.Parse()
 

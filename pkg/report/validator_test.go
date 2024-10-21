@@ -131,7 +131,7 @@ func TestCustomValidators(t *testing.T) {
 		{tag: "indicator", field: "ApiSecChartData.Indicators", setter: setIndicator, value: "some indicator (100.0%)", isBad: false},
 
 		// args, bad
-		{tag: "args", field: "Args", setter: setArgs, value: "", isBad: true},
+		{tag: "args", field: "Args", setter: setArgs, value: "", isBad: false},
 		{tag: "args", field: "Args", setter: setArgs, value: "lkajdf", isBad: true},
 		{tag: "args", field: "Args", setter: setArgs, value: "-a", isBad: true},
 		{tag: "args", field: "Args", setter: setArgs, value: "-lkajdf", isBad: true},
