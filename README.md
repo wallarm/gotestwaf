@@ -363,41 +363,42 @@ Usage: ./gotestwaf [OPTIONS] --url <URL>
 Options:
       --addDebugHeader          Add header with a hash of the test information in each request
       --addHeader string        An HTTP header to add to requests
-      --blockConnReset          If true, connection resets will be considered as block
+      --blockConnReset          If present, connection resets will be considered as block
       --blockRegex string       Regex to detect a blocking page with the same HTTP response status code as a not blocked request
       --blockStatusCodes ints   HTTP status code that WAF uses while blocking requests (default [403])
       --configPath string       Path to the config file (default "config.yaml")
       --email string            E-mail to which the report will be sent
-      --followCookies           If true, use cookies sent by the server. May work only with --maxIdleConns=1 (gohttp only)
+      --followCookies           If present, use cookies sent by the server. May work only with --maxIdleConns=1 (gohttp only)
       --graphqlURL string       GraphQL URL to check
       --grpcPort uint16         gRPC port to check
-      --httpClient string       Which HTTP client use to send requests: chrome, gohttp (default "gohttp")
+      --hideArgsInReport        If present, GoTestWAF CLI arguments will not be displayed in the report
+      --httpClient string       Which HTTP client use to send requests: gohttp, chrome (default "gohttp")
       --idleConnTimeout int     The maximum amount of time a keep-alive connection will live (gohttp only) (default 2)
-      --ignoreUnresolved        If true, unresolved test cases will be considered as bypassed (affect score and results)
-      --includePayloads         If true, payloads will be included in HTML/PDF report
+      --ignoreUnresolved        If present, unresolved test cases will be considered as bypassed (affect score and results)
+      --includePayloads         If present, payloads will be included in HTML/PDF report
       --logFormat string        Set logging format: text, json (default "text")
       --logLevel string         Logging level: panic, fatal, error, warn, info, debug, trace (default "info")
       --maxIdleConns int        The maximum number of keep-alive connections (gohttp only) (default 2)
       --maxRedirects int        The maximum number of handling redirects (gohttp only) (default 50)
       --noEmailReport           Save report locally
-      --nonBlockedAsPassed      If true, count requests that weren't blocked as passed. If false, requests that don't satisfy to PassStatusCodes/PassRegExp as blocked
+      --nonBlockedAsPassed      If present, count requests that weren't blocked as passed. If false, requests that don't satisfy to PassStatusCodes/PassRegExp as blocked
       --openapiFile string      Path to openAPI file
       --passRegex string        Regex to a detect normal (not blocked) web page with the same HTTP status code as a blocked request
       --passStatusCodes ints    HTTP response status code that WAF uses while passing requests (default [200,404])
       --proxy string            Proxy URL to use
-      --quiet                   If true, disable verbose logging
+      --quiet                   If present, disable verbose logging
       --randomDelay int         Random delay in ms in addition to the delay between requests (default 400)
       --renewSession            Renew cookies before each test. Should be used with --followCookies flag (gohttp only)
-      --reportFormat string     Export report to one of the following formats: none, pdf, html, json (default "pdf")
+      --reportFormat strings    Export report in the following formats: json, html, pdf, none (default [pdf])
       --reportName string       Report file name. Supports `time' package template format (default "waf-evaluation-report-2006-January-02-15-04-05")
       --reportPath string       A directory to store reports (default "reports")
       --sendDelay int           Delay in ms between requests (default 400)
-      --skipWAFBlockCheck       If true, WAF detection tests will be skipped
+      --skipWAFBlockCheck       If present, WAF detection tests will be skipped
       --skipWAFIdentification   Skip WAF identification
       --testCase string         If set then only this test case will be run
       --testCasesPath string    Path to a folder with test cases (default "testcases")
       --testSet string          If set then only this test set's cases will be run
-      --tlsVerify               If true, the received TLS certificate will be verified
+      --tlsVerify               If present, the received TLS certificate will be verified
       --url string              URL to check
       --version                 Show GoTestWAF version and exit
       --wafName string          Name of the WAF product (default "generic")

@@ -62,7 +62,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if !cfg.ReportHideArgs {
+	if !cfg.HideArgsInReport {
 		cfg.Args = args
 	}
 
