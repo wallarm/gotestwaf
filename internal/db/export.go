@@ -2,6 +2,7 @@ package db
 
 import (
 	"encoding/csv"
+	"github.com/wallarm/gotestwaf/internal/helpers"
 	"os"
 	"strconv"
 
@@ -27,6 +28,7 @@ func (db *DB) ExportPayloads(payloadsExportFile string) error {
 		"Set",
 		"Case",
 		"Test Result",
+		"Test Key",
 	}); err != nil {
 		return err
 	}
@@ -54,6 +56,7 @@ func (db *DB) ExportPayloads(payloadsExportFile string) error {
 			blockedTest.Set,
 			blockedTest.Case,
 			testResult,
+			helpers.HexOfHashOfTestIdentifier(blockedTest.Set, blockedTest.Case, blockedTest.Placeholder, blockedTest.Encoder, blockedTest.Payload),
 		})
 		if err != nil {
 			return err
@@ -83,6 +86,7 @@ func (db *DB) ExportPayloads(payloadsExportFile string) error {
 			passedTest.Set,
 			passedTest.Case,
 			testResult,
+			helpers.HexOfHashOfTestIdentifier(passedTest.Set, passedTest.Case, passedTest.Placeholder, passedTest.Encoder, passedTest.Payload),
 		})
 		if err != nil {
 			return err
@@ -107,6 +111,7 @@ func (db *DB) ExportPayloads(payloadsExportFile string) error {
 			naTest.Set,
 			naTest.Case,
 			"unknown",
+			helpers.HexOfHashOfTestIdentifier(naTest.Set, naTest.Case, naTest.Placeholder, naTest.Encoder, naTest.Payload),
 		})
 		if err != nil {
 			return err

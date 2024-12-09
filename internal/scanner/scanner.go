@@ -3,8 +3,6 @@ package scanner
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"math/rand"
@@ -478,22 +476,12 @@ func (s *Scanner) produceTests(ctx context.Context, n int) <-chan *payloadConfig
 
 		var debugHeaderValue string
 
-		hash := sha256.New()
-
 		for _, testCase := range testCases {
 			for _, payload := range testCase.Payloads {
 				for _, encoder := range testCase.Encoders {
 					for _, placeholder := range testCase.Placeholders {
 						if s.enableDebugHeader {
-							hash.Reset()
-
-							hash.Write([]byte(testCase.Set))
-							hash.Write([]byte(testCase.Name))
-							hash.Write([]byte(placeholder.Name))
-							hash.Write([]byte(encoder))
-							hash.Write([]byte(payload))
-
-							debugHeaderValue = hex.EncodeToString(hash.Sum(nil))
+							debugHeaderValue = testCase.Set + " /// " + testCase.Name + " /// " + placeholder.Name + " /// " + encoder + " /// " + helpers.HexOfHashOfTestIdentifier(testCase.Set, testCase.Name, placeholder.Name, encoder, payload)
 						} else {
 							debugHeaderValue = ""
 						}
