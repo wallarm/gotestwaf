@@ -387,11 +387,11 @@
                         <br>
                         <span class="row__name">GoTestWAF version</span>
                         :
-                        <span class="row__content">{{.GtwVersion}}</span>
+                        <span class="row__content mono">{{.GtwVersion}}</span>
                         <br>
                         <span class="row__name">Test cases fingerprint</span>
                         :
-                        <span class="row__content">{{.TestCasesFP}}</span>
+                        <span class="row__content mono">{{.TestCasesFP}}</span>
                         <br>
                         {{$length := len $.OpenApiFile}}{{if ne $length 0}}
                         <span class="row__name">OpenAPI file</span>
