@@ -261,6 +261,8 @@ Summary:
 
 The report file `waf-evaluation-report-<date>.pdf` is available in the `reports` folder of the user directory. You can also specify the directory to save the reports with the `reportPath` parameter and the name of the report file with the `reportName` parameter. To learn advanced configuration options, please use this [link](#configuration-options).
 
+You can found an example of PDF report [here](./docs/report_example.pdf).
+
 ![Example of GoTestWaf report](./docs/report_preview.png)
 
 ## Demos
