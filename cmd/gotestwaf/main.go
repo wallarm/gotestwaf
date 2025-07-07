@@ -184,7 +184,14 @@ func run(ctx context.Context, cfg *config.Config, logger *logrus.Logger) error {
 	}
 
 	reportTime := time.Now()
-	reportName := reportTime.Format(cfg.ReportName)
+
+	// Set report name as entered
+	reportName := cfg.ReportName
+
+	// If report name is default - replace time tokens with real data
+	if cfg.ReportName == defaultReportName {
+		reportName = reportTime.Format(cfg.ReportName)
+	}
 
 	reportFile := filepath.Join(cfg.ReportPath, reportName)
 
