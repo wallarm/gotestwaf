@@ -60,9 +60,6 @@ func printConsoleReportTable(
 	// Negative cases summary table
 	table := tablewriter.NewWriter(&buffer)
 	table.Header(baseHeader)
-	//for index := range baseHeader {
-	//	table.SetColMinWidth(index, colMinWidth)
-	//}
 
 	for _, row := range s.TruePositiveTests.SummaryTable {
 		rowAppend := []string{
@@ -123,9 +120,6 @@ func printConsoleReportTable(
 	// Positive cases summary table
 	posTable := tablewriter.NewWriter(&buffer)
 	posTable.Header(baseHeader)
-	//for index := range baseHeader {
-	//	posTable.SetColMinWidth(index, colMinWidth)
-	//}
 
 	for _, row := range s.TrueNegativeTests.SummaryTable {
 		rowAppend := []string{
@@ -187,9 +181,6 @@ func printConsoleReportTable(
 	sumTable := tablewriter.NewWriter(&buffer)
 	baseHeader = []string{"Type", "True-Positive tests blocked", "True-Negative tests passed", "Average"}
 	sumTable.Header(baseHeader)
-	//for index := range baseHeader {
-	//	sumTable.SetColMinWidth(index, 27)
-	//}
 
 	row := []string{"API Security"}
 	if s.Score.ApiSec.TruePositive != -1.0 {
