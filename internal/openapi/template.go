@@ -35,7 +35,7 @@ type Template struct {
 // NewTemplates parses OpenAPI document and returns all possible templates.
 func NewTemplates(openapiDoc *openapi3.T, basePath string) (Templates, error) {
 	var unsortedTemplates []*Template
-	for path, info := range openapiDoc.Paths {
+	for path, info := range openapiDoc.Paths.Map() {
 		pathTemplates, err := pathTemplates(openapiDoc, basePath, path, info)
 		if err != nil {
 			return nil, err

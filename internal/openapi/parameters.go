@@ -115,8 +115,14 @@ func parsePathParameter(parameter *openapi3.Parameter) (paramName string, spec *
 	}
 
 	schema := parameter.Schema.Value
-	spec.paramType = schema.Type
-	switch schema.Type {
+
+	paramType := ""
+	if schema.Type != nil && len(*schema.Type) > 0 {
+		paramType = (*schema.Type)[0]
+	}
+
+	spec.paramType = paramType
+	switch paramType {
 	case openapi3.TypeNumber:
 		randFloat := genRandomFloat(schema.Min, schema.Max, schema.ExclusiveMin, schema.ExclusiveMax)
 		spec.value = fmt.Sprintf("%f", randFloat)
@@ -173,8 +179,13 @@ func parseQueryParameter(parameter *openapi3.Parameter) (paramName string, spec 
 		return "", nil, fmt.Errorf("neither schema nor content not found in query parameter specification")
 	}
 
-	spec.paramType = schema.Type
-	switch schema.Type {
+	paramType := ""
+	if schema.Type != nil && len(*schema.Type) > 0 {
+		paramType = (*schema.Type)[0]
+	}
+
+	spec.paramType = paramType
+	switch paramType {
 	case openapi3.TypeNumber:
 		randFloat := genRandomFloat(schema.Min, schema.Max, schema.ExclusiveMin, schema.ExclusiveMax)
 		spec.value = fmt.Sprintf("%f", randFloat)
@@ -194,9 +205,13 @@ func parseQueryParameter(parameter *openapi3.Parameter) (paramName string, spec 
 
 	case openapi3.TypeArray:
 		items := schema.Items.Value
-		spec.paramType = items.Type
+		paramType = ""
+		if schema.Type != nil && len(*schema.Type) > 0 {
+			paramType = (*items.Type)[0]
+		}
 
-		switch items.Type {
+		spec.paramType = paramType
+		switch paramType {
 		case openapi3.TypeNumber:
 			randFloat := genRandomFloat(schema.Min, schema.Max, schema.ExclusiveMin, schema.ExclusiveMax)
 			spec.value = fmt.Sprintf("%f", randFloat)
@@ -306,8 +321,13 @@ func parseHeaderParameter(parameter *openapi3.Parameter) (paramName string, spec
 		return "", nil, fmt.Errorf("neither schema nor content not found in header specification")
 	}
 
-	spec.paramType = schema.Type
-	switch schema.Type {
+	paramType := ""
+	if schema.Type != nil && len(*schema.Type) > 0 {
+		paramType = (*schema.Type)[0]
+	}
+
+	spec.paramType = paramType
+	switch paramType {
 	case openapi3.TypeNumber:
 		randFloat := genRandomFloat(schema.Min, schema.Max, schema.ExclusiveMin, schema.ExclusiveMax)
 		spec.value = fmt.Sprintf("%f", randFloat)
