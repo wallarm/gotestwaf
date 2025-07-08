@@ -152,9 +152,9 @@ crs_testcases.each do |gtw_testcase_name, test_set|
     next unless file.match(/.yaml$/)
 
     parsed_yaml_data = YAML.safe_load(File.read(file))
-    next if parsed_yaml_data['meta']['enabled'] != true
 
-    rule_id = parsed_yaml_data['meta']['name'].split('.')[0]
+    rule_id = parsed_yaml_data['rule_id']
+
     next if paranoia_level[rule_id].nil? || paranoia_level[rule_id] >= max_paranoia_level
     parsed_yaml_data['tests'].each { |t| current_test_set_data << t }
   end
