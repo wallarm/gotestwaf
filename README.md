@@ -363,7 +363,7 @@ Supported GoTestWAF configuration options are described below.
 Usage: ./gotestwaf [OPTIONS] --url <URL>
 
 Options:
-      --addDebugHeader          Add header with a hash of the test information in each request
+      --addDebugHeader          Add header "X-GoTestWAF-Test" with a hash of the test information in each request
       --addHeader string        An HTTP header to add to requests
       --blockConnReset          If present, connection resets will be considered as block
       --blockRegex string       Regex to detect a blocking page with the same HTTP response status code as a not blocked request
@@ -374,7 +374,7 @@ Options:
       --graphqlURL string       GraphQL URL to check
       --grpcPort uint16         gRPC port to check
       --hideArgsInReport        If present, GoTestWAF CLI arguments will not be displayed in the report
-      --httpClient string       Which HTTP client use to send requests: gohttp, chrome (default "gohttp")
+      --httpClient string       Which HTTP client use to send requests: chrome, gohttp (default "gohttp")
       --idleConnTimeout int     The maximum amount of time a keep-alive connection will live (gohttp only) (default 2)
       --ignoreUnresolved        If present, unresolved test cases will be considered as bypassed (affect score and results)
       --includePayloads         If present, payloads will be included in HTML/PDF report
@@ -391,7 +391,7 @@ Options:
       --quiet                   If present, disable verbose logging
       --randomDelay int         Random delay in ms in addition to the delay between requests (default 400)
       --renewSession            Renew cookies before each test. Should be used with --followCookies flag (gohttp only)
-      --reportFormat strings    Export report in the following formats: json, html, pdf, none (default [pdf])
+      --reportFormat strings    Export report in the following formats: none, json, html, pdf (default [pdf])
       --reportName string       Report file name. Supports `time' package template format (default "waf-evaluation-report-2006-January-02-15-04-05")
       --reportPath string       A directory to store reports (default "reports")
       --sendDelay int           Delay in ms between requests (default 400)

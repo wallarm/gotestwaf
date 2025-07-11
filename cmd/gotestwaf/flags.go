@@ -114,7 +114,7 @@ func parseFlags() (args []string, err error) {
 	flag.Bool("tlsVerify", false, "If present, the received TLS certificate will be verified")
 	flag.String("proxy", "", "Proxy URL to use")
 	flag.String("addHeader", "", "An HTTP header to add to requests")
-	flag.Bool("addDebugHeader", false, "Add header with a hash of the test information in each request")
+	flag.Bool("addDebugHeader", false, "Add header \"X-GoTestWAF-Test\" with a hash of the test information in each request")
 
 	// GoHTTP client only settings
 	flag.Int("maxIdleConns", 2, "The maximum number of keep-alive connections (gohttp only)")
