@@ -112,7 +112,12 @@ func schemaToMap(name string, schema *openapi3.Schema, isXML bool) (
 		}
 	}
 
-	switch schema.Type {
+	paramType := ""
+	if schema.Type != nil && len(*schema.Type) > 0 {
+		paramType = (*schema.Type)[0]
+	}
+
+	switch paramType {
 	case openapi3.TypeInteger:
 		randInt := genRandomInt(schema.Min, schema.Max, schema.ExclusiveMin, schema.ExclusiveMax)
 		value = fmt.Sprintf("%d", randInt)
@@ -126,7 +131,7 @@ func schemaToMap(name string, schema *openapi3.Schema, isXML bool) (
 		strAvailable = true
 
 		spec := &parameterSpec{}
-		spec.paramType = schema.Type
+		spec.paramType = paramType
 		spec.minLength = schema.MinLength
 		if schema.MaxLength == nil {
 			spec.maxLength = math.MaxUint64
