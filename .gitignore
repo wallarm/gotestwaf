@@ -1,4 +1,5 @@
 .idea
+.tmp
 .DS_store
 /gotestwaf
 /main
