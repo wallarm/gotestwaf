@@ -30,26 +30,26 @@ var (
 		{
 			Name:         "ModSecurity PARANOIA=1",
 			ApiSec:       computeGrade(42.86, 1),
-			AppSec:       computeGrade(67.57, 1),
-			OverallScore: computeGrade(55.22, 1),
+			AppSec:       computeGrade(68.16, 1),
+			OverallScore: computeGrade(55.51, 1),
 		},
 		{
 			Name:         "ModSecurity PARANOIA=2",
 			ApiSec:       computeGrade(57.14, 1),
-			AppSec:       computeGrade(58.94, 1),
-			OverallScore: computeGrade(58.04, 1),
+			AppSec:       computeGrade(60.12, 1),
+			OverallScore: computeGrade(58.63, 1),
 		},
 		{
 			Name:         "ModSecurity PARANOIA=3",
-			ApiSec:       computeGrade(85.71, 1),
-			AppSec:       computeGrade(50.86, 1),
-			OverallScore: computeGrade(68.29, 1),
+			ApiSec:       computeGrade(78.57, 1),
+			AppSec:       computeGrade(51.24, 1),
+			OverallScore: computeGrade(64.91, 1),
 		},
 		{
 			Name:         "ModSecurity PARANOIA=4",
 			ApiSec:       computeGrade(100.00, 1),
-			AppSec:       computeGrade(36.76, 1),
-			OverallScore: computeGrade(68.38, 1),
+			AppSec:       computeGrade(36.74, 1),
+			OverallScore: computeGrade(68.37, 1),
 		},
 	}
 
