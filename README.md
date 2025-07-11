@@ -409,23 +409,6 @@ Options:
 
 GoTestWAF supports two HTTP clients for performing requests, selectable via the `--httpClient` option. The default client is the standard Golang HTTP client. The second option is Chrome, which can be used with the `--httpClient=chrome` CLI argument. Note that on Linux systems, you must add the `--cap-add=SYS_ADMIN` argument to the Docker arguments to run GoTestWAF with Chrome as the request performer.
 
-### Report name
-
-With the `reportName` option you can set your own filename for GoTestWAF reports. This option supports golang's `time` package for timestamps. Details can be found [there](https://pkg.go.dev/time#pkg-constants). You can use following placeholders to add timestamp to your report name:
-
-* Year: `2006`, `06`
-* Month: `Jan`, `January`
-* Textual day of the week: `Mon`, `Monday`
-* Numeric day of the month: `2`, `_2`, `02`
-* Numeric day of the year: `__2`, `002`
-* Hour: `15`, `3`, `03` (PM or AM)
-* Minute: `4`, `04`
-* Second: `5`, `05`
-* AM/PM mark: `PM`
-* Numeric zones: `Z0700` = Z or ±hhmm, `Z07:00` = Z or ±hh:mm, `Z07` = Z or ±hh
-
-For example, default `reportName` is `waf-evaluation-report-2006-January-02-15-04-05`, where `2006` will be replaced with actual year, `January` - month, `02` - day, `15` - hour, `04` - minute and `05` - second.
-
 
 ### Scan based on OpenAPI file
 
