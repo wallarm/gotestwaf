@@ -174,89 +174,92 @@ To learn advanced configuration options, please use this [link](#configuration-o
 Check the evaluation results logged using the `STDOUT` and `STDERR` services. For example:
 
 ```
-INFO[0000] GoTestWAF started                             version=v0.4.11-1-g8ccc316
+INFO[0000] GoTestWAF started                             version=v0.5.6-7-g48e6959
 INFO[0000] Test cases loading started                   
 INFO[0000] Test cases loading finished                  
-INFO[0000] Test cases fingerprint                        fp=23c3ae919db5e6edcb62815de1a09fdf
+INFO[0000] Test cases fingerprint                        fp=c6d14d6138601d19d215bb97806bcda3
 INFO[0000] Try to identify WAF solution                 
 INFO[0000] WAF was not identified                       
-INFO[0000] WAF pre-check                                 url="http://localhost:8080"
+INFO[0000] gohttp is used as an HTTP client to make requests  http_client=gohttp
+INFO[0000] WAF pre-check                                 url="http://host.docker.internal:8080"
 INFO[0000] WAF pre-check                                 blocked=true code=403 status=done
-INFO[0000] WebSocket pre-check                           status=started url="ws://localhost:8080"
-INFO[0000] WebSocket pre-check                           connection="not available" error="websocket: bad handshake" status=done
 INFO[0000] gRPC pre-check                                status=started
 INFO[0000] gRPC pre-check                                connection="not available" status=done
-INFO[0000] Scanning started                              url="http://localhost:8080"
-INFO[0025] Scanning finished                             duration=25.043996212s                                                                                                                          
+INFO[0000] GraphQL pre-check                             status=started
+INFO[0000] GraphQL pre-check                             connection="not available" status=done
+INFO[0000] Scanning started                              url="http://host.docker.internal:8080"
+INFO[0005] Scanning finished                             duration=5.422700876s                                                                            
 True-Positive Tests:
-+-----------------------+-------------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
-|       TEST SET        |        TEST CASE        |     PERCENTAGE, %     |        BLOCKED        |       BYPASSED        |      UNRESOLVED       |         SENT          |        FAILED         |
-+-----------------------+-------------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
-| community             | community-128kb-rce     |                  0.00 |                     0 |                     0 |                     1 |                     1 |                     0 |
-| community             | community-128kb-sqli    |                  0.00 |                     0 |                     0 |                     1 |                     1 |                     0 |
-| community             | community-128kb-xss     |                  0.00 |                     0 |                     0 |                     1 |                     1 |                     0 |
-| community             | community-16kb-rce      |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
-| community             | community-16kb-sqli     |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
-| community             | community-16kb-xss      |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
-| community             | community-32kb-rce      |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
-| community             | community-32kb-sqli     |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
-| community             | community-32kb-xss      |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
-| community             | community-64kb-rce      |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
-| community             | community-64kb-sqli     |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
-| community             | community-64kb-xss      |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
-| community             | community-8kb-rce       |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
-| community             | community-8kb-sqli      |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
-| community             | community-8kb-xss       |                100.00 |                     1 |                     0 |                     0 |                     1 |                     0 |
-| community             | community-lfi           |                100.00 |                     8 |                     0 |                     0 |                     8 |                     0 |
-| community             | community-lfi-multipart |                  0.00 |                     0 |                     0 |                     9 |                     9 |                     0 |
-| community             | community-rce           |                 83.33 |                    10 |                     2 |                     0 |                    12 |                     0 |
-| community             | community-sqli          |                100.00 |                    32 |                     0 |                     0 |                    32 |                     0 |
-| community             | community-user-agent    |                 70.00 |                     7 |                     3 |                     0 |                    10 |                     0 |
-| community             | community-xss           |                 95.80 |                   502 |                    22 |                     0 |                   524 |                     0 |
-| community             | community-xxe           |                  0.00 |                     0 |                     2 |                     0 |                     2 |                     0 |
-| owasp                 | crlf                    |                 77.78 |                     7 |                     2 |                     0 |                     9 |                     0 |
-| owasp                 | ldap-injection          |                  3.13 |                     2 |                    62 |                     0 |                    64 |                     0 |
-| owasp                 | mail-injection          |                 12.50 |                     3 |                    21 |                     0 |                    24 |                     0 |
-| owasp                 | nosql-injection         |                  0.00 |                     0 |                    70 |                     0 |                    70 |                     0 |
-| owasp                 | path-traversal          |                 24.77 |                    27 |                    82 |                     1 |                   110 |                     0 |
-| owasp                 | rce                     |                 33.33 |                    22 |                    44 |                     0 |                    66 |                     0 |
-| owasp                 | rce-urlparam            |                 33.33 |                     3 |                     6 |                     0 |                     9 |                     0 |
-| owasp                 | shell-injection         |                 27.08 |                    13 |                    35 |                     0 |                    48 |                     0 |
-| owasp                 | sql-injection           |                 24.36 |                    38 |                   118 |                     0 |                   156 |                     0 |
-| owasp                 | ss-include              |                 37.50 |                    15 |                    25 |                     0 |                    40 |                     0 |
-| owasp                 | sst-injection           |                 18.75 |                    12 |                    52 |                     0 |                    64 |                     0 |
-| owasp                 | xml-injection           |                  0.00 |                     0 |                    12 |                     1 |                    13 |                     0 |
-| owasp                 | xss-scripting           |                 33.20 |                   167 |                   336 |                     1 |                   504 |                     0 |
-| owasp-api             | graphql                 |                  0.00 |                     0 |                     6 |                     0 |                     6 |                     0 |
-| owasp-api             | graphql-post            |                 50.00 |                     2 |                     2 |                     0 |                     4 |                     0 |
-| owasp-api             | grpc                    |                  0.00 |                     0 |                     0 |                     0 |                     0 |                     0 |
-| owasp-api             | non-crud                |                100.00 |                     2 |                     0 |                     0 |                     2 |                     0 |
-| owasp-api             | rest                    |                 23.08 |                     3 |                    10 |                     0 |                    13 |                     0 |
-| owasp-api             | soap                    |                 23.08 |                     3 |                    10 |                     0 |                    13 |                     0 |
-+-----------------------+-------------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
-|         DATE:         |      PROJECT NAME:      | TRUE-POSITIVE SCORE:  |  BLOCKED (RESOLVED):  | BYPASSED (RESOLVED):  |  UNRESOLVED (SENT):   |      TOTAL SENT:      |    FAILED (TOTAL):    |
-|      2024-02-08       |         GENERIC         |        49.12%         |   890/1812 (49.12%)   |   922/1812 (50.88%)   |    15/1827 (0.82%)    |         1827          |    0/1827 (0.00%)     |
-+-----------------------+-------------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
+┌────────────┬───────────────────────────┬──────────────────────┬─────────────────────┬──────────────────────┬────────────────────┬─────────────┬─────────────────┐
+│  TEST SET  │         TEST CASE         │    PERCENTAGE , %    │       BLOCKED       │       BYPASSED       │     UNRESOLVED     │    SENT     │     FAILED      │
+├────────────┼───────────────────────────┼──────────────────────┼─────────────────────┼──────────────────────┼────────────────────┼─────────────┼─────────────────┤
+│ community  │ community-128kb-rce       │ 0.00                 │ 0                   │ 0                    │ 1                  │ 1           │ 0               │
+│ community  │ community-128kb-sqli      │ 0.00                 │ 0                   │ 0                    │ 1                  │ 1           │ 0               │
+│ community  │ community-128kb-xss       │ 0.00                 │ 0                   │ 0                    │ 1                  │ 1           │ 0               │
+│ community  │ community-16kb-rce        │ 100.00               │ 1                   │ 0                    │ 0                  │ 1           │ 0               │
+│ community  │ community-16kb-sqli       │ 100.00               │ 1                   │ 0                    │ 0                  │ 1           │ 0               │
+│ community  │ community-16kb-xss        │ 100.00               │ 1                   │ 0                    │ 0                  │ 1           │ 0               │
+│ community  │ community-32kb-rce        │ 100.00               │ 1                   │ 0                    │ 0                  │ 1           │ 0               │
+│ community  │ community-32kb-sqli       │ 100.00               │ 1                   │ 0                    │ 0                  │ 1           │ 0               │
+│ community  │ community-32kb-xss        │ 100.00               │ 1                   │ 0                    │ 0                  │ 1           │ 0               │
+│ community  │ community-64kb-rce        │ 100.00               │ 1                   │ 0                    │ 0                  │ 1           │ 0               │
+│ community  │ community-64kb-sqli       │ 100.00               │ 1                   │ 0                    │ 0                  │ 1           │ 0               │
+│ community  │ community-64kb-xss        │ 100.00               │ 1                   │ 0                    │ 0                  │ 1           │ 0               │
+│ community  │ community-8kb-rce         │ 100.00               │ 1                   │ 0                    │ 0                  │ 1           │ 0               │
+│ community  │ community-8kb-sqli        │ 100.00               │ 1                   │ 0                    │ 0                  │ 1           │ 0               │
+│ community  │ community-8kb-xss         │ 100.00               │ 1                   │ 0                    │ 0                  │ 1           │ 0               │
+│ community  │ community-lfi             │ 100.00               │ 8                   │ 0                    │ 0                  │ 8           │ 0               │
+│ community  │ community-lfi-multipart   │ 0.00                 │ 0                   │ 0                    │ 2                  │ 2           │ 0               │
+│ community  │ community-rce             │ 50.00                │ 2                   │ 2                    │ 0                  │ 4           │ 0               │
+│ community  │ community-rce-rawrequests │ 100.00               │ 3                   │ 0                    │ 0                  │ 3           │ 0               │
+│ community  │ community-sqli            │ 100.00               │ 12                  │ 0                    │ 0                  │ 12          │ 0               │
+│ community  │ community-user-agent      │ 66.67                │ 6                   │ 3                    │ 0                  │ 9           │ 0               │
+│ community  │ community-xss             │ 88.46                │ 92                  │ 12                   │ 0                  │ 104         │ 0               │
+│ community  │ community-xxe             │ 0.00                 │ 0                   │ 1                    │ 1                  │ 2           │ 0               │
+│ owasp      │ crlf                      │ 85.71                │ 6                   │ 1                    │ 0                  │ 7           │ 0               │
+│ owasp      │ ldap-injection            │ 8.33                 │ 2                   │ 22                   │ 0                  │ 24          │ 0               │
+│ owasp      │ mail-injection            │ 12.50                │ 3                   │ 21                   │ 0                  │ 24          │ 0               │
+│ owasp      │ nosql-injection           │ 24.00                │ 12                  │ 38                   │ 0                  │ 50          │ 0               │
+│ owasp      │ path-traversal            │ 30.00                │ 6                   │ 14                   │ 0                  │ 20          │ 0               │
+│ owasp      │ rce                       │ 33.33                │ 2                   │ 4                    │ 0                  │ 6           │ 0               │
+│ owasp      │ rce-urlparam              │ 33.33                │ 3                   │ 6                    │ 0                  │ 9           │ 0               │
+│ owasp      │ rce-urlpath               │ 0.00                 │ 0                   │ 3                    │ 0                  │ 3           │ 0               │
+│ owasp      │ shell-injection           │ 18.75                │ 6                   │ 26                   │ 0                  │ 32          │ 0               │
+│ owasp      │ sql-injection             │ 29.17                │ 14                  │ 34                   │ 0                  │ 48          │ 0               │
+│ owasp      │ ss-include                │ 50.00                │ 12                  │ 12                   │ 0                  │ 24          │ 0               │
+│ owasp      │ sst-injection             │ 29.17                │ 7                   │ 17                   │ 0                  │ 24          │ 0               │
+│ owasp      │ xml-injection             │ 0.00                 │ 0                   │ 7                    │ 0                  │ 7           │ 0               │
+│ owasp      │ xss-scripting             │ 39.91                │ 89                  │ 134                  │ 1                  │ 224         │ 0               │
+│ owasp-api  │ graphql                   │ 0.00                 │ 0                   │ 0                    │ 0                  │ 0           │ 0               │
+│ owasp-api  │ graphql-post              │ 0.00                 │ 0                   │ 0                    │ 0                  │ 0           │ 0               │
+│ owasp-api  │ grpc                      │ 0.00                 │ 0                   │ 0                    │ 0                  │ 0           │ 0               │
+│ owasp-api  │ non-crud                  │ 100.00               │ 2                   │ 0                    │ 0                  │ 2           │ 0               │
+│ owasp-api  │ rest                      │ 42.86                │ 3                   │ 4                    │ 0                  │ 7           │ 0               │
+│ owasp-api  │ soap                      │ 20.00                │ 1                   │ 4                    │ 0                  │ 5           │ 0               │
+├────────────┼───────────────────────────┼──────────────────────┼─────────────────────┼──────────────────────┼────────────────────┼─────────────┼─────────────────┤
+│      Date: │             Project Name: │ True-Positive Score: │ Blocked (Resolved): │ Bypassed (Resolved): │ Unresolved (Sent): │ Total Sent: │ Failed (Total): │
+│ 2025-07-14 │                   generic │               45.36% │    303/668 (45.36%) │     365/668 (54.64%) │      7/675 (1.04%) │         675 │   0/675 (0.00%) │
+└────────────┴───────────────────────────┴──────────────────────┴─────────────────────┴──────────────────────┴────────────────────┴─────────────┴─────────────────┘
 
 True-Negative Tests:
-+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
-|       TEST SET        |       TEST CASE       |     PERCENTAGE, %     |        BLOCKED        |       BYPASSED        |      UNRESOLVED       |         SENT          |        FAILED         |
-+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
-| false-pos             | texts                 |                 85.65 |                    31 |                   185 |                     0 |                   216 |                     0 |
-+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
-|         DATE:         |     PROJECT NAME:     | TRUE-NEGATIVE SCORE:  |  BLOCKED (RESOLVED):  | BYPASSED (RESOLVED):  |  UNRESOLVED (SENT):   |      TOTAL SENT:      |    FAILED (TOTAL):    |
-|      2024-02-08       |        GENERIC        |        85.65%         |    31/216 (14.35%)    |   185/216 (85.65%)    |     0/216 (0.00%)     |          216          |     0/216 (0.00%)     |
-+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+-----------------------+
+┌────────────┬───────────────┬──────────────────────┬─────────────────────┬──────────────────────┬────────────────────┬─────────────┬─────────────────┐
+│  TEST SET  │   TEST CASE   │    PERCENTAGE , %    │       BLOCKED       │       BYPASSED       │     UNRESOLVED     │    SENT     │     FAILED      │
+├────────────┼───────────────┼──────────────────────┼─────────────────────┼──────────────────────┼────────────────────┼─────────────┼─────────────────┤
+│ false-pos  │ texts         │ 90.78                │ 13                  │ 128                  │ 0                  │ 141         │ 0               │
+├────────────┼───────────────┼──────────────────────┼─────────────────────┼──────────────────────┼────────────────────┼─────────────┼─────────────────┤
+│      Date: │ Project Name: │ True-Negative Score: │ Blocked (Resolved): │ Bypassed (Resolved): │ Unresolved (Sent): │ Total Sent: │ Failed (Total): │
+│ 2025-07-14 │       generic │               90.78% │      13/141 (9.22%) │     128/141 (90.78%) │      0/141 (0.00%) │         141 │   0/141 (0.00%) │
+└────────────┴───────────────┴──────────────────────┴─────────────────────┴──────────────────────┴────────────────────┴─────────────┴─────────────────┘
 
 Summary:
-+-----------------------------+-----------------------------+-----------------------------+-----------------------------+
-|            TYPE             | TRUE-POSITIVE TESTS BLOCKED | TRUE-NEGATIVE TESTS PASSED  |           AVERAGE           |
-+-----------------------------+-----------------------------+-----------------------------+-----------------------------+
-| API Security                | 26.32%                      | n/a                         | 26.32%                      |
-| Application Security        | 49.61%                      | 85.65%                      | 67.63%                      |
-+-----------------------------+-----------------------------+-----------------------------+-----------------------------+
-|                                                                        SCORE            |           46.97%            |
-+-----------------------------+-----------------------------+-----------------------------+-----------------------------+
+┌──────────────────────┬───────────────────────────────┬──────────────────────────────┬─────────┐
+│         TYPE         │ TRUE - POSITIVE TESTS BLOCKED │ TRUE - NEGATIVE TESTS PASSED │ AVERAGE │
+├──────────────────────┼───────────────────────────────┼──────────────────────────────┼─────────┤
+│ API Security         │ 42.86%                        │ n/a                          │ 42.86%  │
+│ Application Security │ 45.41%                        │ 90.78%                       │ 68.10%  │
+├──────────────────────┼───────────────────────────────┼──────────────────────────────┼─────────┤
+│                      │                               │                        Score │  55.48% │
+└──────────────────────┴───────────────────────────────┴──────────────────────────────┴─────────┘
 ```
 
 The report file `waf-evaluation-report-<date>.pdf` is available in the `reports` folder of the user directory. You can also specify the directory to save the reports with the `reportPath` parameter and the name of the report file with the `reportName` parameter. To learn advanced configuration options, please use this [link](#configuration-options).
