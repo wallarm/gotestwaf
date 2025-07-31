@@ -55,7 +55,7 @@ type HtmlReport struct {
 	} `json:"app_sec"`
 
 	ComparisonTable []*ComparisonTableRow `json:"comparison_table" validate:"required,dive,required"`
-	WallarmResult   *ComparisonTableRow   `json:"wallarm_result" validate:"required,dive,required"`
+	WallarmResult   *ComparisonTableRow   `json:"wallarm_result" validate:"required,required"`
 
 	TotalSent                int `json:"total_sent" validate:"min=0"`
 	BlockedRequestsNumber    int `json:"blocked_requests_number" validate:"min=0"`
