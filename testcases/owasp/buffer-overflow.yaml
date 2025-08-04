@@ -1,0 +1,23 @@
+name: "Buffer Overflow"
+type: "custom"
+payloads:
+  # Long string of A's
+  - "A" * 5000
+  - "A" * 10000
+
+  # URL-encoded long string
+  - "%41" * 5000
+
+  # Format string overflow indicators
+  - "%x%x%x%x%x%x%x%x"
+  - "%s%s%s%s%s"
+
+  # Mixed pattern long string
+  - "AAAAA%x%x%xAAAAA" * 500
+
+  # Header overflow simulation
+  - "B" * 8000
+
+headers:
+  User-Agent: "GoTestWAF-Overflow-Test"
+  Content-Type: "application/x-www-form-urlencoded"
