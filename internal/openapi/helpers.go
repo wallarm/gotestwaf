@@ -1,11 +1,27 @@
 package openapi
 
-import "math/rand"
+import (
+	"math/rand"
+
+	"github.com/getkin/kin-openapi/openapi3"
+)
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
+// resolveBound converts an OpenAPI 3.0 boolean exclusive flag or an
+// OpenAPI 3.1 numeric exclusive bound into a (bound, exclusive) pair.
+func resolveBound(bound *float64, exclusive openapi3.ExclusiveBound) (*float64, bool) {
+	if exclusive.Value != nil {
+		return exclusive.Value, true
+	}
+	return bound, exclusive.IsTrue()
+}
+
 // genRandomInt generates a random integer within the given bounds.
-func genRandomInt(min, max *float64, exclusiveMin, exclusiveMax bool) int {
+func genRandomInt(min, max *float64, exclusiveMinBound, exclusiveMaxBound openapi3.ExclusiveBound) int {
+	min, exclusiveMin := resolveBound(min, exclusiveMinBound)
+	max, exclusiveMax := resolveBound(max, exclusiveMaxBound)
+
 	minValue := 0
 	maxValue := defaultMaxInt
 
@@ -29,7 +45,10 @@ func genRandomInt(min, max *float64, exclusiveMin, exclusiveMax bool) int {
 }
 
 // genRandomFloat generates a random float within the given bounds.
-func genRandomFloat(min, max *float64, exclusiveMin, exclusiveMax bool) float64 {
+func genRandomFloat(min, max *float64, exclusiveMinBound, exclusiveMaxBound openapi3.ExclusiveBound) float64 {
+	min, exclusiveMin := resolveBound(min, exclusiveMinBound)
+	max, exclusiveMax := resolveBound(max, exclusiveMaxBound)
+
 	minValue := float64(0)
 	maxValue := float64(defaultMaxInt)
 
