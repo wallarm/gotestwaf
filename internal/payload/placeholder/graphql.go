@@ -79,9 +79,17 @@ func (p *GraphQL) CreateRequest(requestURL, payload string, config PlaceholderCo
 
 	switch conf.Method {
 	case http.MethodGet:
-		queryParams := reqURL.Query()
-		queryParams.Set("query", payload)
-		reqURL.RawQuery = queryParams.Encode()
+		// Append the payload directly to RawQuery to avoid double-encoding.
+		// url.Values.Encode() would re-escape an already-encoded payload (e.g.
+		// one produced by the URL encoder), turning %3C into %253C.
+		// Preserving any existing query parameters and concatenating verbatim
+		// matches the behaviour of the URLParam and URLPath placeholders.
+		rawQuery := reqURL.RawQuery
+		if rawQuery != "" {
+			rawQuery += "&"
+		}
+		rawQuery += "query=" + payload
+		reqURL.RawQuery = rawQuery
 
 		req, err := http.NewRequest(http.MethodGet, reqURL.String(), nil)
 		if err != nil {
