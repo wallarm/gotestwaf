@@ -132,6 +132,8 @@ func (c *Client) CheckAvailability(ctx context.Context) (bool, error) {
 			return false, errors.New("couldn't create request to check GraphQL availability")
 		}
 
+		c.setHeaders(req, false)
+
 		resp, err := c.client.Do(req)
 		if err != nil {
 			return false, errors.New("couldn't send request to check GraphQL availability")
@@ -165,6 +167,25 @@ func (c *Client) CheckAvailability(ctx context.Context) (bool, error) {
 	return false, nil
 }
 
+// setHeaders applies the headers from the config file and --addHeader to a
+// request. Headers already present on the request (e.g. from RawRequest) are
+// kept. The User-Agent header is skipped when the payload is placed into it.
+func (c *Client) setHeaders(req *http.Request, isUAPlaceholder bool) {
+	for header, value := range c.headers {
+		if strings.EqualFold(header, placeholder.UAHeader) && isUAPlaceholder {
+			continue
+		}
+
+		if req.Header.Get(header) == "" {
+			req.Header.Set(header, value)
+		}
+	}
+
+	if c.hostHeader != "" {
+		req.Host = c.hostHeader
+	}
+}
+
 func (c *Client) IsAvailable() bool {
 	return c.isGraphQLAvailable
 }
@@ -182,21 +203,7 @@ func (c *Client) SendPayload(ctx context.Context, payloadInfo *payload.PayloadIn
 
 	req := r.Req.WithContext(ctx)
 
-	isUAPlaceholder := payloadInfo.PlaceholderName == placeholder.DefaultUserAgent.GetName()
-
-	for header, value := range c.headers {
-		// Skip setting the User-Agent header to the value from the GoTestWAF config file
-		// if the placeholder is UserAgent.
-		if strings.EqualFold(header, placeholder.UAHeader) && isUAPlaceholder {
-			continue
-		}
-
-		// Do not replace header values for RawRequest headers
-		if req.Header.Get(header) == "" {
-			req.Header.Set(header, value)
-		}
-	}
-	req.Host = c.hostHeader
+	c.setHeaders(req, payloadInfo.PlaceholderName == placeholder.DefaultUserAgent.GetName())
 
 	if payloadInfo.DebugHeaderValue != "" {
 		req.Header.Set(clients.GTWDebugHeader, payloadInfo.DebugHeaderValue)

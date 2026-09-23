@@ -38,6 +38,8 @@ type Config struct {
 	// Analysis settings
 	SkipWAFBlockCheck     bool   `mapstructure:"skipWAFBlockCheck"`
 	SkipWAFIdentification bool   `mapstructure:"skipWAFIdentification"`
+	SkipGraphQLCheck      bool   `mapstructure:"skipGraphQLCheck"`
+	SkipGRPCCheck         bool   `mapstructure:"skipGRPCCheck"`
 	BlockStatusCodes      []int  `mapstructure:"blockStatusCodes"`
 	PassStatusCodes       []int  `mapstructure:"passStatusCodes"`
 	BlockRegex            string `mapstructure:"blockRegex"`

@@ -131,6 +131,8 @@ func parseFlags() (args []string, err error) {
 	// Analysis settings
 	flag.Bool("skipWAFBlockCheck", false, "If present, WAF detection tests will be skipped")
 	flag.Bool("skipWAFIdentification", false, "Skip WAF identification")
+	flag.Bool("skipGraphQLCheck", false, "Skip the GraphQL availability pre-check and assume the GraphQL endpoint is available")
+	flag.Bool("skipGRPCCheck", false, "Skip the gRPC availability pre-check and assume the gRPC endpoint is available")
 	flag.IntSlice("blockStatusCodes", []int{403}, "HTTP status code that WAF uses while blocking requests")
 	flag.IntSlice("passStatusCodes", []int{200, 404}, "HTTP response status code that WAF uses while passing requests")
 	blockRegex := flag.String("blockRegex", "",
