@@ -34,10 +34,10 @@ payload:
 encoder:
   - Base64Flat
   - URL
-placeholder:
-  - UrlPath
-  - UrlParam
   - JSUnicode
+placeholder:
+  - URLPath
+  - URLParam
   - Header
 type: SQL Injection
 ```
