@@ -202,7 +202,7 @@ func printFullReportToJson(
 			TestSet:               bypass.TestSet,
 			TestCase:              bypass.TestCase,
 			Encoder:               bypass.Encoder,
-			Placeholder:           bypass.Encoder,
+			Placeholder:           bypass.Placeholder,
 			Status:                bypass.ResponseStatusCode,
 			TestResult:            "failed",
 			AdditionalInformation: bypass.AdditionalInfo,
@@ -217,7 +217,7 @@ func printFullReportToJson(
 				TestSet:               unresolved.TestSet,
 				TestCase:              unresolved.TestCase,
 				Encoder:               unresolved.Encoder,
-				Placeholder:           unresolved.Encoder,
+				Placeholder:           unresolved.Placeholder,
 				Status:                unresolved.ResponseStatusCode,
 				TestResult:            "unknown",
 				AdditionalInformation: unresolved.AdditionalInfo,
@@ -232,7 +232,7 @@ func printFullReportToJson(
 			TestSet:     failed.TestSet,
 			TestCase:    failed.TestCase,
 			Encoder:     failed.Encoder,
-			Placeholder: failed.Encoder,
+			Placeholder: failed.Placeholder,
 			Reason:      failed.Reason,
 		}
 
@@ -247,7 +247,7 @@ func printFullReportToJson(
 			TestSet:               blocked.TestSet,
 			TestCase:              blocked.TestCase,
 			Encoder:               blocked.Encoder,
-			Placeholder:           blocked.Encoder,
+			Placeholder:           blocked.Placeholder,
 			Status:                blocked.ResponseStatusCode,
 			TestResult:            "failed",
 			AdditionalInformation: blocked.AdditionalInfo,
@@ -262,7 +262,7 @@ func printFullReportToJson(
 				TestSet:               unresolved.TestSet,
 				TestCase:              unresolved.TestCase,
 				Encoder:               unresolved.Encoder,
-				Placeholder:           unresolved.Encoder,
+				Placeholder:           unresolved.Placeholder,
 				Status:                unresolved.ResponseStatusCode,
 				TestResult:            "unknown",
 				AdditionalInformation: unresolved.AdditionalInfo,
@@ -277,7 +277,7 @@ func printFullReportToJson(
 			TestSet:     failed.TestSet,
 			TestCase:    failed.TestCase,
 			Encoder:     failed.Encoder,
-			Placeholder: failed.Encoder,
+			Placeholder: failed.Placeholder,
 			Reason:      failed.Reason,
 		}
 
