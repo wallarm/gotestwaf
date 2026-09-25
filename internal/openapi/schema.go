@@ -117,6 +117,19 @@ func schemaToMap(name string, schema *openapi3.Schema, isXML bool) (
 		paramType = (*schema.Type)[0]
 	}
 
+	// The type field is optional in OpenAPI 3: infer it from the schema
+	// structure, falling back to string as the most generic value.
+	if paramType == "" {
+		switch {
+		case len(schema.Properties) > 0:
+			paramType = openapi3.TypeObject
+		case schema.Items != nil:
+			paramType = openapi3.TypeArray
+		default:
+			paramType = openapi3.TypeString
+		}
+	}
+
 	switch paramType {
 	case openapi3.TypeInteger:
 		randInt := genRandomInt(schema.Min, schema.Max, schema.ExclusiveMin, schema.ExclusiveMax)
@@ -196,7 +209,7 @@ func schemaToMap(name string, schema *openapi3.Schema, isXML bool) (
 		value = mapStructure
 
 	default:
-		return nil, false, nil, fmt.Errorf("unknown schema type: %s", schema.Type)
+		return nil, false, nil, fmt.Errorf("unknown schema type: %s", paramType)
 	}
 
 	if isXML {
