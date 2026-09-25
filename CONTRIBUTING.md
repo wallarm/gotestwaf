@@ -25,7 +25,8 @@ Please be respectful and constructive in all interactions. We welcome contributo
 
 ### Prerequisites
 
-- Go 1.20 or higher
+- Go version specified in `go.mod`
+- `golangci-lint` and `goimports` (for `make lint` and `make fmt`)
 - Docker (optional, for containerized testing)
 
 ### Building from Source
@@ -36,11 +37,20 @@ git clone https://github.com/wallarm/gotestwaf.git
 cd gotestwaf
 
 # Build the binary
-go build -o gotestwaf ./cmd/
+make gotestwaf_bin
+
+# Build the Docker image
+make gotestwaf
 
 # Run tests
-go test ./...
+make test
+
+# Run linter and formatter
+make lint
+make fmt
 ```
+
+To try your changes against a local ModSecurity instance, see `make modsec` and `make scan_local`.
 
 ## How to Contribute
 
@@ -57,7 +67,7 @@ go test ./...
 
 ### Code Contributions
 
-1. Ensure your code follows Go conventions (`go fmt`, `go vet`)
+1. Ensure your code follows Go conventions (`make fmt`, `make lint`)
 2. Add tests for new functionality
 3. Update documentation as needed
 
@@ -70,7 +80,12 @@ go test ./...
 
 ## Adding Test Cases
 
-Test cases are defined in `testcases/` directory as YAML files:
+Test cases are defined in the `testcases/` directory as YAML files, grouped into test sets:
+
+- `owasp/` — OWASP Top 10 attacks
+- `owasp-api/` — OWASP API Security Top 10 attacks
+- `community/` — community contributed test cases
+- `false-pos/` — legitimate requests that must not be blocked (false positive checks)
 
 ```yaml
 payload:
@@ -79,10 +94,12 @@ encoder:
   - URL
   - Base64Flat
 placeholder:
-  - UrlParam
+  - URLParam
   - Header
 type: Your Attack Type
 ```
+
+Payloads must be quoted YAML strings. The full list of supported encoders and placeholders is in the [README](README.md#how-it-works).
 
 ### Guidelines for Test Cases
 
