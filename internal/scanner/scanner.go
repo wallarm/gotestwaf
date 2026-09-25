@@ -176,6 +176,12 @@ func (s *Scanner) CheckIfJavaScriptRequired(ctx context.Context) (bool, error) {
 
 // CheckGRPCAvailability checks if the gRPC server is available at the given URL.
 func (s *Scanner) CheckGRPCAvailability(ctx context.Context) {
+	if s.cfg.SkipGRPCCheck {
+		s.logger.WithField("status", "skipped").Info("gRPC pre-check")
+		s.db.IsGrpcAvailable = s.grpcConn.IsAvailable()
+		return
+	}
+
 	s.logger.WithField("status", "started").Info("gRPC pre-check")
 
 	available, err := s.grpcConn.CheckAvailability(ctx)
@@ -201,6 +207,12 @@ func (s *Scanner) CheckGRPCAvailability(ctx context.Context) {
 
 // CheckGraphQLAvailability checks if the GraphQL is available at the given URL.
 func (s *Scanner) CheckGraphQLAvailability(ctx context.Context) {
+	if s.cfg.SkipGraphQLCheck {
+		s.logger.WithField("status", "skipped").Info("GraphQL pre-check")
+		s.db.IsGraphQLAvailable = s.graphqlClient.IsAvailable()
+		return
+	}
+
 	s.logger.WithField("status", "started").Info("GraphQL pre-check")
 
 	available, err := s.graphqlClient.CheckAvailability(ctx)
@@ -211,7 +223,6 @@ func (s *Scanner) CheckGraphQLAvailability(ctx context.Context) {
 		}).WithError(err).Infof("GraphQL pre-check")
 	}
 
-	s.db.IsGrpcAvailable = available
 	connection := "not available"
 	if available {
 		connection = "available"

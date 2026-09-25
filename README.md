@@ -400,6 +400,8 @@ Options:
       --sendDelay int           Delay in ms between requests (default 400)
       --skipWAFBlockCheck       If present, WAF detection tests will be skipped
       --skipWAFIdentification   Skip WAF identification
+      --skipGraphQLCheck        Skip the GraphQL availability pre-check and assume the GraphQL endpoint is available
+      --skipGRPCCheck           Skip the gRPC availability pre-check and assume the gRPC endpoint is available
       --testCase string         If set then only this test case will be run
       --testCasesPath string    Path to a folder with test cases (default "testcases")
       --testSet string          If set then only this test set's cases will be run
