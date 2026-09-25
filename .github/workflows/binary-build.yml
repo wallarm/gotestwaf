@@ -1,0 +1,33 @@
+name: Build binary and push to releases page
+
+on:
+  push:
+    tags:
+      - v*
+  workflow_dispatch:
+
+permissions:
+    contents: write
+    packages: write
+
+jobs:
+  releases-matrix:
+    name: Release Go Binary
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux, darwin]
+        goarch: [amd64, arm64]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Release Client Binary
+        uses: wangyoucao577/go-release-action@v1.53
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          goos: ${{ matrix.goos }}
+          goarch: ${{ matrix.goarch }}
+          goversion: "https://dl.google.com/go/go1.23.7.linux-amd64.tar.gz"
+          project_path: cmd/gotestwaf
+          binary_name: gotestwaf
+          asset_name: "gotestwaf-${{ matrix.goos }}-${{ matrix.goarch }}"
